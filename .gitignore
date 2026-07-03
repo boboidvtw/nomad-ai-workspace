@@ -394,3 +394,7 @@ public/manifest.json
 
 CLAUDE.md
 .trae/*
+
+# scratch directory for audit results
+/scratch
+

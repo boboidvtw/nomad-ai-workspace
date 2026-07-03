@@ -1,7 +1,7 @@
 {
-  "name": "claude-nexus",
+  "name": "claude-voyager",
   "version": "1.4.0",
-  "description": "A browser extension for Claude with folder organization, timeline navigation, prompt library management, chat export, and bilingual UI.",
+  "description": "An all-in-one enhancement suite for Claude.ai - folder management, timeline navigation, and chat export in one powerful extension.",
   "license": "MIT",
   "repository": {
     "type": "git",
