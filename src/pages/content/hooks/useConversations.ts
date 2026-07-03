@@ -212,12 +212,27 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
       onConversationContextMenu?.({ x: e.clientX, y: e.clientY, conversationId: id });
     };
 
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target instanceof Element ? e.target : null;
+      if (!target) return;
+      const li = target.closest(CONVERSATION_LIST_ITEM_SELECTOR);
+      if (!li) return;
+      const a = li.querySelector(CONVERSATION_LINK_SELECTOR);
+      if (!a || !(a instanceof HTMLAnchorElement)) return;
+      const href = a.getAttribute('href') || '';
+      const id = extractConversationIdFromHref(href);
+      if (!id) return;
+      (window as any).__lastClickedConversationId = id;
+    };
+
     ul.addEventListener('dragstart', handleDragStart, true);
     ul.addEventListener('contextmenu', handleContextMenu, true);
+    ul.addEventListener('mousedown', handleMouseDown, true);
 
     return () => {
       ul.removeEventListener('dragstart', handleDragStart, true);
       ul.removeEventListener('contextmenu', handleContextMenu, true);
+      ul.removeEventListener('mousedown', handleMouseDown, true);
     };
   }, [navUlEl, onConversationContextMenu]);
 

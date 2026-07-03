@@ -40,6 +40,50 @@ const mount = async () => {
     </>,
   );
 
+  const checkPendingExport = () => {
+    const pending = sessionStorage.getItem('__pending_export');
+    if (pending) {
+      sessionStorage.removeItem('__pending_export');
+      
+      const checkAndRun = () => {
+        const messages = document.querySelectorAll('[data-test-render-count]');
+        if (messages.length > 0) {
+          setTimeout(async () => {
+            try {
+              const { extractConversationMessages } = await import('./services/exportExtractors');
+              const { formatContent } = await import('./services/exportFormatters');
+              const extracted = await extractConversationMessages();
+              const text = formatContent(extracted.messages, pending as any);
+              const time = new Date().toISOString().replace(/[:.]/g, '-');
+              const filename = `claude-export-${window.location.pathname.split('/chat/')?.[1] ?? ''}-${time}.md`;
+              
+              const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              a.style.display = 'none';
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+            } catch (e) {
+              console.error('Auto-export failed:', e);
+            }
+          }, 1500);
+        } else {
+          setTimeout(checkAndRun, 100);
+        }
+      };
+      setTimeout(checkAndRun, 500);
+    }
+  };
+
+  checkPendingExport();
+  window.addEventListener('claude-nexus:locationchange', () => {
+    setTimeout(checkPendingExport, 200);
+  });
+
   initExportButtonInjection();
   initPromptButtonInjection();
 };
