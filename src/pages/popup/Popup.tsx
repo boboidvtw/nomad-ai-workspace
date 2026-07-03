@@ -1,11 +1,8 @@
-/**
- * Renders the popup settings UI and allows switching language persisted in storage.
- */
-
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGE_CHANGE_MESSAGE_TYPE, setLanguage } from '@src/services/i18n';
 import type { Language } from '@src/types/settings';
+import { CloudSyncSettings } from './components/CloudSyncSettings';
 
 /**
  * Popup settings panel.
@@ -74,6 +71,7 @@ export default function Popup() {
         </select>
       </div>
       <div className="mt-2 text-[12px] text-[#6B6B6B]">{t('popup.hint')}</div>
+      <CloudSyncSettings />
     </div>
   );
 }

@@ -117,5 +117,28 @@
     "openAria": "開啟對話寬度調整",
     "closeAria": "關閉對話寬度調整",
     "sliderAria": "調整對話寬度"
+  },
+  "sync": {
+    "title": "雲端同步",
+    "description": "將資料夾和提示詞同步到 Google Drive",
+    "connect": "連結 Google Drive",
+    "disconnect": "中斷連結",
+    "mode": "同步模式",
+    "modeDisabled": "已停用",
+    "modeManual": "手動",
+    "modeAuto": "自動",
+    "syncNow": "立即上傳",
+    "syncMerge": "下載並合併",
+    "syncOverwrite": "下載並覆蓋",
+    "lastSynced": "上次下載：{{time}}",
+    "neverSynced": "從未下載",
+    "lastUploaded": "上次上傳：{{time}}",
+    "neverUploaded": "從未上傳",
+    "success": "✓ 同步成功",
+    "uploadSuccess": "✓ 上傳成功",
+    "downloadSuccess": "✓ 下載成功",
+    "syncing": "同步中...",
+    "error": "✗ 同步失敗: {{error}}",
+    "overwriteConfirm": "確定要用雲端的資料覆蓋本地資料嗎？本地尚未上傳的變更將會遺失。"
   }
 }

@@ -117,5 +117,28 @@
     "openAria": "Open chat width control",
     "closeAria": "Close chat width control",
     "sliderAria": "Adjust chat width"
+  },
+  "sync": {
+    "title": "Cloud Sync",
+    "description": "Sync folders and prompts to Google Drive",
+    "connect": "Connect Google Drive",
+    "disconnect": "Disconnect",
+    "mode": "Sync Mode",
+    "modeDisabled": "Disabled",
+    "modeManual": "Manual",
+    "modeAuto": "Auto",
+    "syncNow": "Upload to Cloud",
+    "syncMerge": "Download & Merge",
+    "syncOverwrite": "Download & Overwrite",
+    "lastSynced": "Last downloaded: {{time}}",
+    "neverSynced": "Never downloaded",
+    "lastUploaded": "Last uploaded: {{time}}",
+    "neverUploaded": "Never uploaded",
+    "success": "✓ Sync successful",
+    "uploadSuccess": "✓ Upload successful",
+    "downloadSuccess": "✓ Download successful",
+    "syncing": "Syncing...",
+    "error": "✗ Sync failed: {{error}}",
+    "overwriteConfirm": "Are you sure you want to overwrite local data with cloud data? Any unuploaded local changes will be lost."
   }
 }

@@ -117,5 +117,28 @@
     "openAria": "打开对话宽度调整",
     "closeAria": "关闭对话宽度调整",
     "sliderAria": "调整对话宽度"
+  },
+  "sync": {
+    "title": "云端同步",
+    "description": "将文件夹和提示词同步到 Google Drive",
+    "connect": "连接 Google Drive",
+    "disconnect": "断开连接",
+    "mode": "同步模式",
+    "modeDisabled": "已禁用",
+    "modeManual": "手动",
+    "modeAuto": "自动",
+    "syncNow": "立即上传",
+    "syncMerge": "下载并合并",
+    "syncOverwrite": "下载并覆盖",
+    "lastSynced": "上次下载：{{time}}",
+    "neverSynced": "从未下载",
+    "lastUploaded": "上次上传：{{time}}",
+    "neverUploaded": "从未上传",
+    "success": "✓ 同步成功",
+    "uploadSuccess": "✓ 上传成功",
+    "downloadSuccess": "✓ 下载成功",
+    "syncing": "同步中...",
+    "error": "✗ 同步失败: {{error}}",
+    "overwriteConfirm": "确定要用云端的数据覆盖本地数据吗？本地尚未上传的变更将会丢失。"
   }
 }
