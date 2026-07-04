@@ -158,6 +158,47 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
     const ul = navUlEl;
     if (!ul) return;
 
+    const injectFolderButton = (a: HTMLAnchorElement) => {
+      const li = a.closest(CONVERSATION_LIST_ITEM_SELECTOR);
+      if (!li || !(li instanceof HTMLLIElement)) return;
+
+      if (li.querySelector('.claude-voyager-item-folder-btn')) return;
+
+      const href = a.getAttribute('href') || '';
+      const id = extractConversationIdFromHref(href);
+      if (!id) return;
+
+      if (window.getComputedStyle(li).position === 'static') {
+        li.style.position = 'relative';
+      }
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'claude-voyager-item-folder-btn';
+      button.setAttribute('aria-label', 'Move to folder / Export');
+      button.title = 'Move to folder / Export';
+
+      button.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"></path>
+        </svg>
+      `;
+
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = button.getBoundingClientRect();
+        onConversationContextMenu?.({
+          x: rect.left,
+          y: rect.bottom + window.scrollY,
+          conversationId: id,
+        });
+      });
+
+      li.appendChild(button);
+    };
+
     const updateConversations = () => {
       const conversations = scanConversations(ul);
       const nextIndex: Record<string, Conversation> = {};
@@ -168,6 +209,7 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
       for (const a of anchors) {
         if (!(a instanceof HTMLAnchorElement)) continue;
         if (!a.hasAttribute('draggable')) a.setAttribute('draggable', 'true');
+        injectFolderButton(a);
       }
 
       applyConversationVisibility(ul, hiddenConversationIds);
@@ -177,7 +219,7 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
     const mo = new MutationObserver(updateConversations);
     mo.observe(ul, { childList: true, subtree: true });
     return () => mo.disconnect();
-  }, [navUlEl, scanTick, hiddenConversationIds]);
+  }, [navUlEl, scanTick, hiddenConversationIds, onConversationContextMenu]);
 
   useLayoutEffect(() => {
     const ul = navUlEl;
@@ -212,27 +254,12 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
       onConversationContextMenu?.({ x: e.clientX, y: e.clientY, conversationId: id });
     };
 
-    const handleMouseDown = (e: MouseEvent) => {
-      const target = e.target instanceof Element ? e.target : null;
-      if (!target) return;
-      const li = target.closest(CONVERSATION_LIST_ITEM_SELECTOR);
-      if (!li) return;
-      const a = li.querySelector(CONVERSATION_LINK_SELECTOR);
-      if (!a || !(a instanceof HTMLAnchorElement)) return;
-      const href = a.getAttribute('href') || '';
-      const id = extractConversationIdFromHref(href);
-      if (!id) return;
-      (window as any).__lastClickedConversationId = id;
-    };
-
     ul.addEventListener('dragstart', handleDragStart, true);
     ul.addEventListener('contextmenu', handleContextMenu, true);
-    ul.addEventListener('mousedown', handleMouseDown, true);
 
     return () => {
       ul.removeEventListener('dragstart', handleDragStart, true);
       ul.removeEventListener('contextmenu', handleContextMenu, true);
-      ul.removeEventListener('mousedown', handleMouseDown, true);
     };
   }, [navUlEl, onConversationContextMenu]);
 

@@ -6,6 +6,7 @@ import type React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { Folder } from '@src/types/folder';
+import { Download } from 'lucide-react';
 
 type ThemeTokens = {
   rootText: string;
@@ -26,6 +27,7 @@ type FolderManagerModalsProps = {
   contextMenu: { x: number; y: number; conversationId: string } | null;
   onContextMenuClose: () => void;
   onMoveConversationToFolder: (conversationId: string, folderId: string | null) => Promise<void>;
+  onExportConversation?: (conversationId: string) => Promise<void>;
   deleteTarget: DeleteTarget | null;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
@@ -38,6 +40,7 @@ export function FolderManagerModals({
   contextMenu,
   onContextMenuClose,
   onMoveConversationToFolder,
+  onExportConversation,
   deleteTarget,
   onDeleteConfirm,
   onDeleteCancel,
@@ -110,6 +113,24 @@ export function FolderManagerModals({
             >
               {t('menu.moveOut')}
             </button>
+            
+            {onExportConversation && (
+              <>
+                <div className={`my-1 h-px ${theme.divider}`} />
+                <button
+                  type="button"
+                  className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left ${theme.rootText} ${theme.hoverBg}`}
+                  onClick={() => {
+                    onContextMenuClose();
+                    void onExportConversation(contextMenu.conversationId);
+                  }}
+                  role="menuitem"
+                >
+                  <Download size={13} className="opacity-60" />
+                  <span>{t('export.title')}</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       ) : null}
