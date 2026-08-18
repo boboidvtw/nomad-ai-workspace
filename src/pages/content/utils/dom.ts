@@ -14,8 +14,26 @@ import {
 } from '@src/constants/selectors';
 
 export const findNavUl = (): HTMLElement | null => {
+  // Option 1: Find ul that contains a chat link (most reliable to identify the chat list)
+  const uls = Array.from(document.querySelectorAll('nav ul'));
+  for (const ul of uls) {
+    if (ul.querySelector('a[href^="/chat/"]')) {
+      return ul as HTMLElement;
+    }
+  }
+
+  // Option 2: Find ul next to or inside the container containing "Recents"
+  const divs = Array.from(document.querySelectorAll('nav div, nav section'));
+  for (const div of divs) {
+    const header = div.querySelector('span, h2, h3, div');
+    if (header && header.textContent?.trim() === 'Recents') {
+      const ul = div.querySelector('ul');
+      if (ul) return ul as HTMLElement;
+    }
+  }
+
+  // Option 3: Fallback to the selector from constants
   const el = document.querySelector(SIDEBAR_CONVERSATION_LIST_SELECTOR);
-  if (!el) return null;
   if (el instanceof HTMLElement) return el;
   return null;
 };

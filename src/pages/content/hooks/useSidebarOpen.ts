@@ -15,6 +15,19 @@ import { SIDEBAR_WIDTH_TARGET_SELECTOR } from '@src/constants/selectors';
  *   - 2026-03-18 [Qiuner] Added width-based predicate for open/collapsed detection.
  */
 const getSidebarOpen = (): boolean => {
+  // Option 1: Check for the toggle buttons (aria-labels are highly stable)
+  const closeButton = document.querySelector('button[aria-label="Close sidebar"]');
+  if (closeButton) return true;
+  const openButton = document.querySelector('button[aria-label="Open sidebar"]');
+  if (openButton) return false;
+
+  // Option 2: Check nav element width if it exists
+  const nav = document.querySelector('nav');
+  if (nav instanceof HTMLElement) {
+    return nav.getBoundingClientRect().width > 100;
+  }
+
+  // Option 3: Fallback to the width target selector
   const el = document.querySelector(SIDEBAR_WIDTH_TARGET_SELECTOR);
   if (!(el instanceof HTMLElement)) return true;
   return el.getBoundingClientRect().width > 100;

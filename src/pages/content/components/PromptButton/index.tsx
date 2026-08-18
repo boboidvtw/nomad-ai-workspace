@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookText, Download, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { BookOpen, BookText, Download, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usePromptLibrary } from '../../hooks/usePromptLibrary';
 import type { Prompt } from '@src/types/prompt';
@@ -76,7 +76,6 @@ const findLeftButtonsContainer = (): HTMLElement | null => {
   if (container instanceof HTMLElement) {
     const currentLeftButtons = container.querySelector(CHAT_INPUT_LEFT_ACTIONS_CURRENT_SELECTOR);
     if (currentLeftButtons instanceof HTMLElement && isVisibleElement(currentLeftButtons)) return currentLeftButtons;
-
     const leftButtons = container.querySelector(CHAT_INPUT_LEFT_ACTIONS_SELECTOR);
     if (leftButtons instanceof HTMLElement && isVisibleElement(leftButtons)) return leftButtons;
 
@@ -537,6 +536,19 @@ const PromptButton = () => {
   );
 };
 
+const NotebookLMButton = () => {
+  return (
+    <button
+      type="button"
+      className="inline-flex h-8 items-center gap-2 rounded-lg bg-white px-3 text-[12px] text-[#374151] hover:bg-zinc-50 active:scale-[0.98]"
+      onClick={() => window.open('https://notebooklm.google.com/', '_blank')}
+    >
+      <BookOpen className="h-4 w-4 text-[#6b7280]" aria-hidden="true" />
+      NotebookLM
+    </button>
+  );
+};
+
 const patchHistory = () => {
   const w = window as unknown as Record<string, unknown>;
   if (w[HISTORY_PATCH_FLAG]) return;
@@ -577,7 +589,12 @@ const mountIntoInputToolbar = (): boolean => {
     container.appendChild(host);
   }
 
-  createRoot(host).render(<PromptButton />);
+  createRoot(host).render(
+    <div className="flex gap-2">
+      <PromptButton />
+      <NotebookLMButton />
+    </div>
+  );
   return true;
 };
 

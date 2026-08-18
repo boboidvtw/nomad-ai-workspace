@@ -64,6 +64,11 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const [navUlEl, setNavUlEl] = useState<HTMLElement | null>(null);
 
+  const onConversationContextMenuRef = useRef(onConversationContextMenu);
+  useEffect(() => {
+    onConversationContextMenuRef.current = onConversationContextMenu;
+  }, [onConversationContextMenu]);
+
   const lastNavUlRef = useRef<HTMLElement | null>(null);
   const hasPatchedHistoryRef = useRef(false);
   const [scanTick, setScanTick] = useState(0);
@@ -220,7 +225,7 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
         e.stopPropagation();
 
         const rect = button.getBoundingClientRect();
-        onConversationContextMenu?.({
+        onConversationContextMenuRef.current?.({
           x: rect.left,
           y: rect.bottom + window.scrollY,
           conversationId: id,
@@ -271,7 +276,7 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
     const mo = new MutationObserver(updateConversations);
     mo.observe(ul, { childList: true, subtree: true });
     return () => mo.disconnect();
-  }, [navUlEl, scanTick, hiddenConversationIds, onConversationContextMenu]);
+  }, [navUlEl, scanTick, hiddenConversationIds]);
 
   useLayoutEffect(() => {
     const ul = navUlEl;
@@ -314,7 +319,7 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
       const id = extractConversationIdFromHref(href);
       if (!id) return;
       e.preventDefault();
-      onConversationContextMenu?.({ x: e.clientX, y: e.clientY, conversationId: id });
+      onConversationContextMenuRef.current?.({ x: e.clientX, y: e.clientY, conversationId: id });
     };
 
     ul.addEventListener('dragstart', handleDragStart, true);
@@ -324,7 +329,7 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
       ul.removeEventListener('dragstart', handleDragStart, true);
       ul.removeEventListener('contextmenu', handleContextMenu, true);
     };
-  }, [navUlEl, onConversationContextMenu]);
+  }, [navUlEl]);
 
   const conversations = useMemo(() => Object.values(conversationIndex), [conversationIndex]);
 
