@@ -13,7 +13,7 @@ import {
   getManifestUpdateUrl,
 } from '../utils/latestVersion';
 
-const LATEST_VERSION_CACHE_KEY = 'gvLatestVersionCache';
+const LATEST_VERSION_CACHE_KEY = 'nomadLatestVersionCache';
 const LATEST_VERSION_MAX_AGE = 1000 * 60 * 60 * 6; // 6 hours
 const SAFARI_DMG_RETRY_AGE = 1000 * 60 * 30; // 30 min — re-check for DMG if missing
 
@@ -39,6 +39,8 @@ export function usePopupReleaseInfo(isSafariBrowser: boolean) {
       const version = chrome?.runtime?.getManifest?.()?.version;
       if (version) {
         setExtVersion(version);
+        // Clear legacy voyager version cache
+        browser.storage.local.remove('gvLatestVersionCache').catch(() => {});
       }
     } catch (err) {
       console.error('[Gemini Voyager] Failed to get extension version:', err);
@@ -103,12 +105,15 @@ export function usePopupReleaseInfo(isSafariBrowser: boolean) {
 
         if (!latest) {
           const resp = await fetch(
-            'https://api.github.com/repos/voyager-crew/voyager/releases/latest',
+            'https://api.github.com/repos/boboidvtw/nomad-ai-workspace/releases/latest',
             {
               headers: { Accept: 'application/vnd.github+json' },
             },
           );
 
+          if (resp.status === 404) {
+            return;
+          }
           if (!resp.ok) {
             throw new Error(`HTTP ${resp.status}`);
           }
@@ -166,12 +171,12 @@ export function usePopupReleaseInfo(isSafariBrowser: boolean) {
       : false;
   const latestReleaseTag = toReleaseTag(latestVersion ?? normalizedLatestVersion ?? undefined);
   const latestReleaseUrl = latestReleaseTag
-    ? `https://github.com/voyager-crew/voyager/releases/tag/${latestReleaseTag}`
-    : 'https://github.com/voyager-crew/voyager/releases/latest';
+    ? `https://github.com/boboidvtw/nomad-ai-workspace/releases/tag/${latestReleaseTag}`
+    : 'https://github.com/boboidvtw/nomad-ai-workspace/releases/latest';
   const currentReleaseTag = toReleaseTag(extVersion);
   const releaseUrl = extVersion
-    ? `https://github.com/voyager-crew/voyager/releases/tag/${currentReleaseTag ?? `v${extVersion}`}`
-    : 'https://github.com/voyager-crew/voyager/releases';
+    ? `https://github.com/boboidvtw/nomad-ai-workspace/releases/tag/${currentReleaseTag ?? `v${extVersion}`}`
+    : 'https://github.com/boboidvtw/nomad-ai-workspace/releases';
 
   return {
     extVersion,

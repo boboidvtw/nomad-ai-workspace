@@ -109,7 +109,7 @@ const ID = {
 /** Exported so surfaces outside the panel (the onboarding guide) can anchor to it. */
 export const PROMPT_TRIGGER_ID = ID.trigger;
 
-const LATEST_VERSION_CACHE_KEY = 'gvLatestVersionCache';
+const LATEST_VERSION_CACHE_KEY = 'nomadLatestVersionCache';
 const LATEST_VERSION_MAX_AGE = 1000 * 60 * 60 * 6; // 6 hours
 const SPONSOR_HEART_PATH_16 =
   'M7.655 14.916h-.002l-.006-.003l-.018-.01a22 22 0 0 1-3.744-2.584C2.045 10.731 0 8.35 0 5.5C0 2.836 2.086 1 4.25 1C5.797 1 7.153 1.802 8 3.02C8.847 1.802 10.203 1 11.75 1C13.914 1 16 2.836 16 5.5c0 2.85-2.044 5.231-3.886 6.818a22 22 0 0 1-3.433 2.414a7 7 0 0 1-.31.17l-.018.01l-.008.004a.75.75 0 0 1-.69 0';
@@ -316,9 +316,12 @@ async function getLatestVersionCached(): Promise<string | null> {
       return cached.version;
     }
 
-    const resp = await fetch('https://api.github.com/repos/voyager-crew/voyager/releases/latest', {
+    const resp = await fetch('https://api.github.com/repos/boboidvtw/nomad-ai-workspace/releases/latest', {
       headers: { Accept: 'application/vnd.github+json' },
     });
+    if (resp.status === 404) {
+      return null;
+    }
     if (!resp.ok) {
       throw new Error(`HTTP ${resp.status}`);
     }
@@ -712,7 +715,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       // and log the error so site-specific failures (e.g. on Claude/ChatGPT
       // custom websites) are diagnosable from the console.
       const openReleasesFallback = () => {
-        window.open('https://github.com/voyager-crew/voyager/releases', '_blank', 'noopener');
+        window.open('https://github.com/boboidvtw/nomad-ai-workspace/releases', '_blank', 'noopener');
       };
       // If badge was active, clear it
       if (changelogBadgeActive) {

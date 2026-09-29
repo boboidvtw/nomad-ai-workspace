@@ -369,7 +369,7 @@ function createChangelogModal(
   // GitHub link
   const githubLink = document.createElement('a');
   githubLink.className = 'gv-changelog-icon-link gv-changelog-icon-github';
-  githubLink.href = 'https://github.com/voyager-crew/voyager';
+  githubLink.href = 'https://github.com/boboidvtw/nomad-ai-workspace';
   githubLink.target = '_blank';
   githubLink.rel = 'noopener noreferrer';
   githubLink.setAttribute('aria-label', 'GitHub');
