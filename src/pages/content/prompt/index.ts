@@ -378,6 +378,7 @@ function createSponsorHeartIcon(size = 14): SVGSVGElement {
   svg.setAttribute('fill', 'currentColor');
   svg.setAttribute('aria-hidden', 'true');
 
+  svg.style.color = '#f43f5e';
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   path.setAttribute('d', SPONSOR_HEART_PATH_16);
   svg.appendChild(path);
@@ -598,7 +599,8 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     // Trigger button
     const trigger = createEl('button', 'gv-pm-trigger');
     trigger.id = ID.trigger;
-    trigger.setAttribute('aria-label', 'Prompt Manager');
+    trigger.setAttribute('aria-label', 'Nomad AI Workspace');
+    trigger.title = 'Nomad AI Workspace';
     const img = createTriggerLogoImage(trigger, useMascotLogo, getRuntimeUrl);
     if (changelogBadgeActive) {
       trigger.classList.add('gv-pm-trigger-new');
@@ -692,7 +694,13 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     const titleRow = createEl('div', 'gv-pm-title-row');
     const title = createEl('div', 'gv-pm-title');
     const titleText = document.createElement('span');
-    titleText.textContent = 'Voyager';
+    titleText.textContent = 'Nomad';
+    titleText.style.cursor = 'pointer';
+    titleText.title = 'Nomad AI Workspace (前往 GitHub)';
+    titleText.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.open('https://github.com/boboidvtw/nomad-ai-workspace', '_blank', 'noopener');
+    });
     title.appendChild(titleText);
 
     const manifestVersion = chrome?.runtime?.getManifest?.()?.version;
@@ -959,6 +967,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     supportLink.className = 'gv-pm-support';
     supportLink.target = '_blank';
     supportLink.rel = 'noreferrer';
+    supportLink.href = 'https://www.paypal.me/boboidvtw';
     supportLink.title = i18n.t('sponsorMe');
 
     secondaryActions.appendChild(settingsBtn);
@@ -1425,7 +1434,8 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     function applyPanelViewUI(): void {
       const isStarredView = panelView === 'starred';
       panel.setAttribute('data-gv-panel-view', panelView);
-      titleText.textContent = isStarredView ? i18n.t('pm_starred_library') : 'Voyager';
+      titleText.textContent = isStarredView ? i18n.t('pm_starred_library') : 'Nomad';
+      titleText.title = isStarredView ? i18n.t('pm_starred_library') : 'Nomad AI Workspace (前往 GitHub)';
       backupBtn.replaceChildren(
         createStarIcon(15),
         document.createTextNode(i18n.t('pm_starred_library')),
@@ -1500,7 +1510,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
         }
         downloadTextFile(
           response.data,
-          response.filename || `gemini-voyager-highlights.${format === 'json' ? 'json' : 'md'}`,
+          response.filename || `nomad-highlights.${format === 'json' ? 'json' : 'md'}`,
           format === 'json' ? 'application/json' : 'text/markdown',
         );
       } catch (error) {
@@ -2582,6 +2592,11 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     exportMarkdownBtn.addEventListener('click', () => {
       setSavedExportMenuOpen(false);
       void exportHighlights('markdown');
+    });
+
+    supportLink.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      window.open('https://www.paypal.me/boboidvtw', '_blank', 'noopener,noreferrer');
     });
 
     // Initialize
