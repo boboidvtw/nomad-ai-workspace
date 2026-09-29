@@ -55,7 +55,6 @@
     "https://grok.com/*"
   ],
   "optional_host_permissions": [
-    "https://chatgpt.com/*",
     "<all_urls>"
   ],
   "content_security_policy": {
