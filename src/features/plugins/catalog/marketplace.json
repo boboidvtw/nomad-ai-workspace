@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "owner": {
     "name": "voyager-official",
-    "url": "https://github.com/voyager-crew/voyager"
+    "url": "https://github.com/boboidvtw/nomad-ai-workspace"
   },
   "description": "Index of the bundled official plugins for the docs plugin store. The extension discovers sites/*/site.json and sites/*/plugins/*/plugin.json itself; keep this list in sync (a test enforces it).",
   "plugins": [

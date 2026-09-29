@@ -2210,11 +2210,11 @@
     "description": "Changelog annotation pointing to docs icon"
   },
   "changelog_rate_chrome": {
-    "message": "Love Nomad? A quick rating on the Chrome Web Store makes a huge difference!",
+    "message": "Enjoying Nomad? Star us on GitHub ⭐️ to help more people discover it!",
     "description": "Chrome Web Store rating prompt in changelog modal"
   },
   "changelog_rate_chrome_cta": {
-    "message": "Rate Now",
+    "message": "Star on GitHub",
     "description": "Chrome Web Store rating CTA button text"
   },
   "changelog_rate_edge": {

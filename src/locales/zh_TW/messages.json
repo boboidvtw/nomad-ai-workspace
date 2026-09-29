@@ -2210,11 +2210,11 @@
     "description": "Changelog annotation pointing to docs icon"
   },
   "changelog_rate_chrome": {
-    "message": "覺得 Nomad 好用嗎？在 Chrome 線上應用程式商店給個好評，幫助更多人發現它！",
+    "message": "覺得 Nomad 好用嗎？在 GitHub 為我們點亮 Star ⭐️，幫助更多人發現它！",
     "description": "Chrome Web Store rating prompt in changelog modal"
   },
   "changelog_rate_chrome_cta": {
-    "message": "立即評分",
+    "message": "前往 GitHub",
     "description": "Chrome Web Store rating CTA button text"
   },
   "changelog_rate_edge": {

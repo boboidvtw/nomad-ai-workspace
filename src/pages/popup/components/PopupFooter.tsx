@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 
-import { getWebStoreRatingChannel } from '@/core/utils/browser';
 import type { TranslationKey } from '@/utils/translations';
 
 export function PopupFooter({
@@ -16,19 +15,7 @@ export function PopupFooter({
   t: (key: TranslationKey) => string;
   children: ReactNode;
 }) {
-  const webStoreRatingChannel = getWebStoreRatingChannel();
-  const websiteUrl =
-    'https://github.com/boboidvtw/nomad-ai-workspace#readme';
-
-  // Bundled "Fable 5 Verified" badge (public/fable-verified-badge.png). Guarded
-  // so non-extension contexts (e.g. tests) don't throw on chrome.runtime.getURL.
-  const fableBadgeUrl = (() => {
-    try {
-      return chrome?.runtime?.getURL?.('fable-verified-badge.png') ?? null;
-    } catch {
-      return null;
-    }
-  })();
+  const websiteUrl = 'https://github.com/boboidvtw/nomad-ai-workspace#readme';
 
   return (
     <>
@@ -48,22 +35,6 @@ export function PopupFooter({
             >
               {extVersion ?? '...'}
             </a>
-            {fableBadgeUrl && (
-              <a
-                href="https://github.com/yetone/alma-releases/issues/56"
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center opacity-75 transition-opacity hover:opacity-100"
-                title={t('fableVerifiedBadgeAlt')}
-                aria-label={t('fableVerifiedBadgeAlt')}
-              >
-                <img
-                  src={fableBadgeUrl}
-                  alt={t('fableVerifiedBadgeAlt')}
-                  className="h-[40px] w-auto"
-                />
-              </a>
-            )}
           </div>
 
           <a
@@ -90,7 +61,7 @@ export function PopupFooter({
           </a>
         </div>
 
-                <div className="flex items-center justify-between text-xs px-1">
+        <div className="flex items-center justify-between text-xs px-1">
           <a
             href="https://www.paypal.me/boboidvtw"
             target="_blank"
@@ -102,30 +73,22 @@ export function PopupFooter({
           <span className="text-muted-foreground text-[10px]">boboidvtw</span>
         </div>
 
-        {webStoreRatingChannel && (
-          <a
-            href={
-              webStoreRatingChannel === 'edge'
-                ? 'https://microsoftedge.microsoft.com/addons/detail/voyager/gibmkggjijalcjinbdhcpklodjkhhlne'
-                : 'https://chromewebstore.google.com/detail/gemini-voyager/iifacdnjakkhjjiengaffnegbndgingi'
-            }
-            target="_blank"
-            rel="noreferrer"
-            className="group hover:border-primary/30 flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs shadow-sm transition-[border-color,box-shadow] hover:shadow-md"
-          >
-            <span className="text-base leading-none" aria-hidden="true">
-              ⭐
-            </span>
-            <span className="flex-1 leading-snug text-slate-700">
-              {webStoreRatingChannel === 'edge'
-                ? t('changelog_rate_edge')
-                : t('changelog_rate_chrome')}
-            </span>
-            <span className="text-primary font-semibold whitespace-nowrap transition-transform group-hover:translate-x-0.5">
-              {`${webStoreRatingChannel === 'edge' ? t('changelog_rate_edge_cta') : t('changelog_rate_chrome_cta')} →`}
-            </span>
-          </a>
-        )}
+        <a
+          href="https://github.com/boboidvtw/nomad-ai-workspace"
+          target="_blank"
+          rel="noreferrer"
+          className="group hover:border-primary/30 flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs shadow-sm transition-[border-color,box-shadow] hover:shadow-md dark:border-white/10 dark:bg-zinc-800/80"
+        >
+          <span className="text-base leading-none" aria-hidden="true">
+            ⭐
+          </span>
+          <span className="flex-1 leading-snug text-slate-700 dark:text-zinc-200">
+            {t('changelog_rate_chrome')}
+          </span>
+          <span className="text-primary font-semibold whitespace-nowrap transition-transform group-hover:translate-x-0.5">
+            {`${t('changelog_rate_chrome_cta')} →`}
+          </span>
+        </a>
 
         <a
           href="https://github.com/boboidvtw/nomad-ai-workspace"

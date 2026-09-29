@@ -220,9 +220,9 @@ function showImageLightbox(src: string, alt: string): void {
 }
 
 const CHROME_STORE_URL =
-  'https://chromewebstore.google.com/detail/gemini-voyager/iifacdnjakkhjjiengaffnegbndgingi';
+  'https://github.com/boboidvtw/nomad-ai-workspace';
 const EDGE_STORE_URL =
-  'https://microsoftedge.microsoft.com/addons/detail/voyager/gibmkggjijalcjinbdhcpklodjkhhlne';
+  'https://github.com/boboidvtw/nomad-ai-workspace';
 
 /**
  * Read the current changelog notification mode.

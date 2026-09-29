@@ -182,7 +182,7 @@ describe('MarkdownFormatter', () => {
     it('should include footer', () => {
       const markdown = MarkdownFormatter.format(mockTurns, mockMetadata);
 
-      expect(markdown).toContain('Voyager');
+      expect(markdown).toContain('Nomad AI Workspace');
       expect(markdown).toContain('Generated on');
     });
 

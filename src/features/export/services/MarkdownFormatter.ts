@@ -286,7 +286,7 @@ export class MarkdownFormatter {
    */
   private static formatFooter(metadata: ConversationMetadata): string {
     return [
-      `*Exported from [Voyager](https://github.com/voyager-crew/voyager)*`,
+      `*Exported from [Nomad AI Workspace](https://github.com/boboidvtw/nomad-ai-workspace)*`,
       `*Generated on ${this.formatDate(metadata.exportedAt)}*`,
     ].join('  \n'); // Two spaces for line break
   }

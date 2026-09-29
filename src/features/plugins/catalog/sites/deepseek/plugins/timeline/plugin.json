@@ -100,7 +100,7 @@
   "author": "voyager-official",
   "category": "productivity",
   "license": "GPL-3.0-or-later",
-  "homepage": "https://github.com/voyager-crew/voyager/tree/main/src/features/plugins/catalog/sites/deepseek/plugins/timeline",
+  "homepage": "https://github.com/boboidvtw/nomad-ai-workspace/tree/main/src/features/plugins/catalog/sites/deepseek/plugins/timeline",
   "engine": ">=1.4.0",
   "tier": "declarative",
   "matches": ["https://chat.deepseek.com/*"],

@@ -8,7 +8,7 @@ export const EDGE_FINAL_VERSION_NOTICE_READ_MS = 0;
 
 const NOTICE_CLASS = 'gv-edge-final-version-notice';
 const EDGE_ADDONS_URL =
-  'https://microsoftedge.microsoft.com/addons/detail/voyager/gibmkggjijalcjinbdhcpklodjkhhlne';
+  'https://github.com/boboidvtw/nomad-ai-workspace';
 
 type NoticeCopy = {
   title: string;

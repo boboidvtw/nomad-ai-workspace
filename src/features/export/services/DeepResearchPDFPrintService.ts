@@ -177,7 +177,7 @@ export class DeepResearchPDFPrintService {
           <div class="gv-dr-print-report">${bodyHtml}</div>
         </div>
         <div class="gv-dr-print-footer">
-          <p>Exported from <a href="https://github.com/voyager-crew/voyager">Voyager</a></p>
+          <p>Exported from <a href="https://github.com/boboidvtw/nomad-ai-workspace">Nomad AI Workspace</a></p>
           <p>Generated on ${this.escapeHTML(date)}</p>
         </div>
       </div>

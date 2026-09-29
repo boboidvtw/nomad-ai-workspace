@@ -2210,11 +2210,11 @@
     "description": "Changelog annotation pointing to docs icon"
   },
   "changelog_rate_chrome": {
-    "message": "Nomad を気に入っていただけましたか？Chrome ウェブストアでの評価が大きな励みになります！",
+    "message": "Nomad を気に入っていただけましたか？GitHub でスター ⭐️ を付けて応援してください！",
     "description": "Chrome Web Store rating prompt in changelog modal"
   },
   "changelog_rate_chrome_cta": {
-    "message": "評価する",
+    "message": "GitHub へ",
     "description": "Chrome Web Store rating CTA button text"
   },
   "changelog_rate_edge": {
