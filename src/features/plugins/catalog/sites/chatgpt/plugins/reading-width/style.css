@@ -1,0 +1,36 @@
+/* voyager.chatgpt-reading-width - one wider, centered reading column.
+ * The width variable is declared on both real content columns and structural
+ * wrappers. Only the content columns are centered; constraining
+ * #thread-bottom-container itself pins the composer to the left. Propagate the
+ * variable everywhere, but keep that outer footer wrapper full-width. */
+.gv-plugin-chatgpt-readable [class*='--thread-content-max-width'] {
+  --thread-content-max-width: var(--gv-plugin-reading-width, 768px) !important;
+}
+
+.gv-plugin-chatgpt-readable [class*='--thread-content-max-width'] {
+  max-width: var(--gv-plugin-reading-width, 768px) !important;
+}
+
+.gv-plugin-chatgpt-readable #thread-bottom-container {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Optional centered-turn mode: keep the selected reading width and only change
+ * user content alignment. ChatGPT nests user media and bubbles under two
+ * end-aligned flex columns, so both levels need to be centered. Assistant prose
+ * remains left-aligned for readability. */
+.gv-plugin-chatgpt-readable[data-gv-center-conversation='true']
+  section[data-testid^='conversation-turn-']
+  [data-message-author-role='user'],
+.gv-plugin-chatgpt-readable[data-gv-center-conversation='true']
+  section[data-testid^='conversation-turn-']
+  [data-message-author-role='user']
+  > div,
+.gv-plugin-chatgpt-readable[data-gv-center-conversation='true']
+  section[data-testid^='conversation-turn-']
+  [data-message-author-role='user']
+  > div
+  > div {
+  align-items: center !important;
+}

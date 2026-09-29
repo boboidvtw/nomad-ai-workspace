@@ -1,0 +1,52 @@
+{
+  "$schema": "https://voyager.nagi.fun/marketplace.schema.json",
+  "name": "voyager-official",
+  "version": "1.0.0",
+  "owner": {
+    "name": "voyager-official",
+    "url": "https://github.com/voyager-crew/voyager"
+  },
+  "description": "Index of the bundled official plugins for the docs plugin store. The extension discovers sites/*/site.json and sites/*/plugins/*/plugin.json itself; keep this list in sync (a test enforces it).",
+  "plugins": [
+    {
+      "name": "claude-cjk-render-fix",
+      "source": "sites/claude/plugins/cjk-render-fix/plugin.json",
+      "official": true
+    },
+    {
+      "name": "claude-reading-width",
+      "source": "sites/claude/plugins/reading-width/plugin.json",
+      "official": true
+    },
+    {
+      "name": "chatgpt-reading-width",
+      "source": "sites/chatgpt/plugins/reading-width/plugin.json",
+      "official": true
+    },
+    {
+      "name": "deepseek-reading-width",
+      "source": "sites/deepseek/plugins/reading-width/plugin.json",
+      "official": true
+    },
+    {
+      "name": "deepseek-formula-copy",
+      "source": "sites/deepseek/plugins/formula-copy/plugin.json",
+      "official": true
+    },
+    {
+      "name": "deepseek-timeline",
+      "source": "sites/deepseek/plugins/timeline/plugin.json",
+      "official": true
+    },
+    {
+      "name": "deepseek-vim-input",
+      "source": "sites/deepseek/plugins/vim-input/plugin.json",
+      "official": true
+    },
+    {
+      "name": "deepseek-wrap-code",
+      "source": "sites/deepseek/plugins/wrap-code/plugin.json",
+      "official": true
+    }
+  ]
+}

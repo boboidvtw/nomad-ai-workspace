@@ -1,0 +1,3121 @@
+{
+  "extName": {
+    "message": "Nomad AI Workspace",
+    "description": "擴充功能名稱"
+  },
+  "extDescription": {
+    "message": "為 Gemini、Claude、ChatGPT 和 Grok 打造的跨 AI 平台工作空間：側邊欄階層清單、通用提示詞庫與 Google Drive 實體子目錄分離同步。",
+    "description": "擴充功能描述"
+  },
+  "timelineStyle": {
+    "message": "時間軸樣式",
+    "description": "時間軸視覺樣式標籤"
+  },
+  "timelineStyleDots": {
+    "message": "節點",
+    "description": "經典時間軸節點樣式"
+  },
+  "timelineStyleCompact": {
+    "message": "精簡索引",
+    "description": "精簡時間軸索引樣式"
+  },
+  "timelineStyleRuler": {
+    "message": "刻度",
+    "description": "時間軸刻度樣式"
+  },
+  "timelineCompactOpenPreview": {
+    "message": "開啟時間軸預覽",
+    "description": "精簡時間軸索引的無障礙標籤"
+  },
+  "scrollMode": {
+    "message": "捲動模式",
+    "description": "捲動模式標籤"
+  },
+  "flow": {
+    "message": "流動",
+    "description": "流動模式"
+  },
+  "jump": {
+    "message": "跳躍",
+    "description": "跳躍模式"
+  },
+  "hideOuterContainer": {
+    "message": "隱藏外部容器",
+    "description": "隱藏外部容器標籤"
+  },
+  "draggableTimeline": {
+    "message": "可拖曳時間軸",
+    "description": "可拖曳時間軸標籤"
+  },
+  "pinTimelinePreview": {
+    "message": "固定預覽面板",
+    "description": "固定時間軸預覽面板開關標籤"
+  },
+  "pinTimelinePreviewHint": {
+    "message": "讓時間軸旁邊的預覽面板保持常駐展開。",
+    "description": "固定時間軸預覽面板功能提示"
+  },
+  "enableMarkerLevel": {
+    "message": "啟用節點層級",
+    "description": "啟用時間軸節點層級功能"
+  },
+  "enableMarkerLevelHint": {
+    "message": "右鍵點擊時間軸節點可設定其層級和折疊子節點",
+    "description": "節點層級功能提示"
+  },
+  "experimentalLabel": {
+    "message": "實驗性",
+    "description": "實驗性功能標籤"
+  },
+  "resetPosition": {
+    "message": "重設位置",
+    "description": "重設位置按鈕"
+  },
+  "resetTimelinePosition": {
+    "message": "重設時間軸位置",
+    "description": "重設時間軸位置按鈕（在時間軸選項中）"
+  },
+  "language": {
+    "message": "語言",
+    "description": "語言標籤"
+  },
+  "pm_title": {
+    "message": "Voyager",
+    "description": "面板標題"
+  },
+  "pm_add": {
+    "message": "新增",
+    "description": "新增 prompt 按鈕"
+  },
+  "pm_search_placeholder": {
+    "message": "搜尋 prompt 或標籤",
+    "description": "搜尋佔位符"
+  },
+  "popupSettingsSearchPlaceholder": {
+    "message": "搜尋設定",
+    "description": "Popup 設定搜尋框佔位符"
+  },
+  "popupSettingsSearchClear": {
+    "message": "清除搜尋",
+    "description": "Popup 設定搜尋清除按鈕標籤"
+  },
+  "popupSettingsSearchNoResults": {
+    "message": "沒有符合的設定",
+    "description": "Popup 設定搜尋無結果狀態"
+  },
+  "pm_import": {
+    "message": "匯入",
+    "description": "匯入按鈕"
+  },
+  "pm_export": {
+    "message": "匯出",
+    "description": "匯出按鈕"
+  },
+  "pm_export_format": {
+    "message": "匯出格式",
+    "description": "開啟收藏庫匯出格式選單的按鈕"
+  },
+  "pm_prompt_placeholder": {
+    "message": "Prompt 文字",
+    "description": "Prompt 輸入佔位符"
+  },
+  "pm_tags_placeholder": {
+    "message": "標籤（逗號分隔）",
+    "description": "標籤輸入佔位符"
+  },
+  "pm_save": {
+    "message": "儲存",
+    "description": "儲存"
+  },
+  "pm_cancel": {
+    "message": "取消",
+    "description": "取消"
+  },
+  "pm_all_tags": {
+    "message": "全部",
+    "description": "全部標籤"
+  },
+  "pm_empty": {
+    "message": "暫無 prompt",
+    "description": "空狀態"
+  },
+  "pm_copy": {
+    "message": "複製",
+    "description": "複製 prompt"
+  },
+  "pm_copied": {
+    "message": "已複製",
+    "description": "複製成功"
+  },
+  "pm_inserted": {
+    "message": "已插入",
+    "description": "提示詞已插入輸入框"
+  },
+  "pm_fill_title": {
+    "message": "填寫變數",
+    "description": "Accessible name of the template variable fill surface"
+  },
+  "pm_fill_insert": {
+    "message": "插入",
+    "description": "Insert the prompt with the entered variable values"
+  },
+  "pm_fill_copy": {
+    "message": "複製",
+    "description": "Copy the prompt with the entered variable values"
+  },
+  "pm_fill_keep_raw": {
+    "message": "保持原樣",
+    "description": "Insert the prompt body with its placeholders untouched"
+  },
+  "pm_sent_chip_hint": {
+    "message": "點擊查看實際送出的內容"
+  },
+  "pm_convert_braces": {
+    "message": "把 {name} 轉成 {{name}}",
+    "description": "Action that rewrites single-brace placeholders as template variables"
+  },
+  "pm_delete": {
+    "message": "刪除",
+    "description": "刪除 prompt"
+  },
+  "pm_delete_confirm": {
+    "message": "確定刪除該 prompt 嗎？",
+    "description": "刪除確認"
+  },
+  "pm_lock": {
+    "message": "鎖定位置",
+    "description": "鎖定面板位置"
+  },
+  "pm_unlock": {
+    "message": "取消鎖定",
+    "description": "取消鎖定面板位置"
+  },
+  "pm_import_invalid": {
+    "message": "檔案格式不正確",
+    "description": "匯入失敗"
+  },
+  "pm_import_empty": {
+    "message": "匯入檔案中沒有 prompt",
+    "description": "匯入檔案有效但為空"
+  },
+  "pm_import_success": {
+    "message": "已匯入 {count} 條",
+    "description": "匯入成功"
+  },
+  "promptNameConflictsDetected": {
+    "message": "已保留全部 Prompt；其中 {count} 個名稱重複，重新命名後才能使用 / 快速插入",
+    "description": "匯入或雲端合併保留重名 Prompt 時的非阻斷提示"
+  },
+  "pm_duplicate": {
+    "message": "重複的 prompt",
+    "description": "新增重複"
+  },
+  "pm_deleted": {
+    "message": "已刪除",
+    "description": "刪除提示"
+  },
+  "pm_edit": {
+    "message": "編輯",
+    "description": "編輯 prompt"
+  },
+  "pm_expand": {
+    "message": "展開",
+    "description": "展開提示詞文字"
+  },
+  "pm_collapse": {
+    "message": "收起",
+    "description": "收起提示詞文字"
+  },
+  "pm_reorder": {
+    "message": "拖曳調整順序（↑/↓ 鍵）",
+    "description": "Prompt list reorder handle"
+  },
+  "pm_pin": {
+    "message": "置頂",
+    "description": "Pin a prompt above the rest"
+  },
+  "pm_unpin": {
+    "message": "取消置頂",
+    "description": "Remove a prompt from the pinned group"
+  },
+  "pm_saved": {
+    "message": "已儲存",
+    "description": "儲存提示"
+  },
+  "pm_settings": {
+    "message": "設定",
+    "description": "設定按鈕"
+  },
+  "pm_settings_tooltip": {
+    "message": "調整擴充功能設定",
+    "description": "設定按鈕提示"
+  },
+  "pm_settings_fallback": {
+    "message": "請點擊瀏覽器工具列中的擴充功能圖示開啟設定",
+    "description": "設定開啟失敗提示"
+  },
+  "pm_backup": {
+    "message": "本機備份",
+    "description": "本機備份按鈕"
+  },
+  "pm_backup_tooltip": {
+    "message": "將提示詞和資料夾備份到帶時間戳記的資料夾",
+    "description": "備份按鈕提示"
+  },
+  "pm_backup_cancelled": {
+    "message": "備份已取消",
+    "description": "備份取消提示"
+  },
+  "pm_backup_error": {
+    "message": "✗ 備份失敗",
+    "description": "備份失敗提示"
+  },
+  "pm_backup_hint_options": {
+    "message": "功能已整合在 Gemini 頁面的提示詞管理器中。",
+    "description": "選項頁面的備份說明"
+  },
+  "pm_backup_step1": {
+    "message": "開啟 Gemini 頁面（gemini.google.com）",
+    "description": "備份步驟 1"
+  },
+  "pm_backup_step2": {
+    "message": "點擊右下角的擴充功能圖示開啟提示詞管理器",
+    "description": "備份步驟 2"
+  },
+  "pm_backup_step3": {
+    "message": "點擊 \"💾 本機備份\" 按鈕，選擇備份資料夾",
+    "description": "備份步驟 3"
+  },
+  "pm_backup_note": {
+    "message": "備份將包含所有提示詞和資料夾，並儲存在帶時間戳記的資料夾中（格式：backup-YYYYMMDD-HHMMSS）",
+    "description": "備份功能說明"
+  },
+  "pm_theme_light": {
+    "message": "切換至淺色模式",
+    "description": "Theme toggle tooltip - switch to light"
+  },
+  "pm_view_compact": {
+    "message": "切換為緊湊列表",
+    "description": "View-mode toggle tooltip - switch from comfortable cards to compact single-line rows"
+  },
+  "pm_view_comfortable": {
+    "message": "切換為舒適檢視",
+    "description": "View-mode toggle tooltip - switch from compact rows to comfortable cards with markdown preview"
+  },
+  "pm_name_placeholder": {
+    "message": "備註名稱",
+    "description": "Placeholder for the required prompt name input"
+  },
+  "pm_name_required": {
+    "message": "必須填寫 Prompt 名稱",
+    "description": "Validation shown when saving a prompt without a name"
+  },
+  "pm_name_duplicate": {
+    "message": "Prompt 名稱已存在",
+    "description": "Validation shown when saving a prompt with an existing name"
+  },
+  "pm_name_conflict_badge": {
+    "message": "名稱重複——重新命名後可使用 /",
+    "description": "名稱重複而無法使用 / 快速插入時顯示的標記"
+  },
+  "pm_prompt_manager": {
+    "message": "提示詞管理器",
+    "description": "Button label for returning from the starred library to Prompt Manager"
+  },
+  "pm_open_prompt_manager": {
+    "message": "開啟提示詞管理器",
+    "description": "從收藏庫返回提示詞管理器的底部按鈕"
+  },
+  "pm_starred_library": {
+    "message": "收藏庫",
+    "description": "Prompt Manager starred messages library title and entry button"
+  },
+  "pm_starred_search_placeholder": {
+    "message": "搜尋收藏內容",
+    "description": "Search placeholder for starred messages in Prompt Manager"
+  },
+  "pm_starred_no_results": {
+    "message": "沒有符合搜尋的星號內容",
+    "description": "Empty state when starred search has no matches"
+  },
+  "pm_starred_untitled": {
+    "message": "未命名對話",
+    "description": "Fallback title for starred messages without a conversation title"
+  },
+  "pm_starred_open": {
+    "message": "開啟星號內容",
+    "description": "Tooltip for opening a starred message from Prompt Manager"
+  },
+  "pm_starred_load_error": {
+    "message": "無法載入星號內容",
+    "description": "Error shown when starred messages cannot be loaded"
+  },
+  "pm_theme_dark": {
+    "message": "切換至深色模式",
+    "description": "Theme toggle tooltip - switch to dark"
+  },
+  "extensionVersion": {
+    "message": "版本",
+    "description": "擴充功能版本標籤"
+  },
+  "newVersionAvailable": {
+    "message": "發現新版本",
+    "description": "更新提醒標題"
+  },
+  "currentVersionLabel": {
+    "message": "目前",
+    "description": "目前版本號標籤"
+  },
+  "latestVersionLabel": {
+    "message": "最新",
+    "description": "最新版本號標籤"
+  },
+  "updateNow": {
+    "message": "立即更新",
+    "description": "跳轉更新 CTA"
+  },
+  "safariUpdateNotSynced": {
+    "message": "更新源尚未同步，請幾小時後再試",
+    "description": "Safari 上 DMG 檔案尚未上傳到 GitHub releases 時顯示"
+  },
+  "fableVerifiedBadgeAlt": {
+    "message": "Fable 5 Verified",
+    "description": "Alt text for the Fable 5 Verified badge in the popup footer"
+  },
+  "starProject": {
+    "message": "為專案點亮 ⭐️",
+    "description": "Github 引導"
+  },
+  "sponsorMe": {
+    "message": "為我贊助",
+    "description": "贊助引導"
+  },
+  "officialDocs": {
+    "message": "官方文件",
+    "description": "Official docs link"
+  },
+  "exportChatJson": {
+    "message": "匯出對話記錄",
+    "description": "匯出按鈕提示"
+  },
+  "folder_title": {
+    "message": "資料夾",
+    "description": "資料夾區域標題"
+  },
+  "folder_activity_turn_on": {
+    "message": "開啟動態檢視",
+    "description": "開啟注意力優先的動態檢視"
+  },
+  "folder_activity_turn_off": {
+    "message": "關閉動態檢視",
+    "description": "關閉注意力優先的動態檢視"
+  },
+  "folder_activity_priority": {
+    "message": "優先",
+    "description": "最近三小時內活躍的對話"
+  },
+  "folder_activity_today": {
+    "message": "今天",
+    "description": "今天有對話的分組"
+  },
+  "folder_activity_yesterday": {
+    "message": "昨天",
+    "description": "昨天有對話的分組"
+  },
+  "folder_activity_empty": {
+    "message": "資料夾中還沒有對話",
+    "description": "動態檢視空狀態"
+  },
+  "folder_activity_top_level": {
+    "message": "頂層",
+    "description": "未放入具名資料夾的對話"
+  },
+  "folder_create": {
+    "message": "建立資料夾",
+    "description": "建立資料夾按鈕提示"
+  },
+  "folder_search_placeholder": {
+    "message": "搜尋資料夾和對話",
+    "description": "資料夾側邊欄搜尋輸入佔位符"
+  },
+  "folder_search_mode_folder": {
+    "message": "僅資料夾",
+    "description": "僅資料夾搜尋模式啟用時顯示的標記"
+  },
+  "folder_search_empty": {
+    "message": "沒有符合的資料夾或對話",
+    "description": "資料夾側邊欄搜尋無符合結果時的空狀態"
+  },
+  "folder_name_prompt": {
+    "message": "輸入資料夾名稱：",
+    "description": "建立資料夾名稱提示"
+  },
+  "folder_rename_prompt": {
+    "message": "輸入新名稱：",
+    "description": "重新命名資料夾提示"
+  },
+  "folder_delete_confirm": {
+    "message": "確定刪除此資料夾及其所有內容嗎？",
+    "description": "刪除資料夾確認"
+  },
+  "folder_create_subfolder": {
+    "message": "建立子資料夾",
+    "description": "建立子資料夾選單項目"
+  },
+  "folder_rename": {
+    "message": "重新命名",
+    "description": "重新命名資料夾選單項目"
+  },
+  "folder_delete": {
+    "message": "刪除",
+    "description": "刪除資料夾選單項目"
+  },
+  "folder_empty": {
+    "message": "暫無資料夾",
+    "description": "沒有資料夾時顯示的佔位提示"
+  },
+  "folder_pin": {
+    "message": "置頂資料夾",
+    "description": "置頂資料夾選單項目"
+  },
+  "folder_unpin": {
+    "message": "取消置頂",
+    "description": "取消置頂資料夾選單項目"
+  },
+  "folder_remove_conversation": {
+    "message": "從資料夾中移除",
+    "description": "移除對話按鈕提示"
+  },
+  "folder_remove_conversation_action": {
+    "message": "移除",
+    "description": "從資料夾移除對話確認按鈕的短標籤"
+  },
+  "folder_remove_conversation_confirm": {
+    "message": "從此資料夾中移除「{title}」？",
+    "description": "移除對話確認"
+  },
+  "conversation_more": {
+    "message": "更多選項",
+    "description": "對話更多選項按鈕提示"
+  },
+  "conversation_move_to_folder": {
+    "message": "移動到資料夾",
+    "description": "移動對話到資料夾選單項目"
+  },
+  "conversation_move_to_folder_title": {
+    "message": "移動到資料夾",
+    "description": "移動對話到資料夾對話框標題"
+  },
+  "chatWidth": {
+    "message": "對話區域寬度",
+    "description": "對話區域寬度調整標籤"
+  },
+  "chatWidthNarrow": {
+    "message": "窄",
+    "description": "窄對話區域寬度標籤"
+  },
+  "chatWidthWide": {
+    "message": "寬",
+    "description": "寬對話區域寬度標籤"
+  },
+  "chatFontSize": {
+    "message": "對話字體大小",
+    "description": "對話訊息字體大小調整標籤"
+  },
+  "chatFontSizeSmall": {
+    "message": "小",
+    "description": "小字體大小標籤"
+  },
+  "chatFontSizeLarge": {
+    "message": "大",
+    "description": "大字體大小標籤"
+  },
+  "chatLineHeight": {
+    "message": "對話間距",
+    "description": "對話訊息間距調整標籤"
+  },
+  "chatLineHeightTight": {
+    "message": "緊湊",
+    "description": "緊湊行距標籤"
+  },
+  "chatLineHeightLoose": {
+    "message": "寬鬆",
+    "description": "寬鬆行距標籤"
+  },
+  "chatParagraphSpacing": {
+    "message": "對話段落間距",
+    "description": "對話訊息段落間距調整標籤"
+  },
+  "sidebarWidth": {
+    "message": "側邊欄寬度",
+    "description": "側邊欄寬度調節標籤"
+  },
+  "sidebarWidthNarrow": {
+    "message": "窄",
+    "description": "側邊欄變窄標籤"
+  },
+  "sidebarWidthWide": {
+    "message": "寬",
+    "description": "側邊欄變寬標籤"
+  },
+  "formula_copied": {
+    "message": "✓ 公式已複製",
+    "description": "公式複製成功訊息"
+  },
+  "formula_copy_failed": {
+    "message": "✗ 複製失敗",
+    "description": "公式複製失敗訊息"
+  },
+  "enableFormulaCopy": {
+    "message": "啟用公式複製",
+    "description": "公式複製啟用開關"
+  },
+  "enableFormulaCopyHint": {
+    "message": "點擊公式時依所選格式複製。",
+    "description": "公式複製啟用開關提示"
+  },
+  "formulaCopyFormat": {
+    "message": "公式複製格式",
+    "description": "公式複製格式設定標籤"
+  },
+  "formulaCopyFormatLatex": {
+    "message": "LaTeX",
+    "description": "LaTeX 格式選項"
+  },
+  "formulaCopyFormatUnicodeMath": {
+    "message": "MathML (Word)",
+    "description": "Label for MathML formula copy format option (formerly UnicodeMath)"
+  },
+  "formulaCopyFormatHint": {
+    "message": "選擇點擊公式時複製的格式",
+    "description": "公式複製格式提示"
+  },
+  "formulaCopyFormatNoDollar": {
+    "message": "LaTeX (純文字，無 $ 符號)",
+    "description": "LaTeX 格式選項，無美元符號"
+  },
+  "formulaCopyFormatNotion": {
+    "message": "Notion (雙$格式)",
+    "description": "Notion 相容格式，使用 $$ 分隔符"
+  },
+  "folder_filter_current_user": {
+    "message": "僅顯示目前帳號",
+    "description": "Show only conversations from the current Google account"
+  },
+  "folder_export": {
+    "message": "匯出資料夾",
+    "description": "匯出資料夾按鈕提示"
+  },
+  "folder_import_export": {
+    "message": "匯入/匯出資料夾",
+    "description": "合併的匯入匯出按鈕提示"
+  },
+  "folder_cloud_upload": {
+    "message": "上傳到雲端",
+    "description": "雲端上傳按鈕提示"
+  },
+  "folder_cloud_sync": {
+    "message": "從雲端同步",
+    "description": "雲端同步按鈕提示"
+  },
+  "folder_cloud": {
+    "message": "雲端同步",
+    "description": "合併後的雲端按鈕提示，點擊彈出上傳/同步選項"
+  },
+  "folder_settings": {
+    "message": "資料夾設定",
+    "description": "齒輪圖示提示，開啟資料夾相關設定"
+  },
+  "folder_sort": {
+    "message": "對話排序",
+    "description": "資料夾標題列中的對話排序方式入口"
+  },
+  "folder_sort_manual": {
+    "message": "手動排序",
+    "description": "依照拖曳位置排列對話"
+  },
+  "folder_sort_recent": {
+    "message": "最近開啟",
+    "description": "最近開啟的對話優先顯示"
+  },
+  "folder_sort_recent_drag_hint": {
+    "message": "請切換到「手動排序」後再調整資料夾內的對話順序。",
+    "description": "最近開啟模式下嘗試資料夾內排序時的提示"
+  },
+  "folder_anchor_move_above_notebooks": {
+    "message": "將資料夾移到 Notebooks 上方",
+    "description": "Tooltip on the folder header swap button shown when folders are currently above Recents — clicking moves them above Notebooks instead."
+  },
+  "folder_anchor_move_above_recents": {
+    "message": "將資料夾移到 Recents 上方",
+    "description": "Tooltip on the folder header swap button shown when folders are currently above Notebooks — clicking moves them above Recents instead."
+  },
+  "folder_item_font_size": {
+    "message": "字級",
+    "description": "資料夾/對話字級步進器的標籤"
+  },
+  "folder_item_font_size_decrease": {
+    "message": "縮小",
+    "description": "字級步進器減號按鈕提示"
+  },
+  "folder_item_font_size_increase": {
+    "message": "放大",
+    "description": "字級步進器加號按鈕提示"
+  },
+  "folder_manage_in_library": {
+    "message": "到 Library 管理",
+    "description": "AI Studio 側欄按鈕，跳轉到 /library 以拖曳管理對話"
+  },
+  "aistudio_hide_archived_nudge_title": {
+    "message": "整理你的 AI Studio Library",
+    "description": "邀請使用者在 AI Studio 隱藏已歸檔對話的引導標題"
+  },
+  "aistudio_hide_archived_nudge_body": {
+    "message": "Voyager 可以把已經歸入資料夾的對話從 Library 表格中隱藏，只保留未分類的對話。",
+    "description": "引導卡說明 AI Studio 隱藏已歸檔功能"
+  },
+  "aistudio_hide_archived_nudge_enable": {
+    "message": "立即開啟",
+    "description": "AI Studio 隱藏已歸檔引導卡的主按鈕"
+  },
+  "aistudio_hide_archived_nudge_dismiss": {
+    "message": "暫不開啟",
+    "description": "AI Studio 隱藏已歸檔引導卡的次按鈕"
+  },
+  "aistudio_hide_archived_nudge_footnote": {
+    "message": "僅對 AI Studio 生效 —— Gemini 的偏好獨立保存。",
+    "description": "AI Studio 隱藏已歸檔引導卡的註腳，說明設定分平台保存"
+  },
+  "folder_import": {
+    "message": "匯入資料夾",
+    "description": "匯入資料夾按鈕提示"
+  },
+  "folder_import_title": {
+    "message": "匯入資料夾設定",
+    "description": "匯入對話框標題"
+  },
+  "folder_import_strategy": {
+    "message": "匯入策略：",
+    "description": "匯入策略標籤"
+  },
+  "folder_import_merge": {
+    "message": "與現有資料夾合併",
+    "description": "合併匯入策略"
+  },
+  "folder_import_overwrite": {
+    "message": "覆蓋現有資料夾",
+    "description": "覆蓋匯入策略"
+  },
+  "folder_import_select_file": {
+    "message": "選擇要匯入的 JSON 檔案",
+    "description": "匯入檔案選擇提示"
+  },
+  "folder_import_success": {
+    "message": "✓ 已匯入 {folders} 個資料夾，{conversations} 個對話",
+    "description": "匯入成功訊息"
+  },
+  "folder_import_success_skipped": {
+    "message": "✓ 已匯入 {folders} 個資料夾，{conversations} 個對話（略過 {skipped} 個重複項）",
+    "description": "匯入成功並略過重複項訊息"
+  },
+  "folder_import_error": {
+    "message": "✗ 匯入失敗：{error}",
+    "description": "匯入錯誤訊息"
+  },
+  "folder_save_error": {
+    "message": "無法儲存資料夾變更，請再試一次。",
+    "description": "資料夾變更儲存失敗時顯示的提示"
+  },
+  "folder_export_success": {
+    "message": "✓ 資料夾匯出成功",
+    "description": "匯出成功訊息"
+  },
+  "folder_import_invalid_format": {
+    "message": "檔案格式無效。請選擇有效的資料夾設定檔。",
+    "description": "無效格式錯誤"
+  },
+  "folder_import_confirm_overwrite": {
+    "message": "這將取代所有現有資料夾。系統將建立備份。是否繼續？",
+    "description": "覆蓋確認"
+  },
+  "folder_import_paste_json": {
+    "message": "或直接貼上 JSON",
+    "description": "匯入對話框中顯示貼上文字框的切換按鈕"
+  },
+  "folder_import_paste_placeholder": {
+    "message": "在此貼上 JSON...",
+    "description": "貼上文字框的佔位文字"
+  },
+  "export_dialog_title": {
+    "message": "匯出對話",
+    "description": "匯出對話框標題"
+  },
+  "export_speaker_names": {
+    "message": "角色稱呼",
+    "description": "匯出對話框中角色稱呼欄位的標題"
+  },
+  "export_speaker_user_label": {
+    "message": "你的稱呼",
+    "description": "使用者稱呼欄位的標籤"
+  },
+  "export_speaker_ai_label": {
+    "message": "AI 的稱呼",
+    "description": "AI 稱呼欄位的標籤"
+  },
+  "export_speaker_user_default": {
+    "message": "使用者",
+    "description": "對話匯出中的預設使用者標籤"
+  },
+  "export_speaker_assistant_default": {
+    "message": "助理",
+    "description": "對話匯出中的預設 AI 標籤"
+  },
+  "export_dialog_select": {
+    "message": "選擇匯出格式：",
+    "description": "匯出格式選擇標籤"
+  },
+  "export_dialog_warning": {
+    "message": "⚠️ 點擊匯出後，系統將自動跳轉至首則訊息以載入完整內容。在此期間請勿操作，跳轉完成後將自動繼續匯出。",
+    "description": "關於內容完整性和自動跳轉的提示"
+  },
+  "export_dialog_safari_cmdp_hint": {
+    "message": "Safari 提示：請先點選下方「匯出」按鈕，稍等片刻，再按 ⌘P 選擇「儲存為 PDF」。",
+    "description": "Safari 下 PDF 匯出的提示"
+  },
+  "export_toast_safari_pdf_ready": {
+    "message": "現在可以按 Command + P 匯出 PDF。",
+    "description": "Safari 中完成匯出準備後的提示"
+  },
+  "export_toast_images_omitted": {
+    "message": "有 {count} 張圖片沒能放進壓縮檔，Markdown 裡仍保留原來的連結。",
+    "description": "Markdown 匯出有圖片未能寫入壓縮檔時的提示"
+  },
+  "export_dialog_safari_markdown_hint": {
+    "message": "提醒：由於 Safari 限制，無法提取聊天記錄中的圖片，如需完整匯出，建議使用 PDF 匯出",
+    "description": "關於 Safari Markdown 匯出無法提取圖片的警告"
+  },
+  "export_format_json_description": {
+    "message": "開發者使用的機器可讀格式",
+    "description": "JSON 匯出格式描述"
+  },
+  "export_format_markdown_description": {
+    "message": "清晰便攜的文字格式（推薦）",
+    "description": "Markdown 匯出格式描述"
+  },
+  "export_format_pdf_description": {
+    "message": "適合列印的格式（透過另存為 PDF）",
+    "description": "PDF 匯出格式描述"
+  },
+  "editInputWidth": {
+    "message": "編輯輸入框寬度",
+    "description": "編輯輸入框寬度調整標籤"
+  },
+  "editInputWidthNarrow": {
+    "message": "窄",
+    "description": "窄編輯輸入框寬度標籤"
+  },
+  "editInputWidthWide": {
+    "message": "寬",
+    "description": "寬編輯輸入框寬度標籤"
+  },
+  "timelineOptions": {
+    "message": "時間軸選項",
+    "description": "時間軸選項區域標籤"
+  },
+  "folderOptions": {
+    "message": "資料夾選項",
+    "description": "資料夾選項區域標籤"
+  },
+  "enableFolderFeature": {
+    "message": "啟用資料夾功能",
+    "description": "啟用或停用資料夾功能"
+  },
+  "enableFolderFloatingMode": {
+    "message": "使用浮動資料夾面板",
+    "description": "Popup toggle that renders the folder feature as a floating window instead of injecting into Gemini's sidebar"
+  },
+  "enableFolderFloatingModeHint": {
+    "message": "以可拖曳的浮動視窗顯示資料夾，不再注入到側邊欄。",
+    "description": "Helper text under the floating folder mode toggle"
+  },
+  "openFloatingFolderOnStartup": {
+    "message": "進入時自動開啟浮動面板",
+    "description": "Popup toggle that controls whether floating folder mode opens the panel immediately when Gemini loads"
+  },
+  "openFloatingFolderOnStartupHint": {
+    "message": "關閉後，進入 Gemini 時只顯示浮動按鈕，需要時點擊按鈕開啟資料夾。",
+    "description": "Helper text under the floating folder startup toggle"
+  },
+  "hideArchivedConversations": {
+    "message": "隱藏已歸檔對話",
+    "description": "從主清單隱藏已新增到資料夾的對話"
+  },
+  "showFolderSearch": {
+    "message": "顯示資料夾搜尋",
+    "description": "Popup toggle that shows or hides the folder sidebar search box"
+  },
+  "hideArchivedNudgeTitle": {
+    "message": "整理你的側邊欄",
+    "description": "Title of the first-archive onboarding nudge"
+  },
+  "hideArchivedNudgeBody": {
+    "message": "Voyager 支援自動隱藏已歸入資料夾的對話，讓側邊欄只保留進行中的內容。對話不會被刪除，隨時可在資料夾中檢視。",
+    "description": "Body text of the first-archive onboarding nudge"
+  },
+  "hideArchivedNudgeEnable": {
+    "message": "立即開啟",
+    "description": "Primary button that turns on hide-archived"
+  },
+  "hideArchivedNudgeDismiss": {
+    "message": "暫不開啟",
+    "description": "Secondary button that dismisses the nudge"
+  },
+  "hideArchivedNudgeFootnote": {
+    "message": "可在擴充功能彈窗 → 資料夾選項中關閉此功能。",
+    "description": "Footnote explaining where to toggle the setting later"
+  },
+  "floatingModeNudgeTitle": {
+    "message": "側邊欄無法使用 — 在浮動視窗中開啟資料夾？",
+    "description": "Title of the floating-mode fallback nudge"
+  },
+  "floatingModeNudgeBody": {
+    "message": "Voyager 找不到 Gemini 側邊欄，可能是頁面版面已變更。你仍然可以在浮動視窗中瀏覽資料夾。",
+    "description": "Body copy of the floating-mode fallback nudge"
+  },
+  "floatingModeNudgeEnable": {
+    "message": "開啟浮動視窗",
+    "description": "Primary button that opens the floating folder panel"
+  },
+  "floatingModeNudgeDismiss": {
+    "message": "暫時不用",
+    "description": "Secondary button that dismisses the floating-mode nudge"
+  },
+  "floatingPanelTitle": {
+    "message": "資料夾",
+    "description": "Title shown in the floating folder panel header"
+  },
+  "floatingPanelClose": {
+    "message": "關閉",
+    "description": "Aria label for the floating panel close button"
+  },
+  "floatingPanelEmpty": {
+    "message": "尚無資料夾。",
+    "description": "Empty state shown when the user has no folders"
+  },
+  "floatingPanelUntitled": {
+    "message": "未命名",
+    "description": "Fallback label for conversations with no title"
+  },
+  "floatingFabLabel": {
+    "message": "開啟浮動資料夾",
+    "description": "Aria label and tooltip for the persistent floating-mode FAB"
+  },
+  "conversation_star": {
+    "message": "星號標記對話",
+    "description": "星號標記對話按鈕提示"
+  },
+  "conversation_unstar": {
+    "message": "取消星號標記",
+    "description": "取消星號標記對話按鈕提示"
+  },
+  "conversation_untitled": {
+    "message": "未命名",
+    "description": "無標題對話的備用標題"
+  },
+  "geminiOnlyNotice": {
+    "message": "預設僅在 Gemini（含企業版）和 AI Studio 生效。想在其他網站使用提示詞管理器，請在下方新增並授權。",
+    "description": "提示預設範圍為 Gemini/AI Studio"
+  },
+  "folderManager_dataLossWarning": {
+    "message": "⚠️ 警告：無法載入資料夾資料。您的資料夾可能已損壞。請檢查瀏覽器主控台以取得詳細資訊，並在可用時嘗試從備份還原。",
+    "description": "資料夾資料載入失敗時顯示的警告"
+  },
+  "backupOptions": {
+    "message": "自動備份",
+    "description": "備份選項區域標籤"
+  },
+  "backupEnabled": {
+    "message": "啟用自動備份",
+    "description": "啟用自動備份開關"
+  },
+  "backupNow": {
+    "message": "立即備份",
+    "description": "立即備份按鈕"
+  },
+  "backupSelectFolder": {
+    "message": "選擇備份資料夾",
+    "description": "選擇備份資料夾按鈕"
+  },
+  "backupFolderSelected": {
+    "message": "備份資料夾：{folder}",
+    "description": "顯示已選擇的備份資料夾"
+  },
+  "backupIncludePrompts": {
+    "message": "包含提示詞",
+    "description": "備份中包含提示詞開關"
+  },
+  "backupIncludeFolders": {
+    "message": "包含資料夾",
+    "description": "備份中包含資料夾開關"
+  },
+  "backupIntervalLabel": {
+    "message": "備份間隔",
+    "description": "備份間隔標籤"
+  },
+  "backupIntervalManual": {
+    "message": "僅手動",
+    "description": "手動備份模式"
+  },
+  "backupIntervalDaily": {
+    "message": "每天",
+    "description": "每天備份間隔"
+  },
+  "backupIntervalWeekly": {
+    "message": "每週（7 天）",
+    "description": "每週備份間隔"
+  },
+  "backupLastBackup": {
+    "message": "上次備份：{time}",
+    "description": "上次備份時間戳記"
+  },
+  "backupNever": {
+    "message": "從未",
+    "description": "從未備份過"
+  },
+  "backupSuccess": {
+    "message": "✓ 備份建立成功：{prompts} 個提示詞、{folders} 個資料夾、{conversations} 個對話",
+    "description": "備份成功訊息"
+  },
+  "backupError": {
+    "message": "✗ 備份失敗：{error}",
+    "description": "備份錯誤訊息"
+  },
+  "backupNotSupported": {
+    "message": "⚠️ 自動備份需要支援檔案系統存取 API 的現代瀏覽器",
+    "description": "瀏覽器不支援訊息"
+  },
+  "backupSelectFolderFirst": {
+    "message": "請先選擇備份資料夾",
+    "description": "未選擇資料夾警告"
+  },
+  "backupUserCancelled": {
+    "message": "備份已取消",
+    "description": "使用者取消資料夾選擇"
+  },
+  "backupConfigSaved": {
+    "message": "✓ 備份設定已儲存",
+    "description": "設定儲存訊息"
+  },
+  "backupPermissionDenied": {
+    "message": "⚠️ 無法存取此目錄。請選擇其他位置（例如：文件、下載，或桌面中的自訂資料夾）",
+    "description": "受限目錄權限被拒絕"
+  },
+  "backupConfigureInOptions": {
+    "message": "備份功能需要在選項頁面中設定。點擊下方按鈕開啟選項頁面（點擊擴充功能圖示旁的三個點 → 選項）。",
+    "description": "備份設定在選項頁面的說明"
+  },
+  "openOptionsPage": {
+    "message": "開啟選項頁面",
+    "description": "開啟選項頁面按鈕"
+  },
+  "optionsPageSubtitle": {
+    "message": "擴充功能選項",
+    "description": "選項頁面副標題"
+  },
+  "optionsComingSoon": {
+    "message": "更多選項即將推出...",
+    "description": "選項頁面佔位提示"
+  },
+  "backupDataAccessNotice": {
+    "message": "資料存取限制",
+    "description": "備份資料存取限制標題"
+  },
+  "backupDataAccessHint": {
+    "message": "由於瀏覽器安全限制，選項頁面無法直接讀取 Gemini 頁面的提示詞和資料夾資料。建議使用 Gemini 頁面上的提示詞管理器和資料夾匯出功能進行手動備份。",
+    "description": "備份資料存取限制說明"
+  },
+  "promptManagerOptions": {
+    "message": "提示詞管理器",
+    "description": "提示詞管理器選項區域標籤"
+  },
+  "hidePromptManager": {
+    "message": "隱藏提示詞管理器",
+    "description": "隱藏提示詞管理器懸浮球"
+  },
+  "hidePromptManagerHint": {
+    "message": "隱藏頁面上的提示詞管理器懸浮球",
+    "description": "隱藏提示詞管理器功能提示"
+  },
+  "promptTriggerMascotLogo": {
+    "message": "使用看板娘 Logo",
+    "description": "在提示詞管理器懸浮球上顯示看板娘"
+  },
+  "promptTriggerMascotLogoHint": {
+    "message": "在懸浮球上顯示看板娘。人物以外的透明區域會跟隨各網站的主題色。",
+    "description": "看板娘懸浮球 Logo 提示"
+  },
+  "slashPromptEnabled": {
+    "message": "啟用斜線快速插入提示詞",
+    "description": "啟用斜線快速插入提示詞開關"
+  },
+  "slashPromptEnabledHint": {
+    "message": "在 Gemini 輸入框中輸入 /，即可快速插入已儲存的提示詞。",
+    "description": "斜線快速插入提示詞說明"
+  },
+  "promptInsertOnClick": {
+    "message": "點擊時直接插入提示詞",
+    "description": "啟用後點擊提示詞時直接插入而不是複製"
+  },
+  "promptInsertOnClickHint": {
+    "message": "開啟後，點擊提示詞會直接插入 Gemini 輸入框。關閉時維持預設複製行為。",
+    "description": "提示詞點擊插入行為說明"
+  },
+  "promptDataMigration": {
+    "message": "提示詞資料",
+    "description": "提示詞管理器匯入匯出設定標籤"
+  },
+  "promptDataMigrationHint": {
+    "message": "將已儲存的提示詞匯出或匯入為本機 JSON 檔案。",
+    "description": "提示詞管理器匯入匯出設定說明"
+  },
+  "promptExportSuccess": {
+    "message": "已匯出 {count} 則提示詞",
+    "description": "提示詞匯出成功提示"
+  },
+  "promptExportError": {
+    "message": "匯出失敗",
+    "description": "提示詞匯出失敗提示"
+  },
+  "promptImportError": {
+    "message": "匯入失敗",
+    "description": "提示詞匯入失敗提示"
+  },
+  "customWebsites": {
+    "message": "自訂網站",
+    "description": "提示詞管理器的自訂網站"
+  },
+  "customWebsitesPlaceholder": {
+    "message": "輸入網站 URL（例如：chatgpt.com）",
+    "description": "自訂網站輸入佔位符"
+  },
+  "customWebsitesHint": {
+    "message": "新增您想要使用提示詞管理器的網站。這些網站上只會啟用提示詞管理器功能。",
+    "description": "自訂網站提示"
+  },
+  "addWebsite": {
+    "message": "新增網站",
+    "description": "新增網站按鈕"
+  },
+  "removeWebsite": {
+    "message": "移除",
+    "description": "移除網站按鈕"
+  },
+  "invalidUrl": {
+    "message": "URL 格式無效",
+    "description": "無效 URL 錯誤訊息"
+  },
+  "websiteAdded": {
+    "message": "網站已新增",
+    "description": "網站新增成功訊息"
+  },
+  "websiteRemoved": {
+    "message": "網站已移除",
+    "description": "網站移除成功訊息"
+  },
+  "permissionDenied": {
+    "message": "權限被拒絕。請允許存取此網站。",
+    "description": "權限被拒絕錯誤訊息"
+  },
+  "permissionRequestFailed": {
+    "message": "要求權限失敗，請重試或在擴充功能設定中手動授權。",
+    "description": "要求權限失敗訊息"
+  },
+  "customWebsitesNote": {
+    "message": "提示：新增網站時會彈出授權，請先允許，再重新整理該網站即可啟用提示詞管理器。",
+    "description": "自訂網站重新載入/權限提示"
+  },
+  "starredHistory": {
+    "message": "收藏庫",
+    "description": "收藏的星號與醒目標示標題"
+  },
+  "viewStarredHistory": {
+    "message": "檢視收藏庫",
+    "description": "檢視收藏的星號與醒目標示按鈕"
+  },
+  "noStarredMessages": {
+    "message": "暫無星號標記訊息",
+    "description": "無星號標記訊息佔位符"
+  },
+  "removeFromStarred": {
+    "message": "取消星號標記",
+    "description": "取消星號標記提示"
+  },
+  "justNow": {
+    "message": "剛剛",
+    "description": "剛剛時間標籤"
+  },
+  "hoursAgo": {
+    "message": "小時前",
+    "description": "小時前標籤"
+  },
+  "yesterday": {
+    "message": "昨天",
+    "description": "昨天日期標籤"
+  },
+  "daysAgo": {
+    "message": "天前",
+    "description": "天前標籤"
+  },
+  "loading": {
+    "message": "載入中...",
+    "description": "載入訊息"
+  },
+  "export_collecting_title": {
+    "message": "收集對話中",
+    "description": "滾動收集 ChatGPT 對話 DOM 時顯示的橫幅"
+  },
+  "export_collecting_desc": {
+    "message": "請稍候…",
+    "description": "ChatGPT 對話 DOM 收集期間橫幅的描述"
+  },
+  "keyboardShortcuts": {
+    "message": "鍵盤快速鍵",
+    "description": "鍵盤快速鍵區段標題"
+  },
+  "enableShortcuts": {
+    "message": "啟用鍵盤快速鍵",
+    "description": "啟用快速鍵開關標籤"
+  },
+  "previousNode": {
+    "message": "上一個節點",
+    "description": "上一個時間軸節點快速鍵標籤"
+  },
+  "nextNode": {
+    "message": "下一個節點",
+    "description": "下一個時間軸節點快速鍵標籤"
+  },
+  "firstNode": {
+    "message": "第一輪",
+    "description": "第一個時間軸節點快速鍵標籤"
+  },
+  "lastNode": {
+    "message": "最後一輪",
+    "description": "最後一個時間軸節點快速鍵標籤"
+  },
+  "shortcutKey": {
+    "message": "按鍵",
+    "description": "快速鍵按鍵標籤"
+  },
+  "shortcutModifiers": {
+    "message": "修飾鍵",
+    "description": "快速鍵修飾鍵標籤"
+  },
+  "resetShortcuts": {
+    "message": "恢復預設",
+    "description": "重設快速鍵按鈕"
+  },
+  "shortcutsResetSuccess": {
+    "message": "快速鍵已恢復預設設定",
+    "description": "快速鍵重設成功訊息"
+  },
+  "shortcutsDescription": {
+    "message": "使用鍵盤快速鍵導覽時間軸節點",
+    "description": "快速鍵描述"
+  },
+  "modifierNone": {
+    "message": "無",
+    "description": "無修飾鍵"
+  },
+  "modifierAlt": {
+    "message": "Alt",
+    "description": "Alt 修飾鍵"
+  },
+  "modifierCtrl": {
+    "message": "Ctrl",
+    "description": "Ctrl 修飾鍵"
+  },
+  "modifierShift": {
+    "message": "Shift",
+    "description": "Shift 修飾鍵"
+  },
+  "modifierMeta": {
+    "message": "Cmd/Win",
+    "description": "Meta/Command/Windows 修飾鍵"
+  },
+  "preventAutoScroll": {
+    "message": "防自動跳轉",
+    "description": "Auto-hide sidebar toggle label"
+  },
+  "preventAutoScrollHint": {
+    "message": "閱讀較早內容時保持目前位置；開啟或切換對話後仍允許短暫跳到最新訊息",
+    "description": "Hint for prevent auto scroll feature"
+  },
+  "cloudSync": {
+    "message": "雲端同步",
+    "description": "雲端同步區域標題"
+  },
+  "cloudSyncDescription": {
+    "message": "將資料夾和提示詞同步到 Google Drive",
+    "description": "雲端同步描述"
+  },
+  "cloudSyncDescriptionICloud": {
+    "message": "透過你的私人 iCloud 空間同步 Voyager 資料",
+    "description": "iCloud sync description"
+  },
+  "syncProvider": {
+    "message": "儲存服務"
+  },
+  "syncProviderGoogleDrive": {
+    "message": "Google Drive"
+  },
+  "syncProviderICloud": {
+    "message": "iCloud"
+  },
+  "syncConnectGoogleDrive": {
+    "message": "連接 Google Drive"
+  },
+  "syncModeDisabled": {
+    "message": "已停用",
+    "description": "同步模式停用選項"
+  },
+  "syncModeManual": {
+    "message": "手動",
+    "description": "同步模式手動選項"
+  },
+  "syncServerPort": {
+    "message": "服務埠號",
+    "description": "同步服務埠號"
+  },
+  "syncNow": {
+    "message": "立即同步",
+    "description": "立即同步按鈕"
+  },
+  "lastSynced": {
+    "message": "上次同步：{time}",
+    "description": "上次同步時間戳記"
+  },
+  "neverSynced": {
+    "message": "從未同步",
+    "description": "從未同步訊息"
+  },
+  "lastUploaded": {
+    "message": "上次上傳：{time}",
+    "description": "上次上傳時間戳記"
+  },
+  "neverUploaded": {
+    "message": "從未上傳",
+    "description": "從未上傳訊息"
+  },
+  "syncSuccess": {
+    "message": "✓ 同步成功",
+    "description": "同步成功訊息"
+  },
+  "syncSuccessHighlightsSkipped": {
+    "message": "✓ 已同步；已略過醒目提示，請開啟 Gemini 後重試",
+    "description": "因無法識別帳號而略過醒目提示時的同步成功訊息"
+  },
+  "syncSuccessFoldersMissing": {
+    "message": "✓ 其他資料已同步；雲端沒有資料夾備份",
+    "description": "雲端沒有資料夾資料時的部分同步提示"
+  },
+  "syncError": {
+    "message": "✗ 同步失敗：{error}",
+    "description": "同步錯誤訊息"
+  },
+  "syncInProgress": {
+    "message": "同步中...",
+    "description": "同步進行中訊息"
+  },
+  "uploadInProgress": {
+    "message": "上傳中...",
+    "description": "上傳進行中訊息"
+  },
+  "uploadSuccess": {
+    "message": "✓ 上傳成功",
+    "description": "上傳成功訊息"
+  },
+  "downloadInProgress": {
+    "message": "下載中...",
+    "description": "下載進行中訊息"
+  },
+  "downloadMergeSuccess": {
+    "message": "✓ 下載合併成功",
+    "description": "下載合併成功訊息"
+  },
+  "syncUpload": {
+    "message": "上傳到雲端",
+    "description": "上傳到雲端按鈕"
+  },
+  "syncMerge": {
+    "message": "從雲端下載合併",
+    "description": "同步（合併）按鈕"
+  },
+  "syncOverwrite": {
+    "message": "覆蓋下載",
+    "description": "覆蓋下載按鈕"
+  },
+  "syncOverwriteConfirm": {
+    "message": "確定要用雲端資料覆蓋本機資料嗎？尚未上傳的本機變更將會遺失。",
+    "description": "覆蓋本機同步資料前的確認"
+  },
+  "syncDeleteICloudBackup": {
+    "message": "刪除 iCloud 備份"
+  },
+  "syncDeleteICloudConfirm": {
+    "message": "刪除 iCloud 中所有 Voyager 備份？本機資料會保留，此操作無法復原。"
+  },
+  "syncDeletingICloudBackup": {
+    "message": "正在刪除 iCloud 備份…"
+  },
+  "syncDeleteICloudSuccess": {
+    "message": "✓ 已刪除 {count} 個 iCloud 備份檔案，本機資料未變更"
+  },
+  "syncDeleteICloudFailed": {
+    "message": "✗ 無法刪除 iCloud 備份：{error}"
+  },
+  "syncMode": {
+    "message": "同步模式",
+    "description": "同步模式標籤"
+  },
+  "minutesAgo": {
+    "message": "分鐘前",
+    "description": "分鐘前標籤"
+  },
+  "syncNoData": {
+    "message": "未在雲端找到同步資料",
+    "description": "Error message when no data is found in Drive"
+  },
+  "syncOverwriteMissingFolders": {
+    "message": "雲端沒有可用來覆蓋的資料夾備份。本機資料夾已保持不變。",
+    "description": "Error message when overwrite is blocked because Drive has no folders payload"
+  },
+  "syncUploadFailed": {
+    "message": "上傳失敗",
+    "description": "Error message when upload fails"
+  },
+  "syncDownloadFailed": {
+    "message": "下載失敗",
+    "description": "Error message when download fails"
+  },
+  "syncAuthFailed": {
+    "message": "認證失敗",
+    "description": "Error message when authentication fails"
+  },
+  "signOut": {
+    "message": "登出",
+    "description": "登出按鈕"
+  },
+  "signInWithGoogle": {
+    "message": "使用 Google 登入",
+    "description": "使用 Google 登入按鈕"
+  },
+  "nanobananaOptions": {
+    "message": "Image Refinement 選項",
+    "description": "Image Refinement options section label"
+  },
+  "nanobananaDownloadLabel": {
+    "message": "下載時移除浮水印",
+    "description": "下載圖片時自動移除浮水印（輕量，建議開啟）"
+  },
+  "nanobananaDownloadHint": {
+    "message": "按下下載按鈕時，儲存的檔案會自動移除浮水印。",
+    "description": "下載時移除浮水印開關說明"
+  },
+  "nanobananaPreviewLabel": {
+    "message": "預覽時移除浮水印",
+    "description": "對話中預覽圖也移除浮水印（開銷較大，處理時圖片可能會閃一下）"
+  },
+  "nanobananaPreviewHint": {
+    "message": "同時處理頁面上預覽的圖片。速度較慢，處理過程中圖片可能會短暫閃一下。",
+    "description": "預覽時移除浮水印開關說明"
+  },
+  "nanobananaBadgeRecommended": {
+    "message": "推薦",
+    "description": "下載時移除浮水印開關旁的推薦標籤"
+  },
+  "nanobananaBadgeUnstable": {
+    "message": "不穩定",
+    "description": "預覽時移除浮水印開關旁的不穩定標籤"
+  },
+  "nanobananaDownloadTooltip": {
+    "message": "下載無浮水印圖片 (Image Refinement)",
+    "description": "Download button tooltip"
+  },
+  "deepResearchDownload": {
+    "message": "下載 Thinking 內容",
+    "description": "Deep Research download button text"
+  },
+  "deepResearchDownloadTooltip": {
+    "message": "將 Thinking 內容匯出為 Markdown 檔案",
+    "description": "Deep Research download button tooltip"
+  },
+  "folder_uncategorized": {
+    "message": "未分類",
+    "description": "根目錄下未分類對話的標籤"
+  },
+  "timelineLevelTitle": {
+    "message": "節點層級",
+    "description": "時間軸節點層級右鍵選單標題"
+  },
+  "timelineLevel1": {
+    "message": "一級",
+    "description": "時間軸節點一級選項"
+  },
+  "timelineLevel2": {
+    "message": "二級",
+    "description": "時間軸節點二級選項"
+  },
+  "timelineLevel3": {
+    "message": "三級",
+    "description": "時間軸節點三級選項"
+  },
+  "timelineCollapse": {
+    "message": "收起",
+    "description": "收起子節點"
+  },
+  "timelineExpand": {
+    "message": "展開",
+    "description": "展開子節點"
+  },
+  "timelinePreviewSearch": {
+    "message": "搜尋...",
+    "description": "Timeline preview panel search placeholder"
+  },
+  "timelinePreviewNoResults": {
+    "message": "無結果",
+    "description": "Timeline preview panel no search results"
+  },
+  "timelinePreviewNoMessages": {
+    "message": "暫無訊息",
+    "description": "Timeline preview panel no messages"
+  },
+  "quoteReply": {
+    "message": "引用回覆",
+    "description": "引用回覆按鈕文字"
+  },
+  "inputCollapseOptions": {
+    "message": "輸入選項",
+    "description": "輸入選項區域標籤"
+  },
+  "enableInputCollapse": {
+    "message": "啟用輸入框摺疊",
+    "description": "啟用輸入框摺疊開關標籤"
+  },
+  "enableInputCollapseHint": {
+    "message": "輸入框為空時自動摺疊，獲得更多閱讀空間",
+    "description": "輸入框摺疊功能提示"
+  },
+  "inputCollapseShortcutHint": {
+    "message": "{modifier}+I 展開",
+    "description": "展開折疊輸入框的快捷鍵提示。{modifier} 在 macOS 上替換為 ⌘，其他平台替換為 Ctrl"
+  },
+  "inputCollapsePlaceholder": {
+    "message": "傳送訊息給 Gemini",
+    "description": "摺疊輸入框時顯示的佔位符文字"
+  },
+  "allowCollapseWhenNotEmpty": {
+    "message": "允許折疊有內容的輸入框",
+    "description": "允許輸入框即使包含文字或附件也進行折疊"
+  },
+  "allowCollapseWhenNotEmptyHint": {
+    "message": "即使輸入框包含文字或附件也允許折疊",
+    "description": "解釋非空折疊功能的提示文字"
+  },
+  "inputVimMode": {
+    "message": "輸入 Vim Mode",
+    "description": "Toggle label for focusing and leaving the question input with Vim-style keys"
+  },
+  "inputVimModeHint": {
+    "message": "在提問框內用 i/Escape 切換插入/普通模式，用 v 選取，並支援 Vim 移動",
+    "description": "Hint for input Vim mode shortcuts"
+  },
+  "ctrlEnterSend": {
+    "message": "{modifier}+Enter 傳送",
+    "description": "Modifier+Enter 傳送開關標籤。{modifier} 在 macOS 上替換為 ⌘，其他平台替換為 Ctrl"
+  },
+  "ctrlEnterSendHint": {
+    "message": "按 {modifier}+Enter 傳送訊息，Enter 鍵僅換行",
+    "description": "Modifier+Enter 傳送功能提示。{modifier} 在 macOS 上替換為 ⌘，其他平台替換為 Ctrl"
+  },
+  "aistudioEnterSend": {
+    "message": "AI Studio Enter 傳送",
+    "description": "AI Studio Enter 傳送開關標籤。{modifier} 在 macOS 上替換為 ⌘，其他平台替換為 Ctrl"
+  },
+  "aistudioEnterSendHint": {
+    "message": "在 AI Studio 中按 Enter 傳送訊息，{modifier}+Enter 換行",
+    "description": "AI Studio Enter 傳送功能提示。{modifier} 在 macOS 上替換為 ⌘，其他平台替換為 Ctrl"
+  },
+  "safariEnterFix": {
+    "message": "修復 Safari Enter 鍵",
+    "description": "Safari Enter 鍵修復功能的開關標籤"
+  },
+  "safariEnterFixHint": {
+    "message": "按一次 Enter 即可傳送訊息（修復 Safari 需按兩次 Enter 的問題）",
+    "description": "Safari Enter 鍵修復功能的提示文字"
+  },
+  "draftAutoSave": {
+    "message": "草稿自動儲存",
+    "description": "Toggle label for input draft auto-save feature"
+  },
+  "draftAutoSaveHint": {
+    "message": "重新整理頁面或重新開啟對話時，自動儲存和恢復未送出的輸入內容",
+    "description": "Hint for draft auto-save feature"
+  },
+  "batch_delete_confirm": {
+    "message": "確定要刪除 {count} 個對話嗎？此操作無法復原。",
+    "description": "批次刪除確認訊息"
+  },
+  "folder_batch_remove_confirm": {
+    "message": "確定要從此資料夾移除 {count} 個已選對話嗎？",
+    "description": "Confirmation before removing the selected conversations from a folder"
+  },
+  "folder_multi_select_count": {
+    "message": "已選 {count} 個",
+    "description": "Number of conversations currently selected in multi-select mode"
+  },
+  "folder_multi_select_exit": {
+    "message": "結束多選模式",
+    "description": "Tooltip for the button that leaves multi-select mode"
+  },
+  "batch_delete_in_progress": {
+    "message": "正在刪除... ({current}/{total})",
+    "description": "批次刪除進度訊息"
+  },
+  "batch_delete_success": {
+    "message": "✓ 已刪除 {count} 個對話",
+    "description": "批次刪除成功訊息"
+  },
+  "batch_delete_partial": {
+    "message": "刪除完成：{success} 個成功，{failed} 個失敗",
+    "description": "批次刪除部分成功訊息"
+  },
+  "batch_delete_limit_reached": {
+    "message": "一次最多可選擇 {max} 個對話",
+    "description": "批次刪除數量限制警告"
+  },
+  "batch_delete_button": {
+    "message": "刪除所選",
+    "description": "多選模式下的批次刪除按鈕提示"
+  },
+  "batch_delete_match_patterns": {
+    "message": "刪除，確認，確定，是，delete,confirm,yes,ok,remove",
+    "description": "符合原生刪除/確認按鈕的關鍵字清單（逗號分隔）"
+  },
+  "generalOptions": {
+    "message": "一般選項",
+    "description": "一般選項區域標籤"
+  },
+  "enableTabTitleUpdate": {
+    "message": "同步分頁標題與對話",
+    "description": "啟用分頁標題同步開關標籤"
+  },
+  "enableTabTitleUpdateHint": {
+    "message": "Gemini 官方已於 2026 年 6 月實作此功能，因此 Voyager 已停用此開關。",
+    "description": "已停用的分頁標題同步功能說明"
+  },
+  "persistentExportToolbar": {
+    "message": "顯示懸浮匯出按鈕",
+    "description": "右上角兜底匯出工具列開關標籤"
+  },
+  "persistentExportToolbarHint": {
+    "message": "當 Gemini 頂列不再提供匯出入口時，於右上角顯示匯出按鈕。關閉即可隱藏。",
+    "description": "右上角兜底匯出工具列開關提示"
+  },
+  "enableMermaidRendering": {
+    "message": "啟用 Mermaid 圖表轉譯",
+    "description": "啟用 Mermaid 圖表轉譯開關標籤"
+  },
+  "enableMermaidRenderingHint": {
+    "message": "自動將程式碼區塊中的 Mermaid 程式碼轉譯為圖表",
+    "description": "Mermaid 轉譯功能提示"
+  },
+  "enableQuoteReply": {
+    "message": "啟用引用回覆",
+    "description": "啟用引用回覆開關標籤"
+  },
+  "enableQuoteReplyHint": {
+    "message": "在對話中選取文字時顯示懸浮按鈕，用於引用所選內容",
+    "description": "引用回覆功能提示"
+  },
+  "enableWaveDromRendering": {
+    "message": "啟用 WaveDrom 時序圖渲染",
+    "description": "WaveDrom 渲染開關標籤"
+  },
+  "enableWaveDromRenderingHint": {
+    "message": "自動將程式碼區塊中的 WaveJSON 渲染為可互動的時序波形圖",
+    "description": "WaveDrom 渲染功能提示"
+  },
+  "wavedromDiagramButton": {
+    "message": "〜 圖示",
+    "description": "切換到已渲染圖示的按鈕標籤"
+  },
+  "wavedromCodeButton": {
+    "message": "</> 程式碼",
+    "description": "切換到 WaveJSON 原始碼的按鈕標籤"
+  },
+  "wavedromZoomIn": {
+    "message": "放大",
+    "description": "全螢幕工具列：放大按鈕標題"
+  },
+  "wavedromZoomOut": {
+    "message": "縮小",
+    "description": "全螢幕工具列：縮小按鈕標題"
+  },
+  "wavedromResetView": {
+    "message": "重設檢視",
+    "description": "全螢幕工具列：重設檢視按鈕標題"
+  },
+  "wavedromCloseFullscreen": {
+    "message": "關閉 (ESC)",
+    "description": "全螢幕工具列：關閉按鈕標題"
+  },
+  "wavedromFullscreenHint": {
+    "message": "捲動縮放 • 拖曳平移 • ESC 關閉",
+    "description": "全螢幕遮罩操作提示"
+  },
+  "enableEchartsRendering": {
+    "message": "啟用 ECharts 圖表渲染",
+    "description": "ECharts rendering toggle label"
+  },
+  "enableEchartsRenderingHint": {
+    "message": "自動將 ECharts 設定程式碼區塊轉換為互動式圖表",
+    "description": "ECharts rendering feature hint"
+  },
+  "echartsDiagramButton": {
+    "message": "📊 圖表",
+    "description": "Toggle button label to show the rendered chart"
+  },
+  "echartsCodeButton": {
+    "message": "</> 程式碼",
+    "description": "Toggle button label to show the ECharts option source"
+  },
+  "echartsFullscreenButton": {
+    "message": "全螢幕",
+    "description": "Button title to open an ECharts diagram in fullscreen"
+  },
+  "echartsCloseFullscreen": {
+    "message": "關閉（ESC）",
+    "description": "Fullscreen toolbar: close button title"
+  },
+  "echartsFullscreenHint": {
+    "message": "按 ESC 關閉",
+    "description": "Fullscreen overlay usage hint"
+  },
+  "enableHighlights": {
+    "message": "啟用醒目標記",
+    "description": "醒目標記功能開關標籤"
+  },
+  "enableHighlightsHint": {
+    "message": "標記選取的回答文字、選擇顏色，並記住上次使用的顏色。",
+    "description": "醒目標記功能提示"
+  },
+  "showHighlightTimelineMarkers": {
+    "message": "在時間軸顯示醒目標記位置",
+    "description": "醒目標記時間軸位置開關標籤"
+  },
+  "showHighlightTimelineMarkersHint": {
+    "message": "為每個已儲存的醒目標記顯示彩色位置。關閉後醒目標記本身仍會保留。",
+    "description": "醒目標記時間軸位置開關說明"
+  },
+  "hideInputHalo": {
+    "message": "隱藏輸入框光暈",
+    "description": "輸入框光暈開關標籤"
+  },
+  "hideInputHaloHint": {
+    "message": "隱藏 Gemini 輸入框背後的藍色徑向漸層光暈",
+    "description": "輸入框光暈開關說明"
+  },
+  "contextSync": {
+    "message": "上下文同步",
+    "description": "上下文同步標題"
+  },
+  "contextSyncDescription": {
+    "message": "將對話上下文同步到本機 IDE",
+    "description": "上下文同步描述"
+  },
+  "syncToIDE": {
+    "message": "同步到 IDE",
+    "description": "同步到 IDE 按鈕"
+  },
+  "ideOnline": {
+    "message": "IDE 線上",
+    "description": "IDE 線上狀態"
+  },
+  "ideOffline": {
+    "message": "IDE 離線",
+    "description": "IDE 離線狀態"
+  },
+  "syncing": {
+    "message": "同步中...",
+    "description": "同步中狀態"
+  },
+  "checkServer": {
+    "message": "請在 VS Code 中啟動 AI Sync 伺服器",
+    "description": "檢查伺服器提示"
+  },
+  "capturing": {
+    "message": "正在取得對話...",
+    "description": "取得對話狀態"
+  },
+  "syncedSuccess": {
+    "message": "同步成功！",
+    "description": "同步成功訊息"
+  },
+  "folder_change_color": {
+    "message": "更改顏色",
+    "description": "Change folder color tooltip"
+  },
+  "folder_color_default": {
+    "message": "預設",
+    "description": "Default folder color"
+  },
+  "folder_color_red": {
+    "message": "紅色",
+    "description": "Red folder color"
+  },
+  "folder_color_orange": {
+    "message": "橙色",
+    "description": "Orange folder color"
+  },
+  "folder_color_yellow": {
+    "message": "黃色",
+    "description": "Yellow folder color"
+  },
+  "folder_color_green": {
+    "message": "綠色",
+    "description": "Green folder color"
+  },
+  "folder_color_blue": {
+    "message": "藍色",
+    "description": "Blue folder color"
+  },
+  "folder_color_purple": {
+    "message": "紫色",
+    "description": "Purple folder color"
+  },
+  "folder_color_pink": {
+    "message": "粉紅色",
+    "description": "粉紅色資料夾顏色名稱"
+  },
+  "folder_color_custom": {
+    "message": "自定義",
+    "description": "自定義資料夾顏色名稱"
+  },
+  "downloadingOriginal": {
+    "message": "正在下載原始圖片",
+    "description": "下載原始圖片時的狀態"
+  },
+  "downloadingOriginalLarge": {
+    "message": "正在下載原始圖片（大檔案）",
+    "description": "下載較大原始圖片時的狀態"
+  },
+  "downloadLargeWarning": {
+    "message": "大檔案警告",
+    "description": "大檔案下載提示"
+  },
+  "downloadProcessing": {
+    "message": "正在處理浮水印中",
+    "description": "處理浮水印時的狀態"
+  },
+  "downloadSuccess": {
+    "message": "正在下載",
+    "description": "開始下載時的狀態"
+  },
+  "downloadError": {
+    "message": "失敗",
+    "description": "下載失敗時的狀態前置"
+  },
+  "googleImageCorrupted": {
+    "message": "Google 傳回的原圖已損壞（並非 Voyager 導致）；下載結果可能模糊或缺少內容",
+    "description": "Google 下載原圖與預覽不一致時顯示的警告"
+  },
+  "gemsHide": {
+    "message": "隱藏 Gems",
+    "description": "隱藏 Gems 列表區域的提示"
+  },
+  "gemsShow": {
+    "message": "顯示 Gems",
+    "description": "顯示 Gems 列表區域的提示"
+  },
+  "notebooksHide": {
+    "message": "隱藏筆記本",
+    "description": "隱藏筆記本列表區域的提示"
+  },
+  "notebooksShow": {
+    "message": "顯示筆記本",
+    "description": "顯示筆記本列表區域的提示"
+  },
+  "foldersHide": {
+    "message": "隱藏資料夾",
+    "description": "Tooltip for hiding Folders section"
+  },
+  "foldersShow": {
+    "message": "顯示資料夾",
+    "description": "Tooltip for showing Folders section"
+  },
+  "sidebarCollapseNudgeTitle": {
+    "message": "摺疊後還能找回來",
+    "description": "Title of the one-time nudge shown after collapsing a sidebar section"
+  },
+  "sidebarCollapseNudgeBody": {
+    "message": "側邊欄會保留一條細欄，隨時點擊它即可重新展開這個區域。",
+    "description": "Body text of the one-time nudge shown after collapsing a sidebar section"
+  },
+  "sidebarCollapseNudgeDismiss": {
+    "message": "知道了",
+    "description": "Dismiss button for the one-time sidebar collapse nudge"
+  },
+  "setAsDefaultModel": {
+    "message": "設為新對話的預設模型",
+    "description": "Tooltip for setting default model"
+  },
+  "cancelDefaultModel": {
+    "message": "取消預設模型",
+    "description": "Tooltip for cancelling default model"
+  },
+  "defaultModelSet": {
+    "message": "已設定預設模型：$1",
+    "description": "Toast message when default model is set"
+  },
+  "defaultModelCleared": {
+    "message": "已取消預設模型",
+    "description": "Toast message when default model is cleared"
+  },
+  "enableDefaultModelAutoApply": {
+    "message": "新對話時自動套用預設模型",
+    "description": "Toggle label for the default-model auto-apply kill switch in the popup"
+  },
+  "enableDefaultModelAutoApplyHint": {
+    "message": "開始新對話時自動切換到您已加星號的預設模型與思考強度。若 Gemini 改版導致自動選擇失靈，關閉此項即可。",
+    "description": "Hint text under the default-model auto-apply toggle"
+  },
+  "defaultModelAutoApplyFailed": {
+    "message": "預設模型連續 3 次自動套用失敗，Gemini 選單可能已改版，可以暫時關閉此功能。",
+    "description": "Toast body when the model locker hits its consecutive-failure threshold"
+  },
+  "defaultModelAutoApplyFailedAction": {
+    "message": "到設定中暫停",
+    "description": "Action button label on the auto-apply failure toast"
+  },
+  "defaultModelAutoApplyFailedFallback": {
+    "message": "請點擊工具列上的 Voyager 圖示開啟設定面板，再關閉此功能。",
+    "description": "Fallback message shown when programmatic popup open fails (e.g. Firefox)"
+  },
+  "setAsDefaultThinkingLevel": {
+    "message": "設為預設思考強度",
+    "description": "Tooltip for setting default thinking level"
+  },
+  "cancelDefaultThinkingLevel": {
+    "message": "取消預設思考強度",
+    "description": "Tooltip for cancelling default thinking level"
+  },
+  "defaultThinkingLevelSet": {
+    "message": "已設定預設思考強度：$1",
+    "description": "Toast message when default thinking level is set"
+  },
+  "defaultThinkingLevelCleared": {
+    "message": "已取消預設思考強度",
+    "description": "Toast message when default thinking level is cleared"
+  },
+  "sidebarAutoHide": {
+    "message": "側邊欄自動收起",
+    "description": "側邊欄自動收起開關標籤"
+  },
+  "sidebarAutoHideHint": {
+    "message": "滑鼠離開時自動收起側邊欄，滑鼠進入時展開",
+    "description": "側邊欄自動收起功能提示"
+  },
+  "sidebarFullHide": {
+    "message": "完全隱藏側邊欄",
+    "description": "完全隱藏側邊欄開關標籤"
+  },
+  "sidebarFullHideHint": {
+    "message": "收起時完全隱藏側邊欄",
+    "description": "完全隱藏側邊欄功能提示"
+  },
+  "folderSpacing": {
+    "message": "資料夾間距",
+    "description": "資料夾間距調節標籤"
+  },
+  "folderSpacingCompact": {
+    "message": "緊湊",
+    "description": "緊湊資料夾間距標籤"
+  },
+  "folderSpacingSpacious": {
+    "message": "寬鬆",
+    "description": "寬鬆資料夾間距標籤"
+  },
+  "folderTreeIndent": {
+    "message": "子資料夾縮排",
+    "description": "子資料夾樹狀縮排調整標籤"
+  },
+  "folderTreeIndentCompact": {
+    "message": "更窄",
+    "description": "較窄的子資料夾縮排標籤"
+  },
+  "folderTreeIndentSpacious": {
+    "message": "更寬",
+    "description": "較寬的子資料夾縮排標籤"
+  },
+  "gemsSidebarCount": {
+    "message": "側欄中顯示的最近 Gems",
+    "description": "Popup slider label — how many recent gems to show in the sidebar above Notebooks. 0 hides the section entirely."
+  },
+  "gemsSidebarCountOff": {
+    "message": "關閉",
+    "description": "Narrow-end label on the gems count slider (count=0, section hidden)."
+  },
+  "gemsSidebarCountMany": {
+    "message": "更多",
+    "description": "Wide-end label on the gems count slider (count up to 10)."
+  },
+  "usageStatusTitle": {
+    "message": "Gemini 用量上限",
+    "description": "Accessible label / tooltip for the usage status pill near the composer."
+  },
+  "usageStatusDaily": {
+    "message": "5h",
+    "description": "Label for the rolling 5-hour usage window bar in the usage status pill."
+  },
+  "usageStatusWeekly": {
+    "message": "每週",
+    "description": "Label for the weekly usage limit bar in the usage status pill."
+  },
+  "usageStatusResets": {
+    "message": "重置於",
+    "description": "Tooltip prefix shown before the reset time on a usage bar."
+  },
+  "usageStatusRefresh": {
+    "message": "重新整理",
+    "description": "Tooltip/aria-label for the refresh button on the usage status pill."
+  },
+  "usageStatusOpenHint": {
+    "message": "開啟用量上限",
+    "description": "Tooltip on the usage status pill; clicking opens the Gemini usage page."
+  },
+  "usageStatusEmptyHint": {
+    "message": "點此取得用量",
+    "description": "Placeholder shown before the usage pill has loaded its first snapshot."
+  },
+  "usageStatusJustUpdated": {
+    "message": "剛剛更新",
+    "description": "Freshness stamp on the usage status pill when data is under a minute old."
+  },
+  "usageStatusMinutesAgo": {
+    "message": "{n} 分鐘前更新",
+    "description": "Freshness stamp; {n} is a number of minutes. Keep the {n} placeholder literal."
+  },
+  "usageStatusHoursAgo": {
+    "message": "{n} 小時前更新",
+    "description": "Freshness stamp; {n} is a number of hours. Keep the {n} placeholder literal."
+  },
+  "usageStatusDaysAgo": {
+    "message": "{n} 天前更新",
+    "description": "Freshness stamp; {n} is a number of days. Keep the {n} placeholder literal."
+  },
+  "usageStatusToggle": {
+    "message": "用量狀態列",
+    "description": "Popup toggle label to enable the usage status pill."
+  },
+  "usageStatusToggleHint": {
+    "message": "在聊天框附近顯示 5h 和每週用量上限",
+    "description": "Popup helper text under the usage status bar toggle."
+  },
+  "export_select_mode_select_all": {
+    "message": "全選",
+    "description": "Selection mode select all toggle"
+  },
+  "export_select_mode_count": {
+    "message": "已選擇 {count} 條",
+    "description": "Selection mode selected message count"
+  },
+  "export_select_mode_toggle": {
+    "message": "選擇訊息",
+    "description": "Selection mode per-message toggle tooltip"
+  },
+  "export_select_mode_select_below": {
+    "message": "選擇下方訊息",
+    "description": "Selection mode top-left button to select messages below current line"
+  },
+  "export_select_mode_empty": {
+    "message": "請至少選擇一條訊息進行匯出",
+    "description": "Selection mode validation when nothing is selected"
+  },
+  "export_format_image_description": {
+    "message": "單張 PNG 圖片，便於行動端分享。",
+    "description": "Description for Image export format"
+  },
+  "export_image_progress": {
+    "message": "正在產生圖片...",
+    "description": "Progress message while generating image export"
+  },
+  "deepResearchSaveReport": {
+    "message": "儲存報告",
+    "description": "Deep Research save report button"
+  },
+  "deepResearchSaveReportTooltip": {
+    "message": "匯出此研究報告",
+    "description": "Deep Research save report tooltip"
+  },
+  "export_fontsize_label": {
+    "message": "字體大小",
+    "description": "Label for font size slider in export dialog"
+  },
+  "export_fontsize_preview": {
+    "message": "天地玄黃，宇宙洪荒。日月盈昃，辰宿列張。",
+    "description": "Preview text for font size slider in export dialog"
+  },
+  "export_markdown_prompt_heading": {
+    "message": "將提示詞用作回合標題",
+    "description": "Toggle label for putting user prompts in Markdown turn headings"
+  },
+  "export_markdown_prompt_heading_hint": {
+    "message": "把每個使用者提示詞加入回合標題，並省略重複的「使用者」段落。",
+    "description": "Hint for the Markdown prompt heading toggle"
+  },
+  "export_image_width_label": {
+    "message": "匯出圖片寬度",
+    "description": "Label for image width selection in export dialog"
+  },
+  "export_image_width_narrow": {
+    "message": "窄 (手機)",
+    "description": "Narrow width option (e.g. mobile)"
+  },
+  "export_image_width_medium": {
+    "message": "中 (平板)",
+    "description": "Medium width option (e.g. tablet)"
+  },
+  "export_image_width_wide": {
+    "message": "寬 (電腦)",
+    "description": "Wide width option (e.g. desktop)"
+  },
+  "export_error_generic": {
+    "message": "匯出失敗：{error}",
+    "description": "附帶具體原因的匯出失敗提示"
+  },
+  "export_error_refresh_retry": {
+    "message": "因網路原因，圖片匯出失敗，請重新整理頁面後重試。",
+    "description": "圖片匯出遇到暫時性載入失敗時的重新整理提示"
+  },
+  "export_md_include_source_confirm": {
+    "message": "匯出內容包含網路搜尋圖片。是否在 Markdown 中包含圖片來源連結？",
+    "description": "Confirm dialog when exporting markdown with web search images"
+  },
+  "deepResearch_exportedAt": {
+    "message": "匯出時間",
+    "description": "深度研究匯出時間戳標籤"
+  },
+  "deepResearch_totalPhases": {
+    "message": "總思考階段",
+    "description": "深度研究總思考階段標籤"
+  },
+  "deepResearch_thinkingPhase": {
+    "message": "思考階段",
+    "description": "深度研究思考階段標題"
+  },
+  "deepResearch_researchedWebsites": {
+    "message": "研究網站",
+    "description": "深度研究已研究網站章節標題"
+  },
+  "visualEffect": {
+    "message": "視覺特效",
+    "description": "Visual effect selector label"
+  },
+  "visualEffectHint": {
+    "message": "為頁面增添季節氛圍",
+    "description": "Visual effect feature hint"
+  },
+  "visualEffectOff": {
+    "message": "關閉",
+    "description": "Visual effect off option"
+  },
+  "visualEffectSnow": {
+    "message": "飄雪",
+    "description": "Visual effect snow option"
+  },
+  "visualEffectSakura": {
+    "message": "櫻花",
+    "description": "Visual effect sakura option"
+  },
+  "visualEffectRain": {
+    "message": "雨",
+    "description": "Visual effect rain option"
+  },
+  "watermarkNotice_title": {
+    "message": "Gemini 現在可以關閉可見浮水印",
+    "description": "Title of the notice about Gemini's native media watermark switch"
+  },
+  "watermarkNotice_body": {
+    "message": "Gemini 已提供官方的可見浮水印開關。如果帳號中有 Media watermark，建議設為 Off，改用 Gemini 官方功能，並關閉 Voyager 去浮水印。官方方案更穩定，Voyager 的其他功能不受影響。",
+    "description": "Body text explaining Gemini's native watermark switch"
+  },
+  "watermarkNotice_detected": {
+    "message": "最近生成的圖片已沒有可見浮水印",
+    "description": "Shown when Voyager has observed several watermark-free images in a row"
+  },
+  "watermarkNotice_path": {
+    "message": "設定 → Media watermark → Off",
+    "description": "Breadcrumb of where Gemini's media-watermark switch lives"
+  },
+  "watermarkNotice_caveat": {
+    "message": "找不到 Media watermark？這項功能仍在逐步開放，可以繼續使用 Voyager 去浮水印。無論使用哪種方式，SynthID 和 C2PA 中繼資料都會保留。",
+    "description": "Caveats about SynthID, gradual rollout and account restrictions"
+  },
+  "watermarkNotice_disableCta": {
+    "message": "已設為 Off，關閉 Voyager 去浮水印",
+    "description": "Primary button: disable Voyager's watermark removal"
+  },
+  "watermarkNotice_keepCta": {
+    "message": "沒有這個選項，繼續用 Voyager",
+    "description": "Secondary button: keep Voyager's watermark removal on"
+  },
+  "watermarkNotice_done": {
+    "message": "Voyager 去浮水印已關閉，其他功能不受影響。",
+    "description": "Confirmation shown after Voyager's watermark removal is disabled"
+  },
+  "watermarkNotice_error": {
+    "message": "無法更新設定，請再試一次。",
+    "description": "Error shown when Voyager cannot disable watermark removal"
+  },
+  "watermarkNotice_imageAlt": {
+    "message": "Gemini 設定中 Media watermark 選為 Off",
+    "description": "Alt text for the annotated Gemini settings screenshot"
+  },
+  "changelog_title": {
+    "message": "更新內容",
+    "description": "Changelog modal title"
+  },
+  "changelog_close": {
+    "message": "知道了",
+    "description": "Changelog modal close button"
+  },
+  "changelog_docs_link": {
+    "message": "文檔",
+    "description": "Changelog modal documentation link text"
+  },
+  "changelog_recommendation": {
+    "message": "如果 Voyager 對你有幫助，歡迎推薦給朋友或在社交媒體上分享，記得 @ 作者哦！",
+    "description": "Changelog modal recommendation message"
+  },
+  "changelog_follow_cta": {
+    "message": "獲取最新更新，歡迎追蹤我的社群媒體，新功能與即時修復都會在這裡第一時間發布。",
+    "description": "Changelog modal follow-me CTA headline"
+  },
+  "changelog_social_xiaohongshu": {
+    "message": "小紅書",
+    "description": "Xiaohongshu platform name for social links"
+  },
+  "changelog_docs_hint": {
+    "message": "詳細功能見文檔",
+    "description": "Changelog annotation pointing to docs icon"
+  },
+  "changelog_rate_chrome": {
+    "message": "覺得 Voyager 好用嗎？在 Chrome 線上應用程式商店給個好評，幫助更多人發現它！",
+    "description": "Chrome Web Store rating prompt in changelog modal"
+  },
+  "changelog_rate_chrome_cta": {
+    "message": "立即評分",
+    "description": "Chrome Web Store rating CTA button text"
+  },
+  "changelog_rate_edge": {
+    "message": "覺得 Voyager 好用嗎？在 Edge 附加元件商店給個好評，幫助更多人發現它！",
+    "description": "Edge Add-ons store rating prompt in changelog modal"
+  },
+  "changelog_rate_edge_cta": {
+    "message": "立即評分",
+    "description": "Edge Add-ons store rating CTA button text"
+  },
+  "changelog_badge_mode": {
+    "message": "使用 NEW 標記提醒更新",
+    "description": "Changelog notification mode toggle label"
+  },
+  "changelog_badge_mode_hint": {
+    "message": "新版本發布時，只在懸浮按鈕上顯示 NEW 標記，不自動開啟更新日誌。",
+    "description": "Changelog notification mode toggle hint"
+  },
+  "forkConversation": {
+    "message": "Fork",
+    "description": "Fork conversation button label"
+  },
+  "forkConfirm": {
+    "message": "Fork conversation from this point?",
+    "description": "Fork confirmation prompt"
+  },
+  "forkConfirmBtn": {
+    "message": "Fork",
+    "description": "Fork confirmation button"
+  },
+  "forkMarkdownBtn": {
+    "message": "下載 MD",
+    "description": "Fork confirmation button for downloading a Markdown file"
+  },
+  "forkCancel": {
+    "message": "Cancel",
+    "description": "Fork cancel button"
+  },
+  "forkBranch": {
+    "message": "Branch",
+    "description": "Fork branch label"
+  },
+  "forkOriginal": {
+    "message": "Original",
+    "description": "Original fork branch tag"
+  },
+  "forkCurrent": {
+    "message": "Current",
+    "description": "Current fork branch tag"
+  },
+  "forkPreparing": {
+    "message": "Preparing fork...",
+    "description": "Fork preparation status"
+  },
+  "forkPasteHint": {
+    "message": "Press Enter to send and create the fork",
+    "description": "Fork paste hint text"
+  },
+  "forkManualUploadHint": {
+    "message": "請在 2 分鐘內將 {filename} 拖入 Gemini 並送出，即可建立分支。",
+    "description": "Fork manual Markdown upload hint text"
+  },
+  "forkManualUploadPrompt": {
+    "message": "我已上傳 {filename}，這是上一段對話的上下文。請把附件作為背景資料，回答我下面的新問題。\n\n新問題：\n",
+    "description": "Prefilled prompt for manual Markdown upload forks"
+  },
+  "forkDeleteData": {
+    "message": "刪除此分支",
+    "description": "Delete fork branch metadata button"
+  },
+  "forkDeleteDataConfirm": {
+    "message": "刪除此分支關聯？只會移除 Voyager 的分支中繼資料，不會刪除任何對話。",
+    "description": "Fork metadata delete confirmation prompt"
+  },
+  "enableForkFeature": {
+    "message": "啟用對話分叉",
+    "description": "Enable conversation fork feature toggle label"
+  },
+  "enableForkFeatureHint": {
+    "message": "在 Gemini 對話中顯示 Fork 按鈕與分支序號",
+    "description": "Enable conversation fork feature toggle hint"
+  },
+  "enableAccountIsolation": {
+    "message": "啟用硬隔離（Hard Isolation）",
+    "description": "Enable hard isolation for account-scoped folder data and cloud sync."
+  },
+  "enableAccountIsolationHint": {
+    "message": "依 Google 帳號嚴格隔離資料夾與雲端同步資料，避免任何跨帳號混用。",
+    "description": "Hint text for account isolation option."
+  },
+  "currentPlatform": {
+    "message": "目前平台",
+    "description": "Current active platform label in popup."
+  },
+  "platformGemini": {
+    "message": "Gemini",
+    "description": "Gemini platform label."
+  },
+  "platformAIStudio": {
+    "message": "AI Studio",
+    "description": "AI Studio platform label."
+  },
+  "enableOnAIStudio": {
+    "message": "在 AI Studio 上啟用",
+    "description": "Toggle to enable/disable Voyager on AI Studio"
+  },
+  "enableOnAIStudioHint": {
+    "message": "關閉後將停用 AI Studio 上的 Voyager 功能（Prompt Manager 不受影響）",
+    "description": "Hint for AI Studio enable toggle"
+  },
+  "export_select_mode_only_user": {
+    "message": "僅選用戶",
+    "description": "Export selection mode: select only user messages"
+  },
+  "export_select_mode_only_ai": {
+    "message": "僅選模型",
+    "description": "Export selection mode: select only AI messages"
+  },
+  "aiOrgCopyButton": {
+    "message": "AI 整理",
+    "description": "複製資料夾結構和對話以供 AI 整理的按鈕"
+  },
+  "aiOrgCopied": {
+    "message": "已複製！",
+    "description": "複製 AI 整理提示後的確認"
+  },
+  "aiOrgError": {
+    "message": "失敗 — 請先開啟 Gemini",
+    "description": "複製 AI 整理提示失敗時的錯誤"
+  },
+  "aiOrgNoConversations": {
+    "message": "找不到對話 — 請展開並捲動聊天清單後重試",
+    "description": "AI 整理未能讀取到任何對話時的按鈕文字"
+  },
+  "aiOrgCopyHint": {
+    "message": "複製所有對話和資料夾結構作為提示詞。貼到 Gemini 中即可獲得可匯入的資料夾方案。",
+    "description": "AI 整理複製按鈕下方的提示文字"
+  },
+  "aiOrgCurrentFolders": {
+    "message": "目前資料夾結構",
+    "description": "AI 整理提示中的標題"
+  },
+  "aiOrgUnfiledConversations": {
+    "message": "未歸類的對話",
+    "description": "不在任何資料夾中的對話標題"
+  },
+  "aiOrgEmpty": {
+    "message": "空",
+    "description": "AI 整理提示中空資料夾的標籤"
+  },
+  "aiOrgInstructions": {
+    "message": "指示",
+    "description": "AI 指示部分的標題"
+  },
+  "aiOrgInstructionsBody": {
+    "message": "根據以上對話和資料夾結構，請將它們重新整理為合理的資料夾層級。輸出一個使用以下格式的 JSON 檔案，可以直接匯入到 Voyager 擴充功能中（使用「合併」匯入策略）。保留已有的合理資料夾，根據需要建立新資料夾，將未歸類的對話移入合適的資料夾。每個資料夾需要一個唯一 ID（使用短隨機字串），每個對話必須保留其原始的 conversationId 和 url。",
+    "description": "AI 生成可匯入資料夾結構的指示正文"
+  },
+  "showMessageTimestamps": {
+    "message": "顯示訊息時間",
+    "description": "顯示每則訊息的時間戳"
+  },
+  "showMessageTimestampsHint": {
+    "message": "顯示每則訊息的發送時間",
+    "description": "訊息時間戳功能提示"
+  },
+  "moveSectionUp": {
+    "message": "上移",
+    "description": "Tooltip for moving a settings section up in popup"
+  },
+  "moveSectionDown": {
+    "message": "下移",
+    "description": "Tooltip for moving a settings section down in popup"
+  },
+  "folderAsProject_enable": {
+    "message": "啟用資料夾作為專案",
+    "description": "Toggle label for the Folder-as-Project feature"
+  },
+  "folderAsProject_description": {
+    "message": "在新對話頁面顯示資料夾選擇器，首次傳送時自動將對話分配到所選資料夾",
+    "description": "Hint for the Folder-as-Project feature toggle"
+  },
+  "folderAsProject_selectFolder": {
+    "message": "選擇資料夾…",
+    "description": "Placeholder text for the folder picker chip when no folder is selected"
+  },
+  "folderAsProject_noFolder": {
+    "message": "不選擇資料夾",
+    "description": "Option in the folder picker dropdown to clear the selection"
+  },
+  "folderAsProject_setInstructions": {
+    "message": "設定指令",
+    "description": "Folder context menu item to open the instructions editor"
+  },
+  "folderAsProject_editInstructions": {
+    "message": "編輯指令",
+    "description": "Folder context menu item to edit existing instructions"
+  },
+  "folderAsProject_expand": {
+    "message": "展開",
+    "description": "Aria-label for the expand button (screen readers)"
+  },
+  "folderAsProject_collapse": {
+    "message": "收合",
+    "description": "Aria-label for the collapse button (screen readers)"
+  },
+  "canvasExportCopyMarkdown": {
+    "message": "複製為 Markdown",
+    "description": "Canvas 分享選單項目：將 Canvas 內容以 Markdown 複製到剪貼簿"
+  },
+  "canvasExportCopyMarkdownTooltip": {
+    "message": "將 Canvas 內容複製為 Markdown",
+    "description": "Canvas 複製為 Markdown 選單項目的提示"
+  },
+  "canvasExportCopied": {
+    "message": "已將 Canvas 複製為 Markdown",
+    "description": "複製成功後顯示的提示"
+  },
+  "canvasExportEmpty": {
+    "message": "Canvas 內容為空",
+    "description": "Canvas 無內容可複製時顯示的提示"
+  },
+  "canvasExportFailed": {
+    "message": "複製 Canvas 內容失敗",
+    "description": "剪貼簿複製 Markdown 失敗時顯示的提示"
+  },
+  "floatingPanelCreateFolder": {
+    "message": "建立資料夾",
+    "description": "Floating folder panel create folder action"
+  },
+  "floatingPanelCreateSubfolder": {
+    "message": "建立子資料夾",
+    "description": "Floating folder panel create subfolder action"
+  },
+  "floatingPanelFolderNamePlaceholder": {
+    "message": "資料夾名稱",
+    "description": "Floating folder panel folder name input placeholder"
+  },
+  "floatingPanelRenameFolder": {
+    "message": "重新命名",
+    "description": "Floating folder panel rename folder action"
+  },
+  "floatingPanelDeleteFolder": {
+    "message": "刪除",
+    "description": "Floating folder panel delete folder action"
+  },
+  "floatingPanelDeleteConfirm": {
+    "message": "要刪除此資料夾及其所有內容嗎？",
+    "description": "Floating folder panel delete folder confirmation"
+  },
+  "floatingPanelCancel": {
+    "message": "取消",
+    "description": "Floating folder panel cancel action"
+  },
+  "floatingPanelSave": {
+    "message": "儲存",
+    "description": "Floating folder panel save action"
+  },
+  "floatingPanelPinFolder": {
+    "message": "釘選",
+    "description": "Floating folder panel pin folder action"
+  },
+  "floatingPanelUnpinFolder": {
+    "message": "取消釘選",
+    "description": "Floating folder panel unpin folder action"
+  },
+  "floatingPanelRemoveConversation": {
+    "message": "從資料夾移除",
+    "description": "Floating folder panel remove conversation action"
+  },
+  "floatingPanelStarConversation": {
+    "message": "加上星號",
+    "description": "Floating folder panel star conversation action"
+  },
+  "floatingPanelUnstarConversation": {
+    "message": "取消星號",
+    "description": "Floating folder panel unstar conversation action"
+  },
+  "floatingPanelColor": {
+    "message": "顏色",
+    "description": "Floating folder panel color section label"
+  },
+  "floatingPanelExpandFolder": {
+    "message": "展開",
+    "description": "Floating folder panel expand folder aria label"
+  },
+  "floatingPanelCollapseFolder": {
+    "message": "收合",
+    "description": "Floating folder panel collapse folder aria label"
+  },
+  "floatingPanelCloudUpload": {
+    "message": "上傳到雲端",
+    "description": "Floating folder panel cloud upload button tooltip"
+  },
+  "floatingPanelCloudSync": {
+    "message": "從雲端同步",
+    "description": "Floating folder panel cloud sync button tooltip"
+  },
+  "floatingPanelMoveHint": {
+    "message": "若要加入對話：打開對話的 ⋮ 選單 →「移動到資料夾」。",
+    "description": "Floating folder panel hint explaining how to add conversations through the native conversation menu"
+  },
+  "floatingPanelGestureHint": {
+    "message": "雙擊重新命名 · 右鍵可置頂 / 改色 / 刪除。",
+    "description": "Floating folder panel hint explaining folder gestures and context menu actions"
+  },
+  "folder_new_chat_in_folder": {
+    "message": "在此資料夾新增對話",
+    "description": "Folder context menu item to create a new chat and auto-assign it to this folder"
+  },
+  "responseCompleteNotification": {
+    "message": "Gemini 思考完成通知",
+    "description": "Gemini 回答完成系統通知開關"
+  },
+  "responseCompleteNotificationHint": {
+    "message": "當 Gemini 完整輸出回答後，傳送系統通知。",
+    "description": "Gemini 回答完成系統通知提示"
+  },
+  "responseCompleteNotificationHintSafari": {
+    "message": "在 Safari 上，此系統通知由 Gemini Voyager macOS App 傳送。",
+    "description": "Safari 上 Gemini 回答完成通知提示"
+  },
+  "responseCompleteNotificationMessage": {
+    "message": "Gemini 思考完成",
+    "description": "Gemini 完成回答時的系統通知內文"
+  },
+  "responseCompleteForegroundToast": {
+    "message": "新回覆已完成",
+    "description": "Gemini 回覆在畫面外完成時的前景提示文字"
+  },
+  "remoteAnnouncementNotification": {
+    "message": "遠端公告通知",
+    "description": "維護者遠端公告通知開關"
+  },
+  "remoteAnnouncementNotificationHint": {
+    "message": "Voyager 會在本機定時讀取公開 GitHub JSON 公告，只顯示文字/連結提醒。它不能遠端注入或執行程式碼，也不能控制你的電腦。",
+    "description": "遠端公告通知說明及安全邊界"
+  },
+  "remoteAnnouncementSystemPermissionCta": {
+    "message": "啟用系統提醒",
+    "description": "為遠端公告授予選用系統通知權限的按鈕文字"
+  },
+  "remoteAnnouncementDefaultTitle": {
+    "message": "Voyager 公告",
+    "description": "遠端公告頁面內提示的預設標題"
+  },
+  "remoteAnnouncementOpen": {
+    "message": "開啟",
+    "description": "遠端公告連結按鈕"
+  },
+  "remoteAnnouncementDismiss": {
+    "message": "關閉",
+    "description": "遠端公告關閉按鈕"
+  },
+  "pluginsTitle": {
+    "message": "外掛",
+    "description": "Popup section title for the plugin list"
+  },
+  "pluginsDescription": {
+    "message": "啟用強化其他 AI 網站的外掛。開啟時會要求該網站的存取權限。已啟用的外掛會向 voyager.nagi.fun 檢查更新。",
+    "description": "Popup subtitle explaining the plugin list"
+  },
+  "pluginViewSource": {
+    "message": "原始碼",
+    "description": "Link label to a plugin source/repo"
+  },
+  "pluginPermissionDenied": {
+    "message": "網站權限遭拒，外掛無法運作。",
+    "description": "Shown when the user denies the site permission for a plugin"
+  },
+  "pluginGrantRequiredAccess": {
+    "message": "授予所需網站存取權限",
+    "description": "Button that repairs missing optional site access for an enabled plugin"
+  },
+  "pluginUnsupportedPlatform": {
+    "message": "此瀏覽器不支援——無法授予此外掛所需的網站權限。",
+    "description": "Shown when a plugin can't be enabled because the browser can't grant the site access it needs (e.g. Safari)"
+  },
+  "pluginsLoading": {
+    "message": "正在載入外掛…",
+    "description": "Shown while the plugin catalog is loading"
+  },
+  "pluginsEmpty": {
+    "message": "暫無可用外掛。",
+    "description": "Shown when no plugins are available"
+  },
+  "pluginsRefresh": {
+    "message": "立即檢查外掛更新",
+    "description": "Tooltip for the manual plugin-update check button"
+  },
+  "pluginSourceBuiltin": {
+    "message": "內建",
+    "description": "Source label for a plugin built into Voyager itself"
+  },
+  "pluginSourceBundled": {
+    "message": "預裝",
+    "description": "Source label for a plugin from the catalog snapshot shipped with this build"
+  },
+  "pluginSourceOnline": {
+    "message": "線上目錄",
+    "description": "Source label for a plugin fetched from the online catalog for this site"
+  },
+  "pluginUpdateNeedsNewerVoyager": {
+    "message": "{version} 更新需要較新版本的 Voyager。",
+    "description": "Note shown when a plugin update is held back because it needs a newer Voyager; {version} is the held-back version"
+  },
+  "pluginsOnlineUpdates": {
+    "message": "外掛線上更新",
+    "description": "Label for the switch that allows online plugin update checks for this site"
+  },
+  "pluginsOnlineUpdatesHint": {
+    "message": "會向 voyager.nagi.fun 查詢此網站的外掛更新——只傳送網站名稱，不傳送 Cookie 或頁面內容。關閉後，只有上方的重新整理按鈕會連線。",
+    "description": "Explains what the online plugin update check sends and when it runs"
+  },
+  "pluginsCheckInterval": {
+    "message": "檢查頻率",
+    "description": "Label for the automatic plugin update check frequency selector"
+  },
+  "pluginsIntervalHourly": {
+    "message": "1 小時",
+    "description": "Check for plugin updates once an hour"
+  },
+  "pluginsIntervalSixHours": {
+    "message": "6 小時",
+    "description": "Check for plugin updates every six hours"
+  },
+  "pluginsIntervalDaily": {
+    "message": "24 小時",
+    "description": "Check for plugin updates once a day"
+  },
+  "pluginsIntervalManual": {
+    "message": "僅手動",
+    "description": "Never check automatically; only the manual button checks"
+  },
+  "pluginsLastChecked": {
+    "message": "上次檢查：{time}",
+    "description": "Time of the last plugin update check; {time} is a localized date and time"
+  },
+  "pluginsNeverChecked": {
+    "message": "尚未檢查",
+    "description": "Shown when no plugin update check has run yet"
+  },
+  "pluginsNoOnlineCatalog": {
+    "message": "此網站尚無線上目錄。",
+    "description": "Shown when the online catalog has no entry for the current site"
+  },
+  "pluginNeedsNewerVoyager": {
+    "message": "需要 Voyager 外掛引擎 {engine}",
+    "description": "Note on a plugin this build cannot run because its engine range is newer; {engine} is the required engine range"
+  },
+  "pluginNeedsVoyagerUpdate": {
+    "message": "需要更新版本的 Voyager 才能執行",
+    "description": "Note on a plugin that uses a capability this build of Voyager does not ship"
+  },
+  "pluginNeedsSiteAdapterUpdate": {
+    "message": "需要更新後的 {site} 配接器",
+    "description": "Note on a plugin whose site adapter lacks something it relies on; {site} is the current site name"
+  },
+  "pluginNoEffectOnPage": {
+    "message": "在此頁面上找不到可處理的內容",
+    "description": "Note on an enabled plugin that found no matching elements on this page"
+  },
+  "pluginUpdateAfterReload": {
+    "message": "更新 {version} 將在重新載入頁面後生效",
+    "description": "Note that a newer plugin version takes effect on the next page load; {version} is the pending version"
+  },
+  "pluginChangelogLabel": {
+    "message": "更新內容：",
+    "description": "Prefix for the plugin's one-line changelog in the popup"
+  },
+  "pluginUpdatedBadge": {
+    "message": "已更新",
+    "description": "Chip next to a plugin whose version changed since it was last shown"
+  },
+  "usageCoachmarkTitle": {
+    "message": "新功能：用量額度",
+    "description": "Coachmark title introducing the usage pill"
+  },
+  "usageCoachmarkBody": {
+    "message": "在輸入框旁隨時查看你剩餘的 Gemini 5 小時與每週額度。",
+    "description": "Coachmark body text introducing the usage pill"
+  },
+  "usageCoachmarkToggle": {
+    "message": "顯示用量膠囊",
+    "description": "Inline toggle label in the usage-pill coachmark"
+  },
+  "folderSearchCoachmarkTitle": {
+    "message": "新增：資料夾搜尋",
+    "description": "Coachmark title introducing folder search"
+  },
+  "folderSearchCoachmarkBody": {
+    "message": "直接在資料夾區域搜尋資料夾和對話標題。",
+    "description": "Coachmark body text introducing folder search"
+  },
+  "folderSearchCoachmarkToggle": {
+    "message": "顯示資料夾搜尋",
+    "description": "Inline toggle label in the folder-search coachmark"
+  },
+  "conversationSortCoachmarkTitle": {
+    "message": "新增：對話排序",
+    "description": "Coachmark title introducing conversation sorting"
+  },
+  "conversationSortCoachmarkBody": {
+    "message": "「手動排序」會保留你拖曳調整後的順序；「最近開啟」會把剛瀏覽的對話排到前面。可隨時在資料夾設定中切換。",
+    "description": "Coachmark body explaining manual and recently opened conversation sorting"
+  },
+  "timelineRulerCoachmarkTitle": {
+    "message": "新增：刻度時間軸",
+    "description": "Coachmark title introducing the ruler timeline style"
+  },
+  "timelineRulerCoachmarkBody": {
+    "message": "緊湊的訊號簇會隨閱讀位置形成波峰。懸停任一刻度，即時預覽使用者提問與模型回覆。",
+    "description": "Coachmark body text introducing the ruler timeline style"
+  },
+  "timelineRulerCoachmarkToggle": {
+    "message": "使用刻度時間軸",
+    "description": "Inline toggle label in the ruler-timeline coachmark"
+  },
+  "folderActivityCoachmarkTitle": {
+    "message": "新增：Activity 注意力檢視",
+    "description": "Coachmark title introducing the folder Activity view"
+  },
+  "folderActivityCoachmarkBody": {
+    "message": "依優先、今天與最近幾天彙整進行中的對話，不改變它們原本所在的資料夾。",
+    "description": "Coachmark body text introducing the folder Activity view"
+  },
+  "folderActivityCoachmarkToggle": {
+    "message": "使用 Activity 檢視",
+    "description": "Inline toggle label in the folder-Activity coachmark"
+  },
+  "timelineCoachmarkTitle": {
+    "message": "新增：精簡時間軸",
+    "description": "Coachmark title introducing the compact timeline style"
+  },
+  "timelineCoachmarkBody": {
+    "message": "右側只保留一列精簡索引。懸停即可在單一面板中查看所有訊息。",
+    "description": "Coachmark body text introducing the compact timeline style"
+  },
+  "timelineCoachmarkToggle": {
+    "message": "使用精簡索引",
+    "description": "Inline toggle label in the compact-timeline coachmark"
+  },
+  "slashPromptCoachmarkTitle": {
+    "message": "新功能：斜線提示詞插入",
+    "description": "Coachmark title introducing slash prompt insertion"
+  },
+  "promptReorderCoachmarkTitle": {
+    "message": "新功能：幫提示詞排個序",
+    "description": "Reorder onboarding title"
+  },
+  "promptReorderCoachmarkBody": {
+    "message": "拖曳列上的握把即可調整順序；點右側的星號可以把常用的提示詞固定在最上面。",
+    "description": "Reorder onboarding body"
+  },
+  "slashPromptCoachmarkBody": {
+    "message": "在 Gemini 輸入框中輸入 /，即可快速插入已儲存的提示詞。",
+    "description": "Coachmark body text introducing slash prompt insertion"
+  },
+  "slashPromptCoachmarkToggle": {
+    "message": "啟用斜線提示詞插入",
+    "description": "Inline toggle label in the slash-prompt coachmark"
+  },
+  "coachmarkDismiss": {
+    "message": "完成",
+    "description": "Generic confirmation label for feature coachmarks"
+  },
+  "coachmarkNext": {
+    "message": "下一步",
+    "description": "Button label for advancing to the next feature coachmark"
+  },
+  "coachmarkClose": {
+    "message": "關閉",
+    "description": "Accessible label for the feature coachmark close button"
+  },
+  "themeColor": {
+    "message": "主題色",
+    "description": "Accent/theme colour picker title"
+  },
+  "themeColorDesc": {
+    "message": "為目前網站自訂 Voyager 的主題色。",
+    "description": "Accent colour picker description"
+  },
+  "themeColorReset": {
+    "message": "回復預設",
+    "description": "Reset accent colour to default"
+  },
+  "promptCloudPull": {
+    "message": "拉取（合併）",
+    "description": "Button: pull (merge) prompts from Google Drive into local"
+  },
+  "promptCloudPush": {
+    "message": "上傳（合併）",
+    "description": "Button: push (merge) local prompts up to Google Drive"
+  },
+  "promptCloudPullSuccess": {
+    "message": "已從雲端合併 {count} 則提示詞",
+    "description": "Toast: prompts merged from cloud (with {count})"
+  },
+  "promptCloudPushSuccess": {
+    "message": "已上傳合併後的 {count} 則提示詞到雲端",
+    "description": "Toast: merged prompts uploaded to cloud (with {count})"
+  },
+  "promptCloudPullEmpty": {
+    "message": "雲端還沒有提示詞",
+    "description": "Toast: no prompts in the cloud yet"
+  },
+  "promptCloudError": {
+    "message": "雲端同步失敗，請確認已登入 Google Drive。",
+    "description": "Toast: cloud prompt sync failed / not signed in"
+  },
+  "enablePromptManagerOnSite": {
+    "message": "在 {site} 上開啟提示詞管理器",
+    "description": "Top toggle label: enable Prompt Manager on the current plugin site ({site})"
+  },
+  "enablePromptManagerOnSiteHint": {
+    "message": "在此網站使用你儲存的提示詞。開啟時需要授權存取該網站。",
+    "description": "Top toggle hint for enabling Prompt Manager on a third-party site"
+  },
+  "storageQuotaTitle": {
+    "message": "儲存空間"
+  },
+  "storageQuotaManage": {
+    "message": "管理儲存空間"
+  },
+  "storageQuotaLocal": {
+    "message": "擴充功能本機資料"
+  },
+  "storageQuotaSync": {
+    "message": "同步設定"
+  },
+  "storageQuotaHealthy": {
+    "message": "空間充足"
+  },
+  "storageQuotaAttention": {
+    "message": "接近上限"
+  },
+  "storageQuotaCritical": {
+    "message": "即將存滿"
+  },
+  "storageQuotaWarningToast": {
+    "message": "Voyager 儲存空間已使用 {percent}%。請開啟擴充功能彈出視窗查看或清理資料。"
+  },
+  "storageQuotaUnknown": {
+    "message": "無法讀取用量"
+  },
+  "storageQuotaBreakdown": {
+    "message": "儲存明細"
+  },
+  "storageQuotaSoftLimit": {
+    "message": "Voyager 軟上限"
+  },
+  "storageQuotaEffectiveLimit": {
+    "message": "目前實際上限：{size}。Voyager 會採用此值與所選軟上限中較低者。"
+  },
+  "storageQuotaCache": {
+    "message": "可重建快取"
+  },
+  "storageQuotaHighlights": {
+    "message": "醒目標記"
+  },
+  "storageQuotaOther": {
+    "message": "其他"
+  },
+  "storageQuotaUnlock": {
+    "message": "擴充本機空間"
+  },
+  "storageQuotaSafariLimit": {
+    "message": "Safari 15 只能把本機儲存空間從約 5 MB 提升到約 10 MB，仍然可能存滿。"
+  },
+  "storageQuotaUnknownLimit": {
+    "message": "無法識別 Safari 版本；舊版本擴充後仍可能受限。"
+  },
+  "storageQuotaClearConfirm": {
+    "message": "清理「{category}」？只會刪除這個類別的資料。"
+  },
+  "storageQuotaHighlightClearConfirm": {
+    "message": "刪除所有已儲存的醒目標記與註解？此操作無法復原。"
+  },
+  "storageQuotaDraftClearConfirm": {
+    "message": "刪除所有尚未傳送的草稿？此操作無法復原。"
+  },
+  "highlightAction": {
+    "message": "醒目標示"
+  },
+  "highlightSaved": {
+    "message": "醒目標示已儲存"
+  },
+  "highlightSaveFailed": {
+    "message": "無法儲存醒目標示"
+  },
+  "highlightDeleteFailed": {
+    "message": "無法刪除醒目標示"
+  },
+  "highlightNotePlaceholder": {
+    "message": "新增備註（選填）"
+  },
+  "highlightColor": {
+    "message": "醒目標示顏色"
+  },
+  "highlightCustomColor": {
+    "message": "自訂醒目標示顏色"
+  },
+  "highlightTooLong": {
+    "message": "選取內容太長，請縮小範圍。"
+  },
+  "highlightAriaLabel": {
+    "message": "已儲存的醒目標示。開啟註解。"
+  },
+  "highlightTimelineAriaLabel": {
+    "message": "開啟已儲存的醒目標示"
+  },
+  "savedLibraryAll": {
+    "message": "全部"
+  },
+  "savedLibraryStars": {
+    "message": "星號"
+  },
+  "savedLibraryHighlights": {
+    "message": "醒目標示"
+  },
+  "savedLibraryEmpty": {
+    "message": "尚無收藏內容"
+  },
+  "savedLibraryNoHighlights": {
+    "message": "尚無醒目標示"
+  },
+  "savedLibrarySearchPlaceholder": {
+    "message": "搜尋星號與醒目標示"
+  },
+  "highlightImportSuccess": {
+    "message": "已匯入 {count} 則醒目標示"
+  },
+  "highlightCloudSync": {
+    "message": "同步醒目標示"
+  },
+  "highlightCloudSyncHint": {
+    "message": "將醒目標示儲存在依帳號隔離的獨立 Drive 檔案中。啟用 Drive 同步後預設包含醒目標示，並一律安全合併。"
+  },
+  "diagnosticsTitle": {
+    "message": "問題診斷"
+  },
+  "diagnosticsHint": {
+    "message": "預覽用於 Issue 回報的脫敏環境與外掛設定。"
+  },
+  "diagnosticsPreview": {
+    "message": "預覽"
+  },
+  "diagnosticsPreviewTitle": {
+    "message": "診斷資訊預覽"
+  },
+  "diagnosticsPrivacyNote": {
+    "message": "分享前請先檢查。不包含提示詞、對話、帳號、憑證及私人網址。"
+  },
+  "diagnosticsClose": {
+    "message": "關閉"
+  },
+  "diagnosticsCopyMarkdown": {
+    "message": "複製 Markdown"
+  },
+  "diagnosticsCopying": {
+    "message": "正在複製…"
+  },
+  "diagnosticsCopied": {
+    "message": "已複製"
+  },
+  "diagnosticsCopyFailed": {
+    "message": "無法存取剪貼簿，請手動選取預覽內容或下載 JSON。"
+  },
+  "diagnosticsDownloadJson": {
+    "message": "下載 JSON"
+  },
+  "promptHistoryTitle": {
+    "message": "提示詞歷史",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryEnabledHint": {
+    "message": "在此裝置上按 Gemini 帳號分別儲存已傳送和已更新的提示詞。",
+    "description": "Prompt History setting hint (#923)"
+  },
+  "promptHistoryEmpty": {
+    "message": "暫無提示詞歷史",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistorySent": {
+    "message": "已傳送",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryEdited": {
+    "message": "已修改",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryCopy": {
+    "message": "複製",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryInsert": {
+    "message": "插入",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryDelete": {
+    "message": "刪除",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryClear": {
+    "message": "清空",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryCopied": {
+    "message": "已複製",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryInserted": {
+    "message": "已插入",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryInsertFailed": {
+    "message": "插入失敗",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryCopyFailed": {
+    "message": "複製失敗",
+    "description": "Prompt History panel text (#923)"
+  },
+  "promptHistoryClearConfirm": {
+    "message": "清空目前 Gemini 帳號的提示詞歷史？",
+    "description": "Prompt History clear confirmation (#923)"
+  },
+  "promptHistoryCancel": {
+    "message": "取消",
+    "description": "Prompt History clear confirmation (#923)"
+  },
+  "promptHistoryStorageFailed": {
+    "message": "提示詞歷史儲存失敗，請檢查擴充功能儲存空間。",
+    "description": "Prompt History storage error (#923)"
+  },
+  "welcomeTitle": {
+    "message": "歡迎使用 Voyager",
+    "description": "Welcome page heading"
+  },
+  "welcomeSubtitle": {
+    "message": "兩步就緒。",
+    "description": "Welcome page subheading"
+  },
+  "welcomeStepPinTitle": {
+    "message": "把 Voyager 釘選到工具列",
+    "description": "Welcome page: title of the pin-to-toolbar step"
+  },
+  "welcomeStepPinBody": {
+    "message": "Voyager 的設定都在工具列圖示裡，釘選之後每次少點一步。",
+    "description": "Welcome page: why pinning helps"
+  },
+  "welcomePinStepsChrome": {
+    "message": "點選右上角的拼圖圖示，再點 Voyager 旁邊的圖釘。",
+    "description": "Welcome page: how to pin on Chrome-like browsers"
+  },
+  "welcomePinStepsEdge": {
+    "message": "點選右上角的「擴充功能」按鈕，再點 Voyager 旁邊的眼睛圖示。",
+    "description": "Welcome page: how to pin on Microsoft Edge"
+  },
+  "welcomePinStepsFirefox": {
+    "message": "點選右上角的「擴充功能」按鈕，打開 Voyager 旁邊的齒輪選單，選擇「釘選到工具列」。",
+    "description": "Welcome page: how to pin on Firefox"
+  },
+  "welcomePinWaiting": {
+    "message": "等待釘選…",
+    "description": "Welcome page: live status while the icon is not pinned yet"
+  },
+  "welcomePinDone": {
+    "message": "已釘選，Voyager 在工具列上了。",
+    "description": "Welcome page: live status once the icon is pinned"
+  },
+  "welcomeArrowLabel": {
+    "message": "在這裡",
+    "description": "Welcome page: label beside the arrow pointing at the browser toolbar"
+  },
+  "welcomeStepOpenTitle": {
+    "message": "打開 Gemini",
+    "description": "Welcome page: title of the open-Gemini step"
+  },
+  "welcomeStepOpenBody": {
+    "message": "Voyager 住在對話頁裡。打開 Gemini，會有一段簡短的導覽帶你熟悉。",
+    "description": "Welcome page: why to open Gemini"
+  },
+  "welcomeOpenGemini": {
+    "message": "打開 Gemini",
+    "description": "Welcome page: primary button"
+  },
+  "welcomeOtherSites": {
+    "message": "Claude、ChatGPT 和 DeepSeek 在 Voyager 彈出視窗裡開啟。",
+    "description": "Welcome page: note under the supported-sites list"
+  },
+  "welcomeStepDone": {
+    "message": "完成",
+    "description": "Welcome page: badge on a completed step"
+  },
+  "popupPinHint": {
+    "message": "把 Voyager 釘選到工具列，下次少點一步。",
+    "description": "Popup: reminder to pin the extension icon"
+  },
+  "popupPinHintDismiss": {
+    "message": "關閉",
+    "description": "Popup: dismiss the pin reminder"
+  }
+}

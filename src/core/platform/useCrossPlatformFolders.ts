@@ -1,0 +1,100 @@
+/**
+ * Nomad AI Workspace — Cross-Platform Folders Hook
+ * Reads and normalizes folder trees across Gemini, Claude, and future platforms.
+ */
+
+import { useEffect, useState } from 'react';
+import type { CrossPlatformFolder, PlatformId } from './types';
+
+export const GEMINI_FOLDERS_KEY = 'folders';
+export const GEMINI_CONTENTS_KEY = 'folderContents';
+export const CLAUDE_FOLDERS_KEY = 'claude_nexus_folders';
+
+export function useCrossPlatformFolders() {
+  const [geminiFolders, setGeminiFolders] = useState<CrossPlatformFolder[]>([]);
+  const [claudeFolders, setClaudeFolders] = useState<CrossPlatformFolder[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const reload = async () => {
+    try {
+      if (typeof chrome === 'undefined' || !chrome.storage?.local) {
+        setLoading(false);
+        return;
+      }
+
+      const res = await new Promise<Record<string, any>>((resolve) => {
+        chrome.storage.local.get([GEMINI_FOLDERS_KEY, GEMINI_CONTENTS_KEY, CLAUDE_FOLDERS_KEY], (items) => {
+          resolve(items || {});
+        });
+      });
+
+      // 1. Parse Gemini Folders
+      const rawGeminiFolders: Array<{ id: string; name: string; isExpanded?: boolean }> = res[GEMINI_FOLDERS_KEY] || [];
+      const rawGeminiContents: Record<string, Array<{ conversationId: string; title: string; url: string }>> = res[GEMINI_CONTENTS_KEY] || {};
+
+      const parsedGemini: CrossPlatformFolder[] = rawGeminiFolders.map((f) => {
+        const chats = rawGeminiContents[f.id] || [];
+        return {
+          id: f.id,
+          name: f.name,
+          platformId: 'gemini',
+          isExpanded: f.isExpanded,
+          conversations: chats.map((c) => ({
+            id: c.conversationId,
+            title: c.title || '無標題對話',
+            url: c.url || `https://gemini.google.com/app/${c.conversationId}`,
+            platformId: 'gemini',
+            folderId: f.id,
+          })),
+        };
+      });
+      setGeminiFolders(parsedGemini);
+
+      // 2. Parse Claude Folders
+      const rawClaudeFolders: Array<{ id: string; name: string; conversationIds: string[]; isExpanded?: boolean }> = res[CLAUDE_FOLDERS_KEY] || [];
+      const parsedClaude: CrossPlatformFolder[] = rawClaudeFolders.map((f) => {
+        const chatIds = f.conversationIds || [];
+        return {
+          id: f.id,
+          name: f.name,
+          platformId: 'claude',
+          isExpanded: f.isExpanded,
+          conversations: chatIds.map((id) => ({
+            id,
+            title: `Claude 對話 (${id.slice(0, 8)})`,
+            url: `https://claude.ai/chat/${id}`,
+            platformId: 'claude',
+            folderId: f.id,
+          })),
+        };
+      });
+      setClaudeFolders(parsedClaude);
+    } catch (e) {
+      console.error('[Nomad Workspace] Failed to load cross-platform folders:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    reload();
+
+    const handleStorageChange = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
+      if (areaName === 'local' && (changes[GEMINI_FOLDERS_KEY] || changes[GEMINI_CONTENTS_KEY] || changes[CLAUDE_FOLDERS_KEY])) {
+        reload();
+      }
+    };
+
+    chrome?.storage?.onChanged?.addListener(handleStorageChange);
+    return () => {
+      chrome?.storage?.onChanged?.removeListener(handleStorageChange);
+    };
+  }, []);
+
+  return {
+    geminiFolders,
+    claudeFolders,
+    loading,
+    reload,
+  };
+}

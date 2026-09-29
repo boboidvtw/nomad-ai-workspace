@@ -1,0 +1,21 @@
+/* DeepSeek wraps long code lines by default, which destroys the indentation of
+   anything but one-liners. Scroll them instead, and let the setting put the
+   wrapping back. Scoped to the final answer so thinking and controls are left
+   alone. */
+.gv-plugin-deepseek-wrap-code .ds-assistant-message-main-content pre {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  white-space: pre !important;
+}
+
+.gv-plugin-deepseek-wrap-code[data-gv-code-wrap='true'] .ds-assistant-message-main-content pre,
+.gv-plugin-deepseek-wrap-code[data-gv-code-wrap='true']
+  .ds-assistant-message-main-content
+  pre
+  code {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}

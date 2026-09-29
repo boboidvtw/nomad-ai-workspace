@@ -1,0 +1,79 @@
+/**
+ * Renders the folder list (pure UI composition).
+ */
+
+import type { Conversation } from '@src/types/conversation';
+import type { Folder } from '@src/types/folder';
+import FolderItem from './FolderItem';
+
+type ThemeTokens = {
+  rootText: string;
+  headerText: string;
+  mutedText: string;
+  subtleText: string;
+  border: string;
+  panelBg: string;
+  hoverBg: string;
+  input: string;
+  icon: string;
+  iconDanger: string;
+  iconHoverBg: string;
+};
+
+type Props = {
+  folders: Folder[];
+  theme: ThemeTokens;
+  conversationIndex: Record<string, Conversation>;
+  conversationTitleIndex: Record<string, string>;
+  editingFolderId: string | null;
+  editingName: string;
+  onEditingNameChange: (value: string) => void;
+  onRenameStart: (folder: Folder) => void;
+  onRenameCommit: (folderId: string) => void;
+  onDelete: (folderId: string, anchorRect: DOMRect) => void;
+  onToggleExpanded: (folderId: string) => void;
+  onDropConversationToFolder: (folderId: string, conversationId: string) => void;
+  onConversationContextMenu?: (payload: { x: number; y: number; conversationId: string }) => void;
+};
+
+const FolderList = ({
+  folders,
+  theme,
+  conversationIndex,
+  conversationTitleIndex,
+  editingFolderId,
+  editingName,
+  onEditingNameChange,
+  onRenameStart,
+  onRenameCommit,
+  onDelete,
+  onToggleExpanded,
+  onDropConversationToFolder,
+  onConversationContextMenu,
+}: Props) => {
+  return (
+    <div className="space-y-[2px]">
+      {folders.map((folder) => (
+        <FolderItem
+          key={folder.id}
+          folder={folder}
+          theme={theme}
+          conversationIndex={conversationIndex}
+          conversationTitleIndex={conversationTitleIndex}
+          isEditing={editingFolderId === folder.id}
+          editingName={editingName}
+          onEditingNameChange={onEditingNameChange}
+          onRenameStart={onRenameStart}
+          onRenameCommit={onRenameCommit}
+          onDelete={onDelete}
+          onToggleExpanded={onToggleExpanded}
+          onDropConversationToFolder={onDropConversationToFolder}
+          onConversationContextMenu={onConversationContextMenu}
+        />
+      ))}
+    </div>
+  );
+};
+
+export default FolderList;
+
