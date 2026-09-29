@@ -80,7 +80,7 @@
     "description": "Language label"
   },
   "pm_title": {
-    "message": "Voyager",
+    "message": "Nomad AI Workspace",
     "description": "Prompt Manager title"
   },
   "pm_add": {
@@ -711,7 +711,7 @@
     "description": "Onboarding nudge title inviting the user to hide archived conversations from the AI Studio library table"
   },
   "aistudio_hide_archived_nudge_body": {
-    "message": "Voyager can hide conversations already filed into folders from the Library table, leaving only uncategorized chats behind.",
+    "message": "Nomad can hide conversations already filed into folders from the Library table, leaving only uncategorized chats behind.",
     "description": "Onboarding nudge body explaining the hide-archived feature in AI Studio"
   },
   "aistudio_hide_archived_nudge_enable": {
@@ -883,7 +883,7 @@
     "description": "Popup toggle that controls whether floating folder mode opens the panel immediately when Gemini loads"
   },
   "openFloatingFolderOnStartupHint": {
-    "message": "When off, Voyager starts with only the floating button; click it to open folders.",
+    "message": "When off, Nomad starts with only the floating button; click it to open folders.",
     "description": "Helper text under the floating folder startup toggle"
   },
   "hideArchivedConversations": {
@@ -899,7 +899,7 @@
     "description": "Title of the first-archive onboarding nudge"
   },
   "hideArchivedNudgeBody": {
-    "message": "Voyager can hide conversations that are filed into folders from the main list, so you see only active chats. Nothing is deleted — filed conversations stay accessible inside their folders.",
+    "message": "Nomad can hide conversations that are filed into folders from the main list, so you see only active chats. Nothing is deleted — filed conversations stay accessible inside their folders.",
     "description": "Body text of the first-archive onboarding nudge"
   },
   "hideArchivedNudgeEnable": {
@@ -919,7 +919,7 @@
     "description": "Title of the floating-mode fallback nudge"
   },
   "floatingModeNudgeBody": {
-    "message": "Voyager couldn't find the Gemini sidebar, likely because the page layout changed. You can still browse your folders in a floating window.",
+    "message": "Nomad couldn't find the Gemini sidebar, likely because the page layout changed. You can still browse your folders in a floating window.",
     "description": "Body copy of the floating-mode fallback nudge"
   },
   "floatingModeNudgeEnable": {
@@ -1091,7 +1091,7 @@
     "description": "Show the Voyager mascot on the Prompt Manager floating ball"
   },
   "promptTriggerMascotLogoHint": {
-    "message": "Show the Voyager mascot on the floating ball. Clear areas pick up each site's theme color.",
+    "message": "Show the Nomad mascot on the floating ball. Clear areas pick up each site's theme color.",
     "description": "Hint for the mascot floating-ball logo"
   },
   "slashPromptEnabled": {
@@ -1291,7 +1291,7 @@
     "description": "Cloud sync description"
   },
   "cloudSyncDescriptionICloud": {
-    "message": "Sync Voyager data using your private iCloud storage",
+    "message": "Sync Nomad data using your private iCloud storage",
     "description": "iCloud sync description"
   },
   "syncProvider": {
@@ -1402,7 +1402,7 @@
     "message": "Delete iCloud backup"
   },
   "syncDeleteICloudConfirm": {
-    "message": "Delete every Voyager backup from iCloud? Local data will stay on this Mac. This cannot be undone."
+    "message": "Delete every Nomad backup from iCloud? Local data will stay on this Mac. This cannot be undone."
   },
   "syncDeletingICloudBackup": {
     "message": "Deleting iCloud backup…"
@@ -1650,7 +1650,7 @@
     "description": "Enable tab title sync toggle label"
   },
   "enableTabTitleUpdateHint": {
-    "message": "Gemini officially added this in June 2026, so Voyager now keeps this option disabled.",
+    "message": "Gemini officially added this in June 2026, so Nomad now keeps this option disabled.",
     "description": "Retired tab title sync feature note"
   },
   "persistentExportToolbar": {
@@ -1826,7 +1826,7 @@
     "description": "Status prefix when download fails"
   },
   "googleImageCorrupted": {
-    "message": "Google returned a corrupted original image (not caused by Voyager); the download may be blurred or incomplete.",
+    "message": "Google returned a corrupted original image (not caused by Nomad); the download may be blurred or incomplete.",
     "description": "Warning shown when Google's downloaded image does not match its preview"
   },
   "gemsHide": {
@@ -1898,7 +1898,7 @@
     "description": "Action button label on the auto-apply failure toast"
   },
   "defaultModelAutoApplyFailedFallback": {
-    "message": "Click the Voyager icon in your toolbar to open the popup, then pause this feature.",
+    "message": "Click the Nomad icon in your toolbar to open the popup, then pause this feature.",
     "description": "Fallback message shown when programmatic popup open fails (e.g. Firefox)"
   },
   "setAsDefaultThinkingLevel": {
@@ -2146,7 +2146,7 @@
     "description": "Title of the notice about Gemini's native media watermark switch"
   },
   "watermarkNotice_body": {
-    "message": "Gemini now has an official visible-watermark setting. If your account has Media watermark, set it to Off, use Gemini's built-in option, and turn off Voyager watermark removal. Gemini's option is more reliable, and every other Voyager feature stays on.",
+    "message": "Gemini now has an official visible-watermark setting. If your account has Media watermark, set it to Off, use Gemini's built-in option, and turn off Nomad watermark removal. Gemini's option is more reliable, and every other Nomad feature stays on.",
     "description": "Body text explaining Gemini's native watermark switch"
   },
   "watermarkNotice_detected": {
@@ -2158,19 +2158,19 @@
     "description": "Breadcrumb of where Gemini's media-watermark switch lives"
   },
   "watermarkNotice_caveat": {
-    "message": "Can't find Media watermark? It is still rolling out, so you can keep using Voyager watermark removal. SynthID and C2PA metadata remain either way.",
+    "message": "Can't find Media watermark? It is still rolling out, so you can keep using Nomad watermark removal. SynthID and C2PA metadata remain either way.",
     "description": "Caveats about SynthID, gradual rollout and account restrictions"
   },
   "watermarkNotice_disableCta": {
-    "message": "It's Off, turn off Voyager removal",
+    "message": "It's Off, turn off Nomad removal",
     "description": "Primary button: disable Voyager's watermark removal"
   },
   "watermarkNotice_keepCta": {
-    "message": "No setting yet, keep using Voyager",
+    "message": "No setting yet, keep using Nomad",
     "description": "Secondary button: keep Voyager's watermark removal on"
   },
   "watermarkNotice_done": {
-    "message": "Voyager watermark removal is off. Every other feature stays on.",
+    "message": "Nomad watermark removal is off. Every other feature stays on.",
     "description": "Confirmation shown after Voyager's watermark removal is disabled"
   },
   "watermarkNotice_error": {
@@ -2194,7 +2194,7 @@
     "description": "Changelog modal documentation link text"
   },
   "changelog_recommendation": {
-    "message": "If Voyager has been helpful, share it with friends or on social media — feel free to tag the author!",
+    "message": "If Nomad has been helpful, share it with friends or on social media — feel free to tag the author!",
     "description": "Changelog modal recommendation message"
   },
   "changelog_follow_cta": {
@@ -2210,7 +2210,7 @@
     "description": "Changelog annotation pointing to docs icon"
   },
   "changelog_rate_chrome": {
-    "message": "Love Voyager? A quick rating on the Chrome Web Store makes a huge difference!",
+    "message": "Love Nomad? A quick rating on the Chrome Web Store makes a huge difference!",
     "description": "Chrome Web Store rating prompt in changelog modal"
   },
   "changelog_rate_chrome_cta": {
@@ -2218,7 +2218,7 @@
     "description": "Chrome Web Store rating CTA button text"
   },
   "changelog_rate_edge": {
-    "message": "Love Voyager? A quick rating on the Edge Add-ons store makes a huge difference!",
+    "message": "Love Nomad? A quick rating on the Edge Add-ons store makes a huge difference!",
     "description": "Edge Add-ons store rating prompt in changelog modal"
   },
   "changelog_rate_edge_cta": {
@@ -2286,7 +2286,7 @@
     "description": "Delete fork branch metadata button"
   },
   "forkDeleteDataConfirm": {
-    "message": "Delete this branch link? This only removes Voyager fork metadata and will not delete any conversation.",
+    "message": "Delete this branch link? This only removes Nomad fork metadata and will not delete any conversation.",
     "description": "Fork metadata delete confirmation prompt"
   },
   "enableForkFeature": {
@@ -2322,7 +2322,7 @@
     "description": "Toggle to enable/disable Voyager on AI Studio"
   },
   "enableOnAIStudioHint": {
-    "message": "Turn off to disable Voyager features on AI Studio (Prompt Manager stays active)",
+    "message": "Turn off to disable Nomad features on AI Studio (Prompt Manager stays active)",
     "description": "Hint for AI Studio enable toggle"
   },
   "export_select_mode_only_user": {
@@ -2370,7 +2370,7 @@
     "description": "Heading for AI instructions section"
   },
   "aiOrgInstructionsBody": {
-    "message": "Based on the conversations and folder structure above, please reorganize them into a logical folder hierarchy. Output a JSON file using the exact format below that can be directly imported into the Voyager extension (use the \"Merge\" import strategy). Keep existing well-organized folders, create new ones as needed, and move unfiled conversations into appropriate folders. Each folder needs a unique ID (use a short random string), and each conversation must keep its original conversationId and url.",
+    "message": "Based on the conversations and folder structure above, please reorganize them into a logical folder hierarchy. Output a JSON file using the exact format below that can be directly imported into the Nomad extension (use the \"Merge\" import strategy). Keep existing well-organized folders, create new ones as needed, and move unfiled conversations into appropriate folders. Each folder needs a unique ID (use a short random string), and each conversation must keep its original conversationId and url.",
     "description": "Instructions body for AI to generate importable folder structure"
   },
   "showMessageTimestamps": {
@@ -2534,7 +2534,7 @@
     "description": "Hint for response completion system notifications"
   },
   "responseCompleteNotificationHintSafari": {
-    "message": "On Safari, the Gemini Voyager macOS app sends this system notification.",
+    "message": "On Safari, the Nomad AI Workspace macOS app sends this system notification.",
     "description": "Safari-specific hint for response completion notifications"
   },
   "responseCompleteNotificationMessage": {
@@ -2550,7 +2550,7 @@
     "description": "Toggle label for maintainer remote announcement notifications"
   },
   "remoteAnnouncementNotificationHint": {
-    "message": "Voyager locally checks a public GitHub JSON file and only shows text/link notices. It cannot inject or run remote code, or control your computer.",
+    "message": "Nomad locally checks a public GitHub JSON file and only shows text/link notices. It cannot inject or run remote code, or control your computer.",
     "description": "Hint explaining remote announcement notifications and their safety boundary"
   },
   "remoteAnnouncementSystemPermissionCta": {
@@ -2558,7 +2558,7 @@
     "description": "Button text for granting optional system notification permission for remote announcements"
   },
   "remoteAnnouncementDefaultTitle": {
-    "message": "Voyager announcement",
+    "message": "Nomad announcement",
     "description": "Fallback title for remote announcement in-page notifications"
   },
   "remoteAnnouncementOpen": {
@@ -2618,7 +2618,7 @@
     "description": "Source label for a plugin fetched from the online catalog for this site"
   },
   "pluginUpdateNeedsNewerVoyager": {
-    "message": "Update {version} needs a newer Voyager.",
+    "message": "Update {version} needs a newer Nomad.",
     "description": "Note shown when a plugin update is held back because it needs a newer Voyager; {version} is the held-back version"
   },
   "pluginsOnlineUpdates": {
@@ -2662,11 +2662,11 @@
     "description": "Shown when the online catalog has no entry for the current site"
   },
   "pluginNeedsNewerVoyager": {
-    "message": "Needs Voyager plugin engine {engine}",
+    "message": "Needs Nomad plugin engine {engine}",
     "description": "Note on a plugin this build cannot run because its engine range is newer; {engine} is the required engine range"
   },
   "pluginNeedsVoyagerUpdate": {
-    "message": "Needs a newer Voyager to run",
+    "message": "Needs a newer Nomad to run",
     "description": "Note on a plugin that uses a capability this build of Voyager does not ship"
   },
   "pluginNeedsSiteAdapterUpdate": {
@@ -2794,7 +2794,7 @@
     "description": "Accent/theme colour picker title"
   },
   "themeColorDesc": {
-    "message": "Customize Voyager's accent color for this site.",
+    "message": "Customize Nomad's accent color for this site.",
     "description": "Accent colour picker description"
   },
   "themeColorReset": {
@@ -2855,7 +2855,7 @@
     "message": "Almost full"
   },
   "storageQuotaWarningToast": {
-    "message": "Voyager storage is {percent}% full. Open the extension popup to review or clean up stored data."
+    "message": "Nomad storage is {percent}% full. Open the extension popup to review or clean up stored data."
   },
   "storageQuotaUnknown": {
     "message": "Usage unavailable"
@@ -2864,10 +2864,10 @@
     "message": "Storage breakdown"
   },
   "storageQuotaSoftLimit": {
-    "message": "Voyager soft limit"
+    "message": "Nomad soft limit"
   },
   "storageQuotaEffectiveLimit": {
-    "message": "Current effective limit: {size}. Voyager uses the lower of this and your selected soft limit."
+    "message": "Current effective limit: {size}. Nomad uses the lower of this and your selected soft limit."
   },
   "storageQuotaCache": {
     "message": "Rebuildable cache"
@@ -3051,7 +3051,7 @@
     "description": "Prompt History storage error (#923)"
   },
   "welcomeTitle": {
-    "message": "Welcome to Voyager",
+    "message": "Welcome to Nomad AI Workspace",
     "description": "Welcome page heading"
   },
   "welcomeSubtitle": {
@@ -3059,23 +3059,23 @@
     "description": "Welcome page subheading"
   },
   "welcomeStepPinTitle": {
-    "message": "Pin Voyager to your toolbar",
+    "message": "Pin Nomad to your toolbar",
     "description": "Welcome page: title of the pin-to-toolbar step"
   },
   "welcomeStepPinBody": {
-    "message": "Voyager's settings live behind its toolbar icon. Pinning it saves a click every time.",
+    "message": "Nomad's settings live behind its toolbar icon. Pinning it saves a click every time.",
     "description": "Welcome page: why pinning helps"
   },
   "welcomePinStepsChrome": {
-    "message": "Click the puzzle icon at the top right, then the pin next to Voyager.",
+    "message": "Click the puzzle icon at the top right, then the pin next to Nomad.",
     "description": "Welcome page: how to pin on Chrome-like browsers"
   },
   "welcomePinStepsEdge": {
-    "message": "Click the Extensions button at the top right, then the eye icon next to Voyager.",
+    "message": "Click the Extensions button at the top right, then the eye icon next to Nomad.",
     "description": "Welcome page: how to pin on Microsoft Edge"
   },
   "welcomePinStepsFirefox": {
-    "message": "Click the Extensions button at the top right, open the gear menu next to Voyager and choose “Pin to Toolbar”.",
+    "message": "Click the Extensions button at the top right, open the gear menu next to Nomad and choose “Pin to Toolbar”.",
     "description": "Welcome page: how to pin on Firefox"
   },
   "welcomePinWaiting": {
@@ -3083,7 +3083,7 @@
     "description": "Welcome page: live status while the icon is not pinned yet"
   },
   "welcomePinDone": {
-    "message": "Pinned. Voyager is on your toolbar.",
+    "message": "Pinned. Nomad is on your toolbar.",
     "description": "Welcome page: live status once the icon is pinned"
   },
   "welcomeArrowLabel": {
@@ -3095,7 +3095,7 @@
     "description": "Welcome page: title of the open-Gemini step"
   },
   "welcomeStepOpenBody": {
-    "message": "Voyager lives inside the chat page. Open Gemini and a short tour will show you around.",
+    "message": "Nomad lives inside the chat page. Open Gemini and a short tour will show you around.",
     "description": "Welcome page: why to open Gemini"
   },
   "welcomeOpenGemini": {
@@ -3103,7 +3103,7 @@
     "description": "Welcome page: primary button"
   },
   "welcomeOtherSites": {
-    "message": "Claude, ChatGPT and DeepSeek are turned on from the Voyager popup.",
+    "message": "Claude, ChatGPT and DeepSeek are turned on from the Nomad popup.",
     "description": "Welcome page: note under the supported-sites list"
   },
   "welcomeStepDone": {
@@ -3111,7 +3111,7 @@
     "description": "Welcome page: badge on a completed step"
   },
   "popupPinHint": {
-    "message": "Pin Voyager to the toolbar to skip a click next time.",
+    "message": "Pin Nomad to the toolbar to skip a click next time.",
     "description": "Popup: reminder to pin the extension icon"
   },
   "popupPinHintDismiss": {

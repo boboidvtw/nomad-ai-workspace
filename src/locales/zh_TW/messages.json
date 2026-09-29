@@ -80,7 +80,7 @@
     "description": "語言標籤"
   },
   "pm_title": {
-    "message": "Voyager",
+    "message": "Nomad AI Workspace",
     "description": "面板標題"
   },
   "pm_add": {
@@ -671,7 +671,7 @@
     "description": "邀請使用者在 AI Studio 隱藏已歸檔對話的引導標題"
   },
   "aistudio_hide_archived_nudge_body": {
-    "message": "Voyager 可以把已經歸入資料夾的對話從 Library 表格中隱藏，只保留未分類的對話。",
+    "message": "Nomad 可以把已經歸入資料夾的對話從 Library 表格中隱藏，只保留未分類的對話。",
     "description": "引導卡說明 AI Studio 隱藏已歸檔功能"
   },
   "aistudio_hide_archived_nudge_enable": {
@@ -859,7 +859,7 @@
     "description": "Title of the first-archive onboarding nudge"
   },
   "hideArchivedNudgeBody": {
-    "message": "Voyager 支援自動隱藏已歸入資料夾的對話，讓側邊欄只保留進行中的內容。對話不會被刪除，隨時可在資料夾中檢視。",
+    "message": "Nomad 支援自動隱藏已歸入資料夾的對話，讓側邊欄只保留進行中的內容。對話不會被刪除，隨時可在資料夾中檢視。",
     "description": "Body text of the first-archive onboarding nudge"
   },
   "hideArchivedNudgeEnable": {
@@ -879,7 +879,7 @@
     "description": "Title of the floating-mode fallback nudge"
   },
   "floatingModeNudgeBody": {
-    "message": "Voyager 找不到 Gemini 側邊欄，可能是頁面版面已變更。你仍然可以在浮動視窗中瀏覽資料夾。",
+    "message": "Nomad 找不到 Gemini 側邊欄，可能是頁面版面已變更。你仍然可以在浮動視窗中瀏覽資料夾。",
     "description": "Body copy of the floating-mode fallback nudge"
   },
   "floatingModeNudgeEnable": {
@@ -1259,7 +1259,7 @@
     "description": "雲端同步描述"
   },
   "cloudSyncDescriptionICloud": {
-    "message": "透過你的私人 iCloud 空間同步 Voyager 資料",
+    "message": "透過你的私人 iCloud 空間同步 Nomad 資料",
     "description": "iCloud sync description"
   },
   "syncProvider": {
@@ -1362,7 +1362,7 @@
     "message": "刪除 iCloud 備份"
   },
   "syncDeleteICloudConfirm": {
-    "message": "刪除 iCloud 中所有 Voyager 備份？本機資料會保留，此操作無法復原。"
+    "message": "刪除 iCloud 中所有 Nomad 備份？本機資料會保留，此操作無法復原。"
   },
   "syncDeletingICloudBackup": {
     "message": "正在刪除 iCloud 備份…"
@@ -1610,7 +1610,7 @@
     "description": "啟用分頁標題同步開關標籤"
   },
   "enableTabTitleUpdateHint": {
-    "message": "Gemini 官方已於 2026 年 6 月實作此功能，因此 Voyager 已停用此開關。",
+    "message": "Gemini 官方已於 2026 年 6 月實作此功能，因此 Nomad 已停用此開關。",
     "description": "已停用的分頁標題同步功能說明"
   },
   "persistentExportToolbar": {
@@ -1826,7 +1826,7 @@
     "description": "下載失敗時的狀態前置"
   },
   "googleImageCorrupted": {
-    "message": "Google 傳回的原圖已損壞（並非 Voyager 導致）；下載結果可能模糊或缺少內容",
+    "message": "Google 傳回的原圖已損壞（並非 Nomad 導致）；下載結果可能模糊或缺少內容",
     "description": "Google 下載原圖與預覽不一致時顯示的警告"
   },
   "gemsHide": {
@@ -1898,7 +1898,7 @@
     "description": "Action button label on the auto-apply failure toast"
   },
   "defaultModelAutoApplyFailedFallback": {
-    "message": "請點擊工具列上的 Voyager 圖示開啟設定面板，再關閉此功能。",
+    "message": "請點擊工具列上的 Nomad 圖示開啟設定面板，再關閉此功能。",
     "description": "Fallback message shown when programmatic popup open fails (e.g. Firefox)"
   },
   "setAsDefaultThinkingLevel": {
@@ -2146,7 +2146,7 @@
     "description": "Title of the notice about Gemini's native media watermark switch"
   },
   "watermarkNotice_body": {
-    "message": "Gemini 已提供官方的可見浮水印開關。如果帳號中有 Media watermark，建議設為 Off，改用 Gemini 官方功能，並關閉 Voyager 去浮水印。官方方案更穩定，Voyager 的其他功能不受影響。",
+    "message": "Gemini 已提供官方的可見浮水印開關。如果帳號中有 Media watermark，建議設為 Off，改用 Gemini 官方功能，並關閉 Nomad 去浮水印。官方方案更穩定，Nomad 的其他功能不受影響。",
     "description": "Body text explaining Gemini's native watermark switch"
   },
   "watermarkNotice_detected": {
@@ -2158,19 +2158,19 @@
     "description": "Breadcrumb of where Gemini's media-watermark switch lives"
   },
   "watermarkNotice_caveat": {
-    "message": "找不到 Media watermark？這項功能仍在逐步開放，可以繼續使用 Voyager 去浮水印。無論使用哪種方式，SynthID 和 C2PA 中繼資料都會保留。",
+    "message": "找不到 Media watermark？這項功能仍在逐步開放，可以繼續使用 Nomad 去浮水印。無論使用哪種方式，SynthID 和 C2PA 中繼資料都會保留。",
     "description": "Caveats about SynthID, gradual rollout and account restrictions"
   },
   "watermarkNotice_disableCta": {
-    "message": "已設為 Off，關閉 Voyager 去浮水印",
+    "message": "已設為 Off，關閉 Nomad 去浮水印",
     "description": "Primary button: disable Voyager's watermark removal"
   },
   "watermarkNotice_keepCta": {
-    "message": "沒有這個選項，繼續用 Voyager",
+    "message": "沒有這個選項，繼續用 Nomad",
     "description": "Secondary button: keep Voyager's watermark removal on"
   },
   "watermarkNotice_done": {
-    "message": "Voyager 去浮水印已關閉，其他功能不受影響。",
+    "message": "Nomad 去浮水印已關閉，其他功能不受影響。",
     "description": "Confirmation shown after Voyager's watermark removal is disabled"
   },
   "watermarkNotice_error": {
@@ -2194,7 +2194,7 @@
     "description": "Changelog modal documentation link text"
   },
   "changelog_recommendation": {
-    "message": "如果 Voyager 對你有幫助，歡迎推薦給朋友或在社交媒體上分享，記得 @ 作者哦！",
+    "message": "如果 Nomad 對你有幫助，歡迎推薦給朋友或在社交媒體上分享，記得 @ 作者哦！",
     "description": "Changelog modal recommendation message"
   },
   "changelog_follow_cta": {
@@ -2210,7 +2210,7 @@
     "description": "Changelog annotation pointing to docs icon"
   },
   "changelog_rate_chrome": {
-    "message": "覺得 Voyager 好用嗎？在 Chrome 線上應用程式商店給個好評，幫助更多人發現它！",
+    "message": "覺得 Nomad 好用嗎？在 Chrome 線上應用程式商店給個好評，幫助更多人發現它！",
     "description": "Chrome Web Store rating prompt in changelog modal"
   },
   "changelog_rate_chrome_cta": {
@@ -2218,7 +2218,7 @@
     "description": "Chrome Web Store rating CTA button text"
   },
   "changelog_rate_edge": {
-    "message": "覺得 Voyager 好用嗎？在 Edge 附加元件商店給個好評，幫助更多人發現它！",
+    "message": "覺得 Nomad 好用嗎？在 Edge 附加元件商店給個好評，幫助更多人發現它！",
     "description": "Edge Add-ons store rating prompt in changelog modal"
   },
   "changelog_rate_edge_cta": {
@@ -2286,7 +2286,7 @@
     "description": "Delete fork branch metadata button"
   },
   "forkDeleteDataConfirm": {
-    "message": "刪除此分支關聯？只會移除 Voyager 的分支中繼資料，不會刪除任何對話。",
+    "message": "刪除此分支關聯？只會移除 Nomad 的分支中繼資料，不會刪除任何對話。",
     "description": "Fork metadata delete confirmation prompt"
   },
   "enableForkFeature": {
@@ -2322,7 +2322,7 @@
     "description": "Toggle to enable/disable Voyager on AI Studio"
   },
   "enableOnAIStudioHint": {
-    "message": "關閉後將停用 AI Studio 上的 Voyager 功能（Prompt Manager 不受影響）",
+    "message": "關閉後將停用 AI Studio 上的 Nomad 功能（Prompt Manager 不受影響）",
     "description": "Hint for AI Studio enable toggle"
   },
   "export_select_mode_only_user": {
@@ -2370,7 +2370,7 @@
     "description": "AI 指示部分的標題"
   },
   "aiOrgInstructionsBody": {
-    "message": "根據以上對話和資料夾結構，請將它們重新整理為合理的資料夾層級。輸出一個使用以下格式的 JSON 檔案，可以直接匯入到 Voyager 擴充功能中（使用「合併」匯入策略）。保留已有的合理資料夾，根據需要建立新資料夾，將未歸類的對話移入合適的資料夾。每個資料夾需要一個唯一 ID（使用短隨機字串），每個對話必須保留其原始的 conversationId 和 url。",
+    "message": "根據以上對話和資料夾結構，請將它們重新整理為合理的資料夾層級。輸出一個使用以下格式的 JSON 檔案，可以直接匯入到 Nomad 擴充功能中（使用「合併」匯入策略）。保留已有的合理資料夾，根據需要建立新資料夾，將未歸類的對話移入合適的資料夾。每個資料夾需要一個唯一 ID（使用短隨機字串），每個對話必須保留其原始的 conversationId 和 url。",
     "description": "AI 生成可匯入資料夾結構的指示正文"
   },
   "showMessageTimestamps": {
@@ -2534,7 +2534,7 @@
     "description": "Gemini 回答完成系統通知提示"
   },
   "responseCompleteNotificationHintSafari": {
-    "message": "在 Safari 上，此系統通知由 Gemini Voyager macOS App 傳送。",
+    "message": "在 Safari 上，此系統通知由 Nomad AI Workspace macOS App 傳送。",
     "description": "Safari 上 Gemini 回答完成通知提示"
   },
   "responseCompleteNotificationMessage": {
@@ -2550,7 +2550,7 @@
     "description": "維護者遠端公告通知開關"
   },
   "remoteAnnouncementNotificationHint": {
-    "message": "Voyager 會在本機定時讀取公開 GitHub JSON 公告，只顯示文字/連結提醒。它不能遠端注入或執行程式碼，也不能控制你的電腦。",
+    "message": "Nomad 會在本機定時讀取公開 GitHub JSON 公告，只顯示文字/連結提醒。它不能遠端注入或執行程式碼，也不能控制你的電腦。",
     "description": "遠端公告通知說明及安全邊界"
   },
   "remoteAnnouncementSystemPermissionCta": {
@@ -2558,7 +2558,7 @@
     "description": "為遠端公告授予選用系統通知權限的按鈕文字"
   },
   "remoteAnnouncementDefaultTitle": {
-    "message": "Voyager 公告",
+    "message": "Nomad 公告",
     "description": "遠端公告頁面內提示的預設標題"
   },
   "remoteAnnouncementOpen": {
@@ -2618,7 +2618,7 @@
     "description": "Source label for a plugin fetched from the online catalog for this site"
   },
   "pluginUpdateNeedsNewerVoyager": {
-    "message": "{version} 更新需要較新版本的 Voyager。",
+    "message": "{version} 更新需要較新版本的 Nomad。",
     "description": "Note shown when a plugin update is held back because it needs a newer Voyager; {version} is the held-back version"
   },
   "pluginsOnlineUpdates": {
@@ -2662,11 +2662,11 @@
     "description": "Shown when the online catalog has no entry for the current site"
   },
   "pluginNeedsNewerVoyager": {
-    "message": "需要 Voyager 外掛引擎 {engine}",
+    "message": "需要 Nomad 外掛引擎 {engine}",
     "description": "Note on a plugin this build cannot run because its engine range is newer; {engine} is the required engine range"
   },
   "pluginNeedsVoyagerUpdate": {
-    "message": "需要更新版本的 Voyager 才能執行",
+    "message": "需要更新版本的 Nomad 才能執行",
     "description": "Note on a plugin that uses a capability this build of Voyager does not ship"
   },
   "pluginNeedsSiteAdapterUpdate": {
@@ -2794,7 +2794,7 @@
     "description": "Accent/theme colour picker title"
   },
   "themeColorDesc": {
-    "message": "為目前網站自訂 Voyager 的主題色。",
+    "message": "為目前網站自訂 Nomad 的主題色。",
     "description": "Accent colour picker description"
   },
   "themeColorReset": {
@@ -2855,7 +2855,7 @@
     "message": "即將存滿"
   },
   "storageQuotaWarningToast": {
-    "message": "Voyager 儲存空間已使用 {percent}%。請開啟擴充功能彈出視窗查看或清理資料。"
+    "message": "Nomad 儲存空間已使用 {percent}%。請開啟擴充功能彈出視窗查看或清理資料。"
   },
   "storageQuotaUnknown": {
     "message": "無法讀取用量"
@@ -2864,10 +2864,10 @@
     "message": "儲存明細"
   },
   "storageQuotaSoftLimit": {
-    "message": "Voyager 軟上限"
+    "message": "Nomad 軟上限"
   },
   "storageQuotaEffectiveLimit": {
-    "message": "目前實際上限：{size}。Voyager 會採用此值與所選軟上限中較低者。"
+    "message": "目前實際上限：{size}。Nomad 會採用此值與所選軟上限中較低者。"
   },
   "storageQuotaCache": {
     "message": "可重建快取"
@@ -3051,7 +3051,7 @@
     "description": "Prompt History storage error (#923)"
   },
   "welcomeTitle": {
-    "message": "歡迎使用 Voyager",
+    "message": "歡迎使用 Nomad AI Workspace",
     "description": "Welcome page heading"
   },
   "welcomeSubtitle": {
@@ -3059,23 +3059,23 @@
     "description": "Welcome page subheading"
   },
   "welcomeStepPinTitle": {
-    "message": "把 Voyager 釘選到工具列",
+    "message": "把 Nomad 釘選到工具列",
     "description": "Welcome page: title of the pin-to-toolbar step"
   },
   "welcomeStepPinBody": {
-    "message": "Voyager 的設定都在工具列圖示裡，釘選之後每次少點一步。",
+    "message": "Nomad 的設定都在工具列圖示裡，釘選之後每次少點一步。",
     "description": "Welcome page: why pinning helps"
   },
   "welcomePinStepsChrome": {
-    "message": "點選右上角的拼圖圖示，再點 Voyager 旁邊的圖釘。",
+    "message": "點選右上角的拼圖圖示，再點 Nomad 旁邊的圖釘。",
     "description": "Welcome page: how to pin on Chrome-like browsers"
   },
   "welcomePinStepsEdge": {
-    "message": "點選右上角的「擴充功能」按鈕，再點 Voyager 旁邊的眼睛圖示。",
+    "message": "點選右上角的「擴充功能」按鈕，再點 Nomad 旁邊的眼睛圖示。",
     "description": "Welcome page: how to pin on Microsoft Edge"
   },
   "welcomePinStepsFirefox": {
-    "message": "點選右上角的「擴充功能」按鈕，打開 Voyager 旁邊的齒輪選單，選擇「釘選到工具列」。",
+    "message": "點選右上角的「擴充功能」按鈕，打開 Nomad 旁邊的齒輪選單，選擇「釘選到工具列」。",
     "description": "Welcome page: how to pin on Firefox"
   },
   "welcomePinWaiting": {
@@ -3083,7 +3083,7 @@
     "description": "Welcome page: live status while the icon is not pinned yet"
   },
   "welcomePinDone": {
-    "message": "已釘選，Voyager 在工具列上了。",
+    "message": "已釘選，Nomad 在工具列上了。",
     "description": "Welcome page: live status once the icon is pinned"
   },
   "welcomeArrowLabel": {
@@ -3095,7 +3095,7 @@
     "description": "Welcome page: title of the open-Gemini step"
   },
   "welcomeStepOpenBody": {
-    "message": "Voyager 住在對話頁裡。打開 Gemini，會有一段簡短的導覽帶你熟悉。",
+    "message": "Nomad 住在對話頁裡。打開 Gemini，會有一段簡短的導覽帶你熟悉。",
     "description": "Welcome page: why to open Gemini"
   },
   "welcomeOpenGemini": {
@@ -3103,7 +3103,7 @@
     "description": "Welcome page: primary button"
   },
   "welcomeOtherSites": {
-    "message": "Claude、ChatGPT 和 DeepSeek 在 Voyager 彈出視窗裡開啟。",
+    "message": "Claude、ChatGPT 和 DeepSeek 在 Nomad 彈出視窗裡開啟。",
     "description": "Welcome page: note under the supported-sites list"
   },
   "welcomeStepDone": {
@@ -3111,7 +3111,7 @@
     "description": "Welcome page: badge on a completed step"
   },
   "popupPinHint": {
-    "message": "把 Voyager 釘選到工具列，下次少點一步。",
+    "message": "把 Nomad 釘選到工具列，下次少點一步。",
     "description": "Popup: reminder to pin the extension icon"
   },
   "popupPinHintDismiss": {

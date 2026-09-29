@@ -84,7 +84,7 @@ export function ToolbarMock({ browser, pinned }: ToolbarMockProps) {
       >
         <div className="bg-accent flex items-center gap-2 rounded-md px-2 py-1.5">
           <img src="/icon-32.png" alt="" width={16} height={16} className="rounded" />
-          <span className="text-foreground flex-1 text-xs font-semibold">Voyager</span>
+          <span className="text-foreground flex-1 text-xs font-semibold">Nomad</span>
           <span className="text-primary relative flex h-5 w-5 items-center justify-center">
             {ACTION_ICON[browser]}
           </span>

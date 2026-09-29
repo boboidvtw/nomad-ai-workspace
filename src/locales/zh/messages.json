@@ -80,7 +80,7 @@
     "description": "语言标签"
   },
   "pm_title": {
-    "message": "Voyager",
+    "message": "Nomad AI Workspace",
     "description": "面板标题"
   },
   "pm_add": {
@@ -711,7 +711,7 @@
     "description": "邀请用户在 AI Studio 隐藏已归档对话的引导标题"
   },
   "aistudio_hide_archived_nudge_body": {
-    "message": "Voyager 可以把已经归入文件夹的对话从 Library 表格里隐藏，只留未归类的对话。",
+    "message": "Nomad 可以把已经归入文件夹的对话从 Library 表格里隐藏，只留未归类的对话。",
     "description": "引导卡说明 AI Studio 隐藏已归档功能"
   },
   "aistudio_hide_archived_nudge_enable": {
@@ -899,7 +899,7 @@
     "description": "Title of the first-archive onboarding nudge"
   },
   "hideArchivedNudgeBody": {
-    "message": "Voyager 支持自动隐藏已归档到文件夹的对话，让侧边栏只保留进行中的内容。对话不会被删除，随时可在文件夹中查看。",
+    "message": "Nomad 支持自动隐藏已归档到文件夹的对话，让侧边栏只保留进行中的内容。对话不会被删除，随时可在文件夹中查看。",
     "description": "Body text of the first-archive onboarding nudge"
   },
   "hideArchivedNudgeEnable": {
@@ -919,7 +919,7 @@
     "description": "Title of the floating-mode fallback nudge"
   },
   "floatingModeNudgeBody": {
-    "message": "Voyager 未找到 Gemini 侧边栏，可能是页面布局发生了变化。你仍可以在悬浮窗中浏览文件夹。",
+    "message": "Nomad 未找到 Gemini 侧边栏，可能是页面布局发生了变化。你仍可以在悬浮窗中浏览文件夹。",
     "description": "Body copy of the floating-mode fallback nudge"
   },
   "floatingModeNudgeEnable": {
@@ -1291,7 +1291,7 @@
     "description": "云同步描述"
   },
   "cloudSyncDescriptionICloud": {
-    "message": "通过你的私人 iCloud 空间同步 Voyager 数据",
+    "message": "通过你的私人 iCloud 空间同步 Nomad 数据",
     "description": "iCloud 同步描述"
   },
   "syncProvider": {
@@ -1402,7 +1402,7 @@
     "message": "删除 iCloud 备份"
   },
   "syncDeleteICloudConfirm": {
-    "message": "删除 iCloud 中的所有 Voyager 备份？本机数据会保留，此操作无法撤销。"
+    "message": "删除 iCloud 中的所有 Nomad 备份？本机数据会保留，此操作无法撤销。"
   },
   "syncDeletingICloudBackup": {
     "message": "正在删除 iCloud 备份…"
@@ -1650,7 +1650,7 @@
     "description": "启用标签页标题同步开关标签"
   },
   "enableTabTitleUpdateHint": {
-    "message": "Gemini 官方已在 2026 年 6 月实现此功能，因此 Voyager 已停用该开关。",
+    "message": "Gemini 官方已在 2026 年 6 月实现此功能，因此 Nomad 已停用该开关。",
     "description": "已停用的标签页标题同步功能说明"
   },
   "persistentExportToolbar": {
@@ -1826,7 +1826,7 @@
     "description": "下载失败时的状态前缀"
   },
   "googleImageCorrupted": {
-    "message": "Google 返回的原图已损坏（并非 Voyager 导致）；下载结果可能模糊或内容缺失",
+    "message": "Google 返回的原图已损坏（并非 Nomad 导致）；下载结果可能模糊或内容缺失",
     "description": "Google 下载原图与预览不一致时显示的警告"
   },
   "gemsHide": {
@@ -1898,7 +1898,7 @@
     "description": "Action button label on the auto-apply failure toast"
   },
   "defaultModelAutoApplyFailedFallback": {
-    "message": "请点击工具栏上的 Voyager 图标打开设置面板，然后关闭此功能。",
+    "message": "请点击工具栏上的 Nomad 图标打开设置面板，然后关闭此功能。",
     "description": "Fallback message shown when programmatic popup open fails (e.g. Firefox)"
   },
   "setAsDefaultThinkingLevel": {
@@ -2146,7 +2146,7 @@
     "description": "Title of the notice about Gemini's native media watermark switch"
   },
   "watermarkNotice_body": {
-    "message": "Gemini 已提供官方的可见水印开关。如果你的账号有 Media watermark，建议设为 Off，改用 Gemini 官方功能，并关闭 Voyager 去水印。官方方案更稳定，Voyager 的其他功能不受影响。",
+    "message": "Gemini 已提供官方的可见水印开关。如果你的账号有 Media watermark，建议设为 Off，改用 Gemini 官方功能，并关闭 Nomad 去水印。官方方案更稳定，Nomad 的其他功能不受影响。",
     "description": "Body text explaining Gemini's native watermark switch"
   },
   "watermarkNotice_detected": {
@@ -2158,19 +2158,19 @@
     "description": "Breadcrumb of where Gemini's media-watermark switch lives"
   },
   "watermarkNotice_caveat": {
-    "message": "找不到 Media watermark？这个功能仍在逐步开放，你可以继续使用 Voyager 去水印。无论使用哪种方式，SynthID 和 C2PA 元数据都会保留。",
+    "message": "找不到 Media watermark？这个功能仍在逐步开放，你可以继续使用 Nomad 去水印。无论使用哪种方式，SynthID 和 C2PA 元数据都会保留。",
     "description": "Caveats about SynthID, gradual rollout and account restrictions"
   },
   "watermarkNotice_disableCta": {
-    "message": "已设为 Off，关闭 Voyager 去水印",
+    "message": "已设为 Off，关闭 Nomad 去水印",
     "description": "Primary button: disable Voyager's watermark removal"
   },
   "watermarkNotice_keepCta": {
-    "message": "没有这个选项，继续用 Voyager",
+    "message": "没有这个选项，继续用 Nomad",
     "description": "Secondary button: keep Voyager's watermark removal on"
   },
   "watermarkNotice_done": {
-    "message": "Voyager 去水印已关闭，其他功能不受影响。",
+    "message": "Nomad 去水印已关闭，其他功能不受影响。",
     "description": "Confirmation shown after Voyager's watermark removal is disabled"
   },
   "watermarkNotice_error": {
@@ -2194,7 +2194,7 @@
     "description": "Changelog modal documentation link text"
   },
   "changelog_recommendation": {
-    "message": "如果 Voyager 帮到了你，欢迎推荐给朋友或发到社媒，记得 @ 作者哦！",
+    "message": "如果 Nomad 帮到了你，欢迎推荐给朋友或发到社媒，记得 @ 作者哦！",
     "description": "Changelog modal recommendation message"
   },
   "changelog_follow_cta": {
@@ -2210,7 +2210,7 @@
     "description": "Changelog annotation pointing to docs icon"
   },
   "changelog_rate_chrome": {
-    "message": "觉得 Voyager 好用吗？在 Chrome 应用商店给个好评，能帮助更多人发现它！",
+    "message": "觉得 Nomad 好用吗？在 Chrome 应用商店给个好评，能帮助更多人发现它！",
     "description": "Chrome Web Store rating prompt in changelog modal"
   },
   "changelog_rate_chrome_cta": {
@@ -2218,7 +2218,7 @@
     "description": "Chrome Web Store rating CTA button text"
   },
   "changelog_rate_edge": {
-    "message": "觉得 Voyager 好用吗？在 Edge 加载项商店给个好评，能帮助更多人发现它！",
+    "message": "觉得 Nomad 好用吗？在 Edge 加载项商店给个好评，能帮助更多人发现它！",
     "description": "Edge Add-ons store rating prompt in changelog modal"
   },
   "changelog_rate_edge_cta": {
@@ -2286,7 +2286,7 @@
     "description": "Delete fork branch metadata button"
   },
   "forkDeleteDataConfirm": {
-    "message": "删除这个分支关联？仅删除 Voyager 的分支元数据，不会删除任何对话。",
+    "message": "删除这个分支关联？仅删除 Nomad 的分支元数据，不会删除任何对话。",
     "description": "Fork metadata delete confirmation prompt"
   },
   "enableForkFeature": {
@@ -2322,7 +2322,7 @@
     "description": "Toggle to enable/disable Voyager on AI Studio"
   },
   "enableOnAIStudioHint": {
-    "message": "关闭后将禁用 AI Studio 上的 Voyager 功能（Prompt Manager 不受影响）",
+    "message": "关闭后将禁用 AI Studio 上的 Nomad 功能（Prompt Manager 不受影响）",
     "description": "Hint for AI Studio enable toggle"
   },
   "export_select_mode_only_user": {
@@ -2370,7 +2370,7 @@
     "description": "AI 指示部分的标题"
   },
   "aiOrgInstructionsBody": {
-    "message": "根据以上对话和文件夹结构，请将它们重新整理为合理的文件夹层级。输出一个使用以下格式的 JSON 文件，可以直接导入到 Voyager 扩展中（使用「合并」导入策略）。保留已有的合理文件夹，根据需要创建新文件夹，将未归类的对话移入合适的文件夹。每个文件夹需要一个唯一 ID（使用短随机字符串），每个对话必须保留其原始的 conversationId 和 url。",
+    "message": "根据以上对话和文件夹结构，请将它们重新整理为合理的文件夹层级。输出一个使用以下格式的 JSON 文件，可以直接导入到 Nomad 扩展中（使用「合并」导入策略）。保留已有的合理文件夹，根据需要创建新文件夹，将未归类的对话移入合适的文件夹。每个文件夹需要一个唯一 ID（使用短随机字符串），每个对话必须保留其原始的 conversationId 和 url。",
     "description": "AI 生成可导入文件夹结构的指示正文"
   },
   "showMessageTimestamps": {
@@ -2534,7 +2534,7 @@
     "description": "Gemini 回答完成系统通知提示"
   },
   "responseCompleteNotificationHintSafari": {
-    "message": "在 Safari 上，此系统通知由 Gemini Voyager macOS App 发送。",
+    "message": "在 Safari 上，此系统通知由 Nomad AI Workspace macOS App 发送。",
     "description": "Safari 上 Gemini 回答完成通知提示"
   },
   "responseCompleteNotificationMessage": {
@@ -2550,7 +2550,7 @@
     "description": "维护者远程公告通知开关"
   },
   "remoteAnnouncementNotificationHint": {
-    "message": "Voyager 会在本地定时读取公开 GitHub JSON 公告，只显示文字/链接提醒。它不能远程注入或执行代码，也不能控制你的电脑。",
+    "message": "Nomad 会在本地定时读取公开 GitHub JSON 公告，只显示文字/链接提醒。它不能远程注入或执行代码，也不能控制你的电脑。",
     "description": "远程公告通知说明及安全边界"
   },
   "remoteAnnouncementSystemPermissionCta": {
@@ -2558,7 +2558,7 @@
     "description": "为远程公告授予可选系统通知权限的按钮文本"
   },
   "remoteAnnouncementDefaultTitle": {
-    "message": "Voyager 公告",
+    "message": "Nomad 公告",
     "description": "远程公告页面内提示的默认标题"
   },
   "remoteAnnouncementOpen": {
@@ -2618,7 +2618,7 @@
     "description": "Source label for a plugin fetched from the online catalog for this site"
   },
   "pluginUpdateNeedsNewerVoyager": {
-    "message": "{version} 更新需要更高版本的 Voyager。",
+    "message": "{version} 更新需要更高版本的 Nomad。",
     "description": "Note shown when a plugin update is held back because it needs a newer Voyager; {version} is the held-back version"
   },
   "pluginsOnlineUpdates": {
@@ -2662,11 +2662,11 @@
     "description": "Shown when the online catalog has no entry for the current site"
   },
   "pluginNeedsNewerVoyager": {
-    "message": "需要 Voyager 插件引擎 {engine}",
+    "message": "需要 Nomad 插件引擎 {engine}",
     "description": "Note on a plugin this build cannot run because its engine range is newer; {engine} is the required engine range"
   },
   "pluginNeedsVoyagerUpdate": {
-    "message": "需要更新版本的 Voyager 才能运行",
+    "message": "需要更新版本的 Nomad 才能运行",
     "description": "Note on a plugin that uses a capability this build of Voyager does not ship"
   },
   "pluginNeedsSiteAdapterUpdate": {
@@ -2794,7 +2794,7 @@
     "description": "Accent/theme colour picker title"
   },
   "themeColorDesc": {
-    "message": "为当前网站自定义 Voyager 的主题色。",
+    "message": "为当前网站自定义 Nomad 的主题色。",
     "description": "Accent colour picker description"
   },
   "themeColorReset": {
@@ -2855,7 +2855,7 @@
     "message": "即将存满"
   },
   "storageQuotaWarningToast": {
-    "message": "Voyager 存储空间已使用 {percent}%。请打开扩展弹窗查看或清理数据。"
+    "message": "Nomad 存储空间已使用 {percent}%。请打开扩展弹窗查看或清理数据。"
   },
   "storageQuotaUnknown": {
     "message": "无法读取用量"
@@ -2864,10 +2864,10 @@
     "message": "存储明细"
   },
   "storageQuotaSoftLimit": {
-    "message": "Voyager 软上限"
+    "message": "Nomad 软上限"
   },
   "storageQuotaEffectiveLimit": {
-    "message": "当前实际上限：{size}。Voyager 会以它和所选软上限中的较低值为准。"
+    "message": "当前实际上限：{size}。Nomad 会以它和所选软上限中的较低值为准。"
   },
   "storageQuotaCache": {
     "message": "可重建缓存"
@@ -3051,7 +3051,7 @@
     "description": "Prompt History storage error (#923)"
   },
   "welcomeTitle": {
-    "message": "欢迎使用 Voyager",
+    "message": "欢迎使用 Nomad AI Workspace",
     "description": "Welcome page heading"
   },
   "welcomeSubtitle": {
@@ -3059,23 +3059,23 @@
     "description": "Welcome page subheading"
   },
   "welcomeStepPinTitle": {
-    "message": "把 Voyager 固定到工具栏",
+    "message": "把 Nomad 固定到工具栏",
     "description": "Welcome page: title of the pin-to-toolbar step"
   },
   "welcomeStepPinBody": {
-    "message": "Voyager 的设置都在工具栏图标里，固定之后每次少点一步。",
+    "message": "Nomad 的设置都在工具栏图标里，固定之后每次少点一步。",
     "description": "Welcome page: why pinning helps"
   },
   "welcomePinStepsChrome": {
-    "message": "点击右上角的拼图图标，再点 Voyager 旁边的图钉。",
+    "message": "点击右上角的拼图图标，再点 Nomad 旁边的图钉。",
     "description": "Welcome page: how to pin on Chrome-like browsers"
   },
   "welcomePinStepsEdge": {
-    "message": "点击右上角的“扩展”按钮，再点 Voyager 旁边的眼睛图标。",
+    "message": "点击右上角的“扩展”按钮，再点 Nomad 旁边的眼睛图标。",
     "description": "Welcome page: how to pin on Microsoft Edge"
   },
   "welcomePinStepsFirefox": {
-    "message": "点击右上角的“扩展”按钮，打开 Voyager 旁边的齿轮菜单，选择“固定到工具栏”。",
+    "message": "点击右上角的“扩展”按钮，打开 Nomad 旁边的齿轮菜单，选择“固定到工具栏”。",
     "description": "Welcome page: how to pin on Firefox"
   },
   "welcomePinWaiting": {
@@ -3083,7 +3083,7 @@
     "description": "Welcome page: live status while the icon is not pinned yet"
   },
   "welcomePinDone": {
-    "message": "已固定，Voyager 在工具栏上了。",
+    "message": "已固定，Nomad 在工具栏上了。",
     "description": "Welcome page: live status once the icon is pinned"
   },
   "welcomeArrowLabel": {
@@ -3095,7 +3095,7 @@
     "description": "Welcome page: title of the open-Gemini step"
   },
   "welcomeStepOpenBody": {
-    "message": "Voyager 住在对话页里。打开 Gemini，会有一段简短的引导带你熟悉。",
+    "message": "Nomad 住在对话页里。打开 Gemini，会有一段简短的引导带你熟悉。",
     "description": "Welcome page: why to open Gemini"
   },
   "welcomeOpenGemini": {
@@ -3103,7 +3103,7 @@
     "description": "Welcome page: primary button"
   },
   "welcomeOtherSites": {
-    "message": "Claude、ChatGPT 和 DeepSeek 在 Voyager 弹窗里开启。",
+    "message": "Claude、ChatGPT 和 DeepSeek 在 Nomad 弹窗里开启。",
     "description": "Welcome page: note under the supported-sites list"
   },
   "welcomeStepDone": {
@@ -3111,7 +3111,7 @@
     "description": "Welcome page: badge on a completed step"
   },
   "popupPinHint": {
-    "message": "把 Voyager 固定到工具栏，下次少点一步。",
+    "message": "把 Nomad 固定到工具栏，下次少点一步。",
     "description": "Popup: reminder to pin the extension icon"
   },
   "popupPinHintDismiss": {
