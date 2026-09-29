@@ -18,7 +18,7 @@ export function PopupFooter({
 }) {
   const webStoreRatingChannel = getWebStoreRatingChannel();
   const websiteUrl =
-    language === 'zh' ? 'https://voyager.nagi.fun' : `https://voyager.nagi.fun/${language}`;
+    'https://github.com/boboidvtw/nomad-ai-workspace#readme';
 
   // Bundled "Fable 5 Verified" badge (public/fable-verified-badge.png). Guarded
   // so non-extension contexts (e.g. tests) don't throw on chrome.runtime.getURL.
@@ -90,6 +90,18 @@ export function PopupFooter({
           </a>
         </div>
 
+                <div className="flex items-center justify-between text-xs px-1">
+          <a
+            href="https://www.paypal.me/boboidvtw"
+            target="_blank"
+            rel="noreferrer"
+            className="text-pink-400 hover:text-pink-300 font-semibold flex items-center gap-1.5 transition-colors"
+          >
+            <span>❤️ 贊助與支持</span>
+          </a>
+          <span className="text-muted-foreground text-[10px]">boboidvtw</span>
+        </div>
+
         {webStoreRatingChannel && (
           <a
             href={
@@ -116,7 +128,7 @@ export function PopupFooter({
         )}
 
         <a
-          href="https://github.com/voyager-crew/voyager"
+          href="https://github.com/boboidvtw/nomad-ai-workspace"
           target="_blank"
           rel="noreferrer"
           className="bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-primary/25 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold tracking-wide transition-all hover:scale-[1.02] hover:shadow-lg active:scale-[0.97]"

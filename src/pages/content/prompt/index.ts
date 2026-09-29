@@ -2086,12 +2086,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       addBtn.textContent = i18n.t('pm_add');
       renderSupportLinkLabel(supportLink, i18n.t('sponsorMe'));
       supportLink.title = i18n.t('sponsorMe');
-      i18n.get().then((lang) => {
-        supportLink.href =
-          lang === 'zh'
-            ? 'https://voyager.nagi.fun/guide/sponsor.html'
-            : `https://voyager.nagi.fun/${lang}/guide/sponsor.html`;
-      });
+      supportLink.href = 'https://www.paypal.me/boboidvtw';
 
       settingsBtn.textContent = i18n.t('pm_settings');
       settingsBtn.title = i18n.t('pm_settings_tooltip');

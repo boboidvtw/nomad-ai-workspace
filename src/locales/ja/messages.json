@@ -2574,7 +2574,7 @@
     "description": "Popup section title for the plugin list"
   },
   "pluginsDescription": {
-    "message": "他の AI サイトを強化するプラグインを有効化します。オンにするとそのサイトへのアクセス権限を要求します。有効なプラグインは voyager.nagi.fun で更新を確認します。",
+    "message": "他の AI サイトを強化するプラグインを有効化します。オンにするとそのサイトへのアクセス権限を要求します。有効なプラグインは Nomad repository で更新を確認します。",
     "description": "Popup subtitle explaining the plugin list"
   },
   "pluginViewSource": {
@@ -2626,7 +2626,7 @@
     "description": "Label for the switch that allows online plugin update checks for this site"
   },
   "pluginsOnlineUpdatesHint": {
-    "message": "このサイト向けのプラグイン更新を voyager.nagi.fun で確認します。送信するのはサイト名だけで、Cookie やページ内容は送りません。オフにすると、上の更新ボタンだけが通信します。",
+    "message": "このサイト向けのプラグイン更新を Nomad repository で確認します。送信するのはサイト名だけで、Cookie やページ内容は送りません。オフにすると、上の更新ボタンだけが通信します。",
     "description": "Explains what the online plugin update check sends and when it runs"
   },
   "pluginsCheckInterval": {

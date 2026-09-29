@@ -122,7 +122,7 @@ export function rewriteChangelogImageUrls(
  * zh is the root locale and gets no prefix.
  */
 export function rewriteChangelogDocUrls(markdown: string, lang: AppLanguage): string {
-  const base = 'https://voyager.nagi.fun';
+  const base = 'https://github.com/boboidvtw/nomad-ai-workspace';
   return markdown.replace(MARKDOWN_DOC_LINK_REGEX, (_full, text, path) => {
     const url = lang === 'zh' ? `${base}${path}` : `${base}/${lang}${path}`;
     return `[${text}](${url})`;
@@ -174,7 +174,7 @@ function t(key: TranslationKey, lang: AppLanguage): string {
  * zh is the root locale (no prefix), others use /{locale}/ prefix.
  */
 function getDocsUrl(lang: AppLanguage): string {
-  const base = 'https://voyager.nagi.fun';
+  const base = 'https://github.com/boboidvtw/nomad-ai-workspace';
   const path = '/guide/getting-started';
   if (lang === 'zh') return `${base}${path}`;
   return `${base}/${lang}${path}`;
@@ -185,8 +185,8 @@ function getDocsUrl(lang: AppLanguage): string {
  * zh is the root locale (no prefix), others use /{locale}/ prefix.
  */
 function getSponsorUrl(lang: AppLanguage): string {
-  const base = 'https://voyager.nagi.fun';
-  const path = '/guide/sponsor.html';
+  const base = 'https://github.com/boboidvtw/nomad-ai-workspace';
+  return 'https://www.paypal.me/boboidvtw';
   if (lang === 'zh') return `${base}${path}`;
   return `${base}/${lang}${path}`;
 }

@@ -2574,7 +2574,7 @@
     "description": "Popup section title for the plugin list"
   },
   "pluginsDescription": {
-    "message": "Ative plugins que aprimoram outros sites de IA. Ativar um pede permissão para aquele site. Os plugins ativados verificam atualizações no voyager.nagi.fun.",
+    "message": "Ative plugins que aprimoram outros sites de IA. Ativar um pede permissão para aquele site. Os plugins ativados verificam atualizações no Nomad repository.",
     "description": "Popup subtitle explaining the plugin list"
   },
   "pluginViewSource": {
@@ -2626,7 +2626,7 @@
     "description": "Label for the switch that allows online plugin update checks for this site"
   },
   "pluginsOnlineUpdatesHint": {
-    "message": "Consulta o voyager.nagi.fun em busca de atualizações de plugins para este site — só o nome do site é enviado, sem cookies nem conteúdo da página. Se desativar, apenas o botão de atualizar acima se conecta.",
+    "message": "Consulta o Nomad repository em busca de atualizações de plugins para este site — só o nome do site é enviado, sem cookies nem conteúdo da página. Se desativar, apenas o botão de atualizar acima se conecta.",
     "description": "Explains what the online plugin update check sends and when it runs"
   },
   "pluginsCheckInterval": {

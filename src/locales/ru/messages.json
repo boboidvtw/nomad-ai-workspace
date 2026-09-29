@@ -2574,7 +2574,7 @@
     "description": "Popup section title for the plugin list"
   },
   "pluginsDescription": {
-    "message": "Включайте плагины, улучшающие другие сайты ИИ. При включении запрашивается доступ к этому сайту. Включённые плагины проверяют обновления на voyager.nagi.fun.",
+    "message": "Включайте плагины, улучшающие другие сайты ИИ. При включении запрашивается доступ к этому сайту. Включённые плагины проверяют обновления на Nomad repository.",
     "description": "Popup subtitle explaining the plugin list"
   },
   "pluginViewSource": {
@@ -2626,7 +2626,7 @@
     "description": "Label for the switch that allows online plugin update checks for this site"
   },
   "pluginsOnlineUpdatesHint": {
-    "message": "Проверяет обновления плагинов для этого сайта на voyager.nagi.fun — отправляется только имя сайта, без файлов cookie и содержимого страницы. Если выключить, подключается только кнопка обновления выше.",
+    "message": "Проверяет обновления плагинов для этого сайта на Nomad repository — отправляется только имя сайта, без файлов cookie и содержимого страницы. Если выключить, подключается только кнопка обновления выше.",
     "description": "Explains what the online plugin update check sends and when it runs"
   },
   "pluginsCheckInterval": {

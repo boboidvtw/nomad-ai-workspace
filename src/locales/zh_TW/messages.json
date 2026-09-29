@@ -2574,7 +2574,7 @@
     "description": "Popup section title for the plugin list"
   },
   "pluginsDescription": {
-    "message": "啟用強化其他 AI 網站的外掛。開啟時會要求該網站的存取權限。已啟用的外掛會向 voyager.nagi.fun 檢查更新。",
+    "message": "啟用強化其他 AI 網站的外掛。開啟時會要求該網站的存取權限。已啟用的外掛會向 Nomad 官方儲存庫 檢查更新。",
     "description": "Popup subtitle explaining the plugin list"
   },
   "pluginViewSource": {
@@ -2626,7 +2626,7 @@
     "description": "Label for the switch that allows online plugin update checks for this site"
   },
   "pluginsOnlineUpdatesHint": {
-    "message": "會向 voyager.nagi.fun 查詢此網站的外掛更新——只傳送網站名稱，不傳送 Cookie 或頁面內容。關閉後，只有上方的重新整理按鈕會連線。",
+    "message": "會向 Nomad 官方儲存庫 查詢此網站的外掛更新——只傳送網站名稱，不傳送 Cookie 或頁面內容。關閉後，只有上方的重新整理按鈕會連線。",
     "description": "Explains what the online plugin update check sends and when it runs"
   },
   "pluginsCheckInterval": {

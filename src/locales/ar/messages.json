@@ -2574,7 +2574,7 @@
     "description": "Popup section title for the plugin list"
   },
   "pluginsDescription": {
-    "message": "فعّل الإضافات التي تحسّن مواقع الذكاء الاصطناعي الأخرى. تفعيل إضافة يطلب إذن الوصول إلى ذلك الموقع. تبحث الإضافات المفعّلة عن التحديثات في voyager.nagi.fun.",
+    "message": "فعّل الإضافات التي تحسّن مواقع الذكاء الاصطناعي الأخرى. تفعيل إضافة يطلب إذن الوصول إلى ذلك الموقع. تبحث الإضافات المفعّلة عن التحديثات في Nomad repository.",
     "description": "Popup subtitle explaining the plugin list"
   },
   "pluginViewSource": {
@@ -2626,7 +2626,7 @@
     "description": "Label for the switch that allows online plugin update checks for this site"
   },
   "pluginsOnlineUpdatesHint": {
-    "message": "يبحث في voyager.nagi.fun عن تحديثات الإضافات لهذا الموقع — يُرسَل اسم الموقع فقط، دون ملفات ارتباط أو محتوى الصفحة. عند الإيقاف، لا يتصل سوى زر التحديث أعلاه.",
+    "message": "يبحث في Nomad repository عن تحديثات الإضافات لهذا الموقع — يُرسَل اسم الموقع فقط، دون ملفات ارتباط أو محتوى الصفحة. عند الإيقاف، لا يتصل سوى زر التحديث أعلاه.",
     "description": "Explains what the online plugin update check sends and when it runs"
   },
   "pluginsCheckInterval": {

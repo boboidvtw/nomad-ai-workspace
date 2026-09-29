@@ -2574,7 +2574,7 @@
     "description": "Popup section title for the plugin list"
   },
   "pluginsDescription": {
-    "message": "启用增强其他 AI 网站的插件。开启时会请求该网站的访问权限。已启用的插件会向 voyager.nagi.fun 检查更新。",
+    "message": "启用增强其他 AI 网站的插件。开启时会请求该网站的访问权限。已启用的插件会向 Nomad 官方仓库 检查更新。",
     "description": "Popup subtitle explaining the plugin list"
   },
   "pluginViewSource": {
@@ -2626,7 +2626,7 @@
     "description": "Label for the switch that allows online plugin update checks for this site"
   },
   "pluginsOnlineUpdatesHint": {
-    "message": "会向 voyager.nagi.fun 查询此网站的插件更新——只发送网站名称，不发送 Cookie 或页面内容。关闭后，只有上方的刷新按钮会联网。",
+    "message": "会向 Nomad 官方仓库 查询此网站的插件更新——只发送网站名称，不发送 Cookie 或页面内容。关闭后，只有上方的刷新按钮会联网。",
     "description": "Explains what the online plugin update check sends and when it runs"
   },
   "pluginsCheckInterval": {

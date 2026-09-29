@@ -2574,7 +2574,7 @@
     "description": "Popup section title for the plugin list"
   },
   "pluginsDescription": {
-    "message": "Activez des extensions qui améliorent d'autres sites d'IA. En activer une demande l'autorisation pour ce site. Les extensions activées recherchent des mises à jour sur voyager.nagi.fun.",
+    "message": "Activez des extensions qui améliorent d'autres sites d'IA. En activer une demande l'autorisation pour ce site. Les extensions activées recherchent des mises à jour sur Nomad repository.",
     "description": "Popup subtitle explaining the plugin list"
   },
   "pluginViewSource": {
@@ -2626,7 +2626,7 @@
     "description": "Label for the switch that allows online plugin update checks for this site"
   },
   "pluginsOnlineUpdatesHint": {
-    "message": "Consulte voyager.nagi.fun pour les mises à jour d'extensions de ce site — seul le nom du site est envoyé, sans cookies ni contenu de page. Désactivé, seul le bouton d'actualisation ci-dessus se connecte.",
+    "message": "Consulte Nomad repository pour les mises à jour d'extensions de ce site — seul le nom du site est envoyé, sans cookies ni contenu de page. Désactivé, seul le bouton d'actualisation ci-dessus se connecte.",
     "description": "Explains what the online plugin update check sends and when it runs"
   },
   "pluginsCheckInterval": {
