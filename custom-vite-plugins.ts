@@ -71,7 +71,7 @@ export function crxI18n(options: {
 
   const getJsonFiles = (dir: string): Array<string> => {
     const files = fs.readdirSync(dir, { recursive: true }) as string[];
-    return files.filter((file) => !!file && file.endsWith('.json'));
+    return files.filter((file) => !!file && file.endsWith('messages.json'));
   };
   const entry = resolve(__dirname, options.src);
   const localeFiles = getJsonFiles(entry);

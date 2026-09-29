@@ -5,9 +5,9 @@
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import type { Language } from '@src/types/settings';
-import enTranslation from '@locales/en/translation.json';
-import zhTranslation from '@locales/zh/translation.json';
-import zhTWTranslation from '@locales/zh-TW/translation.json';
+import enTranslation from '@/features/claude/locales/en.json';
+import zhTranslation from '@/features/claude/locales/zh.json';
+import zhTWTranslation from '@/features/claude/locales/zh_TW.json';
 
 export const i18n = i18next;
 
