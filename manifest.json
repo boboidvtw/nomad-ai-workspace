@@ -96,9 +96,6 @@
       ],
       "js": [
         "src/pages/content/claude/index.tsx"
-      ],
-      "css": [
-        "src/pages/content/claude/style.css"
       ]
     }
   ],
