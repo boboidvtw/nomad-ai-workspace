@@ -268,7 +268,7 @@ describe('startWatermarkNativeNotice', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     const disableBtn = document.querySelector<HTMLButtonElement>('.gv-wm-notice__btn--primary');
-    expect(disableBtn?.textContent).toBe('已设为 Off，关闭 Voyager 去水印');
+    expect(disableBtn?.textContent).toBe('已设为 Off，关闭 Nomad 去水印');
     disableBtn?.click();
     await flush();
 
