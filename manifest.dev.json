@@ -4,7 +4,10 @@
     "default_popup": "src/pages/popup/index.html"
   },
   "icons": {
-    "128": "public/dev-icon-128.png"
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
   },
   "permissions": [
     "storage",
@@ -82,5 +85,6 @@
     "service_worker": "src/pages/background/index.ts",
     "type": "module"
   },
-  "version": "1.9.0"
+  "version": "1.0.0",
+  "name": "Nomad AI Workspace (Dev)"
 }
