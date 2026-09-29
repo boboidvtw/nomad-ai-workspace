@@ -882,6 +882,17 @@ function patternToDomain(pattern: string | undefined): string | null {
   }
 }
 
+function isPrimaryNativePlatform(pattern: string): boolean {
+  const domain = patternToDomain(pattern);
+  if (!domain) return false;
+  return (
+    domain.includes('claude.ai') ||
+    domain.includes('gemini.google.com') ||
+    domain.includes('aistudio.google.') ||
+    domain.includes('business.gemini.google')
+  );
+}
+
 function toMatchPatterns(domain: string): string[] {
   return customWebsiteOriginPatterns(domain) ?? [];
 }
@@ -962,7 +973,9 @@ async function doSyncCustomContentScripts(domains?: string[]): Promise<void> {
     // No-op if script was not registered
   }
 
-  if (!grantedMatches.length) return;
+  // Filter out origins that already have dedicated native content scripts
+  const safeCustomMatches = grantedMatches.filter((m) => !isPrimaryNativePlatform(m));
+  if (!safeCustomMatches.length) return;
 
   const runAt =
     manifestContentScript.run_at === 'document_start'
@@ -984,20 +997,20 @@ async function doSyncCustomContentScripts(domains?: string[]): Promise<void> {
         id: CUSTOM_CONTENT_SCRIPT_ID,
         js: jsResources,
         css: cssResources,
-        matches: grantedMatches,
+        matches: safeCustomMatches,
         allFrames: manifestContentScript.all_frames,
         runAt,
         persistAcrossSessions: true,
       },
     ]);
-    console.log('[Background] Custom content scripts registered for', grantedMatches);
+    console.log('[Background] Custom content scripts registered for', safeCustomMatches);
   } catch (error) {
     console.error('[Background] Failed to register custom content scripts:', error);
   }
 
   // Registration only covers future navigations, so enabling a site would
   // otherwise take a reload to show up. Cover the tabs already open on it.
-  await injectVoyagerScriptIntoOpenTabs(grantedMatches, undefined, jsResources, cssResources);
+  await injectVoyagerScriptIntoOpenTabs(safeCustomMatches, undefined, jsResources, cssResources);
 }
 
 /**
@@ -1130,7 +1143,10 @@ async function doSyncPluginContentScripts(): Promise<void> {
     CLAUDE_USAGE_MAIN_SCRIPT_ID,
   ]);
 
-  if (!grantedMatches.length) return;
+  // Primary AI platforms (Claude, Gemini, AI Studio) have their own dedicated native content scripts.
+  // Never dynamically inject Gemini's content_scripts[0] onto them.
+  const safePluginMatches = grantedMatches.filter((m) => !isPrimaryNativePlatform(m));
+  if (!safePluginMatches.length) return;
 
   const runAt =
     manifestContentScript.run_at === 'document_start'
@@ -1145,7 +1161,7 @@ async function doSyncPluginContentScripts(): Promise<void> {
   const cssResources = isFirefox()
     ? manifestContentScript.css?.map(toRelativeExtensionPath)
     : manifestContentScript.css;
-  const { topFrameOrigins, embeddedFrameOrigins } = partitionPluginOriginPatterns(grantedMatches);
+  const { topFrameOrigins, embeddedFrameOrigins } = partitionPluginOriginPatterns(safePluginMatches);
 
   try {
     const registrations: chrome.scripting.RegisteredContentScript[] = [];
@@ -1179,7 +1195,7 @@ async function doSyncPluginContentScripts(): Promise<void> {
     await injectVoyagerScriptIntoOpenTabs(topFrameOrigins, undefined, jsResources, cssResources);
     if (embeddedFrameOrigins.length) {
       await injectVoyagerScriptIntoOpenTabs(
-        grantedMatches,
+        safePluginMatches,
         embeddedFrameOrigins,
         jsResources,
         cssResources,

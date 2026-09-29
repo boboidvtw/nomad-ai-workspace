@@ -30,12 +30,13 @@ export const baseManifest = {
   // shows up as "Voyager (Dev)" in chrome://extensions, the toolbar tooltip,
   // and OS task switchers. Makes it impossible to confuse with the Chrome Web
   // Store install when both are loaded.
-  ...(isDev ? { name: 'Voyager (Dev)' } : {}),
+  ...(isDev ? { name: 'Nomad (Dev)' } : {}),
 } as ManifestV3Export;
 
 export const baseBuildOptions: BuildOptions = {
   sourcemap: isDev,
   emptyOutDir: !isDev,
+  assetsInlineLimit: 0,
   // Content scripts run under page CSP context for DOM-injected preload links.
   // Disable Vite modulepreload hints to avoid generating "/assets/*" requests
   // on the host page origin (e.g. aistudio.google.com), which are blocked by CSP.

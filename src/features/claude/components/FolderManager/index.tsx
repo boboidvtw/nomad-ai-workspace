@@ -177,7 +177,7 @@ export default function FolderManager() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `claude-voyager-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `claude-nomad-backup-${new Date().toISOString().slice(0, 10)}.json`;
         document.body.appendChild(a);
         a.click();
         a.remove();
