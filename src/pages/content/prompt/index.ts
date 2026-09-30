@@ -118,32 +118,44 @@ type PMTheme = 'light' | 'dark';
 type PMViewMode = 'compact' | 'comfortable';
 
 async function resolveCurrentHighlightScope(): Promise<HighlightAccountScope> {
-  const context = detectAccountContextFromDocument(window.location.href, document);
-  const resolved = await accountIsolationService.resolveAccountScope({
-    pageUrl: window.location.href,
-    routeUserId: context.routeUserId,
-    email: context.email,
-  });
-  return {
-    platform: window.location.hostname.startsWith('aistudio.') ? 'aistudio' : 'gemini',
-    accountKey: resolved.accountKey,
-    accountId: resolved.accountId,
-    routeUserId: resolved.routeUserId,
-  };
+  try {
+    const context = detectAccountContextFromDocument(window.location.href, document);
+    const resolved = await accountIsolationService.resolveAccountScope({
+      pageUrl: window.location.href,
+      routeUserId: context.routeUserId,
+      email: context.email,
+    });
+    return {
+      platform: window.location.hostname.startsWith('aistudio.') ? 'aistudio' : 'gemini',
+      accountKey: resolved.accountKey,
+      accountId: resolved.accountId,
+      routeUserId: resolved.routeUserId,
+    };
+  } catch {
+    return {
+      platform: 'gemini',
+      accountKey: 'anonymous',
+      accountId: null,
+      routeUserId: null,
+    };
+  }
 }
 
 async function loadCurrentAccountHighlightRecords(): Promise<HighlightRecordV1[]> {
+  const hostname = window.location.hostname;
+  if (!hostname.includes('gemini.google.') && !hostname.includes('aistudio.google.')) {
+    return [];
+  }
   try {
     const scope = await resolveCurrentHighlightScope();
     const response = (await browser.runtime.sendMessage({
       type: 'gv.highlight.list',
       payload: { scope, includeDeleted: false },
     })) as { ok?: boolean; records?: HighlightRecordV1[]; error?: string } | undefined;
-    if (!response?.ok) throw new Error(response?.error || 'Failed to load highlights');
+    if (!response?.ok) return [];
     return Array.isArray(response.records) ? response.records : [];
-  } catch (error) {
-    logger.warn('[PromptManager] Failed to load highlights', { error: String(error) });
-    throw error;
+  } catch {
+    return [];
   }
 }
 
@@ -693,9 +705,12 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
 
     const titleRow = createEl('div', 'gv-pm-title-row');
     const title = createEl('div', 'gv-pm-title');
-    const titleText = document.createElement('span');
-    titleText.textContent = 'Nomad';
-    titleText.style.cursor = 'pointer';
+    const titleText = document.createElement('a');
+    titleText.className = 'gv-pm-title-link';
+    titleText.href = 'https://github.com/boboidvtw/nomad-ai-workspace';
+    titleText.target = '_blank';
+    titleText.rel = 'noreferrer';
+    titleText.textContent = 'Nomad AI Workspace';
     titleText.title = 'Nomad AI Workspace (前往 GitHub)';
     titleText.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -963,6 +978,14 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     settingsBtn.textContent = i18n.t('pm_settings');
     settingsBtn.title = i18n.t('pm_settings_tooltip');
 
+    const docsLink = document.createElement('a');
+    docsLink.className = 'gv-pm-docs';
+    docsLink.target = '_blank';
+    docsLink.rel = 'noreferrer';
+    docsLink.href = 'https://github.com/boboidvtw/nomad-ai-workspace#readme';
+    docsLink.title = i18n.t('officialDocs') || '官方文件';
+    docsLink.textContent = i18n.t('officialDocs') || '官方文件';
+
     const supportLink = document.createElement('a');
     supportLink.className = 'gv-pm-support';
     supportLink.target = '_blank';
@@ -971,6 +994,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     supportLink.title = i18n.t('sponsorMe');
 
     secondaryActions.appendChild(settingsBtn);
+    secondaryActions.appendChild(docsLink);
     secondaryActions.appendChild(supportLink);
 
     footer.appendChild(primaryActions);
@@ -1434,8 +1458,8 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     function applyPanelViewUI(): void {
       const isStarredView = panelView === 'starred';
       panel.setAttribute('data-gv-panel-view', panelView);
-      titleText.textContent = isStarredView ? i18n.t('pm_starred_library') : 'Nomad';
-      titleText.title = isStarredView ? i18n.t('pm_starred_library') : 'Nomad AI Workspace (前往 GitHub)';
+      titleText.textContent = isStarredView ? ("Nomad · " + i18n.t("pm_starred_library")) : "Nomad AI Workspace";
+      titleText.title = isStarredView ? ("Nomad · " + i18n.t("pm_starred_library") + " (前往 GitHub)") : "Nomad AI Workspace (前往 GitHub)";
       backupBtn.replaceChildren(
         createStarIcon(15),
         document.createTextNode(i18n.t('pm_starred_library')),
@@ -1451,7 +1475,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       savedToolbar.classList.toggle('gv-hidden', !isStarredView);
       primaryActions.classList.toggle('gv-hidden', isStarredView);
       savedFooterActions.classList.toggle('gv-hidden', !isStarredView);
-      secondaryActions.classList.toggle('gv-hidden', isStarredView);
+      secondaryActions.classList.remove('gv-hidden');
       if (!isStarredView) setSavedExportMenuOpen(false);
       if (isStarredView) {
         addForm.classList.add('gv-hidden');
@@ -1483,10 +1507,12 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       starredLoadError = false;
       renderStarredList();
       try {
-        [starredMessages, highlightRecords] = await Promise.all([
-          StarredMessagesService.getAllStarredMessagesSorted(),
+        const [starred, highlights] = await Promise.all([
+          StarredMessagesService.getAllStarredMessagesSorted().catch(() => []),
           loadCurrentAccountHighlightRecords(),
         ]);
+        starredMessages = starred;
+        highlightRecords = highlights;
       } catch (error) {
         console.warn('[PromptManager] Failed to load saved library:', error);
         starredLoadError = true;
@@ -2100,6 +2126,8 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
 
       settingsBtn.textContent = i18n.t('pm_settings');
       settingsBtn.title = i18n.t('pm_settings_tooltip');
+      docsLink.textContent = i18n.t('officialDocs') || '官方文件';
+      docsLink.title = i18n.t('officialDocs') || '官方文件';
       (addForm.querySelector('.gv-pm-convert-braces') as HTMLButtonElement).textContent =
         i18n.t('pm_convert_braces') || 'Turn {name} into {{name}}';
       (addForm.querySelector('.gv-pm-input-name') as HTMLInputElement).placeholder =
@@ -2592,6 +2620,11 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     exportMarkdownBtn.addEventListener('click', () => {
       setSavedExportMenuOpen(false);
       void exportHighlights('markdown');
+    });
+
+    docsLink.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      window.open('https://github.com/boboidvtw/nomad-ai-workspace#readme', '_blank', 'noopener,noreferrer');
     });
 
     supportLink.addEventListener('click', (ev) => {

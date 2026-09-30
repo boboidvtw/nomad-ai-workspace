@@ -39,7 +39,7 @@ function checkRoute(event?: Event): void {
               : 'poll',
       });
     } catch (error) {
-      console.error('[Voyager] Route change listener failed:', error);
+      console.error('[Nomad] Route change listener failed:', error);
     }
   }
 }
