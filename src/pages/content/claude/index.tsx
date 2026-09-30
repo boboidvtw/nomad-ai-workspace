@@ -1,3 +1,4 @@
+import { startPromptManager } from '@/pages/content/prompt';
 /**
  * index.tsx
  * Nomad AI Workspace — Claude Content Script Entry
@@ -91,6 +92,7 @@ const mount = async () => {
 
   initExportButtonInjection();
   initPromptButtonInjection();
+  void startPromptManager();
 };
 
 void mount();

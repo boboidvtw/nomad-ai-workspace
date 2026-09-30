@@ -683,12 +683,16 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
         // Constrain position after restore to handle window resize/split screen
         requestAnimationFrame(constrainTriggerPosition);
       } else {
+        trigger.style.bottom = '18px';
+        trigger.style.right = '18px';
         // defer a bit to wait for host DOM
         placeTriggerNextToHost();
         requestAnimationFrame(placeTriggerNextToHost);
         window.setTimeout(placeTriggerNextToHost, 350);
       }
     } catch {
+      trigger.style.bottom = '18px';
+      trigger.style.right = '18px';
       placeTriggerNextToHost();
     }
 

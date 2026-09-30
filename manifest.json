@@ -98,6 +98,9 @@
       ],
       "js": [
         "src/pages/content/claude/index.tsx"
+      ],
+      "css": [
+        "contentStyle.css"
       ]
     }
   ],
