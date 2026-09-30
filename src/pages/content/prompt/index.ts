@@ -135,7 +135,7 @@ async function resolveCurrentHighlightScope(): Promise<HighlightAccountScope> {
     return {
       platform: 'gemini',
       accountKey: 'anonymous',
-      accountId: null,
+      accountId: 0,
       routeUserId: null,
     };
   }

@@ -4,6 +4,7 @@
  */
 
 import type { AIPlatformConfig, PlatformId } from './types';
+export type { AIPlatformConfig, PlatformId };
 
 export const SUPPORTED_PLATFORMS: Record<PlatformId, AIPlatformConfig> = {
   gemini: {
@@ -82,7 +83,7 @@ export function detectCurrentPlatform(url: string = typeof window !== 'undefined
     const parsed = new URL(url);
     const host = parsed.hostname;
     for (const [id, config] of Object.entries(SUPPORTED_PLATFORMS)) {
-      if (config.domains.some((d) => host === d || host.endsWith('.' + d))) {
+      if (config.domains.some((d: string) => host === d || host.endsWith('.' + d))) {
         return id as PlatformId;
       }
     }

@@ -442,6 +442,11 @@ export const NON_SETTINGS_BACKUP_POLICIES = {
     disposition: 'device-local',
     reason: 'Rolling observation counter rebuilt from the images seen on this device.',
   },
+  [StorageKeys.GOOGLE_CLIENT_ID]: {
+    storage: 'local',
+    disposition: 'device-local',
+    reason: 'OAuth client credentials remain local to each device or deployment environment.',
+  },
 } as const satisfies Record<NonSettingsStorageKey, NonSettingsBackupPolicy>;
 
 export const BACKUPABLE_SYNC_SETTINGS_KEYS = Object.keys(BACKUPABLE_SYNC_SETTINGS_DEFAULTS);

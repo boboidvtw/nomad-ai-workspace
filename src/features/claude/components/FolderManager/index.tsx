@@ -204,8 +204,8 @@ export default function FolderManager() {
             const cloudPrompts = payload.prompts?.items || [];
             
             const localRes = await chrome.storage.local.get([FOLDERS_KEY, PROMPTS_KEY]);
-            const localFolders = localRes[FOLDERS_KEY] || [];
-            const localPrompts = localRes[PROMPTS_KEY] || [];
+            const localFolders = (localRes[FOLDERS_KEY] as Folder[]) || [];
+            const localPrompts = (localRes[PROMPTS_KEY] as any[]) || [];
 
             const mergedFolders = mergeFoldersLocal(localFolders, cloudFolders);
             
@@ -271,8 +271,8 @@ export default function FolderManager() {
         const cloudPrompts = response.data.prompts?.items || [];
 
         chrome.storage.local.get([FOLDERS_KEY, PROMPTS_KEY], async (localRes) => {
-          const localFolders = localRes[FOLDERS_KEY] || [];
-          const localPrompts = localRes[PROMPTS_KEY] || [];
+          const localFolders = (localRes[FOLDERS_KEY] as Folder[]) || [];
+          const localPrompts = (localRes[PROMPTS_KEY] as any[]) || [];
 
           const mergedFolders = mergeFoldersLocal(localFolders, cloudFolders);
           const localPromptMap = new Map(localPrompts.map((p: any) => [p.id, p]));

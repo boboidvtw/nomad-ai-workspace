@@ -184,11 +184,8 @@ function getDocsUrl(lang: AppLanguage): string {
  * Get the sponsor page URL for the current language.
  * zh is the root locale (no prefix), others use /{locale}/ prefix.
  */
-function getSponsorUrl(lang: AppLanguage): string {
-  const base = 'https://github.com/boboidvtw/nomad-ai-workspace';
+function getSponsorUrl(_lang: AppLanguage): string {
   return 'https://www.paypal.me/boboidvtw';
-  if (lang === 'zh') return `${base}${path}`;
-  return `${base}/${lang}${path}`;
 }
 
 /**

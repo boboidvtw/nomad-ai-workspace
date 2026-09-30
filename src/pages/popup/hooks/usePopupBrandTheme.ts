@@ -65,7 +65,7 @@ export function usePopupBrandTheme({
         chrome.storage?.sync?.get(StorageKeys.ACCENT_COLORS, (res) => {
           if (!alive) return;
           const value = res?.[StorageKeys.ACCENT_COLORS];
-          setAccentColors(value && typeof value === 'object' ? value : {});
+          setAccentColors(value && typeof value === 'object' ? (value as Record<string, string>) : {});
         });
       } catch {
         /* storage unavailable */
