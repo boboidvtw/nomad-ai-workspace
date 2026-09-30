@@ -16,6 +16,7 @@ import { initExportButtonInjection } from '@/features/claude/components/ExportBu
 import { initPromptButtonInjection } from '@/features/claude/components/PromptButton';
 
 const mount = async () => {
+  document.body.classList.add('gv-claude-page');
   await initI18n();
 
   chrome.runtime.onMessage.addListener((message: unknown) => {

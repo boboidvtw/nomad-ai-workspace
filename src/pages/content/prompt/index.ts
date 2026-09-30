@@ -997,6 +997,32 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     supportLink.href = 'https://www.paypal.me/boboidvtw';
     supportLink.title = i18n.t('sponsorMe');
 
+    if (window.location.hostname.includes('claude.ai')) {
+      const widthBtn = document.createElement('button');
+      widthBtn.type = 'button';
+      widthBtn.className = 'gv-pm-width-btn';
+      widthBtn.title = '調節 Claude 對話寬度 (Width)';
+      widthBtn.textContent = '↔️ 寬度';
+      widthBtn.style.fontSize = '12px';
+      widthBtn.style.cursor = 'pointer';
+      widthBtn.style.background = 'transparent';
+      widthBtn.style.border = 'none';
+      widthBtn.style.padding = '0 6px';
+      widthBtn.style.color = 'inherit';
+      widthBtn.style.opacity = '0.85';
+      widthBtn.style.transition = 'opacity 0.15s ease';
+      widthBtn.addEventListener('mouseenter', () => {
+        widthBtn.style.opacity = '1';
+      });
+      widthBtn.addEventListener('mouseleave', () => {
+        widthBtn.style.opacity = '0.85';
+      });
+      widthBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.dispatchEvent(new CustomEvent('nomad:toggle-width-panel'));
+      });
+      secondaryActions.appendChild(widthBtn);
+    }
     secondaryActions.appendChild(settingsBtn);
     secondaryActions.appendChild(docsLink);
     secondaryActions.appendChild(supportLink);
@@ -2265,6 +2291,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       }
       if (target.closest(`#${ID.panel}`)) return;
       if (target.closest(`#${ID.trigger}`)) return;
+      if (target.closest('[data-nomad-orb]')) return;
       if (target.closest('.gv-pm-confirm')) return;
       // The hover-preview tooltip lives on document.body so users can
       // interact with it (scroll long prompts, select text). Without this
