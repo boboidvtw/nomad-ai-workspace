@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { hasValidExtensionContext, isExtensionContextInvalidatedError } from '@/core/utils/extensionContext';
 import type { CrossPlatformFolder, PlatformId } from './types';
 
 export const GEMINI_FOLDERS_KEY = 'folders';
@@ -17,15 +18,36 @@ export function useCrossPlatformFolders() {
 
   const reload = async () => {
     try {
-      if (typeof chrome === 'undefined' || !chrome.storage?.local) {
+      if (typeof chrome === 'undefined' || !chrome.storage?.local || !hasValidExtensionContext()) {
         setLoading(false);
         return;
       }
 
-      const res = await new Promise<Record<string, any>>((resolve) => {
-        chrome.storage.local.get([GEMINI_FOLDERS_KEY, GEMINI_CONTENTS_KEY, CLAUDE_FOLDERS_KEY], (items) => {
-          resolve(items || {});
-        });
+      const res = await new Promise<Record<string, any>>((resolve, reject) => {
+        try {
+          if (!hasValidExtensionContext()) {
+            resolve({});
+            return;
+          }
+          chrome.storage.local.get([GEMINI_FOLDERS_KEY, GEMINI_CONTENTS_KEY, CLAUDE_FOLDERS_KEY], (items) => {
+            const lastError = chrome.runtime?.lastError;
+            if (lastError) {
+              if (isExtensionContextInvalidatedError(lastError)) {
+                resolve({});
+                return;
+              }
+              reject(new Error(lastError.message));
+              return;
+            }
+            resolve(items || {});
+          });
+        } catch (err) {
+          if (isExtensionContextInvalidatedError(err)) {
+            resolve({});
+          } else {
+            reject(err);
+          }
+        }
       });
 
       // 1. Parse Gemini Folders
@@ -70,24 +92,36 @@ export function useCrossPlatformFolders() {
       });
       setClaudeFolders(parsedClaude);
     } catch (e) {
-      console.error('[Nomad Workspace] Failed to load cross-platform folders:', e);
+      if (!isExtensionContextInvalidatedError(e)) {
+        console.error('[Nomad Workspace] Failed to load cross-platform folders:', e);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    reload();
+    if (!hasValidExtensionContext()) return;
+    void reload();
 
     const handleStorageChange = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
+      if (!hasValidExtensionContext()) return;
       if (areaName === 'local' && (changes[GEMINI_FOLDERS_KEY] || changes[GEMINI_CONTENTS_KEY] || changes[CLAUDE_FOLDERS_KEY])) {
-        reload();
+        void reload();
       }
     };
 
-    chrome?.storage?.onChanged?.addListener(handleStorageChange);
+    try {
+      chrome?.storage?.onChanged?.addListener(handleStorageChange);
+    } catch {
+      // Ignore if context invalidated
+    }
     return () => {
-      chrome?.storage?.onChanged?.removeListener(handleStorageChange);
+      try {
+        chrome?.storage?.onChanged?.removeListener(handleStorageChange);
+      } catch {
+        // Ignore if context invalidated
+      }
     };
   }, []);
 

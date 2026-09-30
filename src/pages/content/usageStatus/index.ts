@@ -28,6 +28,7 @@
 import browser from 'webextension-polyfill';
 
 import { StorageKeys } from '@/core/types/common';
+import { hasValidExtensionContext, isExtensionContextInvalidatedError } from '@/core/utils/extensionContext';
 import { decodeBatchExecute } from '@/core/utils/batchexecute';
 import { getCurrentLanguage, getTranslationSync, initI18n } from '@/utils/i18n';
 import type { AppLanguage } from '@/utils/language';
@@ -605,12 +606,15 @@ export function scrapeUsageFromDocument(
 
 async function saveSnapshot(next: UsageSnapshot): Promise<void> {
   try {
+    if (!hasValidExtensionContext()) return;
     await browser.storage.local.set({
       [usageCacheKeyForAccount(next.accountKey ?? currentUsageAccountKey())]: next,
       [StorageKeys.GV_USAGE_CACHE]: next,
     });
   } catch (error) {
-    console.warn('[UsageStatus] Failed to persist usage cache:', error);
+    if (!isExtensionContextInvalidatedError(error)) {
+      console.warn('[UsageStatus] Failed to persist usage cache:', error);
+    }
   }
 }
 
@@ -632,6 +636,7 @@ export function selectUsageSnapshotForAccount(
 
 async function loadSnapshot(): Promise<UsageSnapshot | null> {
   try {
+    if (!hasValidExtensionContext()) return null;
     const accountKey = currentUsageAccountKey();
     const scopedKey = usageCacheKeyForAccount(accountKey);
     const result = await browser.storage.local.get([scopedKey, StorageKeys.GV_USAGE_CACHE]);
@@ -650,7 +655,9 @@ async function loadSnapshot(): Promise<UsageSnapshot | null> {
         ])
       : null;
   } catch (error) {
-    console.warn('[UsageStatus] Failed to load usage cache:', error);
+    if (!isExtensionContextInvalidatedError(error)) {
+      console.warn('[UsageStatus] Failed to load usage cache:', error);
+    }
   }
   return null;
 }
