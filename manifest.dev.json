@@ -76,6 +76,18 @@
         "src/pages/content/usageObserverLoader.ts"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": [
+        "src/pages/content/chatgpt/index.tsx"
+      ],
+      "css": [
+        "contentStyle.css"
+      ]
     }
   ],
   "host_permissions": [
@@ -87,7 +99,11 @@
     "https://accounts.google.com/*",
     "https://*.googleusercontent.com/*",
     "https://lh3.google.com/*",
-    "https://*.ggpht.com/*"
+    "https://*.ggpht.com/*",
+    "https://claude.ai/*",
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://grok.com/*"
   ],
   "optional_host_permissions": [
     "<all_urls>"

@@ -14,7 +14,7 @@
     "lightSelector": "html[data-theme=\"light\"]",
     "darkSelector": "html[data-theme=\"dark\"]"
   },
-  "brandColor": "#0ea5e9",
+  "brandColor": "#10A37F",
   "capabilities": ["chat", "sidebar", "composer", "darkMode"],
   "conversationIdPattern": "^/c/([^/?#]+)"
 }

@@ -1,0 +1,19 @@
+/**
+ * Nomad AI Workspace — ChatGPT Content Script Styles
+ */
+
+.nomad-chatgpt-folder-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.nomad-chatgpt-item-folder-btn {
+  margin-left: auto;
+  cursor: pointer;
+}
+
+.nomad-chatgpt-folder-manager {
+  width: 100%;
+}

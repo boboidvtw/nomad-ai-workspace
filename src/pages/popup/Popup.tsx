@@ -13,6 +13,7 @@ import {
 import type { FormulaCopyFormat } from '@/features/formulaCopy/FormulaCopyService';
 
 import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
+import { detectCurrentPlatform } from '@/core/platform/registry';
 import { CloudSyncSettings } from './components/CloudSyncSettings';
 import { ContextSyncSettings } from './components/ContextSyncSettings';
 import { DiagnosticsExportCard } from './components/DiagnosticsExportCard';
@@ -238,7 +239,7 @@ export default function Popup({ sourceTabId }: PopupProps = {}) {
         <Card className="rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm shadow-sm overflow-hidden mb-2">
           <CardContent className="p-2">
             <MultiAISidebarTree
-              currentPlatform={tab.activeUrl?.includes("claude.ai") ? "claude" : "gemini"}
+              currentPlatform={detectCurrentPlatform(tab.activeUrl) ?? "gemini"}
               theme="dark"
             />
           </CardContent>

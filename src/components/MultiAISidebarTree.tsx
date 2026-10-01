@@ -32,13 +32,13 @@ export const MultiAISidebarTree: React.FC<Props> = ({
   className = '',
   onOpenSyncSettings,
 }) => {
-  const { geminiFolders, claudeFolders, loading } = useCrossPlatformFolders();
+  const { geminiFolders, claudeFolders, chatgptFolders, loading } = useCrossPlatformFolders();
   
   // Track collapsed/expanded state of platform root nodes
   const [expandedPlatforms, setExpandedPlatforms] = useState<Record<PlatformId, boolean>>({
     gemini: currentPlatform === 'gemini',
     claude: currentPlatform === 'claude',
-    chatgpt: false,
+    chatgpt: currentPlatform === 'chatgpt',
     grok: false,
     deepseek: false,
   });
@@ -216,34 +216,36 @@ export const MultiAISidebarTree: React.FC<Props> = ({
           );
         })()}
 
-        {/* 3. OpenAI ChatGPT Node (Ready/Placeholder) */}
+        {/* 3. OpenAI ChatGPT Node */}
         {(() => {
           const cfg = SUPPORTED_PLATFORMS.chatgpt;
+          const isCurrent = currentPlatform === 'chatgpt';
           const isExpanded = expandedPlatforms.chatgpt;
           return (
-            <div className="px-2 opacity-60 hover:opacity-100 transition-opacity">
+            <div className="px-2">
               <div
                 onClick={() => togglePlatform('chatgpt')}
-                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer ${bgHover}`}
+                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer ${bgHover} transition-colors`}
               >
                 {isExpanded ? (
                   <ChevronDown className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                 ) : (
                   <ChevronRight className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                 )}
-                <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                <span className={`text-xs font-medium flex-1 ${textPrimary}`}>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50 flex-shrink-0" />
+                <span className={`text-xs font-semibold flex-1 ${textPrimary}`}>
                   {cfg.name}
                 </span>
-                <span className="text-[9px] px-1 py-0.5 rounded bg-white/10 text-zinc-400">
-                  即將推出
+                {isCurrent && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    目前
+                  </span>
+                )}
+                <span className="text-[10px] text-zinc-500 font-mono">
+                  ({chatgptFolders.reduce((acc, f) => acc + f.conversations.length, 0)})
                 </span>
               </div>
-              {isExpanded && (
-                <div className="pl-6 py-1 text-[11px] text-zinc-500 italic">
-                  ChatGPT 官方側邊欄即將支援
-                </div>
-              )}
+              {isExpanded && renderFolderList(chatgptFolders, 'chatgpt')}
             </div>
           );
         })()}

@@ -42,7 +42,7 @@ export const SUPPORTED_PLATFORMS: Record<PlatformId, AIPlatformConfig> = {
     badgeText: 'text-emerald-400',
     domains: ['chatgpt.com', 'chat.openai.com'],
     driveFolder: 'ChatGPT',
-    status: 'ready',
+    status: 'active',
     homeUrl: 'https://chatgpt.com/',
     description: 'OpenAI ChatGPT web interface conversations',
   },

@@ -102,6 +102,18 @@
       "css": [
         "contentStyle.css"
       ]
+    },
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": [
+        "src/pages/content/chatgpt/index.tsx"
+      ],
+      "css": [
+        "contentStyle.css"
+      ]
     }
   ],
   "web_accessible_resources": [

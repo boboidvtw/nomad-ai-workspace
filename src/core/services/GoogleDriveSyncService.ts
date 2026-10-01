@@ -1847,6 +1847,74 @@ export class GoogleDriveSyncService {
     }
   }
 
+  public async uploadChatGPTFolders(folders: unknown[], interactive = true): Promise<boolean> {
+    try {
+      this.updateState({ isSyncing: true, error: null });
+      const token = await this.getAuthToken(interactive);
+      if (!token) {
+        this.updateState({ isSyncing: false, isAuthenticated: false });
+        return false;
+      }
+
+      const chatgptSubfolderId = await this.ensurePlatformSubfolder(token, "ChatGPT");
+      const fileName = "chatgpt-folders.json";
+      const fileId = await this.ensureSubfolderFileId(token, chatgptSubfolderId, fileName);
+
+      const payload = {
+        format: "nomad.chatgpt.folders.v1",
+        exportedAt: new Date().toISOString(),
+        version: EXTENSION_VERSION,
+        data: folders,
+      };
+
+      await this.uploadFileWithRetry(token, fileId, payload);
+      this.updateState({ isSyncing: false, error: null });
+      await this.saveState();
+      console.log("[GoogleDriveSyncService] ChatGPT folders uploaded to Nomad Workspace/ChatGPT/");
+      return true;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "ChatGPT upload failed";
+      console.error("[GoogleDriveSyncService] ChatGPT upload failed:", error);
+      this.updateState({ isSyncing: false, error: msg });
+      await this.saveState();
+      return false;
+    }
+  }
+
+  public async downloadChatGPTFolders(interactive = true): Promise<unknown[] | null> {
+    try {
+      this.updateState({ isSyncing: true, error: null });
+      const token = await this.getAuthToken(interactive);
+      if (!token) {
+        this.updateState({ isSyncing: false, isAuthenticated: false });
+        return null;
+      }
+
+      const chatgptSubfolderId = await this.ensurePlatformSubfolder(token, "ChatGPT");
+      const fileName = "chatgpt-folders.json";
+      const fileId = await this.findFileInFolder(token, chatgptSubfolderId, fileName);
+      if (!fileId) {
+        this.updateState({ isSyncing: false });
+        return null;
+      }
+
+      const response = await fetch(DRIVE_API_BASE + "/files/" + fileId + "?alt=media", {
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (!response.ok) throw new Error("Download failed with status: " + response.status);
+      const payload = await response.json();
+      this.updateState({ isSyncing: false, error: null });
+      await this.saveState();
+      return payload.data || [];
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "ChatGPT download failed";
+      console.error("[GoogleDriveSyncService] ChatGPT download failed:", error);
+      this.updateState({ isSyncing: false, error: msg });
+      await this.saveState();
+      return null;
+    }
+  }
+
 }
 
 export const googleDriveSyncService = new GoogleDriveSyncService();

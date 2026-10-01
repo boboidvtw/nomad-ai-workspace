@@ -17,7 +17,7 @@ const parseChatWidth = (value: unknown): number | undefined => {
   return value;
 };
 
-type FloatBallPosition = { x: number; y: number };
+export type FloatBallPosition = { x: number; y: number };
 
 const parseFloatBallPosition = (value: unknown): FloatBallPosition | undefined => {
   if (!value || typeof value !== 'object') return undefined;

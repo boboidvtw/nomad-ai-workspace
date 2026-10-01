@@ -2501,6 +2501,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse({ ok: data !== null, data, state: await googleDriveSyncService.getState() });
             return;
           }
+          case 'nomad.sync.uploadChatGPT': {
+            const interactive = message.payload?.interactive !== false;
+            const folders = message.payload?.folders ?? [];
+            const success = await googleDriveSyncService.uploadChatGPTFolders(folders, interactive);
+            sendResponse({ ok: success, state: await googleDriveSyncService.getState() });
+            return;
+          }
+          case 'nomad.sync.downloadChatGPT': {
+            const interactive = message.payload?.interactive !== false;
+            const data = await googleDriveSyncService.downloadChatGPTFolders(interactive);
+            sendResponse({ ok: data !== null, data, state: await googleDriveSyncService.getState() });
+            return;
+          }
           case 'gv.sync.upload': {
             const {
               interactive,
