@@ -16,11 +16,11 @@ type Props = {
   children: ReactNode;
 };
 
-const RING_VIEWBOX_SIZE = 96;
+const RING_VIEWBOX_SIZE = 120;
 const RING_CENTER = RING_VIEWBOX_SIZE / 2;
-const INNER_RADIUS = 37;
-const OUTER_RADIUS = 41;
-const RING_STROKE_WIDTH = 4;
+const INNER_RADIUS = 46;
+const OUTER_RADIUS = 53;
+const RING_STROKE_WIDTH = 4.5;
 const RING_START_ANGLE = -90;
 const HOVER_TOOLTIP_DELAY_MS = 500;
 const DAY_MS = 24 * 60 * 60 * 1000;

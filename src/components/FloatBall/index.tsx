@@ -178,9 +178,9 @@ export type FloatBallProps = {
   platform?: PlatformId;
 };
 
-const BALL_WRAPPER_SIZE_REM = 4;
-const BALL_BUTTON_SIZE_REM = 3;
-const BALL_WRAPPER_FALLBACK_PX = 64;
+const BALL_WRAPPER_SIZE_REM = 4.8;
+const BALL_BUTTON_SIZE_REM = 3.4;
+const BALL_WRAPPER_FALLBACK_PX = 76;
 const BALL_RIGHT_PX = 24;
 const BALL_BOTTOM_PX = 24;
 
@@ -351,10 +351,11 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
               width: `${BALL_BUTTON_SIZE_REM * ballScale}rem`,
               height: `${BALL_BUTTON_SIZE_REM * ballScale}rem`,
               borderRadius: '50%',
+              overflow: 'hidden',
               background: hovered
                 ? `linear-gradient(135deg, color-mix(in srgb, var(--gv-pm-brand, ${brandColor}) 85%, black), var(--gv-pm-brand, ${brandColor}))`
                 : `linear-gradient(135deg, var(--gv-pm-brand, ${brandColor}), color-mix(in srgb, var(--gv-pm-brand, ${brandColor}) 85%, white))`,
-              border: `1.5px solid color-mix(in srgb, var(--gv-pm-brand, ${brandColor}) 75%, white)`,
+              border: `2px solid color-mix(in srgb, var(--gv-pm-brand, ${brandColor}) 75%, white)`,
               boxShadow: hovered
                 ? `0 10px 28px rgba(0,0,0,0.35), 0 0 16px color-mix(in srgb, var(--gv-pm-brand, ${brandColor}) 45%, transparent)`
                 : '0 4px 14px rgba(0,0,0,0.22)',
@@ -382,9 +383,10 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
               alt="Nomad Mascot"
               className="pointer-events-none transition-transform duration-200 select-none"
               style={{
-                width: `${2.2 * ballScale}rem`,
-                height: `${2.2 * ballScale}rem`,
-                objectFit: 'contain',
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: '50%',
                 filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
                 transform: hovered ? 'scale(1.08)' : 'scale(1)',
               }}
@@ -395,7 +397,7 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
         {/* Mini quick-action button on hover */}
         <button
           type="button"
-          className={`absolute top-1 right-1 z-20 flex size-5 items-center justify-center rounded-full border border-[#e5e0d8] bg-white text-[#4b5563] shadow-md transition-all duration-150 hover:scale-110 hover:bg-zinc-100 active:scale-95 ${
+          className={`absolute top-0.5 right-0.5 z-20 flex size-5 items-center justify-center rounded-full border border-[#e5e0d8] bg-white text-[#4b5563] shadow-md transition-all duration-150 hover:scale-110 hover:bg-zinc-100 active:scale-95 ${
             hovered || open ? 'scale-100 opacity-100' : 'pointer-events-none scale-75 opacity-0'
           }`}
           title="對話寬度與球體設定 (亦可右鍵開啟)"

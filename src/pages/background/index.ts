@@ -968,7 +968,7 @@ async function doSyncCustomContentScripts(domains?: string[]): Promise<void> {
   const grantedMatches = await filterGrantedOrigins(matchPatterns);
 
   try {
-    await chrome.scripting.unregisterContentScripts({ ids: [CUSTOM_CONTENT_SCRIPT_ID] });
+    await unregisterRegisteredContentScripts(chrome.scripting, [CUSTOM_CONTENT_SCRIPT_ID]);
   } catch {
     // No-op if script was not registered
   }
@@ -1000,7 +1000,7 @@ async function doSyncCustomContentScripts(domains?: string[]): Promise<void> {
         matches: safeCustomMatches,
         allFrames: manifestContentScript.all_frames,
         runAt,
-        persistAcrossSessions: true,
+        persistAcrossSessions: false,
       },
     ]);
     console.log('[Background] Custom content scripts registered for', safeCustomMatches);
@@ -1173,7 +1173,7 @@ async function doSyncPluginContentScripts(): Promise<void> {
         matches: topFrameOrigins,
         allFrames: false,
         runAt,
-        persistAcrossSessions: true,
+        persistAcrossSessions: false,
       });
     }
     if (embeddedFrameOrigins.length) {
@@ -1184,7 +1184,7 @@ async function doSyncPluginContentScripts(): Promise<void> {
         matches: embeddedFrameOrigins,
         allFrames: true,
         runAt,
-        persistAcrossSessions: true,
+        persistAcrossSessions: false,
       });
     }
     if (registrations.length) {
@@ -1341,12 +1341,26 @@ async function syncPromptNudgeIcon(): Promise<void> {
   }
 }
 
+// Clear stale persisted content scripts from previous builds then sync fresh
+const clearStaleScripts = async () => {
+  if (chrome.scripting?.getRegisteredContentScripts && chrome.scripting?.unregisterContentScripts) {
+    try {
+      const registered = await chrome.scripting.getRegisteredContentScripts();
+      if (registered && registered.length > 0) {
+        await chrome.scripting.unregisterContentScripts({ ids: registered.map((s) => s.id) });
+      }
+    } catch {}
+  }
+};
+
 // Initial sync for persisted permissions
 void disableRetiredTabTitleUpdateSetting();
 void migrateOptionalHighlightSetting();
 void cleanupLegacyGeneratedUiCapturePermission();
-void syncCustomContentScripts();
-void syncPluginContentScripts();
+void clearStaleScripts().finally(() => {
+  void syncCustomContentScripts();
+  void syncPluginContentScripts();
+});
 void refreshPluginSiteDomains().then(() => {
   void syncPromptNudgeIcon();
 });
