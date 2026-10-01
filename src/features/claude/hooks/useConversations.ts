@@ -9,6 +9,7 @@ import type { Conversation } from '@src/types/conversation';
 import {
   estimateIsDarkBackground,
   extractConversationIdFromHref,
+  findClaudeNav,
   findNavUl,
   getConversationTitleFromAnchor,
   scanConversations,
@@ -22,19 +23,18 @@ import {
   CONVERSATION_LINK_SELECTOR,
   CONVERSATION_LIST_ITEM_SELECTOR,
   SIDEBAR_NAV_SELECTOR,
-  SIDEBAR_RECENTS_SECTION_SELECTOR,
 } from '@src/constants/selectors';
 
 const INJECTED_CONTAINER_ID = '__claude_nexus_folder_manager__';
 
-const hideConversationListItem = (li: HTMLLIElement) => {
+const hideConversationListItem = (li: HTMLElement) => {
   if (li.dataset.claudeNexusHidden === '1') return;
   li.dataset.claudeNexusHidden = '1';
   li.dataset.claudeNexusPrevDisplay = li.style.display || '';
   li.style.display = 'none';
 };
 
-const restoreConversationListItem = (li: HTMLLIElement) => {
+const restoreConversationListItem = (li: HTMLElement) => {
   if (li.dataset.claudeNexusHidden !== '1') return;
   li.style.display = li.dataset.claudeNexusPrevDisplay || '';
   delete li.dataset.claudeNexusHidden;
@@ -48,8 +48,8 @@ const applyConversationVisibility = (root: HTMLElement, hiddenIds: Set<string>) 
     const href = a.getAttribute('href') || '';
     const id = extractConversationIdFromHref(href);
     if (!id) continue;
-    const li = a.closest(CONVERSATION_LIST_ITEM_SELECTOR);
-    if (!li || !(li instanceof HTMLLIElement)) continue;
+    const li = (a.closest('li, [role="listitem"]') || a.parentElement) as HTMLElement | null;
+    if (!li || !(li instanceof HTMLElement)) continue;
     if (hiddenIds.has(id)) hideConversationListItem(li);
     else restoreConversationListItem(li);
   }
@@ -129,8 +129,11 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
 
   useEffect(() => {
     const ensureInjected = () => {
-      const ul = findNavUl();
-      if (ul && lastNavUlRef.current !== ul) {
+      const nav = findClaudeNav() ?? document.querySelector('nav');
+      if (!nav) return;
+
+      const ul = findNavUl() || nav;
+      if (lastNavUlRef.current !== ul) {
         lastNavUlRef.current = ul;
         setNavUlEl(ul);
         bumpScanTick();
@@ -138,26 +141,144 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
 
       const existing = document.getElementById(INJECTED_CONTAINER_ID);
       if (existing) {
-        setPortalContainer(existing);
-        return;
+        if (!nav.contains(existing)) {
+          existing.remove();
+        } else {
+          setPortalContainer(existing);
+          return;
+        }
       }
 
       const container = document.createElement('div');
       container.id = INJECTED_CONTAINER_ID;
-      container.className = 'px-2 pt-2 pb-1';
+      container.className = 'nomad-claude-folder-container px-2 pt-2 pb-1 w-full';
 
-      const recentsSection = document.querySelector(SIDEBAR_RECENTS_SECTION_SELECTOR);
-      if (recentsSection instanceof HTMLElement) {
-        recentsSection.insertAdjacentElement('beforebegin', container);
+      // 1. Locate date/history heading section inside nav (Today / Recents / Yesterday / Previous days)
+      let recentsSection: HTMLElement | null = null;
+      const historyKeywords = [
+        'today', '今天', 
+        'recents', '最近', '最近對話', '最近的對話', 
+        'yesterday', '昨天', 
+        'previous 7 days', '過去 7 天', '前 7 天', 
+        'previous 30 days', '過去 30 天', '前 30 天'
+      ];
+
+      const allTextCandidates = Array.from(nav.querySelectorAll('h2, h3, h4, span, div, p, button'));
+      for (const el of allTextCandidates) {
+        const text = el.textContent?.trim().toLowerCase();
+        if (text && historyKeywords.some((k) => text === k || text.startsWith(k))) {
+          let p: HTMLElement | null = el as HTMLElement;
+          while (p && p.parentElement && p.parentElement !== nav) {
+            const parentEl: HTMLElement = p.parentElement;
+            if (
+              parentEl.classList.contains('overflow-y-auto') ||
+              parentEl.classList.contains('overflow-x-clip') ||
+              parentEl.classList.contains('flex-1') ||
+              parentEl.tagName === 'NAV' ||
+              parentEl.tagName === 'ASIDE'
+            ) {
+              recentsSection = p;
+              break;
+            }
+            p = parentEl;
+          }
+          if (recentsSection) break;
+          recentsSection = el as HTMLElement;
+          break;
+        }
+      }
+
+      if (recentsSection && recentsSection.parentElement && nav.contains(recentsSection)) {
+        recentsSection.parentElement.insertBefore(container, recentsSection);
         setPortalContainer(container);
         return;
       }
 
-      if (!ul) return;
-      const parent = ul.parentElement;
-      if (!parent) return;
+      // 2. Locate first conversation link (a[href^="/chat/"]) and insert before its list container
+      const firstChatLink = nav.querySelector('a[href^="/chat/"]');
+      if (firstChatLink) {
+        let p: HTMLElement | null = firstChatLink as HTMLElement;
+        while (p && p.parentElement && p.parentElement !== nav) {
+          const parentEl: HTMLElement = p.parentElement;
+          if (
+            parentEl.classList.contains('overflow-y-auto') ||
+            parentEl.classList.contains('overflow-x-clip') ||
+            parentEl.classList.contains('flex-1') ||
+            parentEl.tagName === 'NAV' ||
+            parentEl.tagName === 'ASIDE'
+          ) {
+            break;
+          }
+          p = parentEl;
+        }
+        if (p && p.parentElement && nav.contains(p)) {
+          p.parentElement.insertBefore(container, p);
+          setPortalContainer(container);
+          return;
+        }
+      }
 
-      parent.insertBefore(container, ul);
+      // 3. Locate the menu group (containing Projects / Artifacts / More) and insert after it
+      const menuAnchor = Array.from(nav.querySelectorAll('a, button, span, div')).find((el) => {
+        const t = el.textContent?.trim().toLowerCase();
+        return t === 'projects' || t === 'artifacts' || t === '專案' || t === '成品';
+      });
+      if (menuAnchor) {
+        let p: HTMLElement | null = menuAnchor as HTMLElement;
+        while (p && p.parentElement && p.parentElement !== nav) {
+          const parentEl: HTMLElement = p.parentElement;
+          if (
+            parentEl.classList.contains('overflow-y-auto') ||
+            parentEl.classList.contains('overflow-x-clip') ||
+            parentEl.classList.contains('flex-1') ||
+            parentEl.tagName === 'NAV' ||
+            parentEl.tagName === 'ASIDE'
+          ) {
+            break;
+          }
+          p = parentEl;
+        }
+        if (p && p.parentElement && nav.contains(p)) {
+          if (p.nextSibling) {
+            p.parentElement.insertBefore(container, p.nextSibling);
+          } else {
+            p.parentElement.appendChild(container);
+          }
+          setPortalContainer(container);
+          return;
+        }
+      }
+
+      // 4. Prepend to main scrollable section of nav
+      const scrollable = nav.querySelector('div.overflow-y-auto, div.overflow-x-clip, div.flex-1');
+      if (scrollable && scrollable instanceof HTMLElement && nav.contains(scrollable)) {
+        scrollable.prepend(container);
+        setPortalContainer(container);
+        return;
+      }
+
+      // 5. Fallback: Before valid UL inside nav
+      if (ul && ul !== nav && ul.parentElement && nav.contains(ul)) {
+        ul.parentElement.insertBefore(container, ul);
+        setPortalContainer(container);
+        return;
+      }
+
+      // 6. Fallback: Before bottom user menu or profile row
+      const bottomProfile = nav.querySelector('button[data-testid="user-menu-button"], div.mt-auto');
+      if (bottomProfile && bottomProfile.parentElement && nav.contains(bottomProfile)) {
+        bottomProfile.parentElement.insertBefore(container, bottomProfile);
+        setPortalContainer(container);
+        return;
+      }
+
+      // 7. Fallback: Prepend or append inside nav
+      if (nav.children.length > 2) {
+        nav.insertBefore(container, nav.children[2]);
+      } else {
+        nav.appendChild(container);
+      }
+
       setPortalContainer(container);
     };
 
@@ -195,8 +316,8 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
     if (!ul) return;
 
     const injectFolderButton = (a: HTMLAnchorElement) => {
-      const li = a.closest(CONVERSATION_LIST_ITEM_SELECTOR);
-      if (!li || !(li instanceof HTMLLIElement)) return;
+      const li = a.closest(CONVERSATION_LIST_ITEM_SELECTOR) || a.parentElement;
+      if (!li || !(li instanceof HTMLElement)) return;
 
       if (li.querySelector('.claude-voyager-item-folder-btn')) return;
 

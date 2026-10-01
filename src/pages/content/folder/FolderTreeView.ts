@@ -1675,7 +1675,10 @@ export class FolderTreeView {
       }
       this.multiAiRoot = createRoot(container);
       this.multiAiRoot.render(
-        React.createElement(MultiAISidebarTree, { currentPlatform: 'gemini' })
+        React.createElement(MultiAISidebarTree, {
+          currentPlatform: 'gemini',
+          theme: isDarkMode() ? 'dark' : 'light',
+        })
       );
     } catch (e) {
       console.warn('[Nomad AI Workspace] MultiAISidebarTree mount skipped:', e);

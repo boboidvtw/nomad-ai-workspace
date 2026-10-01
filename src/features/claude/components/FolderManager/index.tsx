@@ -9,7 +9,6 @@ import { Plus, User, Cloud, Settings, FolderOpen, RefreshCw } from 'lucide-react
 import type { Folder } from '@src/types/folder';
 import { useConversations } from '../../hooks/useConversations';
 import { useFolders } from '../../hooks/useFolders';
-import { useSidebarOpen } from '../../hooks/useSidebarOpen';
 import FolderList from './FolderList';
 import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
 import { FolderManagerModals } from './FolderManagerModals';
@@ -68,7 +67,6 @@ const getThemeTokens = (isDarkTheme: boolean): ThemeTokens => {
 
 export default function FolderManager() {
   const { t } = useTranslation();
-  const isSidebarOpen = useSidebarOpen();
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -408,7 +406,6 @@ export default function FolderManager() {
     }
   };
 
-  if (!isSidebarOpen) return null;
   if (!portalContainer) return null;
 
   return createPortal(
@@ -489,7 +486,6 @@ export default function FolderManager() {
               if (e.key !== 'Enter') return;
               void handleCreateFolder();
             }}
-            autoFocus
           />
           <button
             type="button"
@@ -531,7 +527,14 @@ export default function FolderManager() {
         />
       </div>
 
-      <div className="mt-3 pt-2 border-t border-black/10 dark:border-white/10">
+      <div
+        className="nomad-multi-ai-section"
+        style={{
+          borderTop: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+          marginTop: "12px",
+          paddingTop: "8px",
+        }}
+      >
         <MultiAISidebarTree currentPlatform="claude" theme={isDarkTheme ? "dark" : "light"} />
       </div>
 

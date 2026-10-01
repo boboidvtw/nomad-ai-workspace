@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { readStoredChatWidth, writeStoredChatWidth } from '@/services/storage';
+import { hasValidExtensionContext } from '@/core/utils/extensionContext';
 
 type WidthControlApi = {
   chatWidth: number;
@@ -123,6 +124,10 @@ export const useUniversalWidthControl = (
 
   useEffect(() => {
     const timer = window.setInterval(() => {
+      if (!hasValidExtensionContext()) {
+        window.clearInterval(timer);
+        return;
+      }
       const style = document.getElementById(STYLE_ID);
       if (!style) refresh();
     }, STYLE_CHECK_INTERVAL_MS);

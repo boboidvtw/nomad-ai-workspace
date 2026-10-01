@@ -53,3 +53,10 @@ li:focus-within .claude-voyager-item-folder-btn {
   background-color: rgba(255, 255, 255, 0.1);
   color: #f9fafb;
 }
+
+.nomad-claude-folder-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 8px;
+}

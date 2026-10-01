@@ -5,11 +5,12 @@
 
 import { useEffect, useState } from 'react';
 import { hasValidExtensionContext, isExtensionContextInvalidatedError } from '@/core/utils/extensionContext';
-import type { CrossPlatformFolder, PlatformId } from './types';
+import type { CrossPlatformFolder } from './types';
 
 export const GEMINI_FOLDERS_KEY = 'folders';
 export const GEMINI_CONTENTS_KEY = 'folderContents';
 export const CLAUDE_FOLDERS_KEY = 'claude_nexus_folders';
+export const CLAUDE_TITLES_KEY = 'claude_nexus_conversation_titles';
 export const CHATGPT_FOLDERS_KEY = 'chatgpt_folders';
 export const CHATGPT_TITLES_KEY = 'chatgpt_conversation_titles';
 
@@ -33,7 +34,7 @@ export function useCrossPlatformFolders() {
             return;
           }
           chrome.storage.local.get(
-            [GEMINI_FOLDERS_KEY, GEMINI_CONTENTS_KEY, CLAUDE_FOLDERS_KEY, CHATGPT_FOLDERS_KEY, CHATGPT_TITLES_KEY],
+            [GEMINI_FOLDERS_KEY, GEMINI_CONTENTS_KEY, CLAUDE_FOLDERS_KEY, CLAUDE_TITLES_KEY, CHATGPT_FOLDERS_KEY, CHATGPT_TITLES_KEY],
             (items) => {
               const lastError = chrome.runtime?.lastError;
               if (lastError) {
@@ -80,6 +81,7 @@ export function useCrossPlatformFolders() {
 
       // 2. Parse Claude Folders
       const rawClaudeFolders: Array<{ id: string; name: string; conversationIds: string[]; isExpanded?: boolean }> = res[CLAUDE_FOLDERS_KEY] || [];
+      const claudeTitleCache: Record<string, string> = res[CLAUDE_TITLES_KEY] || {};
       const parsedClaude: CrossPlatformFolder[] = rawClaudeFolders.map((f) => {
         const chatIds = f.conversationIds || [];
         return {
@@ -89,7 +91,7 @@ export function useCrossPlatformFolders() {
           isExpanded: f.isExpanded,
           conversations: chatIds.map((id) => ({
             id,
-            title: `Claude 對話 (${id.slice(0, 8)})`,
+            title: claudeTitleCache[id] || `Claude 對話 (${id.slice(0, 8)})`,
             url: `https://claude.ai/chat/${id}`,
             platformId: 'claude',
             folderId: f.id,
@@ -138,6 +140,7 @@ export function useCrossPlatformFolders() {
         (changes[GEMINI_FOLDERS_KEY] ||
           changes[GEMINI_CONTENTS_KEY] ||
           changes[CLAUDE_FOLDERS_KEY] ||
+          changes[CLAUDE_TITLES_KEY] ||
           changes[CHATGPT_FOLDERS_KEY] ||
           changes[CHATGPT_TITLES_KEY])
       ) {

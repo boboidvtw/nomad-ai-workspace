@@ -10,6 +10,7 @@ import { useChatGPTFolders } from '../../hooks/useChatGPTFolders';
 import { useChatGPTConversations } from '../../hooks/useChatGPTConversations';
 import { FolderList } from './FolderList';
 import { FolderManagerModals } from './FolderManagerModals';
+import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
 
 export default function ChatGPTFolderManager() {
   const [contextMenu, setContextMenu] = useState<{
@@ -125,9 +126,21 @@ export default function ChatGPTFolderManager() {
         onToggleExpanded={toggleExpanded}
         onRename={(folder) => setRenameTarget(folder)}
         onDelete={(folder) => removeFolder(folder.id)}
-        onRemoveConversation={(convId, folderId) => moveConversationToFolder(convId, null)}
+        onRemoveConversation={(convId, _folderId) => moveConversationToFolder(convId, null)}
         onDropConversation={(convId, folderId) => moveConversationToFolder(convId, folderId)}
       />
+
+      {/* Multi-AI Cross-Platform Workspace section */}
+      <div
+        className="nomad-multi-ai-section"
+        style={{
+          borderTop: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+          marginTop: "12px",
+          paddingTop: "8px",
+        }}
+      >
+        <MultiAISidebarTree currentPlatform="chatgpt" theme={isDarkTheme ? "dark" : "light"} />
+      </div>
 
       {/* Modals & Dialogs */}
       <FolderManagerModals

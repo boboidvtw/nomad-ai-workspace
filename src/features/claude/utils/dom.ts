@@ -13,26 +13,64 @@ import {
   SIDEBAR_CONVERSATION_LIST_SELECTOR,
 } from '@src/constants/selectors';
 
-export const findNavUl = (): HTMLElement | null => {
-  // Option 1: Find ul that contains a chat link (most reliable to identify the chat list)
-  const uls = Array.from(document.querySelectorAll('nav ul'));
-  for (const ul of uls) {
-    if (ul.querySelector('a[href^="/chat/"]')) {
-      return ul as HTMLElement;
+export const findClaudeNav = (): HTMLElement | null => {
+  // Option 1: Look for nav or aside that contains a chat link, new button, or search box
+  const navCandidates = Array.from(document.querySelectorAll<HTMLElement>('nav, aside, [role="navigation"]'));
+  for (const el of navCandidates) {
+    if (
+      el.querySelector('a[href^="/chat/"]') ||
+      el.querySelector('a[href="/new"]') ||
+      el.querySelector('button[data-testid="user-menu-button"]') ||
+      el.querySelector('input[placeholder*="Search" i]') ||
+      el.innerText?.includes('Projects') ||
+      el.innerText?.includes('Artifacts') ||
+      el.innerText?.includes('專案') ||
+      el.innerText?.includes('Recents') ||
+      el.innerText?.includes('Today') ||
+      el.innerText?.includes('今天')
+    ) {
+      return el;
     }
   }
 
-  // Option 2: Find ul next to or inside the container containing "Recents"
-  const divs = Array.from(document.querySelectorAll('nav div, nav section'));
+  // Option 2: Locate from chat link parent
+  const chatLink = document.querySelector('a[href^="/chat/"], a[href="/new"]');
+  if (chatLink) {
+    const parentNav = chatLink.closest<HTMLElement>('nav, aside, [role="navigation"]');
+    if (parentNav) return parentNav;
+  }
+
+  // Option 3: Fallback
+  return document.querySelector<HTMLElement>('nav') ?? document.querySelector<HTMLElement>('aside') ?? null;
+};
+
+export const findNavUl = (): HTMLElement | null => {
+  // Option 1: Find ul or list container that contains a chat link (most reliable to identify the chat list)
+  const lists = Array.from(
+    document.querySelectorAll('nav ul, nav ol, nav [role="list"], aside ul, aside ol, aside [role="list"]')
+  );
+  for (const list of lists) {
+    if (list.querySelector('a[href^="/chat/"]')) {
+      return list as HTMLElement;
+    }
+  }
+
+  // Option 2: Find ul/list next to or inside the container containing "Today", "Recents", etc.
+  const divs = Array.from(document.querySelectorAll('nav div, nav section, aside div, aside section'));
+  const headerTexts = ['today', '今天', 'recents', '最近', 'yesterday', '昨天'];
   for (const div of divs) {
     const header = div.querySelector('span, h2, h3, div');
-    if (header && header.textContent?.trim() === 'Recents') {
-      const ul = div.querySelector('ul');
-      if (ul) return ul as HTMLElement;
+    const text = header?.textContent?.trim().toLowerCase();
+    if (text && headerTexts.some((h) => text.includes(h))) {
+      const list = div.querySelector('ul, ol, [role="list"]');
+      if (list) return list as HTMLElement;
     }
   }
 
-  // Option 3: Fallback to the selector from constants
+  // Option 3: Fallback to the nav element itself
+  const nav = findClaudeNav();
+  if (nav) return nav;
+
   const el = document.querySelector(SIDEBAR_CONVERSATION_LIST_SELECTOR);
   if (el instanceof HTMLElement) return el;
   return null;

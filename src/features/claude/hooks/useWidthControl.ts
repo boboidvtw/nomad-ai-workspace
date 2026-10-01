@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { readStoredChatWidth, writeStoredChatWidth } from '@src/services/storage';
+import { hasValidExtensionContext } from '@/core/utils/extensionContext';
 
 type WidthControlApi = {
   chatWidth: number;
@@ -86,6 +87,10 @@ export const useWidthControl = (): WidthControlApi => {
 
   useEffect(() => {
     const timer = window.setInterval(() => {
+      if (!hasValidExtensionContext()) {
+        window.clearInterval(timer);
+        return;
+      }
       const style = document.getElementById(STYLE_ID);
       // claude.ai sometimes re-renders <head>; re-inject our style if missing.
       if (!style) refresh();
