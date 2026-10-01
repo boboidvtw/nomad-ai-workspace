@@ -2,8 +2,7 @@
  * Nomad AI Workspace — ChatGPT Content Script Entry
  * Mounts ChatGPT-adapted workspace components:
  * - ChatGPTFolderManager (Hierarchical folder tree integrated into ChatGPT sidebar)
- * - ChatGPTFloatBall (Draggable Nomad Super Orb with Multi-AI tree & Prompt Vault)
- * - startPromptManager (Prompt library overlays & slash command trigger)
+ * - startPromptManager (Single unified Nomad mascot trigger, prompt library overlays & slash command trigger)
  */
 
 import React from 'react';
@@ -12,7 +11,6 @@ import { i18n, initI18n, LANGUAGE_CHANGE_MESSAGE_TYPE } from '@/services/i18n';
 import { startBrandTheme } from '@/pages/content/platformTheme';
 import { startPromptManager } from '@/pages/content/prompt';
 import ChatGPTFolderManager from '@/features/chatgpt/components/FolderManager';
-import ChatGPTFloatBall from '@/features/chatgpt/components/FloatBall';
 import './style.css';
 
 const NOMAD_CHATGPT_ROOT_ID = 'nomad-chatgpt-root';
@@ -50,11 +48,10 @@ const mount = async () => {
   root.render(
     <>
       <ChatGPTFolderManager />
-      <ChatGPTFloatBall />
     </>,
   );
 
-  // Initialize prompt manager & slash commands on ChatGPT
+  // Initialize prompt manager & slash commands on ChatGPT (creates the single unified trigger)
   try {
     void startPromptManager();
   } catch (e) {

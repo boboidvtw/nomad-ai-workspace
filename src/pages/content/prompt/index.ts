@@ -1023,6 +1023,30 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       });
       secondaryActions.appendChild(widthBtn);
     }
+    const workspaceBtn = document.createElement("button");
+    workspaceBtn.type = "button";
+    workspaceBtn.className = "gv-pm-workspace-btn";
+    workspaceBtn.title = "開啟 Nomad 多平台工作空間總覽";
+    workspaceBtn.textContent = "📁 工作空間";
+    workspaceBtn.style.fontSize = "12px";
+    workspaceBtn.style.cursor = "pointer";
+    workspaceBtn.style.background = "transparent";
+    workspaceBtn.style.border = "none";
+    workspaceBtn.style.padding = "0 6px";
+    workspaceBtn.style.color = "inherit";
+    workspaceBtn.style.opacity = "0.85";
+    workspaceBtn.style.transition = "opacity 0.15s ease";
+    workspaceBtn.addEventListener("mouseenter", () => {
+      workspaceBtn.style.opacity = "1";
+    });
+    workspaceBtn.addEventListener("mouseleave", () => {
+      workspaceBtn.style.opacity = "0.85";
+    });
+    workspaceBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.dispatchEvent(new CustomEvent("nomad:toggle-workspace-modal"));
+    });
+    secondaryActions.appendChild(workspaceBtn);
     secondaryActions.appendChild(settingsBtn);
     secondaryActions.appendChild(docsLink);
     secondaryActions.appendChild(supportLink);

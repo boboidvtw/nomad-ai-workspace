@@ -23,6 +23,12 @@ export default function ChatGPTFolderManager() {
   const [treeModalOpen, setTreeModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  React.useEffect(() => {
+    const handleToggle = () => setTreeModalOpen((prev) => !prev);
+    window.addEventListener("nomad:toggle-workspace-modal", handleToggle);
+    return () => window.removeEventListener("nomad:toggle-workspace-modal", handleToggle);
+  }, []);
+
   const {
     folders,
     addFolder,
