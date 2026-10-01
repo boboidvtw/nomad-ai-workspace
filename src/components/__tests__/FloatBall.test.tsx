@@ -137,4 +137,35 @@ describe('Universal FloatBall (Flagship Super Orb)', () => {
     expect(container.textContent).toContain('Nomad 提示詞庫中樞');
     expect(container.textContent).toContain('重新整理 ChatGPT 額度');
   });
+
+  it('anchors to the right side of the chat composer when present', async () => {
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1440 });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 900 });
+    const composer = document.createElement('form');
+    composer.id = 'thread-bottom-container';
+    composer.innerHTML = '<div id="prompt-textarea" contenteditable="true"></div>';
+    composer.getBoundingClientRect = () => ({
+      width: 768,
+      height: 64,
+      top: 800,
+      bottom: 864,
+      left: 336,
+      right: 1104,
+      x: 336,
+      y: 800,
+      toJSON: () => {},
+    });
+    document.body.appendChild(composer);
+
+    await act(async () => {
+      root.render(<FloatBall platform="chatgpt" />);
+    });
+
+    const orb = container.querySelector<HTMLDivElement>('[data-nomad-orb="true"]');
+    expect(orb).not.toBeNull();
+    // composer right (1104) + gap (14) = 1118px
+    expect(orb?.style.left).toBe('1118px');
+
+    composer.remove();
+  });
 });

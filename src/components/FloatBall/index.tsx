@@ -3,15 +3,17 @@
  * Nomad AI Workspace — Universal Flagship Super Orb (物理合一)
  * Integrates Concentric UsageRings, Nomad 3D Star Mascot, PromptManager Trigger,
  * and Universal Width / Ball Size Controls across Claude, Gemini, and ChatGPT.
+ * Anchored to the right side of the central chat composer across platforms.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowLeftRight,
   MessageSquare,
+  Pin,
   RefreshCw,
   Settings,
   SlidersHorizontal,
@@ -25,9 +27,14 @@ import { initI18n } from '@/services/i18n';
 import { readStoredFloatBallPosition, writeStoredFloatBallPosition } from '@/services/storage';
 
 import UsageRings from './UsageRings';
+import {
+  computeComposerAnchorPosition,
+  findComposerElement,
+  type PlatformId,
+} from './composerAnchor';
 import { panels } from './panelRegistry';
 
-export type PlatformId = 'claude' | 'gemini' | 'chatgpt';
+export type { PlatformId };
 
 type Point = { x: number; y: number };
 type PanelSide = 'left' | 'right';
@@ -67,10 +74,12 @@ const getPlatformDisplayName = (platform: PlatformId): string => {
 type PanelMenuProps = {
   platform: PlatformId;
   side: PanelSide;
+  isAnchored: boolean;
   onClose: () => void;
   onSelectPanel: (panelId: string) => void;
   onOpenPromptVault: () => void;
   onRefreshUsage: () => void;
+  onResetToComposer: () => void;
 };
 
 const panelIcons: Record<string, LucideIcon> = {
@@ -82,10 +91,12 @@ const panelIcons: Record<string, LucideIcon> = {
 const PanelMenu = ({
   platform,
   side,
+  isAnchored,
   onClose,
   onSelectPanel,
   onOpenPromptVault,
   onRefreshUsage,
+  onResetToComposer,
 }: PanelMenuProps) => {
   const { t } = useTranslation();
 
@@ -146,6 +157,26 @@ const PanelMenu = ({
 
           <div className="my-1 h-px bg-[#f1ece4]" />
 
+          {/* Composer Anchor Status & Snap Action */}
+          {!isAnchored ? (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[11px] text-blue-600 transition-colors hover:bg-blue-50"
+              onClick={() => {
+                onResetToComposer();
+                onClose();
+              }}
+            >
+              <Pin className="h-3.5 w-3.5 shrink-0 text-blue-500" aria-hidden="true" />
+              <span className="truncate">固定回對話框右側</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] text-emerald-600">
+              <span className="inline-block size-1.5 rounded-full bg-emerald-500" />
+              <span className="truncate">已固定於對話框右側</span>
+            </div>
+          )}
+
           <button
             type="button"
             className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[11px] text-[#6b7280] transition-colors hover:bg-zinc-50"
@@ -190,7 +221,9 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [activePanelId, setActivePanelId] = useState<string | null>(null);
-  const [loadedPosition, setLoadedPosition] = useState<Point | null>(null);
+  const [isAnchored, setIsAnchored] = useState(true);
+  const isAnchoredRef = useRef(isAnchored);
+  isAnchoredRef.current = isAnchored;
 
   const { ballScale } = useBallSizeControl();
   const { usageData, refreshUsage } = useUniversalUsage(platform);
@@ -206,15 +239,7 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
     setActivePanelId(null);
   };
 
-  useEffect(() => {
-    void (async () => {
-      const stored = await readStoredFloatBallPosition();
-      if (!stored) return;
-      setLoadedPosition(stored);
-    })();
-  }, []);
-
-  const getSize = () => {
+  const getSize = useCallback(() => {
     const el = rootRef.current;
     if (!el) return { width: BALL_WRAPPER_FALLBACK_PX, height: BALL_WRAPPER_FALLBACK_PX };
     const rect = el.getBoundingClientRect();
@@ -222,19 +247,31 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
       width: rect.width || BALL_WRAPPER_FALLBACK_PX,
       height: rect.height || BALL_WRAPPER_FALLBACK_PX,
     };
-  };
+  }, []);
 
   /**
-   * Default position: pinned at bottom-right corner with 24px margin
+   * Fallback position when no composer is found on page: pinned at bottom-right corner.
    */
-  const defaultPosition = () => {
+  const defaultPosition = useCallback((): Point => {
     const size = getSize();
     const x = Math.max(0, window.innerWidth - size.width - BALL_RIGHT_PX);
     const y = Math.max(0, window.innerHeight - size.height - BALL_BOTTOM_PX);
     return { x, y };
-  };
+  }, [getSize]);
 
-  const syncTriggerPosition = () => {
+  /**
+   * Primary position: anchored right beside the central chat input box.
+   */
+  const getAnchoredPosition = useCallback((): Point => {
+    const size = getSize();
+    const composer = findComposerElement(platform);
+    if (composer) {
+      return computeComposerAnchorPosition(composer, size);
+    }
+    return defaultPosition();
+  }, [getSize, platform, defaultPosition]);
+
+  const syncTriggerPosition = useCallback(() => {
     const trigger = document.getElementById('gv-pm-trigger');
     const el = rootRef.current;
     if (trigger && el) {
@@ -245,7 +282,7 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
       trigger.style.right = 'auto';
       trigger.style.bottom = 'auto';
     }
-  };
+  }, []);
 
   const togglePromptManager = () => {
     const trigger = document.getElementById('gv-pm-trigger');
@@ -259,14 +296,16 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
   };
 
   const draggable = useDraggable({
-    defaultPosition: () => loadedPosition ?? defaultPosition(),
+    defaultPosition: () => getAnchoredPosition(),
     getSize,
     onClick: () => {
       void refreshUsage();
       togglePromptManager();
     },
     onDragEnd: (pos) => {
-      void writeStoredFloatBallPosition(pos);
+      setIsAnchored(false);
+      isAnchoredRef.current = false;
+      void writeStoredFloatBallPosition({ ...pos, userCustom: true });
       syncTriggerPosition();
       const panel = document.getElementById('gv-pm-panel');
       const el = rootRef.current;
@@ -293,11 +332,86 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
 
   const { position, isDragging, containerStyle, onPointerDown, setPosition } = draggable;
 
+  const resetToComposer = useCallback(() => {
+    setIsAnchored(true);
+    isAnchoredRef.current = true;
+    const target = getAnchoredPosition();
+    setPosition(target);
+    setTimeout(syncTriggerPosition, 50);
+    void writeStoredFloatBallPosition({ ...target, userCustom: false });
+  }, [getAnchoredPosition, setPosition, syncTriggerPosition]);
+
+  // Load custom position only if user explicitly customized it previously
   useEffect(() => {
-    if (!loadedPosition) return;
-    setPosition(loadedPosition);
-    setTimeout(syncTriggerPosition, 100);
-  }, [loadedPosition, setPosition]);
+    void (async () => {
+      const stored = await readStoredFloatBallPosition();
+      if (!stored) {
+        setIsAnchored(true);
+        const initial = getAnchoredPosition();
+        setPosition(initial);
+        setTimeout(syncTriggerPosition, 100);
+        return;
+      }
+      if (stored.userCustom) {
+        setIsAnchored(false);
+        setPosition(stored);
+        setTimeout(syncTriggerPosition, 100);
+      } else {
+        setIsAnchored(true);
+        const initial = getAnchoredPosition();
+        setPosition(initial);
+        setTimeout(syncTriggerPosition, 100);
+      }
+    })();
+  }, [getAnchoredPosition, setPosition, syncTriggerPosition]);
+
+  // Dynamic composer tracking (ResizeObserver + DOM mutations + window events)
+  useEffect(() => {
+    if (!isAnchored) return;
+
+    let observer: ResizeObserver | null = null;
+    let currentComposer: HTMLElement | null = null;
+
+    const syncPosition = () => {
+      if (!isAnchoredRef.current) return;
+      const target = getAnchoredPosition();
+      setPosition(target);
+      syncTriggerPosition();
+    };
+
+    const attachToComposer = () => {
+      const composer = findComposerElement(platform);
+      if (composer !== currentComposer) {
+        observer?.disconnect();
+        currentComposer = composer;
+        if (composer && typeof ResizeObserver !== 'undefined') {
+          observer = new ResizeObserver(() => {
+            syncPosition();
+          });
+          observer.observe(composer);
+        }
+      }
+      syncPosition();
+    };
+
+    attachToComposer();
+
+    const interval = setInterval(attachToComposer, 300);
+
+    window.addEventListener('resize', syncPosition);
+    window.addEventListener('scroll', syncPosition, true);
+    window.addEventListener('nomad:width-changed', syncPosition);
+    window.addEventListener('nomad:toggle-width-panel', syncPosition);
+
+    return () => {
+      clearInterval(interval);
+      observer?.disconnect();
+      window.removeEventListener('resize', syncPosition);
+      window.removeEventListener('scroll', syncPosition, true);
+      window.removeEventListener('nomad:width-changed', syncPosition);
+      window.removeEventListener('nomad:toggle-width-panel', syncPosition);
+    };
+  }, [isAnchored, platform, getAnchoredPosition, setPosition, syncTriggerPosition]);
 
   useEffect(() => {
     const handleToggleWidth = () => {
@@ -332,7 +446,15 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
   }, [open]);
 
   return (
-    <div className="fixed z-50" style={containerStyle} data-nomad-orb="true">
+    <div
+      className="fixed"
+      style={{
+        ...containerStyle,
+        zIndex: 2147483640,
+        transition: isDragging ? 'none' : 'left 0.15s ease-out, top 0.15s ease-out',
+      }}
+      data-nomad-orb="true"
+    >
       <div
         ref={rootRef}
         className="group relative"
@@ -418,10 +540,12 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
           <PanelMenu
             platform={platform}
             side={panelSide}
+            isAnchored={isAnchored}
             onClose={closeAll}
             onSelectPanel={setActivePanelId}
             onOpenPromptVault={togglePromptManager}
             onRefreshUsage={refreshUsage}
+            onResetToComposer={resetToComposer}
           />
         ) : null}
         {open && activePanel ? <activePanel.component side={panelSide} onClose={closeAll} /> : null}

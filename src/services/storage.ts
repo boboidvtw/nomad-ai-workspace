@@ -17,14 +17,14 @@ const parseChatWidth = (value: unknown): number | undefined => {
   return value;
 };
 
-export type FloatBallPosition = { x: number; y: number };
+export type FloatBallPosition = { x: number; y: number; userCustom?: boolean };
 
 const parseFloatBallPosition = (value: unknown): FloatBallPosition | undefined => {
   if (!value || typeof value !== 'object') return undefined;
   const v = value as Partial<FloatBallPosition>;
   if (typeof v.x !== 'number' || Number.isNaN(v.x) || !Number.isFinite(v.x)) return undefined;
   if (typeof v.y !== 'number' || Number.isNaN(v.y) || !Number.isFinite(v.y)) return undefined;
-  return { x: v.x, y: v.y };
+  return { x: v.x, y: v.y, userCustom: v.userCustom ? Boolean(v.userCustom) : false };
 };
 
 const parseFloatBallSize = (value: unknown): number | undefined => {
