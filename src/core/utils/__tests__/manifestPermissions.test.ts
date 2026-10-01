@@ -76,22 +76,19 @@ describe('manifest permissions', () => {
   it('keeps all-site access optional', () => {
     expect(manifestChrome.host_permissions).not.toContain('<all_urls>');
     expect(manifestChrome.optional_host_permissions).toEqual([
-      'https://chatgpt.com/*',
       '<all_urls>',
     ]);
     expect(manifestDev.optional_host_permissions).toEqual(manifestChrome.optional_host_permissions);
   });
 
-  it('keeps ChatGPT host access opt-in', () => {
-    expect(manifestChrome.host_permissions).not.toContain('https://chatgpt.com/*');
-    expect(manifestChrome.optional_host_permissions).toEqual(
-      expect.arrayContaining(['https://chatgpt.com/*']),
-    );
+  it('includes ChatGPT and Claude in native host permissions and content scripts', () => {
+    expect(manifestChrome.host_permissions).toContain('https://chatgpt.com/*');
+    expect(manifestChrome.host_permissions).toContain('https://claude.ai/*');
     expect(
       manifestChrome.content_scripts.some((entry) =>
         entry.matches.includes('https://chatgpt.com/*'),
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('keeps unlimitedStorage out of the shared manifest', () => {

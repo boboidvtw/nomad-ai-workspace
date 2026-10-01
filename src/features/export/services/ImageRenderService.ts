@@ -1,3 +1,11 @@
+function extractSrcFallback(sheet: CSSStyleSheet, family: string): string {
+  const text = (sheet.ownerNode as HTMLElement | null)?.textContent || '';
+  if (!text) return '';
+  const fontFaceRegex = new RegExp(`@font-face\\s*\\{[^}]*font-family\\s*:\\s*['"]?${family}['"]?[^}]*\\}`, 'i');
+  const block = text.match(fontFaceRegex)?.[0] ?? text;
+  const match = block.match(/src\s*:\s*([\s\S]*?)(?:;\s*(?:[a-z-]+\s*:|\})|\}\s*$)/i);
+  return match ? match[1].trim() : '';
+}
 const TRANSPARENT_IMAGE_PLACEHOLDER =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 const DEFAULT_OFFSCREEN_LEFT = '-100000px';
@@ -312,7 +320,7 @@ async function buildKatexFontEmbedCss(target: HTMLElement): Promise<string> {
         stretch: fontRule.style.getPropertyValue('font-stretch'),
         style: fontRule.style.getPropertyValue('font-style'),
         weight: fontRule.style.getPropertyValue('font-weight'),
-        src: fontRule.style.getPropertyValue('src'),
+        src: fontRule.style.getPropertyValue('src') || extractSrcFallback(sheet, family),
       });
     });
   });

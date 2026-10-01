@@ -75,7 +75,7 @@ describe('ImageRenderService', () => {
     document.head.appendChild(style);
 
     const target = document.createElement('div');
-    target.innerHTML = '<span class="katex"><span class="base">x</span></span>';
+    target.innerHTML = '<span class="katex" style="font-family: KaTeX_Main"><span class="base">x</span></span>';
     document.body.appendChild(target);
     const blob = new Blob(['ok'], { type: 'image/png' });
     (toBlob as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(blob);
@@ -126,10 +126,10 @@ describe('ImageRenderService', () => {
     expect(wrapper?.style.getPropertyValue('width')).toBe('100%');
     expect(aligner?.style.getPropertyValue('text-align')).toBe('left');
     expect(svg?.style.getPropertyValue('display')).toBe('block');
-    expect(svg?.style.getPropertyValue('fill')).toBe('currentColor');
+    expect(svg?.style.getPropertyValue('fill').toLowerCase()).toBe('currentcolor');
     expect(svg?.style.getPropertyValue('height')).toBe('inherit');
     expect(svg?.style.getPropertyValue('position')).toBe('absolute');
-    expect(svg?.style.getPropertyValue('stroke')).toBe('currentColor');
+    expect(svg?.style.getPropertyValue('stroke').toLowerCase()).toBe('currentcolor');
     expect(svg?.style.getPropertyValue('width')).toBe('100%');
     expect(img?.style.getPropertyValue('display')).toBe('block');
     expect(img?.style.getPropertyValue('height')).toBe('inherit');

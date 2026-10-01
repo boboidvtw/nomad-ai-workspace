@@ -1,3 +1,16 @@
+function isLoopbackSyncUrl(rawUrl: string): boolean {
+  try {
+    const parsed = new URL(rawUrl);
+    return (
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+      (parsed.hostname === '127.0.0.1' ||
+        parsed.hostname === 'localhost' ||
+        parsed.hostname === '[::1]')
+    );
+  } catch {
+    return false;
+  }
+}
 /* Background service worker - handles cross-origin image fetch, popup opening, and sync */
 import browser from 'webextension-polyfill';
 
@@ -2863,9 +2876,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
 
-      // Handle sync to IDE (bypasses page CSP)
+      // Handle sync to IDE (bypasses page CSP, strictly restricted to local loopback)
       if (message?.type === 'gv.syncToIDE') {
         const url = String(message.url || '');
+        if (!isLoopbackSyncUrl(url)) {
+          sendResponse({ ok: false, error: 'Target URL must be a local loopback address' });
+          return;
+        }
         const data = message.data || [];
         try {
           const response = await fetch(url, {
@@ -2887,9 +2904,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
 
-      // Handle check sync server status (bypasses page CSP)
+      // Handle check sync server status (bypasses page CSP, strictly restricted to local loopback)
       if (message?.type === 'gv.checkSyncStatus') {
         const url = String(message.url || '');
+        if (!isLoopbackSyncUrl(url)) {
+          sendResponse({ ok: false });
+          return;
+        }
         const timeout = Number(message.timeout || 200);
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);

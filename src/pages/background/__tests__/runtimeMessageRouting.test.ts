@@ -159,6 +159,12 @@ describe('background runtime message routing', () => {
     expect(isAllowedRuntimeImageBody('image/png', MAX_RUNTIME_IMAGE_BYTES + 1)).toBe(false);
   });
 
+  it('restricts IDE sync requests strictly to local loopback addresses', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/pages/background/index.ts'), 'utf8');
+    expect(source).toContain('isLoopbackSyncUrl');
+    expect(source).toContain("sendResponse({ ok: false, error: 'Target URL must be a local loopback address' })");
+  });
+
   it('accepts sync content messages only from the matching product host', () => {
     expect(isAllowedSyncContentSender('https://gemini.google.com/app', 'gemini')).toBe(true);
     expect(isAllowedSyncContentSender('https://business.gemini.google/app', 'gemini')).toBe(true);

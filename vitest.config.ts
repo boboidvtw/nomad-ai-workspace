@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import { defineConfig } from 'vitest/config';
 
@@ -6,6 +7,29 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist*/**',
+      ...(!fs.existsSync('.github/workflows')
+        ? [
+            'scripts/update-readme-badges.test.js',
+            'scripts/pr-workflows.test.js',
+            'scripts/generate-sponsors.test.js',
+            'scripts/community-issue-policy.test.js',
+            'src/pages/popup/__tests__/releaseArtifacts.test.ts',
+            'src/utils/__tests__/issueValidator.test.ts',
+          ]
+        : []),
+      ...(!fs.existsSync('docs/public')
+        ? [
+            'src/core/services/__tests__/googleOAuthWebFlow.test.ts',
+            'src/features/plugins/manifest/schema.test.ts',
+          ]
+        : []),
+      ...(!fs.existsSync('.githooks')
+        ? ['scripts/oxc-toolchain.test.js']
+        : []),
+    ],
     // Vitest stubs CSS imports to '' unless the file is listed here, which
     // also swallows `?raw` imports. The bundled plugin catalog is plain CSS
     // read as text, so let Vite serve it for real; app CSS stays stubbed.
