@@ -3,7 +3,7 @@
  * Publish the bundled plugin catalog as per-host JSON files for the docs site.
  *
  * VitePress copies `docs/public/` to the root of its dist, so the files this
- * writes are served as `https://voyager.nagi.fun/catalog/hosts/<host>.json` —
+ * writes are served as `https://raw.githubusercontent.com/boboidvtw/nomad-ai-workspace/main/catalog/hosts/<host>.json` —
  * exactly what the background refresher fetches (see
  * `src/features/plugins/remote/config.ts` and `HostCatalogSource`).
  *

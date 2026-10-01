@@ -38,8 +38,13 @@ const FORCE_POPUP_READ_GATE_SECONDS = 15;
 const MARKDOWN_IMAGE_URL_REGEX = /!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g;
 const MARKDOWN_DOC_LINK_REGEX = /\[([^\]]*)\]\((\/guide\/[^\s)]+)\)/g;
 
-const GITHUB_PROMOTION_PATH_PREFIX = '/voyager-crew/voyager/raw/main/docs/public/assets/promotion/';
+const GITHUB_PROMOTION_PATH_PREFIX =
+  '/boboidvtw/nomad-ai-workspace/raw/main/docs/public/assets/promotion/';
 const RAW_GITHUBUSERCONTENT_PROMOTION_PATH_PREFIX =
+  '/boboidvtw/nomad-ai-workspace/main/docs/public/assets/promotion/';
+const LEGACY_GITHUB_PROMOTION_PATH_PREFIX =
+  '/voyager-crew/voyager/raw/main/docs/public/assets/promotion/';
+const LEGACY_RAW_GITHUBUSERCONTENT_PROMOTION_PATH_PREFIX =
   '/voyager-crew/voyager/main/docs/public/assets/promotion/';
 const SPONSOR_HEART_PATH_24 =
   'M14 20.408c-.492.308-.903.546-1.192.709q-.23.129-.463.252h-.002a.75.75 0 0 1-.686 0a17 17 0 0 1-.465-.252a31 31 0 0 1-4.803-3.34C3.8 15.572 1 12.331 1 8.513C1 5.052 3.829 2.5 6.736 2.5C9.03 2.5 10.881 3.726 12 5.605C13.12 3.726 14.97 2.5 17.264 2.5C20.17 2.5 23 5.052 23 8.514c0 3.818-2.801 7.06-5.389 9.262A31 31 0 0 1 14 20.408';
@@ -77,9 +82,12 @@ function extractPromotionRuntimePath(url: URL): string | null {
   const host = url.hostname.toLowerCase();
   const pathname = url.pathname;
   const isGithubPromotionImage =
-    (host === 'github.com' && pathname.startsWith(GITHUB_PROMOTION_PATH_PREFIX)) ||
+    (host === 'github.com' &&
+      (pathname.startsWith(GITHUB_PROMOTION_PATH_PREFIX) ||
+        pathname.startsWith(LEGACY_GITHUB_PROMOTION_PATH_PREFIX))) ||
     (host === 'raw.githubusercontent.com' &&
-      pathname.startsWith(RAW_GITHUBUSERCONTENT_PROMOTION_PATH_PREFIX));
+      (pathname.startsWith(RAW_GITHUBUSERCONTENT_PROMOTION_PATH_PREFIX) ||
+        pathname.startsWith(LEGACY_RAW_GITHUBUSERCONTENT_PROMOTION_PATH_PREFIX)));
   if (!isGithubPromotionImage) return null;
 
   const filename = pathname.split('/').pop();
@@ -118,7 +126,7 @@ export function rewriteChangelogImageUrls(
 
 /**
  * Rewrite relative doc links (e.g. `/guide/timeline`) in changelog markdown
- * to full locale-aware URLs (e.g. `https://voyager.nagi.fun/ja/guide/timeline`).
+ * to full locale-aware URLs (e.g. `https://github.com/boboidvtw/nomad-ai-workspace/ja/guide/timeline`).
  * zh is the root locale and gets no prefix.
  */
 export function rewriteChangelogDocUrls(markdown: string, lang: AppLanguage): string {

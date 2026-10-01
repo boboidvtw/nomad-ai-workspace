@@ -338,7 +338,7 @@ export const StorageKeys = {
   // src/features/plugins/remote/hostCatalogCache.ts). Network-derived per-device
   // data rebuilt on the next check; never backed up.
   PLUGIN_HOST_CATALOG_PREFIX: 'gvPluginHostCatalog:',
-  // Master switch for checking voyager.nagi.fun for plugin catalog updates
+  // Master switch for checking remote repository for plugin catalog updates
   // (chrome.storage.sync, backed up). Off = the extension never contacts the
   // catalog host except for an explicit manual check in the popup.
   PLUGIN_ONLINE_UPDATES_ENABLED: 'gvPluginOnlineUpdatesEnabled',

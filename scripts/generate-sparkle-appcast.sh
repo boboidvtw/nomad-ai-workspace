@@ -26,10 +26,10 @@ WORK_DIR=$(mktemp -d)
 trap 'rm -rf "$WORK_DIR"' EXIT
 cp "$ARCHIVE_PATH" "$WORK_DIR/"
 
-DOWNLOAD_PREFIX="https://github.com/voyager-crew/voyager/releases/download/$TAG/"
+DOWNLOAD_PREFIX="https://github.com/boboidvtw/nomad-ai-workspace/releases/download/$TAG/"
 COMMON_ARGS=(
   --download-url-prefix "$DOWNLOAD_PREFIX"
-  --link "https://github.com/voyager-crew/voyager"
+  --link "https://github.com/boboidvtw/nomad-ai-workspace"
   -o "$OUTPUT_PATH"
   "$WORK_DIR"
 )

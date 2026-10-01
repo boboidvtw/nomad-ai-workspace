@@ -19,8 +19,8 @@ const ROOT = path.resolve(__dirname, '..');
 const FRIENDS_PATH = path.join(ROOT, 'sponsorkit', 'sponsors.json');
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'assets');
 const OUTPUT_PATH = path.join(OUTPUT_DIR, 'sponsors.svg');
-const SPONSORS_URL = 'https://github.com/sponsors/Nagi-ovo';
-const OWNER_LOGIN = 'Nagi-ovo';
+const SPONSORS_URL = 'https://github.com/sponsors/boboidvtw';
+const OWNER_LOGIN = 'boboidvtw';
 const GRAPHQL_ENDPOINT = 'https://api.github.com/graphql';
 const AFDIAN_API = 'https://afdian.com/api/open/query-sponsor';
 const FONT_FAMILY =
@@ -116,7 +116,7 @@ async function fetchGitHubSponsors(token, { fetchImpl = fetch, strict = false } 
   const headers = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
-    'User-Agent': 'gemini-voyager-sponsor-bot',
+    'User-Agent': 'nomad-ai-workspace-sponsor-bot',
   };
 
   while (true) {

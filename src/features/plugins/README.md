@@ -267,8 +267,8 @@ generates the remote catalog published by the docs deploy. See the
 
 The official CSS/JSON plugins ship as a snapshot inside the extension, and the
 same data is published per site at `<base>/hosts/<host>.json` (default base
-`https://voyager.nagi.fun/catalog`, so DeepSeek is
-`https://voyager.nagi.fun/catalog/hosts/chat.deepseek.com.json`). A selector fix
+`https://raw.githubusercontent.com/boboidvtw/nomad-ai-workspace/main/catalog`, so DeepSeek is
+`https://raw.githubusercontent.com/boboidvtw/nomad-ai-workspace/main/catalog/hosts/chat.deepseek.com.json`). A selector fix
 can therefore reach users without a store release, while the engine that reads
 the data still ships in the package. The host file's optional `site` section is
 adapter data validated by the same `validateSiteAdapterData`, and it overrides

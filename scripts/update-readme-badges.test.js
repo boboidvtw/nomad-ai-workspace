@@ -55,7 +55,7 @@ describe('README badge publishing', () => {
   it('fetches metrics from the current repository slug', () => {
     const generator = readRepositoryFile('scripts/update-readme-badges.mjs');
 
-    expect(generator).toContain("const repo = 'voyager';");
+    expect(generator).toContain("const repo = 'nomad-ai-workspace';");
     expect(generator).not.toContain("const repo = 'gemini-voyager';");
   });
 

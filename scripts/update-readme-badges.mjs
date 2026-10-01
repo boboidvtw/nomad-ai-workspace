@@ -2,15 +2,15 @@
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
-const owner = 'voyager-crew';
-const repo = 'voyager';
+const owner = 'boboidvtw';
+const repo = 'nomad-ai-workspace';
 const badgeColor = '#5f8f55';
 const outDirs = [new URL('../docs/public/badges/', import.meta.url)];
 const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
 
 const headers = {
   Accept: 'application/vnd.github+json',
-  'User-Agent': 'voyager-readme-badges',
+  'User-Agent': 'nomad-readme-badges',
   'X-GitHub-Api-Version': '2022-11-28',
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 };

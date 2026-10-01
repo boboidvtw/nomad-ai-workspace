@@ -131,7 +131,7 @@ describe('changelog quote styles', () => {
 describe('resolveChangelogImageUrl', () => {
   it('rewrites github raw promotion image URLs to runtime URLs', () => {
     const source =
-      'https://github.com/voyager-crew/voyager/raw/main/docs/public/assets/promotion/Activity-View.png';
+      'https://github.com/boboidvtw/nomad-ai-workspace/raw/main/docs/public/assets/promotion/Activity-View.png';
 
     const result = resolveChangelogImageUrl(source, (path) => `moz-extension://test-id/${path}`);
 
@@ -140,7 +140,7 @@ describe('resolveChangelogImageUrl', () => {
 
   it('rewrites raw.githubusercontent.com promotion image URLs to runtime URLs', () => {
     const source =
-      'https://raw.githubusercontent.com/voyager-crew/voyager/main/docs/public/assets/promotion/Activity-View.png';
+      'https://raw.githubusercontent.com/boboidvtw/nomad-ai-workspace/main/docs/public/assets/promotion/Activity-View.png';
 
     const result = resolveChangelogImageUrl(source, (path) => `moz-extension://test-id/${path}`);
 
@@ -171,7 +171,7 @@ describe('resolveChangelogImageUrl', () => {
 
   it('keeps unsupported image URLs unchanged', () => {
     const source =
-      'https://github.com/voyager-crew/voyager/raw/main/docs/public/assets/promotion/Promo-Unknown.png';
+      'https://github.com/boboidvtw/nomad-ai-workspace/raw/main/docs/public/assets/promotion/Promo-Unknown.png';
 
     const result = resolveChangelogImageUrl(source, (path) => `moz-extension://test-id/${path}`);
 
@@ -220,7 +220,7 @@ describe('changelog sanitizer URI policy', () => {
 describe('rewriteChangelogImageUrls', () => {
   it('rewrites supported markdown image URLs and preserves others', () => {
     const source = [
-      '![banner](https://github.com/voyager-crew/voyager/raw/main/docs/public/assets/promotion/Activity-View.png)',
+      '![banner](https://github.com/boboidvtw/nomad-ai-workspace/raw/main/docs/public/assets/promotion/Activity-View.png)',
       '![external](https://example.com/banner.png)',
     ].join('\n');
 
@@ -232,7 +232,7 @@ describe('rewriteChangelogImageUrls', () => {
 
   it('falls back to original URL when runtime URL resolution fails', () => {
     const source =
-      '![banner](https://github.com/voyager-crew/voyager/raw/main/docs/public/assets/promotion/Activity-View.png)';
+      '![banner](https://github.com/boboidvtw/nomad-ai-workspace/raw/main/docs/public/assets/promotion/Activity-View.png)';
 
     const result = rewriteChangelogImageUrls(source, () => null);
 
@@ -241,7 +241,7 @@ describe('rewriteChangelogImageUrls', () => {
 
   it('skips rewriting when rewrite flag is disabled', () => {
     const source =
-      '![banner](https://github.com/voyager-crew/voyager/raw/main/docs/public/assets/promotion/Activity-View.png)';
+      '![banner](https://github.com/boboidvtw/nomad-ai-workspace/raw/main/docs/public/assets/promotion/Activity-View.png)';
 
     const result = rewriteChangelogImageUrls(
       source,

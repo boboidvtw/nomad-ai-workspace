@@ -277,7 +277,6 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
     const initPlatform = async () => {
       const detected = await detectPlatform();
       setPlatform(detected);
-      console.log('[CloudSyncSettings] Detected platform:', detected);
     };
     const fetchClientId = async () => {
       try {
@@ -473,7 +472,6 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
 
           if (response?.ok && response.data) {
             folders = response.data;
-            console.log('[CloudSyncSettings] Got fresh folder data from content script');
             if (response.accountScope) {
               accountScope = response.accountScope;
               folderStorageKey = buildScopedStorageKey(
@@ -484,7 +482,6 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
           }
         }
       } catch (e) {
-        console.log('[CloudSyncSettings] Tab fetch failed/skipped:', e);
       }
 
       // 2. Fallback to storage
@@ -499,7 +496,6 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
         // Only use storage folders if we didn't get them from tab
         if ((!folders.folders || folders.folders.length === 0) && storedFolders) {
           folders = storedFolders;
-          console.log(`[CloudSyncSettings] Loaded folders from ${folderStorageKey} (fallback)`);
         }
 
         // Prompts usually sync well to storage (only for Gemini)
@@ -510,11 +506,6 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
         console.error('[CloudSyncSettings] Error loading data:', err);
       }
 
-      console.log(
-        `[CloudSyncSettings] Uploading ${platform} folders:`,
-        folders.folders?.length || 0,
-        platform === 'gemini' ? `prompts: ${prompts.length}` : '(prompts skipped for AI Studio)',
-      );
 
       // Upload to Google Drive with platform info
       const response = (await chrome.runtime.sendMessage({
@@ -648,23 +639,14 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
         // 1. Try to get fresh folder data from active tab
         try {
           const tab = await getTargetTab();
-          console.log('[CloudSyncSettings] Active tab:', tab?.id, tab?.url);
           if (tab?.id) {
             const tabResponse = (await Promise.race([
               chrome.tabs.sendMessage(tab.id, { type: 'gv.sync.requestData' }),
               new Promise((_, reject) => setTimeout(() => reject('Timeout after 2s'), 2000)),
             ])) as { ok?: boolean; data?: FolderData; accountScope?: SyncAccountScope } | null;
 
-            console.log('[CloudSyncSettings] Tab response:', tabResponse);
             if (tabResponse?.ok && tabResponse.data) {
               localFolders = tabResponse.data;
-              console.log(
-                '[CloudSyncSettings] Got fresh folder data from content script:',
-                'folders:',
-                localFolders.folders?.length,
-                'folderContents keys:',
-                Object.keys(localFolders.folderContents || {}).length,
-              );
               if (tabResponse.accountScope) {
                 accountScope = tabResponse.accountScope;
                 folderStorageKey = buildScopedStorageKey(
@@ -691,7 +673,6 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
           // Only use storage folders if we didn't get them from tab
           if ((!localFolders.folders || localFolders.folders.length === 0) && storedFolders) {
             localFolders = storedFolders;
-            console.log(`[CloudSyncSettings] Loaded folders from ${folderStorageKey} (fallback)`);
           }
 
           // Prompts only for Gemini platform
@@ -732,28 +713,6 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
         const cloudTimelineHierarchyData: TimelineHierarchyData =
           cloudTimelineHierarchyPayload?.data || { conversations: {} };
 
-        console.log('[CloudSyncSettings] === MERGE DEBUG ===');
-        console.log('[CloudSyncSettings] Local folders count:', localFolders.folders?.length || 0);
-        console.log(
-          '[CloudSyncSettings] Local folderContents:',
-          JSON.stringify(Object.keys(localFolders.folderContents || {})),
-        );
-        console.log(
-          '[CloudSyncSettings] Cloud folders count:',
-          cloudFolderData.folders?.length || 0,
-        );
-        console.log(
-          '[CloudSyncSettings] Cloud folderContents:',
-          JSON.stringify(Object.keys(cloudFolderData.folderContents || {})),
-        );
-        console.log(
-          '[CloudSyncSettings] Cloud starred conversations:',
-          Object.keys(cloudStarredData.messages || {}).length,
-        );
-        console.log(
-          '[CloudSyncSettings] Cloud hierarchy conversations:',
-          Object.keys(cloudTimelineHierarchyData.conversations || {}).length,
-        );
 
         // Get local starred messages for merge
         let localStarred: StarredMessagesData = { messages: {} };
@@ -801,23 +760,6 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
           );
         }
 
-        console.log(
-          '[CloudSyncSettings] Resolved folders count:',
-          nextFolders.folders?.length || 0,
-        );
-        console.log(
-          '[CloudSyncSettings] Resolved folderContents:',
-          JSON.stringify(Object.keys(nextFolders.folderContents || {})),
-        );
-        console.log(
-          '[CloudSyncSettings] Resolved starred conversations:',
-          Object.keys(nextStarred.messages || {}).length,
-        );
-        console.log(
-          '[CloudSyncSettings] Resolved hierarchy conversations:',
-          Object.keys(nextTimelineHierarchy.conversations || {}).length,
-        );
-        console.log('[CloudSyncSettings] === END MERGE DEBUG ===');
 
         // Save merged data to storage (platform-specific storage key for folders)
         const storageUpdate: Record<string, unknown> = {
@@ -838,7 +780,6 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
           const tab = await getTargetTab();
           if (tab?.id) {
             await chrome.tabs.sendMessage(tab.id, { type: 'gv.folders.reload' });
-            console.log('[CloudSyncSettings] Sent reload message to content script');
           }
         } catch (err) {
           console.warn('[CloudSyncSettings] Could not notify content script:', err);

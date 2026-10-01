@@ -68,7 +68,7 @@ describe('Popup latest version helpers', () => {
       expect(
         extractDmgDownloadUrl({
           assets: [
-            { name: 'voyager-chrome-v1.3.3.zip', browser_download_url: 'https://x/a.zip' },
+            { name: 'nomad-chrome-v1.3.3.zip', browser_download_url: 'https://x/a.zip' },
             { name: 'voyager-firefox-v1.3.3.xpi', browser_download_url: 'https://x/a.xpi' },
           ],
         }),
@@ -81,12 +81,12 @@ describe('Popup latest version helpers', () => {
 
     it('returns the DMG download URL when present', () => {
       const url =
-        'https://github.com/voyager-crew/voyager/releases/download/v1.3.3/voyager-v1.3.3.dmg';
+        'https://github.com/boboidvtw/nomad-ai-workspace/releases/download/v1.3.3/Nomad-v1.3.3.dmg';
       expect(
         extractDmgDownloadUrl({
           assets: [
-            { name: 'voyager-chrome-v1.3.3.zip', browser_download_url: 'https://x/a.zip' },
-            { name: 'voyager-v1.3.3.dmg', browser_download_url: url },
+            { name: 'nomad-chrome-v1.3.3.zip', browser_download_url: 'https://x/a.zip' },
+            { name: 'Nomad-v1.3.3.dmg', browser_download_url: url },
           ],
         }),
       ).toBe(url);
