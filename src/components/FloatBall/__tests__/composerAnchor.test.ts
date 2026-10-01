@@ -154,5 +154,46 @@ describe('composerAnchor', () => {
       // Max X is 1440 - 76 - 8 = 1356
       expect(pos.x).toBe(1356);
     });
+    it('adapts to left side when right side is cramped and allowAdaptiveSide is true', () => {
+      const mockEl = document.createElement('div');
+      mockEl.getBoundingClientRect = () => ({
+        width: 1100,
+        height: 64,
+        top: 800,
+        bottom: 864,
+        left: 280,
+        right: 1380, // right space is 1440 - 1380 = 60px (< 76 + 14 + 8)
+        x: 280,
+        y: 800,
+        toJSON: () => {},
+      });
+
+      const ballSize = { width: 76, height: 76 };
+      const pos = computeComposerAnchorPosition(mockEl, ballSize, { gap: 14, allowAdaptiveSide: true });
+
+      // Left space: 280 - 14 - 76 = 190
+      expect(pos.x).toBe(190);
+    });
+
+    it('floats above composer when both sides are cramped and allowAdaptiveSide is true', () => {
+      const mockEl = document.createElement('div');
+      mockEl.getBoundingClientRect = () => ({
+        width: 1400,
+        height: 64,
+        top: 800,
+        bottom: 864,
+        left: 20,
+        right: 1420,
+        x: 20,
+        y: 800,
+        toJSON: () => {},
+      });
+
+      const ballSize = { width: 76, height: 76 };
+      const pos = computeComposerAnchorPosition(mockEl, ballSize, { gap: 14, allowAdaptiveSide: true });
+
+      // Above: rect.top (800) - 76 - 14 = 710
+      expect(pos.y).toBe(710);
+    });
   });
 });

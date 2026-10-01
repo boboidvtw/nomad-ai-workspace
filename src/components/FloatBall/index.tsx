@@ -266,7 +266,7 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
     const size = getSize();
     const composer = findComposerElement(platform);
     if (composer) {
-      return computeComposerAnchorPosition(composer, size);
+      return computeComposerAnchorPosition(composer, size, { gap: 14, allowAdaptiveSide: true });
     }
     return defaultPosition();
   }, [getSize, platform, defaultPosition]);
@@ -402,6 +402,8 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
     window.addEventListener('scroll', syncPosition, true);
     window.addEventListener('nomad:width-changed', syncPosition);
     window.addEventListener('nomad:toggle-width-panel', syncPosition);
+    window.visualViewport?.addEventListener('resize', syncPosition);
+    window.visualViewport?.addEventListener('scroll', syncPosition);
 
     return () => {
       clearInterval(interval);
@@ -410,6 +412,8 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
       window.removeEventListener('scroll', syncPosition, true);
       window.removeEventListener('nomad:width-changed', syncPosition);
       window.removeEventListener('nomad:toggle-width-panel', syncPosition);
+      window.visualViewport?.removeEventListener('resize', syncPosition);
+      window.visualViewport?.removeEventListener('scroll', syncPosition);
     };
   }, [isAnchored, platform, getAnchoredPosition, setPosition, syncTriggerPosition]);
 

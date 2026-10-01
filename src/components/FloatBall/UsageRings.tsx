@@ -135,14 +135,33 @@ export default function UsageRings({ data, side, isDragging, children }: Props) 
     >
       {usage ? (
         <svg
-          className="pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0 overflow-visible"
           viewBox={`0 0 ${RING_VIEWBOX_SIZE} ${RING_VIEWBOX_SIZE}`}
           aria-hidden="true"
           style={{
-            filter: 'drop-shadow(0 1px 4px rgba(201, 100, 66, 0.12))',
+            filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.12))',
           }}
         >
           <g transform={`rotate(${RING_START_ANGLE} ${RING_CENTER} ${RING_CENTER})`}>
+            {/* Background concentric guide tracks */}
+            <circle
+              cx={RING_CENTER}
+              cy={RING_CENTER}
+              r={OUTER_RADIUS}
+              fill="none"
+              stroke="rgba(160, 160, 160, 0.22)"
+              strokeWidth={RING_STROKE_WIDTH}
+            />
+            <circle
+              cx={RING_CENTER}
+              cy={RING_CENTER}
+              r={INNER_RADIUS}
+              fill="none"
+              stroke="rgba(160, 160, 160, 0.22)"
+              strokeWidth={RING_STROKE_WIDTH}
+            />
+
+            {/* Active concentric metric progress rings */}
             <circle
               cx={RING_CENTER}
               cy={RING_CENTER}
@@ -153,6 +172,9 @@ export default function UsageRings({ data, side, isDragging, children }: Props) 
               strokeLinecap="round"
               strokeDasharray={usage.sevenDayMetrics.circumference}
               strokeDashoffset={usage.sevenDayMetrics.offset}
+              style={{
+                transition: "stroke-dashoffset 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.4s ease",
+              }}
             />
             <circle
               cx={RING_CENTER}
@@ -164,6 +186,9 @@ export default function UsageRings({ data, side, isDragging, children }: Props) 
               strokeLinecap="round"
               strokeDasharray={usage.fiveHourMetrics.circumference}
               strokeDashoffset={usage.fiveHourMetrics.offset}
+              style={{
+                transition: "stroke-dashoffset 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.4s ease",
+              }}
             />
           </g>
         </svg>
