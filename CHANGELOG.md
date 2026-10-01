@@ -4,6 +4,29 @@
 
 ---
 
+## [1.1.0] - 2026-10-01
+
+### 🤖 專案里程碑：OpenAI ChatGPT 官方深度適配 (ChatGPT Platform Support)
+正式將 OpenAI ChatGPT (`chatgpt.com` / `chat.openai.com`) 升級為 Nomad AI Workspace 的一級核心支援平台，達成 Gemini、Claude、ChatGPT 三大主流 AI 的無界遊牧體驗。
+
+### 🚀 新增功能 (Added)
+- **ChatGPT 側邊欄樹狀資料夾 (`ChatGPTFolderManager`)**：
+  - 支援在 ChatGPT 官方歷史導航欄掛載 Nomad 資料夾系統，支援建立、命名、刪除與層級展開。
+  - 對話列表項目自動注入歸檔按鈕，並全面支援 HTML5 原生拖曳（Drag-and-Drop）歸檔。
+  - 自動偵測系統與頁面深色/淺色主題 (`html.dark`)。
+- **ChatGPT 專屬翡翠綠 Nomad Super Orb (`ChatGPTFloatBall`)**：
+  - 右下角懸浮中樞採用 OpenAI 官方翡翠綠微光 (`#10A37F`)，支援任意拖曳位置記憶。
+  - 左鍵一鍵喚起通用提示詞庫中樞與 `/` 斜線命令。
+  - 右鍵或設定鈕展開多平台工作空間總覽彈窗。
+- **Multi-AI 總覽樹實時聯動 (`MultiAISidebarTree`)**：
+  - ChatGPT 節點由展示佔位符正式升級為實時動態樹狀節點。
+  - 顯示當前歸檔對話統計、即時折疊/展開，並於 ChatGPT 頁面自動顯示「目前」標籤。
+- **Google Drive 雲端同步擴充 (`GoogleDriveSyncService`)**：
+  - 支援將 ChatGPT 資料夾同步至 Google Drive `Nomad Workspace Data/ChatGPT/chatgpt-folders.json`。
+  - 新增 `nomad.sync.uploadChatGPT` 與 `nomad.sync.downloadChatGPT` 背景通訊端點。
+
+---
+
 ## [1.0.0] - 2026-09-30
 
 ### 🧭 專案里程碑：Nomad AI Workspace 正式發布 (Official Release)
