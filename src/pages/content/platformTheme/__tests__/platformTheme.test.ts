@@ -76,8 +76,8 @@ describe('resolveBrandColor with a published site override', () => {
 describe('resolveBrandColor', () => {
   it('uses the adapter brandColor for Claude, ChatGPT and DeepSeek', () => {
     expect(resolveBrandColor('https://claude.ai/chat/1')).toBe('#d97757');
-    expect(resolveBrandColor('https://chatgpt.com/c/1')).toBe('#0ea5e9');
-    expect(resolveBrandColor('https://chat.openai.com/')).toBe('#0ea5e9');
+    expect(resolveBrandColor('https://chatgpt.com/c/1')).toBe('#10A37F');
+    expect(resolveBrandColor('https://chat.openai.com/')).toBe('#10A37F');
     expect(resolveBrandColor('https://chat.deepseek.com/a/chat/s/1')).toBe('#4d6bfe');
   });
 

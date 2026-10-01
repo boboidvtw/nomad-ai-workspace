@@ -2,21 +2,26 @@
  * Nomad AI Workspace — ChatGPT Content Script Entry
  * Mounts ChatGPT-adapted workspace components:
  * - ChatGPTFolderManager (Hierarchical folder tree integrated into ChatGPT sidebar)
- * - startPromptManager (Single unified Nomad mascot trigger, prompt library overlays & slash command trigger)
+ * - FloatBall (Universal Flagship Super Orb with Concentric UsageRings, Mascot Ball, Width & Scale Controls)
+ * - startPromptManager (Underlying Prompt Vault overlays & slash command trigger)
  */
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { i18n, initI18n, LANGUAGE_CHANGE_MESSAGE_TYPE } from '@/services/i18n';
+
+import FloatBall from '@/components/FloatBall';
+import ChatGPTFolderManager from '@/features/chatgpt/components/FolderManager';
 import { startBrandTheme } from '@/pages/content/platformTheme';
 import { startPromptManager } from '@/pages/content/prompt';
-import ChatGPTFolderManager from '@/features/chatgpt/components/FolderManager';
+import { i18n, initI18n, LANGUAGE_CHANGE_MESSAGE_TYPE } from '@/services/i18n';
+
 import './style.css';
 
 const NOMAD_CHATGPT_ROOT_ID = 'nomad-chatgpt-root';
 
 const mount = async () => {
   document.body.classList.add('nomad-chatgpt-page');
+  document.body.setAttribute('data-nomad-orb-active', 'true');
 
   // Start live brand theme (OpenAI emerald accent #10a37f)
   try {
@@ -48,10 +53,11 @@ const mount = async () => {
   root.render(
     <>
       <ChatGPTFolderManager />
+      <FloatBall platform="chatgpt" />
     </>,
   );
 
-  // Initialize prompt manager & slash commands on ChatGPT (creates the single unified trigger)
+  // Initialize prompt manager & slash commands on ChatGPT (synchronized under the FloatBall)
   try {
     void startPromptManager();
   } catch (e) {

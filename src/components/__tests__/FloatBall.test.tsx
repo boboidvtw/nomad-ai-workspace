@@ -1,0 +1,140 @@
+import React, { act } from 'react';
+import { type Root, createRoot } from 'react-dom/client';
+
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import FloatBall from '../FloatBall';
+
+const storageMock: Record<string, any> = {};
+
+describe('Universal FloatBall (Flagship Super Orb)', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+    storageMock['floatBallPosition'] = { x: 100, y: 200 };
+    storageMock['floatBallSize'] = 1;
+    (globalThis as any).chrome = {
+      runtime: {
+        getURL: (path: string) => `chrome-extension://mock/${path}`,
+        onMessage: {
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+        },
+      },
+      storage: {
+        local: {
+          get: vi.fn((keys: string[], cb: (res: any) => void) => {
+            const res: Record<string, any> = {};
+            for (const k of keys) res[k] = storageMock[k];
+            cb(res);
+          }),
+          set: vi.fn((data: Record<string, any>, cb?: () => void) => {
+            Object.assign(storageMock, data);
+            cb?.();
+          }),
+        },
+        onChanged: {
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+        },
+      },
+    };
+
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+    document.body.removeAttribute('data-nomad-orb-active');
+    vi.clearAllMocks();
+  });
+
+  it('renders the mascot orb button and marks body as active', async () => {
+    await act(async () => {
+      root.render(<FloatBall platform="gemini" />);
+    });
+
+    expect(document.body.getAttribute('data-nomad-orb-active')).toBe('true');
+    const ballBtn = container.querySelector(
+      'button[title="Nomad 提示詞中樞 (左鍵開啟 / 右鍵設定對話寬度)"]',
+    );
+    expect(ballBtn).not.toBeNull();
+
+    const mascotImg = container.querySelector('img[alt="Nomad Mascot"]');
+    expect(mascotImg).not.toBeNull();
+    expect(mascotImg?.getAttribute('src')).toBe('chrome-extension://mock/mascot-logo.png');
+  });
+
+  it('applies correct brand styling for Gemini and ChatGPT', async () => {
+    await act(async () => {
+      root.render(<FloatBall platform="chatgpt" />);
+    });
+    const chatgptBtn = container.querySelector<HTMLButtonElement>(
+      'button[title="Nomad 提示詞中樞 (左鍵開啟 / 右鍵設定對話寬度)"]',
+    )!;
+    expect(chatgptBtn.style.background).toContain('#10a37f');
+
+    await act(async () => {
+      root.render(<FloatBall platform="gemini" />);
+    });
+    const geminiBtn = container.querySelector<HTMLButtonElement>(
+      'button[title="Nomad 提示詞中樞 (左鍵開啟 / 右鍵設定對話寬度)"]',
+    )!;
+    expect(geminiBtn.style.background).toContain('#4E88F5');
+  });
+
+  it('clicks the underlying #gv-pm-trigger on left click', async () => {
+    const trigger = document.createElement('button');
+    trigger.id = 'gv-pm-trigger';
+    const clickSpy = vi.fn();
+    trigger.addEventListener('click', clickSpy);
+    document.body.appendChild(trigger);
+
+    await act(async () => {
+      root.render(<FloatBall platform="gemini" />);
+    });
+    const ballBtn = container.querySelector<HTMLButtonElement>(
+      'button[title="Nomad 提示詞中樞 (左鍵開啟 / 右鍵設定對話寬度)"]',
+    )!;
+
+    await act(async () => {
+      ballBtn.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          button: 0,
+          clientX: 100,
+          clientY: 100,
+          pointerId: 1,
+          bubbles: true,
+        }),
+      );
+      document.dispatchEvent(
+        new PointerEvent('pointerup', { clientX: 100, clientY: 100, pointerId: 1, bubbles: true }),
+      );
+    });
+
+    expect(clickSpy).toHaveBeenCalled();
+    trigger.remove();
+  });
+
+  it('opens the Nomad flagship menu on right click or mini button click', async () => {
+    await act(async () => {
+      root.render(<FloatBall platform="chatgpt" />);
+    });
+    const ballBtn = container.querySelector<HTMLButtonElement>(
+      'button[title="Nomad 提示詞中樞 (左鍵開啟 / 右鍵設定對話寬度)"]',
+    )!;
+
+    await act(async () => {
+      ballBtn.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    });
+
+    expect(container.textContent).toContain('Nomad 旗艦中樞');
+    expect(container.textContent).toContain('Nomad 提示詞庫中樞');
+    expect(container.textContent).toContain('重新整理 ChatGPT 額度');
+  });
+});

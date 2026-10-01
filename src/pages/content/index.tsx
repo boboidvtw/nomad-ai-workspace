@@ -41,6 +41,7 @@ import { startFolderItemFontSizeAdjuster } from './folderItemFontSize/index';
 import { startFolderProject } from './folderProject/index';
 import { startFolderSpacingAdjuster } from './folderSpacing/index';
 import { startNativeFormulaCopyForContent } from './formulaCopyStartup';
+import { startGeminiFloatBall } from './geminiOrb';
 import { startInputCollapse } from './inputCollapse/index';
 import { startInputHaloHider } from './inputHaloHider/index';
 import { initKaTeXConfig } from './katexConfig';
@@ -418,6 +419,13 @@ async function initializeFeatures(): Promise<void> {
         () => pm.destroy(),
         CleanupPositions.DestroyPromptManagerInstance,
       );
+      if (location.hostname === 'gemini.google.com') {
+        const orb = startGeminiFloatBall();
+        cleanupManager.registerCleanupFunction(
+          () => orb.destroy(),
+          CleanupPositions.DestroyPromptManagerInstance,
+        );
+      }
       await delay(HEAVY_FEATURE_INIT_DELAY);
     }
 

@@ -2,6 +2,8 @@
  * Nomad AI Workspace — ChatGPT Content Script Styles
  */
 
+@import "tailwindcss";
+
 .nomad-chatgpt-folder-container {
   display: flex;
   flex-direction: column;

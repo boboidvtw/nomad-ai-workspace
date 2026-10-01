@@ -1397,8 +1397,11 @@ html[data-gv-scheme='light'] .timeline-preview-panel {
 }
 
 /* Prompt Manager styles (scoped) */
-/* On Claude, the standalone prompt trigger is replaced by the unified FloatBall orb */
-body.gv-claude-page #gv-pm-trigger {
+/* On Claude, Gemini, and ChatGPT, the standalone prompt trigger is replaced by the unified FloatBall orb */
+body.gv-claude-page #gv-pm-trigger,
+body.gv-gemini-page #gv-pm-trigger,
+body.nomad-chatgpt-page #gv-pm-trigger,
+body[data-nomad-orb-active="true"] #gv-pm-trigger {
   opacity: 0 !important;
   pointer-events: none !important;
   z-index: -1 !important;
