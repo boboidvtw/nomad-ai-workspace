@@ -32,7 +32,7 @@ export const MultiAISidebarTree: React.FC<Props> = ({
   className = '',
   onOpenSyncSettings,
 }) => {
-  const { geminiFolders, claudeFolders, chatgptFolders, loading } = useCrossPlatformFolders();
+  const { geminiFolders, claudeFolders, chatgptFolders } = useCrossPlatformFolders();
   
   // Track collapsed/expanded state of platform root nodes
   const [expandedPlatforms, setExpandedPlatforms] = useState<Record<PlatformId, boolean>>({
@@ -76,7 +76,15 @@ export const MultiAISidebarTree: React.FC<Props> = ({
           return (
             <div key={f.id} className="text-xs">
               <div
+                role="button"
+                tabIndex={0}
                 onClick={() => toggleFolder(f.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleFolder(f.id);
+                  }
+                }}
                 className={`flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer ${bgHover} ${textPrimary}`}
               >
                 {isOpen ? (
@@ -99,19 +107,52 @@ export const MultiAISidebarTree: React.FC<Props> = ({
                 <div className="pl-5 space-y-0.5 py-0.5 border-l border-white/5 ml-3 my-0.5">
                   {f.conversations.map((c) => {
                     const isCurrent = platformId === currentPlatform;
+                    const conversationHref = isCurrent
+                      ? platformId === 'claude'
+                        ? `/chat/${c.id}`
+                        : platformId === 'chatgpt'
+                          ? `/c/${c.id}`
+                          : platformId === 'gemini'
+                            ? `/app/${c.id}`
+                            : c.url
+                      : c.url;
+
+                    const handleConversationClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                      if (isCurrent && currentPlatform === 'gemini') {
+                        e.preventDefault();
+                        try {
+                          window.history.pushState({}, '', `/app/${c.id}`);
+                          const event =
+                            typeof PopStateEvent === 'function'
+                              ? new PopStateEvent('popstate', { state: window.history.state })
+                              : new Event('popstate');
+                          window.dispatchEvent(event);
+                        } catch {
+                          window.location.href = `/app/${c.id}`;
+                        }
+                      }
+                    };
+
+                    const platformLabel = SUPPORTED_PLATFORMS[platformId]?.name || platformId;
+                    const tooltipText = isCurrent
+                      ? c.title
+                      : `[${platformLabel}] ${c.title} (新分頁開啟)`;
+
                     return (
                       <a
                         key={c.id}
-                        href={c.url}
+                        href={conversationHref}
                         target={isCurrent ? '_self' : '_blank'}
-                        rel="noreferrer"
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs no-underline truncate ${bgHover} ${textMuted} hover:text-white transition-colors`}
-                        title={c.title}
+                        rel={isCurrent ? undefined : 'noreferrer noopener'}
+                        onClick={handleConversationClick}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs no-underline truncate ${bgHover} ${textMuted} hover:text-white transition-colors group`}
+                        title={tooltipText}
+                        aria-label={tooltipText}
                       >
                         <MessageSquare className="w-3 h-3 opacity-60 flex-shrink-0" />
                         <span className="truncate flex-1">{c.title}</span>
                         {!isCurrent && (
-                          <ExternalLink className="w-2.5 h-2.5 opacity-40 group-hover:opacity-80 flex-shrink-0" />
+                          <ExternalLink className="w-2.5 h-2.5 opacity-40 group-hover:opacity-100 text-blue-400 flex-shrink-0 transition-opacity" />
                         )}
                       </a>
                     );
@@ -156,7 +197,15 @@ export const MultiAISidebarTree: React.FC<Props> = ({
           return (
             <div className="px-2">
               <div
+                role="button"
+                tabIndex={0}
                 onClick={() => togglePlatform('gemini')}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    togglePlatform('gemini');
+                  }
+                }}
                 className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer ${bgHover} transition-colors`}
               >
                 {isExpanded ? (
@@ -190,7 +239,15 @@ export const MultiAISidebarTree: React.FC<Props> = ({
           return (
             <div className="px-2">
               <div
+                role="button"
+                tabIndex={0}
                 onClick={() => togglePlatform('claude')}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    togglePlatform('claude');
+                  }
+                }}
                 className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer ${bgHover} transition-colors`}
               >
                 {isExpanded ? (
@@ -224,7 +281,15 @@ export const MultiAISidebarTree: React.FC<Props> = ({
           return (
             <div className="px-2">
               <div
+                role="button"
+                tabIndex={0}
                 onClick={() => togglePlatform('chatgpt')}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    togglePlatform('chatgpt');
+                  }
+                }}
                 className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer ${bgHover} transition-colors`}
               >
                 {isExpanded ? (
@@ -257,7 +322,15 @@ export const MultiAISidebarTree: React.FC<Props> = ({
           return (
             <div className="px-2 opacity-50 hover:opacity-90 transition-opacity">
               <div
+                role="button"
+                tabIndex={0}
                 onClick={() => togglePlatform('grok')}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    togglePlatform('grok');
+                  }
+                }}
                 className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer ${bgHover}`}
               >
                 {isExpanded ? (

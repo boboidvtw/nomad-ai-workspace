@@ -130,4 +130,96 @@ describe("MultiAISidebarTree component", () => {
 
     expect(container.textContent).toContain("Gemini Chat 1");
   });
+
+  it("handles cross-platform link jump with _blank, rel noreferrer, and ExternalLink icon", async () => {
+    // Current platform is Claude
+    await act(async () => {
+      root.render(<MultiAISidebarTree currentPlatform="claude" theme="dark" />);
+    });
+
+    // Expand OpenAI ChatGPT root platform node
+    const gptRoot = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent === "OpenAI ChatGPT"
+    )?.closest("div");
+    expect(gptRoot).toBeDefined();
+
+    await act(async () => {
+      gptRoot?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // Expand GPT Folder
+    const folderEl = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent === "GPT Folder"
+    )?.closest("div");
+    expect(folderEl).toBeDefined();
+
+    await act(async () => {
+      folderEl?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // Find the conversation link for ChatGPT inside Claude view
+    const link = container.querySelector("a[href='https://chatgpt.com/c/gptc1']") as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(link.target).toBe("_blank");
+    expect(link.rel).toBe("noreferrer noopener");
+    expect(link.title).toContain("(新分頁開啟)");
+    expect(link.title).toContain("OpenAI ChatGPT");
+    expect(link.getAttribute("aria-label")).toContain("(新分頁開啟)");
+
+    // Should have external link icon (svg)
+    const svgs = link.querySelectorAll("svg");
+    expect(svgs.length).toBeGreaterThanOrEqual(2); // MessageSquare + ExternalLink
+  });
+
+  it("handles same-platform navigation with relative URL and SPA popstate on Gemini", async () => {
+    const pushStateSpy = vi.spyOn(window.history, "pushState").mockImplementation(() => {});
+    const dispatchSpy = vi.spyOn(window, "dispatchEvent");
+
+    await act(async () => {
+      root.render(<MultiAISidebarTree currentPlatform="gemini" theme="dark" />);
+    });
+
+    // Expand Gemini Folder
+    const folderEl = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent === "Gemini Folder"
+    )?.closest("div");
+
+    await act(async () => {
+      folderEl?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // Find the conversation link for Gemini
+    const link = container.querySelector("a[href='/app/gc1']") as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(link.target).toBe("_self");
+    expect(link.rel).toBe("");
+    expect(link.title).toBe("Gemini Chat 1");
+
+    // Click the same-platform link
+    await act(async () => {
+      link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+
+    expect(pushStateSpy).toHaveBeenCalledWith({}, "", "/app/gc1");
+    expect(dispatchSpy).toHaveBeenCalled();
+  });
+
+  it("handles same-platform navigation with relative URL on Claude", async () => {
+    await act(async () => {
+      root.render(<MultiAISidebarTree currentPlatform="claude" theme="light" />);
+    });
+
+    const folderEl = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent === "Claude Folder"
+    )?.closest("div");
+
+    await act(async () => {
+      folderEl?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const link = container.querySelector("a[href='/chat/cc1']") as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(link.target).toBe("_self");
+    expect(link.title).toBe("Claude Chat Real Title");
+  });
 });

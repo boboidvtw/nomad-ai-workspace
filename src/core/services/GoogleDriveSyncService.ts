@@ -1717,11 +1717,22 @@ export class GoogleDriveSyncService {
       return this.fileIdByName[cacheKey];
     }
 
-    const query = "'" + rootFolderId + "' in parents and name='" + this.escapeDriveQueryValue(platformName) + "' and mimeType='" + BACKUP_FOLDER_MIME_TYPE + "' and trashed=false";
+    const legacyName = `${platformName} Voyager`;
+    const query =
+      "'" +
+      rootFolderId +
+      "' in parents and (name='" +
+      this.escapeDriveQueryValue(platformName) +
+      "' or name='" +
+      this.escapeDriveQueryValue(legacyName) +
+      "') and mimeType='" +
+      BACKUP_FOLDER_MIME_TYPE +
+      "' and trashed=false";
     const existing = await this.listDriveFolders(token, query);
     if (existing.length > 0) {
-      this.fileIdByName[cacheKey] = existing[0].id;
-      return existing[0].id;
+      const match = existing.find((f) => f.name === platformName) || existing[0];
+      this.fileIdByName[cacheKey] = match.id;
+      return match.id;
     }
 
     const metadata = {
@@ -1909,6 +1920,87 @@ export class GoogleDriveSyncService {
     } catch (error) {
       const msg = error instanceof Error ? error.message : "ChatGPT download failed";
       console.error("[GoogleDriveSyncService] ChatGPT download failed:", error);
+      this.updateState({ isSyncing: false, error: msg });
+      await this.saveState();
+      return null;
+    }
+  }
+
+  public async uploadGeminiFolders(folders: unknown[], interactive = true): Promise<boolean> {
+    try {
+      this.updateState({ isSyncing: true, error: null });
+      const token = await this.getAuthToken(interactive);
+      if (!token) {
+        this.updateState({ isSyncing: false, isAuthenticated: false });
+        return false;
+      }
+
+      const geminiSubfolderId = await this.ensurePlatformSubfolder(token, "Gemini");
+      const fileName = "gemini-folders.json";
+      const fileId = await this.ensureSubfolderFileId(token, geminiSubfolderId, fileName);
+
+      const payload = {
+        format: "nomad.gemini.folders.v1",
+        exportedAt: new Date().toISOString(),
+        version: EXTENSION_VERSION,
+        data: folders,
+      };
+
+      await this.uploadFileWithRetry(token, fileId, payload);
+      this.updateState({ isSyncing: false, error: null });
+      await this.saveState();
+      console.log("[GoogleDriveSyncService] Gemini folders uploaded to Nomad Workspace/Gemini/");
+      return true;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Gemini upload failed";
+      console.error("[GoogleDriveSyncService] Gemini upload failed:", error);
+      this.updateState({ isSyncing: false, error: msg });
+      await this.saveState();
+      return false;
+    }
+  }
+
+  public async downloadGeminiFolders(interactive = true): Promise<unknown[] | null> {
+    try {
+      this.updateState({ isSyncing: true, error: null });
+      const token = await this.getAuthToken(interactive);
+      if (!token) {
+        this.updateState({ isSyncing: false, isAuthenticated: false });
+        return null;
+      }
+
+      const geminiSubfolderId = await this.ensurePlatformSubfolder(token, "Gemini");
+      const fileName = "gemini-folders.json";
+      const fileId = await this.findFileInFolder(token, geminiSubfolderId, fileName);
+      if (!fileId) {
+        // Fallback to legacy root gemini-voyager-folders.json if present
+        const rootFolderId = await this.ensureBackupFolder(token);
+        const legacyFileId = await this.findFileInFolder(token, rootFolderId, FOLDERS_FILE_NAME);
+        if (!legacyFileId) {
+          this.updateState({ isSyncing: false });
+          return null;
+        }
+        const resp = await fetch(DRIVE_API_BASE + "/files/" + legacyFileId + "?alt=media", {
+          headers: { Authorization: "Bearer " + token },
+        });
+        if (!resp.ok) throw new Error("Download legacy failed with status: " + resp.status);
+        const legPayload = await resp.json();
+        this.updateState({ isSyncing: false, error: null });
+        await this.saveState();
+        return legPayload.data || legPayload.folders || [];
+      }
+
+      const response = await fetch(DRIVE_API_BASE + "/files/" + fileId + "?alt=media", {
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (!response.ok) throw new Error("Download failed with status: " + response.status);
+      const payload = await response.json();
+      this.updateState({ isSyncing: false, error: null });
+      await this.saveState();
+      return payload.data || [];
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Gemini download failed";
+      console.error("[GoogleDriveSyncService] Gemini download failed:", error);
       this.updateState({ isSyncing: false, error: msg });
       await this.saveState();
       return null;

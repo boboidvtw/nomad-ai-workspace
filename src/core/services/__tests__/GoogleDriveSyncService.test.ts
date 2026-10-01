@@ -1197,6 +1197,94 @@ describe('GoogleDriveSyncService plugin-state file', () => {
       const downloaded = await service.downloadClaudeFolders();
       expect(downloaded).toEqual(fakePayload.data);
     });
+
+    it("uploads ChatGPT folders into ChatGPT subfolder", async () => {
+      const chromeMock = createChromeMock();
+      (globalThis as { chrome: MockedChrome }).chrome = chromeMock;
+      const GoogleDriveSyncService = await loadServiceClass();
+      const service = new GoogleDriveSyncService();
+
+      vi.spyOn(service as any, "getAuthToken").mockResolvedValue("token");
+      vi.spyOn(service as any, "ensurePlatformSubfolder").mockResolvedValue("chatgpt-subfolder-id");
+      vi.spyOn(service as any, "ensureSubfolderFileId").mockResolvedValue("chatgpt-file-id");
+      const uploadSpy = vi.spyOn(service as any, "uploadFileWithRetry").mockResolvedValue(undefined);
+
+      const fakeGPTFolders = [{ id: "gpt-1", name: "ChatGPT Coding", conversationIds: ["c-gpt-1"] }];
+      const ok = await service.uploadChatGPTFolders(fakeGPTFolders);
+
+      expect(ok).toBe(true);
+      expect(uploadSpy).toHaveBeenCalledWith("token", "chatgpt-file-id", expect.objectContaining({
+        format: "nomad.chatgpt.folders.v1",
+        data: fakeGPTFolders,
+      }));
+    });
+
+    it("downloads ChatGPT folders from ChatGPT subfolder", async () => {
+      const chromeMock = createChromeMock();
+      (globalThis as { chrome: MockedChrome }).chrome = chromeMock;
+      const GoogleDriveSyncService = await loadServiceClass();
+      const service = new GoogleDriveSyncService();
+
+      const fakePayload = {
+        format: "nomad.chatgpt.folders.v1",
+        data: [{ id: "gpt-1", name: "ChatGPT Coding", conversationIds: ["c-gpt-1"] }],
+      };
+
+      vi.spyOn(service as any, "getAuthToken").mockResolvedValue("token");
+      vi.spyOn(service as any, "ensurePlatformSubfolder").mockResolvedValue("chatgpt-subfolder-id");
+      vi.spyOn(service as any, "findFileInFolder").mockResolvedValue("chatgpt-file-id");
+      vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => fakePayload,
+      } as any);
+
+      const downloaded = await service.downloadChatGPTFolders();
+      expect(downloaded).toEqual(fakePayload.data);
+    });
+
+    it("uploads and downloads Gemini folders with subfolder support", async () => {
+      const chromeMock = createChromeMock();
+      (globalThis as { chrome: MockedChrome }).chrome = chromeMock;
+      const GoogleDriveSyncService = await loadServiceClass();
+      const service = new GoogleDriveSyncService();
+
+      vi.spyOn(service as any, "getAuthToken").mockResolvedValue("token");
+      vi.spyOn(service as any, "ensurePlatformSubfolder").mockResolvedValue("gemini-subfolder-id");
+      vi.spyOn(service as any, "ensureSubfolderFileId").mockResolvedValue("gemini-file-id");
+      const uploadSpy = vi.spyOn(service as any, "uploadFileWithRetry").mockResolvedValue(undefined);
+
+      const fakeGeminiFolders = [{ id: "g-1", name: "Gemini Analysis", conversationIds: ["cg-1"] }];
+      const ok = await service.uploadGeminiFolders(fakeGeminiFolders);
+      expect(ok).toBe(true);
+      expect(uploadSpy).toHaveBeenCalledWith("token", "gemini-file-id", expect.objectContaining({
+        format: "nomad.gemini.folders.v1",
+        data: fakeGeminiFolders,
+      }));
+
+      vi.spyOn(service as any, "findFileInFolder").mockResolvedValue("gemini-file-id");
+      vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => ({ format: "nomad.gemini.folders.v1", data: fakeGeminiFolders }),
+      } as any);
+
+      const downloaded = await service.downloadGeminiFolders();
+      expect(downloaded).toEqual(fakeGeminiFolders);
+    });
+
+    it("resolves platform subfolder matching Voyager legacy alias name", async () => {
+      const chromeMock = createChromeMock();
+      (globalThis as { chrome: MockedChrome }).chrome = chromeMock;
+      const GoogleDriveSyncService = await loadServiceClass();
+      const service = new GoogleDriveSyncService();
+
+      vi.spyOn(service as any, "ensureBackupFolder").mockResolvedValue("root-id");
+      vi.spyOn(service as any, "listDriveFolders").mockResolvedValue([
+        { id: "legacy-subfolder-id", name: "Claude Voyager" }
+      ]);
+
+      const subfolderId = await service.ensurePlatformSubfolder("token", "Claude");
+      expect(subfolderId).toBe("legacy-subfolder-id");
+    });
   });
 
 });

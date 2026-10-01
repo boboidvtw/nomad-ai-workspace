@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Cloud, Layers, RefreshCw } from 'lucide-react';
 import type { Folder } from '@/types/folder';
+import { saveChatGPTFolders } from '../../services/storage';
 import { useChatGPTFolders } from '../../hooks/useChatGPTFolders';
 import { useChatGPTConversations } from '../../hooks/useChatGPTConversations';
 import { FolderList } from './FolderList';
@@ -46,17 +47,63 @@ export default function ChatGPTFolderManager() {
   const handleSyncToDrive = async () => {
     try {
       setIsSyncing(true);
-      await new Promise<void>((resolve) => {
+      // 1. Download cloud folders first
+      const downloadRes = await new Promise<{ ok?: boolean; data?: unknown }>((resolve) => {
+        chrome.runtime.sendMessage(
+          {
+            type: 'nomad.sync.downloadChatGPT',
+            payload: { interactive: true },
+          },
+          (res) => resolve(res || {}),
+        );
+      });
+
+      let mergedFolders = [...folders];
+      if (downloadRes?.ok && downloadRes.data) {
+        const rawCloud = downloadRes.data;
+        const cloudFolders: Folder[] = (
+          Array.isArray(rawCloud)
+            ? rawCloud
+            : ((rawCloud as { folders?: Folder[] }).folders || [])
+        ) as Folder[];
+
+        const localMap = new Map<string, Folder>(mergedFolders.map((f) => [f.id, f]));
+        cloudFolders.forEach((cloudF) => {
+          const existing = localMap.get(cloudF.id);
+          if (!existing) {
+            mergedFolders.push(cloudF);
+          } else {
+            const mergedConvIds = Array.from(
+              new Set([...(existing.conversationIds || []), ...(cloudF.conversationIds || [])]),
+            );
+            const idx = mergedFolders.findIndex((f) => f.id === cloudF.id);
+            if (idx !== -1) {
+              mergedFolders[idx] = {
+                ...existing,
+                conversationIds: mergedConvIds,
+              };
+            }
+          }
+        });
+      }
+
+      // 2. Persist merged folders to local chrome.storage
+      await saveChatGPTFolders(mergedFolders);
+
+      // 3. Upload merged folders to Google Drive
+      await new Promise<void>((resolve, reject) => {
         chrome.runtime.sendMessage(
           {
             type: 'nomad.sync.uploadChatGPT',
-            payload: { folders, interactive: true },
+            payload: { folders: mergedFolders, interactive: true },
           },
           (res) => {
             if (res?.ok) {
-              console.log('[Nomad Workspace] ChatGPT folders synced to Google Drive successfully!');
+              console.log('[Nomad Workspace] ChatGPT folders bidirectional sync completed successfully!');
+              resolve();
+            } else {
+              reject(new Error(res?.error || 'Upload failed'));
             }
-            resolve();
           },
         );
       });

@@ -198,21 +198,22 @@ export default function FolderManager() {
         try {
           const payload = JSON.parse(event.target?.result as string);
           if (payload && payload.format === 'claude-voyager.sync.v1') {
-            const cloudFolders = payload.folders?.data || [];
-            const cloudPrompts = payload.prompts?.items || [];
+            const cloudFolders = (Array.isArray(payload.data) ? payload.data : (payload.folders?.data || payload.folders || [])) as Folder[];
+            const cloudPrompts = (Array.isArray(payload.prompts) ? payload.prompts : (payload.prompts?.items || [])) as unknown[];
             
             const localRes = await chrome.storage.local.get([FOLDERS_KEY, PROMPTS_KEY]);
             const localFolders = (localRes[FOLDERS_KEY] as Folder[]) || [];
-            const localPrompts = (localRes[PROMPTS_KEY] as any[]) || [];
+            const localPrompts = (localRes[PROMPTS_KEY] as Array<{ id: string }>) || [];
 
             const mergedFolders = mergeFoldersLocal(localFolders, cloudFolders);
-            
+
             // merge prompts
-            const localPromptMap = new Map(localPrompts.map((p: any) => [p.id, p]));
+            const localPromptMap = new Map(localPrompts.map((p) => [p.id, p]));
             const mergedPrompts = [...localPrompts];
-            cloudPrompts.forEach((cp: any) => {
-              if (!localPromptMap.has(cp.id)) {
-                mergedPrompts.push(cp);
+            cloudPrompts.forEach((cp) => {
+              const item = cp as { id: string };
+              if (item?.id && !localPromptMap.has(item.id)) {
+                mergedPrompts.push(item);
               }
             });
 
@@ -265,19 +266,20 @@ export default function FolderManager() {
 
     chrome.runtime.sendMessage({ type: 'cv.sync.download' }, (response) => {
       if (response && response.ok && response.data) {
-        const cloudFolders = response.data.folders?.data || [];
-        const cloudPrompts = response.data.prompts?.items || [];
+        const cloudFolders = (Array.isArray(response.data) ? response.data : (response.data.folders?.data || response.data.folders || [])) as Folder[];
+        const cloudPrompts = (Array.isArray(response.data?.prompts) ? response.data.prompts : (response.data?.prompts?.items || [])) as unknown[];
 
         chrome.storage.local.get([FOLDERS_KEY, PROMPTS_KEY], async (localRes) => {
           const localFolders = (localRes[FOLDERS_KEY] as Folder[]) || [];
-          const localPrompts = (localRes[PROMPTS_KEY] as any[]) || [];
+          const localPrompts = (localRes[PROMPTS_KEY] as Array<{ id: string }>) || [];
 
           const mergedFolders = mergeFoldersLocal(localFolders, cloudFolders);
-          const localPromptMap = new Map(localPrompts.map((p: any) => [p.id, p]));
+          const localPromptMap = new Map(localPrompts.map((p) => [p.id, p]));
           const mergedPrompts = [...localPrompts];
-          cloudPrompts.forEach((cp: any) => {
-            if (!localPromptMap.has(cp.id)) {
-              mergedPrompts.push(cp);
+          cloudPrompts.forEach((cp) => {
+            const item = cp as { id: string };
+            if (item?.id && !localPromptMap.has(item.id)) {
+              mergedPrompts.push(item);
             }
           });
 
