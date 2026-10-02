@@ -2572,16 +2572,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse({ ok: data !== null, data, state: await googleDriveSyncService.getState() });
             return;
           }
+          case 'nomad.sync.uploadGrok': {
+            const interactive = message.payload?.interactive !== false;
+            const folders = message.payload?.folders ?? [];
+            const success = await googleDriveSyncService.uploadGrokFolders(folders, interactive);
+            sendResponse({ ok: success, state: await googleDriveSyncService.getState() });
+            return;
+          }
+          case 'nomad.sync.downloadGrok': {
+            const interactive = message.payload?.interactive !== false;
+            const data = await googleDriveSyncService.downloadGrokFolders(interactive);
+            sendResponse({ ok: data !== null, data, state: await googleDriveSyncService.getState() });
+            return;
+          }
           case 'nomad.sync.syncAll': {
             const interactive = message.payload?.interactive !== false;
-            const [claude, chatgpt, gemini] = await Promise.all([
+            const [claude, chatgpt, gemini, grok] = await Promise.all([
               googleDriveSyncService.downloadClaudeFolders(interactive),
               googleDriveSyncService.downloadChatGPTFolders(interactive),
               googleDriveSyncService.downloadGeminiFolders(interactive),
+              googleDriveSyncService.downloadGrokFolders(interactive),
             ]);
             sendResponse({
               ok: true,
-              data: { claude, chatgpt, gemini },
+              data: { claude, chatgpt, gemini, grok },
               state: await googleDriveSyncService.getState(),
             });
             return;

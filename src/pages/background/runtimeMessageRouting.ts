@@ -92,6 +92,8 @@ const HANDLED_BACKGROUND_MESSAGE_TYPES = new Set([
   'nomad.sync.downloadChatGPT',
   'nomad.sync.uploadGemini',
   'nomad.sync.downloadGemini',
+  'nomad.sync.uploadGrok',
+  'nomad.sync.downloadGrok',
   'nomad.sync.getState',
   'nomad.sync.syncAll',
   'gv.openPopup',

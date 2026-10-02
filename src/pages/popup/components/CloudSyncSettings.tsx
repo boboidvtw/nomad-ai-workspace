@@ -1025,7 +1025,7 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="grid grid-cols-4 gap-1.5">
                 {/* Gemini */}
                 <div className="rounded-lg border border-border/50 bg-background/50 p-2 text-center shadow-xs">
                   <div className="text-[11px] font-medium text-foreground truncate">Gemini</div>
@@ -1061,6 +1061,19 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
                     </span>
                     <span title={formatLastSync(syncState.lastSyncTimeChatGPT ?? null)}>
                       ↓ {formatLastSync(syncState.lastSyncTimeChatGPT ?? null)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Grok */}
+                <div className="rounded-lg border border-border/50 bg-background/50 p-2 text-center shadow-xs">
+                  <div className="text-[11px] font-medium text-foreground truncate">Grok</div>
+                  <div className="mt-1 text-[10px] text-muted-foreground flex flex-col gap-0.5">
+                    <span title={formatLastUpload(syncState.lastUploadTimeGrok ?? null)}>
+                      ↑ {formatLastUpload(syncState.lastUploadTimeGrok ?? null)}
+                    </span>
+                    <span title={formatLastSync(syncState.lastSyncTimeGrok ?? null)}>
+                      ↓ {formatLastSync(syncState.lastSyncTimeGrok ?? null)}
                     </span>
                   </div>
                 </div>

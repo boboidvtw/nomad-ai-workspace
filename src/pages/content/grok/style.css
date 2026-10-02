@@ -1,7 +1,7 @@
 /* Nomad AI Workspace — xAI Grok (grok.com) Adaptation Styles */
 body.nomad-grok-page {
   --nomad-platform: 'grok';
-  --nomad-brand-color: #2997ff;
+  --nomad-brand-color: #1D9BF0;
 }
 
 #nomad-grok-root {
@@ -13,4 +13,18 @@ body.nomad-grok-page {
 /* FloatBall integration in Grok layout */
 body.nomad-grok-page [data-nomad-orb="true"] {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Grok Sidebar Folder Tree & Button Styles */
+.nomad-grok-folder-container {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 6px;
+}
+
+.nomad-grok-item-folder-btn {
+  transition: all 0.15s ease-in-out;
+}
+
+.nomad-grok-item-folder-btn:hover {
+  transform: scale(1.1);
 }

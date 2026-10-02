@@ -55,6 +55,10 @@ export interface SyncState {
   lastSyncTimeChatGPT?: number | null;
   /** Timestamp of last successful upload for ChatGPT */
   lastUploadTimeChatGPT?: number | null;
+  /** Timestamp of last successful sync/download for Grok */
+  lastSyncTimeGrok?: number | null;
+  /** Timestamp of last successful upload for Grok */
+  lastUploadTimeGrok?: number | null;
   /** Whether a sync operation is currently in progress */
   isSyncing: boolean;
   /** Last error message (null if no error) */
@@ -228,6 +232,8 @@ export const DEFAULT_SYNC_STATE: SyncState = {
   lastUploadTimeClaude: null,
   lastSyncTimeChatGPT: null,
   lastUploadTimeChatGPT: null,
+  lastSyncTimeGrok: null,
+  lastUploadTimeGrok: null,
   isSyncing: false,
   error: null,
   isAuthenticated: false,

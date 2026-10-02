@@ -32,14 +32,14 @@ export const MultiAISidebarTree: React.FC<Props> = ({
   className = '',
   onOpenSyncSettings,
 }) => {
-  const { geminiFolders, claudeFolders, chatgptFolders } = useCrossPlatformFolders();
+  const { geminiFolders, claudeFolders, chatgptFolders, grokFolders } = useCrossPlatformFolders();
   
   // Track collapsed/expanded state of platform root nodes
   const [expandedPlatforms, setExpandedPlatforms] = useState<Record<PlatformId, boolean>>({
     gemini: currentPlatform === 'gemini',
     claude: currentPlatform === 'claude',
     chatgpt: currentPlatform === 'chatgpt',
-    grok: false,
+    grok: currentPlatform === 'grok',
     deepseek: false,
   });
 
@@ -114,7 +114,9 @@ export const MultiAISidebarTree: React.FC<Props> = ({
                           ? `/c/${c.id}`
                           : platformId === 'gemini'
                             ? `/app/${c.id}`
-                            : c.url
+                            : platformId === 'grok'
+                              ? `/chat/${c.id}`
+                              : c.url
                       : c.url;
 
                     const handleConversationClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -194,6 +196,28 @@ export const MultiAISidebarTree: React.FC<Props> = ({
                           } catch {
                             window.location.href = `/app/${c.id}`;
                           }
+                        } else if (currentPlatform === 'grok') {
+                          const nativeLink =
+                            findHostLink(`nav a[href*="${c.id}"]`) ||
+                            findHostLink(`a[href*="/chat/${c.id}"]`) ||
+                            findHostLink(`a[href*="/c/${c.id}"]`);
+                          if (nativeLink) {
+                            nativeLink.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+                            nativeLink.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                            nativeLink.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                            nativeLink.click();
+                            return;
+                          }
+                          try {
+                            window.history.pushState({}, '', `/chat/${c.id}`);
+                            const event =
+                              typeof PopStateEvent === 'function'
+                                ? new PopStateEvent('popstate', { state: window.history.state })
+                                : new Event('popstate');
+                            window.dispatchEvent(event);
+                          } catch {
+                            window.location.href = `/chat/${c.id}`;
+                          }
                         }
                       } else {
                         if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
@@ -244,8 +268,8 @@ export const MultiAISidebarTree: React.FC<Props> = ({
   };
 
   return (
-    <div className={`nomad-sidebar-tree flex flex-col font-sans select-none ${className}`}>
-      {/* Header Bar */}
+    <div className={`nomad-sidebar-tree select-none ${className}`}>
+      {/* Header bar */}
       <div className={`flex items-center justify-between px-3 py-2 border-b ${borderSubtle}`}>
         <div className="flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-blue-400" />
@@ -392,12 +416,13 @@ export const MultiAISidebarTree: React.FC<Props> = ({
           );
         })()}
 
-        {/* 4. xAI Grok Node (Planned) */}
+        {/* 4. xAI Grok Node */}
         {(() => {
           const cfg = SUPPORTED_PLATFORMS.grok;
+          const isCurrent = currentPlatform === 'grok';
           const isExpanded = expandedPlatforms.grok;
           return (
-            <div className="px-2 opacity-50 hover:opacity-90 transition-opacity">
+            <div className="px-2">
               <div
                 role="button"
                 tabIndex={0}
@@ -408,14 +433,55 @@ export const MultiAISidebarTree: React.FC<Props> = ({
                     togglePlatform('grok');
                   }
                 }}
-                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer ${bgHover}`}
+                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer ${bgHover} transition-colors`}
               >
                 {isExpanded ? (
                   <ChevronDown className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
                 ) : (
                   <ChevronRight className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
                 )}
-                <span className="w-2 h-2 rounded-full bg-sky-500 flex-shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-sky-500 shadow-sm shadow-sky-500/50 flex-shrink-0" />
+                <span className={`text-xs font-semibold flex-1 ${textPrimary}`}>
+                  {cfg.name}
+                </span>
+                {isCurrent && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                    目前
+                  </span>
+                )}
+                <span className="text-[10px] text-zinc-500 font-mono">
+                  ({grokFolders.reduce((acc, f) => acc + f.conversations.length, 0)})
+                </span>
+              </div>
+              {isExpanded && renderFolderList(grokFolders, 'grok')}
+            </div>
+          );
+        })()}
+
+        {/* 5. DeepSeek Node (Planned) */}
+        {(() => {
+          const cfg = SUPPORTED_PLATFORMS.deepseek;
+          const isExpanded = expandedPlatforms.deepseek;
+          return (
+            <div className="px-2 opacity-50 hover:opacity-90 transition-opacity">
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => togglePlatform('deepseek')}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    togglePlatform('deepseek');
+                  }
+                }}
+                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer ${bgHover}`}
+              >
+                {isExpanded ? (
+                  <ChevronDown className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                )}
+                <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0" />
                 <span className={`text-xs font-medium flex-1 ${textPrimary}`}>
                   {cfg.name}
                 </span>
@@ -425,7 +491,7 @@ export const MultiAISidebarTree: React.FC<Props> = ({
               </div>
               {isExpanded && (
                 <div className="pl-6 py-1 text-[11px] text-zinc-500 italic">
-                  xAI Grok 工作空間規劃中
+                  DeepSeek 工作空間規劃中
                 </div>
               )}
             </div>

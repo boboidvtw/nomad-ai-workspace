@@ -1879,7 +1879,7 @@ export class GoogleDriveSyncService {
       };
 
       await this.uploadFileWithRetry(token, fileId, payload);
-      this.updateState({ isSyncing: false, error: null, lastUploadTimeClaude: Date.now() });
+      this.updateState({ isSyncing: false, error: null, lastUploadTimeChatGPT: Date.now() });
       await this.saveState();
       console.log("[GoogleDriveSyncService] ChatGPT folders uploaded to Nomad Workspace/ChatGPT/");
       return true;
@@ -1947,7 +1947,7 @@ export class GoogleDriveSyncService {
       };
 
       await this.uploadFileWithRetry(token, fileId, payload);
-      this.updateState({ isSyncing: false, error: null, lastUploadTimeClaude: Date.now() });
+      this.updateState({ isSyncing: false, error: null, lastUploadTime: Date.now() });
       await this.saveState();
       console.log("[GoogleDriveSyncService] Gemini folders uploaded to Nomad Workspace/Gemini/");
       return true;
@@ -2007,6 +2007,74 @@ export class GoogleDriveSyncService {
     }
   }
 
+
+  public async uploadGrokFolders(folders: unknown[], interactive = true): Promise<boolean> {
+    try {
+      this.updateState({ isSyncing: true, error: null });
+      const token = await this.getAuthToken(interactive);
+      if (!token) {
+        this.updateState({ isSyncing: false, isAuthenticated: false });
+        return false;
+      }
+
+      const grokSubfolderId = await this.ensurePlatformSubfolder(token, "Grok");
+      const fileName = "grok-folders.json";
+      const fileId = await this.ensureSubfolderFileId(token, grokSubfolderId, fileName);
+
+      const payload = {
+        format: "nomad.grok.folders.v1",
+        exportedAt: new Date().toISOString(),
+        version: EXTENSION_VERSION,
+        data: folders,
+      };
+
+      await this.uploadFileWithRetry(token, fileId, payload);
+      this.updateState({ isSyncing: false, error: null, lastUploadTimeGrok: Date.now() });
+      await this.saveState();
+      console.log("[GoogleDriveSyncService] Grok folders uploaded to Nomad Workspace/Grok/");
+      return true;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Grok upload failed";
+      console.error("[GoogleDriveSyncService] Grok upload failed:", error);
+      this.updateState({ isSyncing: false, error: msg });
+      await this.saveState();
+      return false;
+    }
+  }
+
+  public async downloadGrokFolders(interactive = true): Promise<unknown[] | null> {
+    try {
+      this.updateState({ isSyncing: true, error: null });
+      const token = await this.getAuthToken(interactive);
+      if (!token) {
+        this.updateState({ isSyncing: false, isAuthenticated: false });
+        return null;
+      }
+
+      const grokSubfolderId = await this.ensurePlatformSubfolder(token, "Grok");
+      const fileName = "grok-folders.json";
+      const fileId = await this.findFileInFolder(token, grokSubfolderId, fileName);
+      if (!fileId) {
+        this.updateState({ isSyncing: false });
+        return null;
+      }
+
+      const response = await fetch(DRIVE_API_BASE + "/files/" + fileId + "?alt=media", {
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (!response.ok) throw new Error("Download failed with status: " + response.status);
+      const payload = await response.json();
+      this.updateState({ isSyncing: false, error: null, lastSyncTimeGrok: Date.now() });
+      await this.saveState();
+      return payload.data || [];
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Grok download failed";
+      console.error("[GoogleDriveSyncService] Grok download failed:", error);
+      this.updateState({ isSyncing: false, error: msg });
+      await this.saveState();
+      return null;
+    }
+  }
 }
 
 export const googleDriveSyncService = new GoogleDriveSyncService();

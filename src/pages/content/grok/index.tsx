@@ -1,6 +1,7 @@
 /**
  * Nomad AI Workspace — xAI Grok Content Script Entry
  * Mounts Grok-adapted workspace components:
+ * - GrokFolderManager (Hierarchical folder tree integrated into Grok sidebar)
  * - FloatBall (Universal Flagship Super Orb with Concentric UsageRings, Mascot Ball, Width & Scale Controls)
  * - startPromptManager (Underlying Prompt Vault overlays)
  * - startSlashPromptFeature (Slash / command quick completion & dynamic variable fill)
@@ -10,6 +11,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import FloatBall from '@/components/FloatBall';
+import GrokFolderManager from '@/features/grok/components/FolderManager';
 import { startPromptManager } from '@/pages/content/prompt';
 import { startSlashPromptFeature } from '@/pages/content/prompt/slashPromptFeature';
 import { i18n, initI18n, LANGUAGE_CHANGE_MESSAGE_TYPE } from '@/services/i18n';
@@ -44,6 +46,7 @@ export const mountGrokWorkspace = async () => {
   const root = createRoot(rootContainer);
   root.render(
     <>
+      <GrokFolderManager />
       <FloatBall platform="grok" />
     </>,
   );

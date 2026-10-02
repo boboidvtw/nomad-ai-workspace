@@ -1,6 +1,6 @@
 /**
  * Nomad AI Workspace — Cross-Platform Folders Hook
- * Reads and normalizes folder trees across Gemini, Claude, ChatGPT, and future platforms.
+ * Reads and normalizes folder trees across Gemini, Claude, ChatGPT, Grok, and future platforms.
  */
 
 import { useEffect, useState } from 'react';
@@ -13,11 +13,14 @@ export const CLAUDE_FOLDERS_KEY = 'claude_nexus_folders';
 export const CLAUDE_TITLES_KEY = 'claude_nexus_conversation_titles';
 export const CHATGPT_FOLDERS_KEY = 'chatgpt_folders';
 export const CHATGPT_TITLES_KEY = 'chatgpt_conversation_titles';
+export const GROK_FOLDERS_KEY = 'grok_folders';
+export const GROK_TITLES_KEY = 'grok_conversation_titles';
 
 export function useCrossPlatformFolders() {
   const [geminiFolders, setGeminiFolders] = useState<CrossPlatformFolder[]>([]);
   const [claudeFolders, setClaudeFolders] = useState<CrossPlatformFolder[]>([]);
   const [chatgptFolders, setChatGPTFolders] = useState<CrossPlatformFolder[]>([]);
+  const [grokFolders, setGrokFolders] = useState<CrossPlatformFolder[]>([]);
   const [loading, setLoading] = useState(true);
 
   const reload = async () => {
@@ -34,7 +37,16 @@ export function useCrossPlatformFolders() {
             return;
           }
           chrome.storage.local.get(
-            [GEMINI_FOLDERS_KEY, GEMINI_CONTENTS_KEY, CLAUDE_FOLDERS_KEY, CLAUDE_TITLES_KEY, CHATGPT_FOLDERS_KEY, CHATGPT_TITLES_KEY],
+            [
+              GEMINI_FOLDERS_KEY,
+              GEMINI_CONTENTS_KEY,
+              CLAUDE_FOLDERS_KEY,
+              CLAUDE_TITLES_KEY,
+              CHATGPT_FOLDERS_KEY,
+              CHATGPT_TITLES_KEY,
+              GROK_FOLDERS_KEY,
+              GROK_TITLES_KEY,
+            ],
             (items) => {
               const lastError = chrome.runtime?.lastError;
               if (lastError) {
@@ -120,6 +132,27 @@ export function useCrossPlatformFolders() {
         };
       });
       setChatGPTFolders(parsedChatGPT);
+
+      // 4. Parse Grok Folders
+      const rawGrokFolders: Array<{ id: string; name: string; conversationIds: string[]; isExpanded?: boolean }> = res[GROK_FOLDERS_KEY] || [];
+      const grokTitleCache: Record<string, string> = res[GROK_TITLES_KEY] || {};
+      const parsedGrok: CrossPlatformFolder[] = rawGrokFolders.map((f) => {
+        const chatIds = f.conversationIds || [];
+        return {
+          id: f.id,
+          name: f.name,
+          platformId: 'grok',
+          isExpanded: f.isExpanded,
+          conversations: chatIds.map((id) => ({
+            id,
+            title: grokTitleCache[id] || `Grok 對話 (${id.slice(0, 8)})`,
+            url: `https://grok.com/chat/${id}`,
+            platformId: 'grok',
+            folderId: f.id,
+          })),
+        };
+      });
+      setGrokFolders(parsedGrok);
     } catch (e) {
       if (!isExtensionContextInvalidatedError(e)) {
         console.error('[Nomad Workspace] Failed to load cross-platform folders:', e);
@@ -142,7 +175,9 @@ export function useCrossPlatformFolders() {
           changes[CLAUDE_FOLDERS_KEY] ||
           changes[CLAUDE_TITLES_KEY] ||
           changes[CHATGPT_FOLDERS_KEY] ||
-          changes[CHATGPT_TITLES_KEY])
+          changes[CHATGPT_TITLES_KEY] ||
+          changes[GROK_FOLDERS_KEY] ||
+          changes[GROK_TITLES_KEY])
       ) {
         void reload();
       }
@@ -166,6 +201,7 @@ export function useCrossPlatformFolders() {
     geminiFolders,
     claudeFolders,
     chatgptFolders,
+    grokFolders,
     loading,
     reload,
   };
