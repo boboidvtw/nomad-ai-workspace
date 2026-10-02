@@ -22,15 +22,16 @@ const STYLE_CHECK_INTERVAL_MS = 500;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-const detectPlatform = (): 'claude' | 'gemini' | 'chatgpt' => {
+const detectPlatform = (): 'claude' | 'gemini' | 'chatgpt' | 'grok' => {
   const host = window.location.hostname.toLowerCase();
   if (host.includes('claude.ai')) return 'claude';
   if (host.includes('chatgpt.com') || host.includes('openai.com')) return 'chatgpt';
   if (host.includes('gemini.google') || host.includes('aistudio.google')) return 'gemini';
+  if (host.includes('grok.com') || host.includes('x.ai')) return 'grok';
   return 'claude';
 };
 
-const buildOverrideCss = (widthRem: number, platform: 'claude' | 'gemini' | 'chatgpt') => {
+const buildOverrideCss = (widthRem: number, platform: 'claude' | 'gemini' | 'chatgpt' | 'grok') => {
   if (platform === 'chatgpt') {
     return `
 [class*='--thread-content-max-width'],
@@ -67,6 +68,17 @@ input-container input-area-v2 {
 `.trim();
   }
 
+  if (platform === 'grok') {
+    return `
+div[class*='max-w-3xl'],
+div[class*='max-w-4xl'],
+main div[class*='mx-auto'][class*='max-w-'],
+div[class*='message-container'] {
+  max-width: ${widthRem}rem !important;
+}
+`.trim();
+  }
+
   // Claude default
   return `
 div.mx-auto.flex.size-full.max-w-3xl.flex-col,
@@ -93,7 +105,7 @@ const ensureStyleTag = (cssText: string) => {
 };
 
 export const useUniversalWidthControl = (
-  platformOverride?: 'claude' | 'gemini' | 'chatgpt',
+  platformOverride?: 'claude' | 'gemini' | 'chatgpt' | 'grok',
 ): WidthControlApi => {
   const platform = platformOverride ?? detectPlatform();
   const [chatWidth, setChatWidthState] = useState<number>(DEFAULT_CHAT_WIDTH_REM);

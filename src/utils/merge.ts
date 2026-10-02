@@ -432,3 +432,61 @@ export function mergeTimelineHierarchy(
 
   return { conversations };
 }
+
+
+export type FlatSyncFolder = {
+  id: string;
+  name: string;
+  conversationIds?: string[];
+  isExpanded?: boolean;
+  color?: string;
+  createdAt?: number;
+  updatedAt?: number;
+};
+
+/**
+ * Merges local and cloud flat folder structures (Claude, ChatGPT, Grok).
+ * Preserves all distinct folders, merges conversation IDs without duplicates,
+ * and respects newest update timestamps when available.
+ */
+export function mergeFlatFolders<T extends FlatSyncFolder>(local: T[], cloud: T[]): T[] {
+  const localMap = new Map<string, T>(local.map((f) => [f.id, f]));
+  const result: T[] = [...local];
+
+  cloud.forEach((cloudFolder) => {
+    const existing = localMap.get(cloudFolder.id);
+    if (!existing) {
+      result.push({
+        ...cloudFolder,
+        name: cloudFolder.name || "未命名資料夾",
+        conversationIds: Array.isArray(cloudFolder.conversationIds)
+          ? [...cloudFolder.conversationIds]
+          : [],
+        isExpanded: cloudFolder.isExpanded ?? true,
+      });
+    } else {
+      const mergedConvIds = Array.from(
+        new Set([
+          ...(Array.isArray(existing.conversationIds) ? existing.conversationIds : []),
+          ...(Array.isArray(cloudFolder.conversationIds) ? cloudFolder.conversationIds : []),
+        ]),
+      );
+      const cloudTime = cloudFolder.updatedAt || cloudFolder.createdAt || 0;
+      const localTime = existing.updatedAt || existing.createdAt || 0;
+      const name = cloudTime > localTime && cloudFolder.name ? cloudFolder.name : existing.name;
+
+      const idx = result.findIndex((f) => f.id === cloudFolder.id);
+      if (idx !== -1) {
+        result[idx] = {
+          ...existing,
+          ...cloudFolder,
+          name,
+          conversationIds: mergedConvIds,
+          isExpanded: existing.isExpanded ?? cloudFolder.isExpanded ?? true,
+        };
+      }
+    }
+  });
+
+  return result;
+}

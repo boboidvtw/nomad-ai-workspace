@@ -167,11 +167,20 @@ export function openTemplateFill(options: TemplateFillOptions): TemplateFillHand
 
   let closed = false;
 
+  const reposition = (): void => {
+    if (!surface.isConnected) return;
+    positionAgainst(surface, anchor);
+  };
+
   function close(): void {
     if (closed) return;
     closed = true;
     window.removeEventListener('pointerdown', onOutsidePointerDown, true);
     window.removeEventListener('keydown', onKeyDown, true);
+    window.removeEventListener('resize', reposition);
+    window.removeEventListener('scroll', reposition, true);
+    window.visualViewport?.removeEventListener('resize', reposition);
+    window.visualViewport?.removeEventListener('scroll', reposition);
     surface.remove();
   }
 
@@ -267,6 +276,10 @@ export function openTemplateFill(options: TemplateFillOptions): TemplateFillHand
 
   window.addEventListener('pointerdown', onOutsidePointerDown, true);
   window.addEventListener('keydown', onKeyDown, true);
+  window.addEventListener('resize', reposition);
+  window.addEventListener('scroll', reposition, true);
+  window.visualViewport?.addEventListener('resize', reposition);
+  window.visualViewport?.addEventListener('scroll', reposition);
 
   document.body.appendChild(surface);
   positionAgainst(surface, anchor);
@@ -288,8 +301,8 @@ function positionAgainst(surface: HTMLElement, anchor: HTMLElement): void {
   const pad = 8;
   const anchorRect = anchor.getBoundingClientRect();
   const rect = surface.getBoundingClientRect();
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  const vw = typeof window !== 'undefined' && window.visualViewport ? window.visualViewport.width : window.innerWidth;
+  const vh = typeof window !== 'undefined' && window.visualViewport ? window.visualViewport.height : window.innerHeight;
 
   let left = anchorRect.left;
   if (left + rect.width > vw - pad) left = vw - pad - rect.width;

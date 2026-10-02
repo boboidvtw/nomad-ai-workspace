@@ -50,6 +50,30 @@ describe('openTemplateFill', () => {
     expect(document.querySelector('.gv-pm-fill')).toBeNull();
   });
 
+  it('repositions surface on window resize and scroll events', () => {
+    const el = anchor();
+    const handle = openTemplateFill({
+      text: 'Hello {{name}}',
+      anchor: el,
+      theme: 'dark',
+      labels,
+      onSubmit: vi.fn(),
+    });
+
+    const surface = document.querySelector('.gv-pm-fill') as HTMLElement;
+    expect(surface).not.toBeNull();
+
+    // Trigger resize & scroll
+    expect(() => {
+      window.dispatchEvent(new Event('resize'));
+      window.dispatchEvent(new Event('scroll'));
+    }).not.toThrow();
+
+    handle.close();
+    expect(document.querySelector('.gv-pm-fill')).toBeNull();
+  });
+
+
   it('keeps a blank slot literal instead of sending an empty hole', () => {
     const onSubmit = vi.fn();
     const handle = openTemplateFill({

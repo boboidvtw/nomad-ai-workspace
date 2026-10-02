@@ -168,4 +168,53 @@ describe('Universal FloatBall (Flagship Super Orb)', () => {
 
     composer.remove();
   });
+
+  it('applies correct brand styling and menu for Grok', async () => {
+    await act(async () => {
+      root.render(<FloatBall platform="grok" />);
+    });
+    const grokBtn = container.querySelector<HTMLButtonElement>(
+      'button[title="Nomad 提示詞中樞 (左鍵開啟 / 右鍵設定對話寬度)"]',
+    )!;
+    expect(grokBtn.style.background).toContain('#2997ff');
+
+    await act(async () => {
+      grokBtn.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    });
+    expect(container.textContent).toContain('重新整理 Grok 額度');
+  });
+
+  it('anchors to Grok chat composer and adapts under narrow viewport', async () => {
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 800 });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 600 });
+
+    const grokComposer = document.createElement('form');
+    grokComposer.innerHTML = '<textarea placeholder="Ask Grok something..."></textarea>';
+    grokComposer.getBoundingClientRect = () => ({
+      width: 700,
+      height: 60,
+      top: 500,
+      bottom: 560,
+      left: 50,
+      right: 750,
+      x: 50,
+      y: 500,
+      toJSON: () => {},
+    });
+    document.body.appendChild(grokComposer);
+
+    await act(async () => {
+      root.render(<FloatBall platform="grok" />);
+    });
+
+    const orb = container.querySelector<HTMLDivElement>('[data-nomad-orb="true"]');
+    expect(orb).not.toBeNull();
+    // Orb should not exceed viewport boundary (800 - width - 8)
+    const leftPx = parseInt(orb?.style.left || '0', 10);
+    expect(leftPx).toBeLessThanOrEqual(800);
+    expect(leftPx).toBeGreaterThanOrEqual(8);
+
+    grokComposer.remove();
+  });
+
 });

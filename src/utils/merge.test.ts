@@ -4,7 +4,7 @@ import type { ConversationId, FolderId } from '@/core/types/common';
 import type { ConversationReference, Folder, FolderData } from '@/core/types/folder';
 import type { PromptItem } from '@/core/types/sync';
 
-import { mergeFolderData, mergePromptsWithStats } from './merge';
+import { mergeFlatFolders, mergeFolderData, mergePromptsWithStats } from './merge';
 
 // Helper to create test folder
 function createFolder(
@@ -361,5 +361,54 @@ describe('mergePromptsWithStats', () => {
         updatedAt: 2,
       }),
     ]);
+  });
+});
+
+
+describe("mergeFlatFolders", () => {
+  it("should merge unique cloud folders into local folders", () => {
+    const local = [{ id: "f1", name: "Folder 1", conversationIds: ["c1"] }];
+    const cloud = [{ id: "f2", name: "Folder 2", conversationIds: ["c2"] }];
+
+    const result = mergeFlatFolders(local, cloud);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((f) => f.id)).toEqual(["f1", "f2"]);
+    expect(result.find((f) => f.id === "f2")?.conversationIds).toEqual(["c2"]);
+  });
+
+  it("should deduplicate conversation IDs when folders share the same ID", () => {
+    const local = [{ id: "f1", name: "My Work", conversationIds: ["c1", "c2"] }];
+    const cloud = [{ id: "f1", name: "My Work", conversationIds: ["c2", "c3"] }];
+
+    const result = mergeFlatFolders(local, cloud);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].conversationIds).toEqual(["c1", "c2", "c3"]);
+  });
+
+  it("should update folder name when cloud is newer", () => {
+    const local = [{ id: "f1", name: "Old Name", conversationIds: ["c1"], updatedAt: 1000 }];
+    const cloud = [{ id: "f1", name: "New Name", conversationIds: ["c1"], updatedAt: 2000 }];
+
+    const result = mergeFlatFolders(local, cloud);
+
+    expect(result[0].name).toBe("New Name");
+  });
+
+  it("should keep local folder name when local is newer", () => {
+    const local = [{ id: "f1", name: "Local Newer Name", conversationIds: ["c1"], updatedAt: 3000 }];
+    const cloud = [{ id: "f1", name: "Cloud Old Name", conversationIds: ["c1"], updatedAt: 2000 }];
+
+    const result = mergeFlatFolders(local, cloud);
+
+    expect(result[0].name).toBe("Local Newer Name");
+  });
+
+  it("should handle empty local or cloud folder arrays gracefully", () => {
+    const local = [{ id: "f1", name: "Local", conversationIds: ["c1"] }];
+    expect(mergeFlatFolders([], local)).toEqual([expect.objectContaining({ id: "f1" })]);
+    expect(mergeFlatFolders(local, [])).toEqual([expect.objectContaining({ id: "f1" })]);
+    expect(mergeFlatFolders([], [])).toEqual([]);
   });
 });
