@@ -125,7 +125,7 @@ graph TD
 | **Google AI Studio** | 🟢 Full Support | `aistudio.google.com`, `aistudio.google.cn` | ✅ | ✅ | ✅ `Gemini/` |
 | **Anthropic Claude** | 🟢 Full Support | `claude.ai` | ✅ | ✅ | ✅ `Claude/` |
 | **OpenAI ChatGPT** | 🟢 Full Support | `chatgpt.com`, `chat.openai.com` | ✅ | ✅ | ✅ `ChatGPT/` |
-| **xAI Grok** | 🔵 Planned | `grok.com`, `x.com/i/grok` | Planned | ✅ | ✅ `Grok/` |
+| **xAI Grok** | 🟢 Full Support | `grok.com`, `x.com/i/grok` | ✅ | ✅ | ✅ `Grok/` |
 | **DeepSeek** | 🔵 Planned | `chat.deepseek.com` | Planned | ✅ | ✅ `DeepSeek/` |
 
 ---

@@ -125,7 +125,7 @@ graph TD
 | **Google AI Studio** | 🟢 深度支援 | `aistudio.google.com`, `aistudio.google.cn` | ✅ | ✅ | ✅ `Gemini/` |
 | **Anthropic Claude** | 🟢 深度支援 | `claude.ai` | ✅ | ✅ | ✅ `Claude/` |
 | **OpenAI ChatGPT** | 🟢 深度支援 | `chatgpt.com`, `chat.openai.com` | ✅ | ✅ | ✅ `ChatGPT/` |
-| **xAI Grok** | 🔵 規劃中 | `grok.com`, `x.com/i/grok` | 規劃中 | ✅ | ✅ `Grok/` |
+| **xAI Grok** | 🟢 深度支援 | `grok.com`, `x.com/i/grok` | ✅ | ✅ | ✅ `Grok/` |
 | **DeepSeek** | 🔵 規劃中 | `chat.deepseek.com` | 規劃中 | ✅ | ✅ `DeepSeek/` |
 
 ---
@@ -162,7 +162,7 @@ npm run build:chrome
 1. 開啟 Chrome 並前往 `chrome://extensions/`。
 2. 開啟右上角 **「開發者模式 (Developer mode)」**。
 3. 點選 **「載入未打包項目 (Load unpacked)」**，選取專案目錄中的 **`dist_chrome`** 資料夾。
-4. 造訪 [Google Gemini](https://gemini.google.com/) 或 [Anthropic Claude](https://claude.ai/)，即可體驗全新的 Nomad AI Workspace！
+4. 造訪 [Google Gemini](https://gemini.google.com/)、[Anthropic Claude](https://claude.ai/)、[OpenAI ChatGPT](https://chatgpt.com/) 或 [xAI Grok](https://grok.com/)，即可體驗全新的 Nomad AI Workspace！
 
 ---
 

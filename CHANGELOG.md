@@ -4,6 +4,33 @@
 
 ---
 
+## [1.2.0] - 2026-10-02
+
+### 🤖 專案里程碑：xAI Grok 官方深度適配與四大 AI 雲端同步中樞 (Grok Platform Support & 4-Platform Sync)
+正式將 xAI Grok (`grok.com` / `x.com/i/grok`) 納入一級旗艦核心支援平台，達成 Google Gemini、Anthropic Claude、OpenAI ChatGPT 與 xAI Grok 四大 AI 的全方位階層樹狀管理與 Google Drive 雲端雙向同步。
+
+### 🚀 新增功能 (Added)
+- **xAI Grok 專屬側邊欄資料夾管理中樞 (`GrokFolderManager`)**：
+  - 自動偵測並掛載於 Grok 官方歷史紀錄導航欄頂端，支援新增資料夾、重命名、刪除與樹狀展開。
+  - 對話列表項目自動注入專屬科技藍 (`#1D9BF0`) 資料夾歸檔按鈕，並支援 HTML5 原生拖曳（Drag-and-Drop）歸檔。
+  - 自動攔截 Grok SPA 路由切換（`popstate` / `pushState` / `replaceState`）與 `/chat/` / `/c/` 對話識別碼解析。
+- **Grok 專屬科技藍 Nomad Super Orb (`GrokFloatBall`)**：
+  - 於 Grok 頁面掛載科技藍浮動中樞，支援任意拖曳位置記憶與輸入框自適應錨定。
+  - 整合通用提示詞庫中樞與 `/` 斜線命令動態變數填寫。
+- **Multi-AI 跨平台總覽樹正式支援 Grok (`MultiAISidebarTree`)**：
+  - 將 Grok 節點由規劃中正式升格為實時動態樹狀節點，即時統計 Grok 歸檔會話數量。
+  - 支援同平台快速跳轉與跨分頁跳轉喚起。
+- **Google Drive 四大平台雲端雙向同步中樞 (`GoogleDriveSyncService`)**：
+  - 實作 Grok 獨立子目錄隔離同步：`Nomad Workspace Data/Grok/grok-folders.json`。
+  - 新增 `nomad.sync.uploadGrok` 與 `nomad.sync.downloadGrok` 背景通訊端點。
+  - 升級 `nomad.sync.syncAll` 總控路由，實現四大平台（Gemini / Claude / ChatGPT / Grok）雲端資料並行下載與合併。
+  - 在 Options / Popup 雲端同步設定介面打造 4 欄位即時狀態總覽儀表板，獨立呈現各平台最新上傳與下載時間戳。
+- **品質加固 (Quality & Fixes)**：
+  - 修正 `GoogleDriveSyncService` 中 ChatGPT 與 Gemini 上傳時狀態時間戳寫入的 key 鍵值問題。
+  - 新增 Grok 專屬單元測試與雙向合併測試，全專案通過 416 個測試檔案（4,128 項測試 100% 通過）。
+
+---
+
 ## [1.1.0] - 2026-10-01
 
 ### 🤖 專案里程碑：OpenAI ChatGPT 官方深度適配 (ChatGPT Platform Support)

@@ -29,7 +29,7 @@ graph TD
             GeminiAdapter["Gemini DOM Observer & Adapter"]
             ClaudeAdapter["Claude DOM Observer & Adapter"]
             ChatgptAdapter["ChatGPT DOM Adapter (Ready)"]
-            GrokAdapter["Grok DOM Adapter (Planned)"]
+            GrokAdapter["Grok DOM Adapter (Active)"]
             PluggableRegistry["AIPlatformRegistry<br/>(平台註冊表與動態偵測)"]
         end
 
@@ -141,7 +141,7 @@ Nomad AI Workspace 嚴格建立並維護以下雲端階層：
     ├── 📁 ChatGPT/                               <-- OpenAI ChatGPT 專屬隔離區
     │   └── 📄 chatgpt_folders.json              <-- (擴充中)
     ├── 📁 Grok/                                  <-- xAI Grok 專屬隔離區
-    │   └── 📄 grok_folders.json                 <-- (擴充中)
+    │   └── 📄 grok_folders.json                 <-- 對話結構歸檔
     └── 📁 Shared/                                <-- 跨平台通用共享區
         ├── 📄 universal_prompts.json             <-- 跨平台通用提示詞庫
         ├── 📄 custom_plugins.json                <-- 外掛與自訂腳本設定
