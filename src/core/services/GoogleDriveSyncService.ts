@@ -1811,7 +1811,7 @@ export class GoogleDriveSyncService {
       };
 
       await this.uploadFileWithRetry(token, fileId, payload);
-      this.updateState({ isSyncing: false, error: null });
+      this.updateState({ isSyncing: false, error: null, lastUploadTimeClaude: Date.now() });
       await this.saveState();
       console.log("[GoogleDriveSyncService] Claude folders uploaded to Nomad Workspace/Claude/");
       return true;
@@ -1846,7 +1846,7 @@ export class GoogleDriveSyncService {
       });
       if (!response.ok) throw new Error("Download failed with status: " + response.status);
       const payload = await response.json();
-      this.updateState({ isSyncing: false, error: null });
+      this.updateState({ isSyncing: false, error: null, lastSyncTimeClaude: Date.now() });
       await this.saveState();
       return payload.data || [];
     } catch (error) {
@@ -1879,7 +1879,7 @@ export class GoogleDriveSyncService {
       };
 
       await this.uploadFileWithRetry(token, fileId, payload);
-      this.updateState({ isSyncing: false, error: null });
+      this.updateState({ isSyncing: false, error: null, lastUploadTimeClaude: Date.now() });
       await this.saveState();
       console.log("[GoogleDriveSyncService] ChatGPT folders uploaded to Nomad Workspace/ChatGPT/");
       return true;
@@ -1914,7 +1914,7 @@ export class GoogleDriveSyncService {
       });
       if (!response.ok) throw new Error("Download failed with status: " + response.status);
       const payload = await response.json();
-      this.updateState({ isSyncing: false, error: null });
+      this.updateState({ isSyncing: false, error: null, lastSyncTimeChatGPT: Date.now() });
       await this.saveState();
       return payload.data || [];
     } catch (error) {
@@ -1947,7 +1947,7 @@ export class GoogleDriveSyncService {
       };
 
       await this.uploadFileWithRetry(token, fileId, payload);
-      this.updateState({ isSyncing: false, error: null });
+      this.updateState({ isSyncing: false, error: null, lastUploadTimeClaude: Date.now() });
       await this.saveState();
       console.log("[GoogleDriveSyncService] Gemini folders uploaded to Nomad Workspace/Gemini/");
       return true;
@@ -1985,7 +1985,7 @@ export class GoogleDriveSyncService {
         });
         if (!resp.ok) throw new Error("Download legacy failed with status: " + resp.status);
         const legPayload = await resp.json();
-        this.updateState({ isSyncing: false, error: null });
+        this.updateState({ isSyncing: false, error: null, lastSyncTime: Date.now() });
         await this.saveState();
         return legPayload.data || legPayload.folders || [];
       }
@@ -1995,7 +1995,7 @@ export class GoogleDriveSyncService {
       });
       if (!response.ok) throw new Error("Download failed with status: " + response.status);
       const payload = await response.json();
-      this.updateState({ isSyncing: false, error: null });
+      this.updateState({ isSyncing: false, error: null, lastSyncTime: Date.now() });
       await this.saveState();
       return payload.data || [];
     } catch (error) {

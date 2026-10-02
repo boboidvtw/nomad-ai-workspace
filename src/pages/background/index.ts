@@ -2572,6 +2572,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse({ ok: data !== null, data, state: await googleDriveSyncService.getState() });
             return;
           }
+          case 'nomad.sync.syncAll': {
+            const interactive = message.payload?.interactive !== false;
+            const [claude, chatgpt, gemini] = await Promise.all([
+              googleDriveSyncService.downloadClaudeFolders(interactive),
+              googleDriveSyncService.downloadChatGPTFolders(interactive),
+              googleDriveSyncService.downloadGeminiFolders(interactive),
+            ]);
+            sendResponse({
+              ok: true,
+              data: { claude, chatgpt, gemini },
+              state: await googleDriveSyncService.getState(),
+            });
+            return;
+          }
           case 'gv.sync.upload': {
             const {
               interactive,
@@ -2956,7 +2970,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         try {
           const targetUrl = new URL(rawUrl);
-          const allowedHosts = ['gemini.google.com', 'aistudio.google.com', 'chatgpt.com', 'claude.ai'];
+          const allowedHosts = ['gemini.google.com', 'aistudio.google.com', 'chatgpt.com', 'claude.ai', 'grok.com'];
           const host = targetUrl.hostname.toLowerCase();
           const isAllowed = allowedHosts.some((h) => host === h || host.endsWith(`.${h}`));
           if (!isAllowed || targetUrl.protocol !== 'https:') {

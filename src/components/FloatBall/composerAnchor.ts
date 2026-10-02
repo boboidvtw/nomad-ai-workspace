@@ -6,7 +6,7 @@
 
 import { findChatInput } from "@/pages/content/chatInput";
 
-export type PlatformId = "claude" | "gemini" | "chatgpt";
+export type PlatformId = "claude" | "gemini" | "chatgpt" | "grok";
 
 export type Size = {
   width: number;
@@ -71,6 +71,16 @@ export function findComposerElement(platform?: PlatformId): HTMLElement | null {
       trySelector('div[data-testid="chat-input-container"]') ||
       trySelector('[data-testid="chat-input"]') ||
       trySelector('div[contenteditable="true"].ProseMirror');
+    if (el) return el;
+  } else if (platform === "grok") {
+    const el =
+      trySelector('form:has(textarea)') ||
+      trySelector('div:has(> textarea[placeholder*="Grok"])') ||
+      trySelector('div[class*="composer"]') ||
+      trySelector('div:has(> textarea)') ||
+      trySelector('textarea[placeholder*="Grok"]') ||
+      trySelector('textarea[placeholder*="Ask"]') ||
+      trySelector('textarea');
     if (el) return el;
   }
 

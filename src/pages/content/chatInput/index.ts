@@ -1,8 +1,14 @@
 const CHAT_INPUT_SELECTORS = [
   '[data-testid="chat-input"][contenteditable="true"]',
+  'div[data-testid="chat-input"]',
+  'div.ProseMirror[contenteditable="true"]',
+  'div.ProseMirror',
+  'fieldset [contenteditable="true"]',
   '#prompt-textarea[contenteditable="true"]',
+  '#prompt-textarea',
   'rich-textarea [contenteditable="true"]',
   'div[contenteditable="true"][role="textbox"]',
+  'textarea[placeholder*="Grok"]',
   '.input-area textarea',
   'textarea[placeholder*="Ask"]',
   'textarea',
@@ -127,7 +133,11 @@ function insertTextIntoContentEditable(input: HTMLElement, text: string): boolea
     insertTextViaDomFallback(input, activeSelection, text);
   }
 
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+  try {
+    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+  } catch {
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
   return true;
 }
 
@@ -146,7 +156,11 @@ function insertTextIntoTextarea(input: HTMLTextAreaElement, text: string): boole
     input.selectionEnd = caret;
   }
 
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+  try {
+    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+  } catch {
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
   return true;
 }
 

@@ -55,7 +55,7 @@ export const SUPPORTED_PLATFORMS: Record<PlatformId, AIPlatformConfig> = {
     badgeText: 'text-sky-400',
     domains: ['grok.com', 'x.com/i/grok'],
     driveFolder: 'Grok',
-    status: 'planned',
+    status: 'active',
     homeUrl: 'https://grok.com/',
     description: 'xAI Grok standalone and X web platform',
   },

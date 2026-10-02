@@ -1,4 +1,5 @@
 import { startPromptManager } from '@/pages/content/prompt';
+import { startSlashPromptFeature } from '@/pages/content/prompt/slashPromptFeature';
 /**
  * index.tsx
  * Nomad AI Workspace — Claude Content Script Entry
@@ -94,6 +95,7 @@ const mount = async () => {
   initExportButtonInjection();
   initPromptButtonInjection();
   void startPromptManager();
+  void startSlashPromptFeature();
 };
 
 void mount();

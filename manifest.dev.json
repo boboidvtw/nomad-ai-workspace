@@ -88,6 +88,17 @@
       "css": [
         "contentStyle.css"
       ]
+    },
+    {
+      "matches": [
+        "https://grok.com/*"
+      ],
+      "js": [
+        "src/pages/content/grok/index.tsx"
+      ],
+      "css": [
+        "contentStyle.css"
+      ]
     }
   ],
   "host_permissions": [

@@ -123,6 +123,31 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
     kind: 'ok' | 'warn' | 'err';
   } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
+
+  const handleSyncAll = useCallback(async () => {
+    setIsSyncingAll(true);
+    setStatusMessage(null);
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: 'nomad.sync.syncAll',
+        payload: { interactive: true },
+      });
+      if (response?.ok) {
+        if (response.state) {
+          setSyncState(response.state);
+        }
+        setStatusMessage({ text: (t as (k: string) => string)('syncAllSuccess') || '全平台雲端同步完成！', kind: 'ok' });
+      } else {
+        setStatusMessage({ text: response?.error || (t as (k: string) => string)('syncFailed') || '同步失敗', kind: 'err' });
+      }
+    } catch (err) {
+      console.error('[CloudSyncSettings] Failed to sync all platforms:', err);
+      setStatusMessage({ text: (t as (k: string) => string)('syncFailed') || '同步失敗', kind: 'err' });
+    } finally {
+      setIsSyncingAll(false);
+    }
+  }, [t]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeletingICloudBackup, setIsDeletingICloudBackup] = useState(false);
   const [downloadMode, setDownloadMode] = useState<DownloadMode | null>(null);
@@ -960,6 +985,87 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
                 </div>
               </div>
             )}
+
+            {/* Master All-in-One Multi-AI Sync Button */}
+            <Button
+              variant="default"
+              size="sm"
+              className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 hover:from-blue-700 hover:via-indigo-700 hover:to-emerald-700 text-white font-medium shadow-sm transition-all duration-200"
+              onClick={handleSyncAll}
+              disabled={isUploading || isDownloading || isSyncingAll}
+              data-testid="sync-all-platforms-button"
+            >
+              <span className="flex items-center justify-center gap-1.5 text-xs">
+                {isSyncingAll ? (
+                  <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                  </svg>
+                )}
+                {(t as (k: string) => string)('syncAllPlatforms') || '一鍵全平台同步 (All Platforms)'}
+              </span>
+            </Button>
+
+            {/* Multi-AI Cloud Sync Status Overview Dashboard */}
+            <div
+              data-testid="sync-multi-platform-dashboard"
+              className="border-border/60 bg-muted/20 space-y-2 rounded-xl border p-2.5"
+            >
+              <div className="flex items-center justify-between px-0.5">
+                <span className="text-[11px] font-semibold text-foreground/80 tracking-wide uppercase">
+                  {(t as (k: string) => string)('multiPlatformSyncOverview') || '多平台雲端同步狀態 (Multi-AI Status)'}
+                </span>
+                <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <span className="inline-block size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Google Drive
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1.5">
+                {/* Gemini */}
+                <div className="rounded-lg border border-border/50 bg-background/50 p-2 text-center shadow-xs">
+                  <div className="text-[11px] font-medium text-foreground truncate">Gemini</div>
+                  <div className="mt-1 text-[10px] text-muted-foreground flex flex-col gap-0.5">
+                    <span title={formatLastUpload(syncState.lastUploadTime)}>
+                      ↑ {formatLastUpload(syncState.lastUploadTime)}
+                    </span>
+                    <span title={formatLastSync(syncState.lastSyncTime)}>
+                      ↓ {formatLastSync(syncState.lastSyncTime)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Claude */}
+                <div className="rounded-lg border border-border/50 bg-background/50 p-2 text-center shadow-xs">
+                  <div className="text-[11px] font-medium text-foreground truncate">Claude</div>
+                  <div className="mt-1 text-[10px] text-muted-foreground flex flex-col gap-0.5">
+                    <span title={formatLastUpload(syncState.lastUploadTimeClaude ?? null)}>
+                      ↑ {formatLastUpload(syncState.lastUploadTimeClaude ?? null)}
+                    </span>
+                    <span title={formatLastSync(syncState.lastSyncTimeClaude ?? null)}>
+                      ↓ {formatLastSync(syncState.lastSyncTimeClaude ?? null)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* ChatGPT */}
+                <div className="rounded-lg border border-border/50 bg-background/50 p-2 text-center shadow-xs">
+                  <div className="text-[11px] font-medium text-foreground truncate">ChatGPT</div>
+                  <div className="mt-1 text-[10px] text-muted-foreground flex flex-col gap-0.5">
+                    <span title={formatLastUpload(syncState.lastUploadTimeChatGPT ?? null)}>
+                      ↑ {formatLastUpload(syncState.lastUploadTimeChatGPT ?? null)}
+                    </span>
+                    <span title={formatLastSync(syncState.lastSyncTimeChatGPT ?? null)}>
+                      ↓ {formatLastSync(syncState.lastSyncTimeChatGPT ?? null)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Upload/Download Buttons */}
             <div className="grid gap-2">

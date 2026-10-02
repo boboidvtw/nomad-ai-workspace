@@ -10,7 +10,7 @@ import { parsePromptTemplate } from '@/features/prompt/model/promptTemplate';
 import { matchSentPrompt } from '@/features/prompt/model/promptTextMatch';
 import { getTranslationSync } from '@/utils/i18n';
 
-import { findChatInput, insertTextIntoChatInput } from '../chatInput/index';
+import { CHAT_INPUT_SELECTOR, findChatInput, insertTextIntoChatInput } from '../chatInput/index';
 import { findClosestSendActionButton, isSendKeyboardEvent } from '../sendBehavior/sendButton';
 import { type TemplateFillHandle, openTemplateFill } from './PromptTemplateFill';
 
@@ -31,13 +31,10 @@ const TOOLTIP_HIDE_GRACE_MS = 150;
 const TOOLTIP_VALUE_CLASS = 'gv-pm-slash-tooltip-value';
 const GHOST_ID = 'gv-pm-slash-ghost';
 
-const CHAT_INPUT_SELECTOR =
-  '[data-testid="chat-input"][contenteditable="true"], #prompt-textarea[contenteditable="true"], ' +
-  'rich-textarea [contenteditable="true"], div[contenteditable="true"][role="textbox"], ' +
-  '.input-area textarea, textarea[placeholder*="Ask"], textarea';
+/* CHAT_INPUT_SELECTOR imported from chatInput */
 
 const SEND_COMPOSER_SELECTOR =
-  'form, .text-input-field, .input-area, ms-prompt-input-wrapper, chat-message';
+  'form, fieldset, .text-input-field, .input-area, ms-prompt-input-wrapper, chat-message, [class*="composer"]';
 
 export interface SlashPromptController {
   destroy: () => void;
@@ -171,7 +168,10 @@ function inputFromTarget(target: EventTarget | null): HTMLElement | null {
   if (target.closest('.gv-pm-panel, .gv-pm-slash-root, .gv-pm-slash-tooltip')) return null;
   const input = target.closest<HTMLElement>(CHAT_INPUT_SELECTOR);
   if (!input) return null;
-  if (findChatInput({ requireVisible: false }) !== input) return null;
+  const activeInput = findChatInput({ requireVisible: false });
+  if (activeInput && activeInput !== input && !activeInput.contains(input) && !input.contains(activeInput)) {
+    return null;
+  }
   if (input instanceof HTMLTextAreaElement) return input;
   if (input.isContentEditable || input.getAttribute('contenteditable') === 'true') return input;
   return null;

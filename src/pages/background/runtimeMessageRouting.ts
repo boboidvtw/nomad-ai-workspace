@@ -93,6 +93,7 @@ const HANDLED_BACKGROUND_MESSAGE_TYPES = new Set([
   'nomad.sync.uploadGemini',
   'nomad.sync.downloadGemini',
   'nomad.sync.getState',
+  'nomad.sync.syncAll',
   'gv.openPopup',
   'gv.syncToIDE',
   'gv.checkSyncStatus',

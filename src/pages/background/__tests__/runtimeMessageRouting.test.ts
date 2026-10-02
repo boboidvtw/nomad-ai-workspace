@@ -37,6 +37,7 @@ describe('background runtime message routing', () => {
     expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.authenticate' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.signOut' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.getState' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.syncAll' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: 'gv.highlight.list' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: 'gv.sync.upload' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: PLUGIN_CONTENT_SCRIPT_SYNC_MESSAGE })).toBe(

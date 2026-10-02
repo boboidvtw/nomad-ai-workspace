@@ -44,6 +44,7 @@ const detectPlatform = (): PlatformId => {
   if (host.includes('claude.ai')) return 'claude';
   if (host.includes('chatgpt.com') || host.includes('openai.com')) return 'chatgpt';
   if (host.includes('gemini.google') || host.includes('aistudio.google')) return 'gemini';
+  if (host.includes('grok.com') || host.includes('x.ai')) return 'grok';
   return 'claude';
 };
 
@@ -53,6 +54,8 @@ const getPlatformBrandColor = (platform: PlatformId): string => {
       return '#10a37f';
     case 'gemini':
       return '#4E88F5';
+    case 'grok':
+      return '#2997ff';
     case 'claude':
     default:
       return '#d97757';
@@ -65,6 +68,8 @@ const getPlatformDisplayName = (platform: PlatformId): string => {
       return 'ChatGPT';
     case 'gemini':
       return 'Gemini';
+    case 'grok':
+      return 'Grok';
     case 'claude':
     default:
       return 'Claude';
@@ -223,7 +228,9 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
   const [activePanelId, setActivePanelId] = useState<string | null>(null);
   const [isAnchored, setIsAnchored] = useState(true);
   const isAnchoredRef = useRef(isAnchored);
-  isAnchoredRef.current = isAnchored;
+  useEffect(() => {
+    isAnchoredRef.current = isAnchored;
+  }, [isAnchored]);
 
   const { ballScale } = useBallSizeControl();
   const { usageData, refreshUsage } = useUniversalUsage(platform);

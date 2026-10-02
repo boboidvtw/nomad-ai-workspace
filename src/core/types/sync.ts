@@ -47,6 +47,14 @@ export interface SyncState {
   lastSyncTimeAIStudio: number | null;
   /** Timestamp of last successful upload for AI Studio */
   lastUploadTimeAIStudio: number | null;
+  /** Timestamp of last successful sync/download for Claude */
+  lastSyncTimeClaude?: number | null;
+  /** Timestamp of last successful upload for Claude */
+  lastUploadTimeClaude?: number | null;
+  /** Timestamp of last successful sync/download for ChatGPT */
+  lastSyncTimeChatGPT?: number | null;
+  /** Timestamp of last successful upload for ChatGPT */
+  lastUploadTimeChatGPT?: number | null;
   /** Whether a sync operation is currently in progress */
   isSyncing: boolean;
   /** Last error message (null if no error) */
@@ -216,6 +224,10 @@ export const DEFAULT_SYNC_STATE: SyncState = {
   lastUploadTime: null,
   lastSyncTimeAIStudio: null,
   lastUploadTimeAIStudio: null,
+  lastSyncTimeClaude: null,
+  lastUploadTimeClaude: null,
+  lastSyncTimeChatGPT: null,
+  lastUploadTimeChatGPT: null,
   isSyncing: false,
   error: null,
   isAuthenticated: false,

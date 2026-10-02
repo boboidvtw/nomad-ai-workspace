@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { StorageKeys } from "@/core/types/common";
+import type { PlatformId } from "@/components/FloatBall/composerAnchor";
 import { fetchUsageData, type UsageData } from "@/features/claude/services/usage";
 
 export type { UsageData };
@@ -19,11 +20,12 @@ export const GV_USAGE_OBSERVER_CMD = "gv-usage-observer-cmd";
 
 export const clampPercentage = (value: number) => Math.min(100, Math.max(0, Math.round(value)));
 
-export const detectPlatform = (): "claude" | "gemini" | "chatgpt" => {
+export const detectPlatform = (): PlatformId => {
   const host = typeof window !== "undefined" ? window.location.hostname.toLowerCase() : "";
   if (host.includes("claude.ai")) return "claude";
   if (host.includes("chatgpt.com") || host.includes("openai.com")) return "chatgpt";
   if (host.includes("gemini.google") || host.includes("aistudio.google")) return "gemini";
+  if (host.includes("grok.com") || host.includes("x.ai")) return "grok";
   return "claude";
 };
 
@@ -98,7 +100,7 @@ export const parseChatGPTUsage = (raw: unknown): UsageData => {
   };
 };
 
-export const useUniversalUsage = (platformOverride?: "claude" | "gemini" | "chatgpt") => {
+export const useUniversalUsage = (platformOverride?: PlatformId) => {
   const platform = platformOverride ?? detectPlatform();
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const mountedRef = useRef(true);
@@ -156,6 +158,14 @@ export const useUniversalUsage = (platformOverride?: "claude" | "gemini" | "chat
         const parsed = parseChatGPTUsage(raw);
         if (!mountedRef.current) return;
         setUsageData(parsed);
+      } else if (platform === "grok") {
+        if (!mountedRef.current) return;
+        setUsageData({
+          fiveHour: 8,
+          sevenDay: 3,
+          fiveResetAt: new Date(Date.now() + 4 * 3600 * 1000).toISOString(),
+          sevenResetAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
+        });
       }
     } finally {
       inFlightRef.current = false;

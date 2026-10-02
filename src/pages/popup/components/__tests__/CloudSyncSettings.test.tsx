@@ -1047,4 +1047,60 @@ describe('CloudSyncSettings auth flow', () => {
       }),
     );
   });
+  it('renders multi-AI cloud sync status overview dashboard and triggers sync all', async () => {
+    const sendMessageMock = vi.fn().mockImplementation((message: { type?: string }) => {
+      if (message.type === 'gv.sync.getState') {
+        return Promise.resolve({
+          ok: true,
+          state: {
+            ...baseState,
+            lastUploadTime: 1700000000000,
+            lastSyncTime: 1700000000000,
+            lastUploadTimeClaude: 1700000000000,
+            lastSyncTimeClaude: 1700000000000,
+            lastUploadTimeChatGPT: 1700000000000,
+            lastSyncTimeChatGPT: 1700000000000,
+          },
+        });
+      }
+      if (message.type === 'nomad.sync.syncAll') {
+        return Promise.resolve({
+          ok: true,
+          state: {
+            ...baseState,
+            lastUploadTimeClaude: 1700001000000,
+            lastSyncTimeClaude: 1700001000000,
+          },
+        });
+      }
+      return Promise.resolve({ ok: true });
+    });
+
+    const chromeMock = createChromeMock(sendMessageMock);
+    (globalThis as { chrome: MockedChrome }).chrome = chromeMock;
+
+    await act(async () => {
+      root = createRoot(container);
+      root.render(<CloudSyncSettings />);
+    });
+    await flushMicrotasks();
+
+    const dashboard = container.querySelector('[data-testid="sync-multi-platform-dashboard"]');
+    expect(dashboard).toBeTruthy();
+    expect(dashboard?.textContent).toContain('Gemini');
+    expect(dashboard?.textContent).toContain('Claude');
+    expect(dashboard?.textContent).toContain('ChatGPT');
+
+    const syncAllBtn = container.querySelector('[data-testid="sync-all-platforms-button"]') as HTMLButtonElement | null;
+    expect(syncAllBtn).toBeTruthy();
+
+    await act(async () => {
+      syncAllBtn?.click();
+    });
+    await flushMicrotasks();
+
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'nomad.sync.syncAll' })
+    );
+  });
 });

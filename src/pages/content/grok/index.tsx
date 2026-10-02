@@ -1,40 +1,31 @@
 /**
- * Nomad AI Workspace — ChatGPT Content Script Entry
- * Mounts ChatGPT-adapted workspace components:
- * - ChatGPTFolderManager (Hierarchical folder tree integrated into ChatGPT sidebar)
+ * Nomad AI Workspace — xAI Grok Content Script Entry
+ * Mounts Grok-adapted workspace components:
  * - FloatBall (Universal Flagship Super Orb with Concentric UsageRings, Mascot Ball, Width & Scale Controls)
- * - startPromptManager (Underlying Prompt Vault overlays & slash command trigger)
+ * - startPromptManager (Underlying Prompt Vault overlays)
+ * - startSlashPromptFeature (Slash / command quick completion & dynamic variable fill)
  */
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import FloatBall from '@/components/FloatBall';
-import ChatGPTFolderManager from '@/features/chatgpt/components/FolderManager';
-import { startBrandTheme } from '@/pages/content/platformTheme';
 import { startPromptManager } from '@/pages/content/prompt';
 import { startSlashPromptFeature } from '@/pages/content/prompt/slashPromptFeature';
 import { i18n, initI18n, LANGUAGE_CHANGE_MESSAGE_TYPE } from '@/services/i18n';
 
 import './style.css';
 
-const NOMAD_CHATGPT_ROOT_ID = 'nomad-chatgpt-root';
+const NOMAD_GROK_ROOT_ID = 'nomad-grok-root';
 
-const mount = async () => {
-  document.body.classList.add('nomad-chatgpt-page');
+export const mountGrokWorkspace = async () => {
+  document.body.classList.add('nomad-grok-page');
   document.body.setAttribute('data-nomad-orb-active', 'true');
-
-  // Start live brand theme (OpenAI emerald accent #10a37f)
-  try {
-    startBrandTheme(window.location.href, document);
-  } catch (e) {
-    console.warn('[Nomad Workspace] Failed to initialize brand theme:', e);
-  }
 
   await initI18n();
 
   // Listen for language changes from extension popup/settings
-  chrome.runtime.onMessage.addListener((message: unknown) => {
+  chrome.runtime?.onMessage?.addListener((message: unknown) => {
     if (!message || typeof message !== 'object') return;
     const payload = message as { type?: string; lang?: string };
     if (payload.type !== LANGUAGE_CHANGE_MESSAGE_TYPE) return;
@@ -43,28 +34,27 @@ const mount = async () => {
   });
 
   // Ensure root DOM container exists
-  let rootContainer = document.getElementById(NOMAD_CHATGPT_ROOT_ID);
+  let rootContainer = document.getElementById(NOMAD_GROK_ROOT_ID);
   if (!rootContainer) {
     rootContainer = document.createElement('div');
-    rootContainer.id = NOMAD_CHATGPT_ROOT_ID;
+    rootContainer.id = NOMAD_GROK_ROOT_ID;
     document.body.appendChild(rootContainer);
   }
 
   const root = createRoot(rootContainer);
   root.render(
     <>
-      <ChatGPTFolderManager />
-      <FloatBall platform="chatgpt" />
+      <FloatBall platform="grok" />
     </>,
   );
 
-  // Initialize prompt manager & slash commands on ChatGPT (synchronized under the FloatBall)
+  // Initialize prompt manager & slash commands on Grok
   try {
     void startPromptManager();
     void startSlashPromptFeature();
   } catch (e) {
-    console.error('[Nomad Workspace] Failed to start Prompt Manager / Slash Commands on ChatGPT:', e);
+    console.error('[Nomad Workspace] Failed to start Prompt Manager / Slash Commands on Grok:', e);
   }
 };
 
-void mount();
+void mountGrokWorkspace();
