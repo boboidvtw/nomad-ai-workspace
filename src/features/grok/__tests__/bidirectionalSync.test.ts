@@ -114,7 +114,7 @@ describe('Grok Cross-Platform & Bidirectional Sync Suite', () => {
     const rawGrokFolders = [
       { id: 'folder-1', name: 'Grok Research', conversationIds: ['conv-101'], isExpanded: true },
     ];
-    const titleCache = { 'conv-101': 'Quantum Mechanics with Grok' };
+    const titleCache: Record<string, string> = { 'conv-101': 'Quantum Mechanics with Grok' };
 
     const parsedGrok: CrossPlatformFolder[] = rawGrokFolders.map((f) => ({
       id: f.id,

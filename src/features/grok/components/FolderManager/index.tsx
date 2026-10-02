@@ -208,9 +208,9 @@ export default function GrokFolderManager() {
     </div>
   );
 
-  if (portalContainer) {
-    return createPortal(content, portalContainer);
+  if (!portalContainer) {
+    return null;
   }
 
-  return content;
+  return createPortal(content, portalContainer);
 }

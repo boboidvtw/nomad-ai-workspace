@@ -50,6 +50,26 @@ describe('useGrokConversations Helpers & DOM Scanner', () => {
       const found = findGrokNav();
       expect(found).toBeTruthy();
     });
+
+it("detects element with data-sidebar=\"sidebar\"", () => {
+      const sidebar = document.createElement("div");
+      sidebar.setAttribute("data-sidebar", "sidebar");
+      container.appendChild(sidebar);
+
+      const found = findGrokNav();
+      expect(found).toBe(sidebar);
+    });
+
+    it("detects sidebar containing 聊天 section header text", () => {
+      const sidebar = document.createElement("aside");
+      const heading = document.createElement("span");
+      heading.textContent = "聊天";
+      sidebar.appendChild(heading);
+      container.appendChild(sidebar);
+
+      const found = findGrokNav();
+      expect(found).toBe(sidebar);
+    });
   });
 
   describe('getGrokTitleFromAnchor', () => {

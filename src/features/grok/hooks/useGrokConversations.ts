@@ -22,18 +22,81 @@ interface UseGrokConversationsOptions {
 }
 
 export const findGrokNav = (): HTMLElement | null => {
-  const navs = Array.from(document.querySelectorAll<HTMLElement>('nav, aside, [data-testid*="sidebar"], [class*="sidebar"]'));
-  const historyNav = navs.find((n) => {
-    const label = (n.getAttribute('aria-label') || '').toLowerCase();
-    return label.includes('history') || label.includes('chat') || Boolean(n.querySelector(GROK_CONVERSATION_LINK_SELECTOR));
-  });
-  return (
-    historyNav ??
-    document.querySelector<HTMLElement>('aside') ??
-    document.querySelector<HTMLElement>('nav') ??
-    (document.querySelector<HTMLAnchorElement>(GROK_CONVERSATION_LINK_SELECTOR)?.closest('nav, aside, div') as HTMLElement | null) ??
-    null
+  // 1. Explicit sidebar selectors (Shadcn UI data attributes, aside, testid)
+  const explicitSidebar = document.querySelector<HTMLElement>(
+    "[data-sidebar=\"sidebar\"], [data-sidebar=\"content\"], aside, [data-testid*=\"sidebar\"]"
   );
+  if (explicitSidebar) {
+    return explicitSidebar;
+  }
+
+  // 2. Scan for elements containing conversation links (a[href*=\"/chat/\"], a[href*=\"/c/\"])
+  const anchors = Array.from(document.querySelectorAll<HTMLAnchorElement>(GROK_CONVERSATION_LINK_SELECTOR));
+  for (const a of anchors) {
+    let p: HTMLElement | null = a.parentElement;
+    let candidate: HTMLElement | null = null;
+    while (p && p !== document.body && p !== document.documentElement) {
+      if (
+        p.tagName === "NAV" ||
+        p.tagName === "ASIDE" ||
+        p.getAttribute("data-sidebar") === "sidebar" ||
+        p.getAttribute("data-sidebar") === "content" ||
+        p.classList.contains("overflow-y-auto")
+      ) {
+        candidate = p;
+        break;
+      }
+      if (p.offsetWidth > 0 && p.offsetWidth <= 420) {
+        candidate = p;
+      }
+      p = p.parentElement;
+    }
+    if (candidate) return candidate;
+  }
+
+  // 3. Search for nav or aside with aria-label or containing history/chat/sidebar
+  const navs = Array.from(document.querySelectorAll<HTMLElement>("nav, aside, [class*=\"sidebar\"]"));
+  const historyNav = navs.find((n) => {
+    const label = (n.getAttribute("aria-label") || "").toLowerCase();
+    const isSidebarWidth = n.offsetWidth > 0 ? n.offsetWidth <= 450 : true;
+    return (
+      (label.includes("history") || label.includes("chat") || label.includes("sidebar") || Boolean(n.querySelector(GROK_CONVERSATION_LINK_SELECTOR))) &&
+      isSidebarWidth
+    );
+  });
+  if (historyNav) return historyNav;
+
+  // 4. Search by known Grok sidebar section texts ("聊天", "chats", "對話", "專案", "projects", "imagine")
+  const keywords = ["聊天", "chats", "對話", "專案", "projects", "imagine"];
+  const textElements = Array.from(document.querySelectorAll<HTMLElement>("span, p, div, h2, h3, button"));
+  for (const el of textElements) {
+    const text = el.textContent?.trim().toLowerCase();
+    if (text && keywords.includes(text)) {
+      let p: HTMLElement | null = el.parentElement;
+      while (p && p !== document.body && p !== document.documentElement) {
+        if (
+          p.tagName === "ASIDE" ||
+          p.tagName === "NAV" ||
+          p.getAttribute("data-sidebar") === "sidebar" ||
+          (p.offsetWidth > 0 && p.offsetWidth <= 400 && p.offsetHeight > 200)
+        ) {
+          return p;
+        }
+        p = p.parentElement;
+      }
+    }
+  }
+
+  // 5. Fallback to aside or nav with sidebar width restriction
+  const aside = document.querySelector<HTMLElement>("aside");
+  if (aside) return aside;
+
+  const genericNav = document.querySelector<HTMLElement>("nav");
+  if (genericNav && (genericNav.offsetWidth === 0 || genericNav.offsetWidth <= 450)) {
+    return genericNav;
+  }
+
+  return null;
 };
 
 export const getGrokTitleFromAnchor = (a: HTMLAnchorElement): string => {
@@ -121,24 +184,76 @@ export const useGrokConversations = (options: UseGrokConversationsOptions = {}) 
 
       const existing = document.getElementById(GROK_INJECTED_CONTAINER_ID);
       if (existing) {
-        setPortalContainer(existing);
-        return;
+        if (nav && !nav.contains(existing)) {
+          existing.remove();
+        } else {
+          setPortalContainer(existing);
+          return;
+        }
       }
 
       if (!nav) return;
 
-      const container = document.createElement('div');
+      const container = document.createElement("div");
       container.id = GROK_INJECTED_CONTAINER_ID;
-      container.className = 'nomad-grok-folder-container px-2 pt-2 pb-1 border-b border-white/5';
+      container.className = "nomad-grok-folder-container px-2 pt-2 pb-1 border-b border-white/5";
 
-      // Insert at the top of chat history (e.g. before the first history list)
-      const firstSection = nav.querySelector('div.flex-col, ol, ul, div.overflow-y-auto');
-      if (firstSection && firstSection.parentElement === nav) {
-        nav.insertBefore(container, firstSection);
-      } else if (nav.firstChild) {
-        nav.insertBefore(container, nav.firstChild);
+      // Find optimal insertion anchor inside sidebar:
+      // Priority 1: Right before the "聊天" / "Chats" / "History" heading or group
+      const chatKeywords = ["聊天", "chats", "history", "最近", "recents"];
+      let targetSection: HTMLElement | null = null;
+      const allTextNodes = Array.from(nav.querySelectorAll<HTMLElement>("h2, h3, h4, span, div, p, button"));
+      for (const el of allTextNodes) {
+        const text = el.textContent?.trim().toLowerCase();
+        if (text && chatKeywords.some((k) => text === k || text.startsWith(k))) {
+          // Walk up to find the group container inside nav
+          let cur: HTMLElement | null = el.parentElement;
+          while (cur && cur !== nav) {
+            if (
+              cur.getAttribute("data-sidebar") === "group" ||
+              cur.getAttribute("data-sidebar") === "content" ||
+              cur.classList.contains("overflow-y-auto") ||
+              cur.classList.contains("flex-col")
+            ) {
+              targetSection = cur;
+              break;
+            }
+            cur = cur.parentElement;
+          }
+          if (targetSection) break;
+          targetSection = el;
+          break;
+        }
+      }
+
+      // Priority 2: Before the first conversation link in sidebar
+      if (!targetSection) {
+        const firstLink = nav.querySelector<HTMLAnchorElement>(GROK_CONVERSATION_LINK_SELECTOR);
+        if (firstLink) {
+          let cur: HTMLElement | null = firstLink.parentElement;
+          while (cur && cur !== nav) {
+            if (cur.classList.contains("overflow-y-auto") || cur.getAttribute("data-sidebar") === "group") {
+              targetSection = cur;
+              break;
+            }
+            cur = cur.parentElement;
+          }
+          if (!targetSection) targetSection = firstLink;
+        }
+      }
+
+      // Insert container into DOM
+      if (targetSection && targetSection.parentElement) {
+        targetSection.parentElement.insertBefore(container, targetSection);
       } else {
-        nav.appendChild(container);
+        const scrollable = nav.querySelector<HTMLElement>("[data-sidebar=\"content\"], div.overflow-y-auto");
+        if (scrollable) {
+          scrollable.insertBefore(container, scrollable.firstChild);
+        } else if (nav.firstChild) {
+          nav.insertBefore(container, nav.firstChild);
+        } else {
+          nav.appendChild(container);
+        }
       }
 
       setPortalContainer(container);
