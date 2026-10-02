@@ -88,6 +88,31 @@ export default function FolderItem({
         className={`block truncate rounded-md pl-8 pr-2 py-1.5 text-sm transition-colors ${theme.rootText} ${theme.hoverBg}`}
         tabIndex={0}
         aria-label={t('conversation.openAria', { title })}
+        onClick={(e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+          e.preventDefault();
+          const nativeLink =
+            document.querySelector<HTMLAnchorElement>(`nav a[href*="${conversationId}"]`) ||
+            document.querySelector<HTMLAnchorElement>(`a[href^="/chat/${conversationId}"]`);
+          if (nativeLink) {
+            nativeLink.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+            nativeLink.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+            nativeLink.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+            nativeLink.click();
+            return;
+          }
+          try {
+            window.history.pushState({}, '', `/chat/${conversationId}`);
+            window.dispatchEvent(
+              typeof PopStateEvent === 'function'
+                ? new PopStateEvent('popstate', { state: window.history.state })
+                : new Event('popstate')
+            );
+            window.dispatchEvent(new CustomEvent('nomad:locationchange'));
+          } catch {
+            window.location.href = href;
+          }
+        }}
         onContextMenu={(e) => {
           e.preventDefault();
           const href = (e.currentTarget as HTMLAnchorElement).href;

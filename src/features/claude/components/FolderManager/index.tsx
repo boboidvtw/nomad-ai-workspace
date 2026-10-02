@@ -537,7 +537,7 @@ export default function FolderManager() {
           paddingTop: "8px",
         }}
       >
-        <MultiAISidebarTree currentPlatform="claude" theme={isDarkTheme ? "dark" : "light"} />
+        <MultiAISidebarTree currentPlatform="claude" theme={isDarkTheme ? "dark" : "light"} onOpenSyncSettings={handleSyncClick} />
       </div>
 
       <FolderManagerModals

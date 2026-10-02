@@ -35,6 +35,7 @@ describe("MultiAISidebarTree component", () => {
       runtime: {
         id: "mock-id",
         lastError: null,
+        sendMessage: vi.fn(),
       },
       storage: {
         local: {
@@ -221,5 +222,96 @@ describe("MultiAISidebarTree component", () => {
     expect(link).not.toBeNull();
     expect(link.target).toBe("_self");
     expect(link.title).toBe("Claude Chat Real Title");
+  });
+
+  it("handles same-platform navigation with SPA popstate on Claude", async () => {
+    const pushStateSpy = vi.spyOn(window.history, "pushState").mockImplementation(() => {});
+    const dispatchSpy = vi.spyOn(window, "dispatchEvent");
+
+    await act(async () => {
+      root.render(<MultiAISidebarTree currentPlatform="claude" theme="light" />);
+    });
+
+    const folderEl = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent === "Claude Folder"
+    )?.closest("div");
+
+    await act(async () => {
+      folderEl?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const link = container.querySelector("a[href='/chat/cc1']") as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+
+    await act(async () => {
+      link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+
+    expect(pushStateSpy).toHaveBeenCalledWith({}, "", "/chat/cc1");
+    expect(dispatchSpy).toHaveBeenCalled();
+  });
+
+  it("handles same-platform navigation with SPA popstate on ChatGPT", async () => {
+    const pushStateSpy = vi.spyOn(window.history, "pushState").mockImplementation(() => {});
+    const dispatchSpy = vi.spyOn(window, "dispatchEvent");
+
+    await act(async () => {
+      root.render(<MultiAISidebarTree currentPlatform="chatgpt" theme="dark" />);
+    });
+
+    const folderEl = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent === "GPT Folder"
+    )?.closest("div");
+
+    await act(async () => {
+      folderEl?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const link = container.querySelector("a[href='/c/gptc1']") as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+
+    await act(async () => {
+      link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+
+    expect(pushStateSpy).toHaveBeenCalledWith({}, "", "/c/gptc1");
+    expect(dispatchSpy).toHaveBeenCalled();
+  });
+
+  it("dispatches gv.openConversation runtime message on cross-platform conversation click", async () => {
+    await act(async () => {
+      root.render(<MultiAISidebarTree currentPlatform="gemini" theme="dark" />);
+    });
+
+    // Expand Claude platform node
+    const claudeRoot = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent === "Anthropic Claude"
+    )?.closest("div");
+
+    await act(async () => {
+      claudeRoot?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // Expand Claude Folder
+    const folderEl = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent === "Claude Folder"
+    )?.closest("div");
+
+    await act(async () => {
+      folderEl?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // Find the cross-platform Claude link
+    const link = container.querySelector("a[href='https://claude.ai/chat/cc1']") as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+
+    await act(async () => {
+      link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 }));
+    });
+
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+      type: "gv.openConversation",
+      url: "https://claude.ai/chat/cc1",
+    });
   });
 });

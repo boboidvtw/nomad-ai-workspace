@@ -13,7 +13,6 @@ import {
   Trash2,
   X,
   MessageSquare,
-  ExternalLink,
 } from 'lucide-react';
 import type { Folder } from '@/types/folder';
 import type { ConversationTitleCache } from '../../services/storage';
@@ -161,6 +160,30 @@ export const FolderItem: React.FC<Props> = ({
                   href={`/c/${id}`}
                   className={`flex items-center gap-1.5 truncate flex-1 no-underline ${textMuted} hover:text-emerald-400`}
                   title={title}
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                    e.preventDefault();
+                    const nativeLink =
+                      document.querySelector<HTMLAnchorElement>(`nav a[href*="${id}"]`) ||
+                      document.querySelector<HTMLAnchorElement>(`a[href^="/c/${id}"]`);
+                    if (nativeLink) {
+                      nativeLink.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+                      nativeLink.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                      nativeLink.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                      nativeLink.click();
+                      return;
+                    }
+                    try {
+                      window.history.pushState({}, '', `/c/${id}`);
+                      window.dispatchEvent(
+                        typeof PopStateEvent === 'function'
+                          ? new PopStateEvent('popstate', { state: window.history.state })
+                          : new Event('popstate')
+                      );
+                    } catch {
+                      window.location.href = `/c/${id}`;
+                    }
+                  }}
                 >
                   <MessageSquare className="w-3 h-3 opacity-60 flex-shrink-0" />
                   <span className="truncate">{title}</span>

@@ -25,6 +25,18 @@ import {
 describe('background runtime message routing', () => {
   it('keeps the async channel open only for exact handled message types', () => {
     expect(isHandledBackgroundRuntimeMessage({ type: 'gv.account.resolve' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'gv.openConversation' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.uploadChatGPT' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.downloadChatGPT' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.uploadClaude' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.downloadClaude' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.uploadGemini' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.downloadGemini' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'cv.sync.upload' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'cv.sync.download' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.authenticate' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.signOut' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.getState' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: 'gv.highlight.list' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: 'gv.sync.upload' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: PLUGIN_CONTENT_SCRIPT_SYNC_MESSAGE })).toBe(

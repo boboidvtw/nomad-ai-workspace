@@ -340,7 +340,7 @@ async function showResponseCompleteNotification(
 async function focusOrOpenConversation(url: URL): Promise<void> {
   try {
     const tabs = await browser.tabs.query({});
-    const match = tabs.find((tab) => {
+    const exactMatch = tabs.find((tab) => {
       if (typeof tab.url !== 'string' || typeof tab.id !== 'number') return false;
       try {
         const tabUrl = new URL(tab.url);
@@ -350,8 +350,26 @@ async function focusOrOpenConversation(url: URL): Promise<void> {
       }
     });
 
-    if (match && typeof match.id === 'number') {
-      const tab = await browser.tabs.update(match.id, { active: true });
+    if (exactMatch && typeof exactMatch.id === 'number') {
+      const tab = await browser.tabs.update(exactMatch.id, { active: true });
+      if (typeof tab.windowId === 'number') {
+        await browser.windows.update(tab.windowId, { focused: true });
+      }
+      return;
+    }
+
+    const originMatch = tabs.find((tab) => {
+      if (typeof tab.url !== 'string' || typeof tab.id !== 'number') return false;
+      try {
+        const tabUrl = new URL(tab.url);
+        return tabUrl.origin === url.origin;
+      } catch {
+        return false;
+      }
+    });
+
+    if (originMatch && typeof originMatch.id === 'number') {
+      const tab = await browser.tabs.update(originMatch.id, { active: true, url: url.toString() });
       if (typeof tab.windowId === 'number') {
         await browser.windows.update(tab.windowId, { focused: true });
       }
@@ -2925,6 +2943,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse({ ok: false });
         } finally {
           clearTimeout(timeoutId);
+        }
+        return;
+      }
+
+      // Handle cross-platform conversation navigation and tab focusing
+      if (message?.type === 'gv.openConversation') {
+        const rawUrl = (message as { url?: unknown }).url;
+        if (typeof rawUrl !== 'string') {
+          sendResponse({ ok: false, error: 'invalid_url' });
+          return;
+        }
+        try {
+          const targetUrl = new URL(rawUrl);
+          const allowedHosts = ['gemini.google.com', 'aistudio.google.com', 'chatgpt.com', 'claude.ai'];
+          const host = targetUrl.hostname.toLowerCase();
+          const isAllowed = allowedHosts.some((h) => host === h || host.endsWith(`.${h}`));
+          if (!isAllowed || targetUrl.protocol !== 'https:') {
+            sendResponse({ ok: false, error: 'disallowed_host' });
+            return;
+          }
+          await focusOrOpenConversation(targetUrl);
+          sendResponse({ ok: true });
+        } catch (e) {
+          sendResponse({ ok: false, error: e instanceof Error ? e.message : String(e) });
         }
         return;
       }

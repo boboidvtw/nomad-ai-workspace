@@ -186,7 +186,7 @@ export default function ChatGPTFolderManager() {
           paddingTop: "8px",
         }}
       >
-        <MultiAISidebarTree currentPlatform="chatgpt" theme={isDarkTheme ? "dark" : "light"} />
+        <MultiAISidebarTree currentPlatform="chatgpt" theme={isDarkTheme ? "dark" : "light"} onOpenSyncSettings={handleSyncToDrive} />
       </div>
 
       {/* Modals & Dialogs */}
@@ -204,6 +204,7 @@ export default function ChatGPTFolderManager() {
         onMoveToFolder={(convId, folderId) => moveConversationToFolder(convId, folderId)}
         treeModalOpen={treeModalOpen}
         onCloseTreeModal={() => setTreeModalOpen(false)}
+        onOpenSyncSettings={handleSyncToDrive}
       />
     </div>
   );

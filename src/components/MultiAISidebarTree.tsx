@@ -118,17 +118,94 @@ export const MultiAISidebarTree: React.FC<Props> = ({
                       : c.url;
 
                     const handleConversationClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-                      if (isCurrent && currentPlatform === 'gemini') {
+                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+                        return;
+                      }
+
+                      if (isCurrent) {
                         e.preventDefault();
-                        try {
-                          window.history.pushState({}, '', `/app/${c.id}`);
-                          const event =
-                            typeof PopStateEvent === 'function'
-                              ? new PopStateEvent('popstate', { state: window.history.state })
-                              : new Event('popstate');
-                          window.dispatchEvent(event);
-                        } catch {
-                          window.location.href = `/app/${c.id}`;
+                        const findHostLink = (selector: string) => {
+                          const elements = Array.from(document.querySelectorAll<HTMLAnchorElement>(selector));
+                          return elements.find((el) => !el.closest('.nomad-sidebar-tree') && el !== e.currentTarget);
+                        };
+
+                        if (currentPlatform === 'claude') {
+                          const nativeLink =
+                            findHostLink(`nav a[href*="${c.id}"]`) ||
+                            findHostLink(`a[href^="/chat/${c.id}"]`);
+                          if (nativeLink) {
+                            nativeLink.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+                            nativeLink.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                            nativeLink.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                            nativeLink.click();
+                            return;
+                          }
+                          try {
+                            window.history.pushState({}, '', `/chat/${c.id}`);
+                            const event =
+                              typeof PopStateEvent === 'function'
+                                ? new PopStateEvent('popstate', { state: window.history.state })
+                                : new Event('popstate');
+                            window.dispatchEvent(event);
+                            window.dispatchEvent(new CustomEvent('nomad:locationchange'));
+                          } catch {
+                            window.location.href = `/chat/${c.id}`;
+                          }
+                        } else if (currentPlatform === 'chatgpt') {
+                          const nativeLink =
+                            findHostLink(`nav a[href*="${c.id}"]`) ||
+                            findHostLink(`a[href^="/c/${c.id}"]`);
+                          if (nativeLink) {
+                            nativeLink.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+                            nativeLink.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                            nativeLink.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                            nativeLink.click();
+                            return;
+                          }
+                          try {
+                            window.history.pushState({}, '', `/c/${c.id}`);
+                            const event =
+                              typeof PopStateEvent === 'function'
+                                ? new PopStateEvent('popstate', { state: window.history.state })
+                                : new Event('popstate');
+                            window.dispatchEvent(event);
+                          } catch {
+                            window.location.href = `/c/${c.id}`;
+                          }
+                        } else if (currentPlatform === 'gemini') {
+                          const nativeLink =
+                            findHostLink(`a[data-conversation-id="${c.id}"]`) ||
+                            findHostLink(`conversation-list a[href*="/app/${c.id}"]`) ||
+                            findHostLink(`nav a[href*="/app/${c.id}"]`);
+                          if (nativeLink) {
+                            nativeLink.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+                            nativeLink.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                            nativeLink.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                            nativeLink.click();
+                            return;
+                          }
+                          try {
+                            window.history.pushState({}, '', `/app/${c.id}`);
+                            const event =
+                              typeof PopStateEvent === 'function'
+                                ? new PopStateEvent('popstate', { state: window.history.state })
+                                : new Event('popstate');
+                            window.dispatchEvent(event);
+                          } catch {
+                            window.location.href = `/app/${c.id}`;
+                          }
+                        }
+                      } else {
+                        if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+                          try {
+                            chrome.runtime.sendMessage({
+                              type: 'gv.openConversation',
+                              url: c.url,
+                            });
+                            e.preventDefault();
+                          } catch {
+                            // Fallback to standard anchor target="_blank"
+                          }
                         }
                       }
                     };
