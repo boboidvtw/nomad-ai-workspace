@@ -1,3 +1,7 @@
+<p align="right">
+  <b>繁體中文</b> | <a href="USER_GUIDE_EN.md">English</a>
+</p>
+
 # 📖 Nomad AI Workspace 使用者手冊與教學 (User Manual & Tutorial)
 
 歡迎使用 **Nomad AI Workspace**！這是一套專為高強度多 AI 平台使用者量身打造的本地優先瀏覽器工作空間。本手冊將手把手帶領您熟悉各項核心功能與高效操作訣竅。
@@ -12,6 +16,7 @@
 4. [對話時間軸與重點標記](#4-對話時間軸與重點標記-timeline--highlights)
 5. [豐富排版渲染與一鍵匯出](#5-豐富排版渲染與一鍵匯出-export--rendering)
 6. [跨平台同步與偏好自訂](#6-跨平台同步與偏好自訂-settings)
+7. [更新後重新載入方式](#7-更新後重新載入方式-how-to-reload)
 
 ---
 
@@ -45,14 +50,17 @@ Nomad AI Workspace 會自動注入至您造訪的各大 AI 平台（Google Gemin
 - **跨平台跳轉**：若點擊其他平台的會話（項目右側帶有 ↗️ 外部連結圖示），系統將自動開啟新分頁並直接導航至該 AI 對話頁面，告別手動切換書籤的繁瑣。
 
 ### 1.4 xAI Grok (grok.com) 側邊欄與對話管理教學
-1. **自動啟用與介面注入**：
-   - 造訪 [grok.com](https://grok.com/) 時，Nomad 會自動於左側歷史導航欄頂端注入科技藍識別色（`#1D9BF0`）的 **Nomad 資料夾** 區塊，右下角亦會常駐專屬科技藍發光 Super Orb。
+1. **自動啟用與精準側邊欄嵌入 (Sidebar Integration)**：
+   - 造訪 [grok.com](https://grok.com/) 時，Nomad 會自動適配 Grok 的 Shadcn 側邊欄架構，將科技藍識別色（`#1D9BF0`）的 **Nomad 資料夾** 與 **Nomad Workspace** 樹狀清單精確嵌入於左側邊欄「專案」與「聊天 (Chats)」列表之間，絕不佔用頂部或擠壓主聊天區域。
+   - 畫面右下角常駐專屬科技藍發光 Nomad Super Orb，支援額度監控與提示詞調用。
 2. **對話歸檔與拖曳整理**：
    - 將滑鼠懸浮在 Grok 歷史列表的任一對話時，即會顯示 Nomad 專屬資料夾圖示按鈕，點擊可快速勾選移動至指定分類資料夾。
    - 亦支援 HTML5 原生拖曳（Drag & Drop）：直接將對話按住並拖入目標 Nomad 資料夾中即可完成分類。
-3. **雲端備份與全平台同步**：
+3. **雲端備份與四大平台全域同步**：
    - 點擊 Nomad 資料夾頂部 ☁️ 圖示，可立即將 Grok 資料夾架構上傳至 Google Drive `Grok/grok-folders.json`。
    - 透過右上角擴充套件彈出面板（Popup）的「一鍵全平台同步 (All Platforms)」，更可同時進行 Gemini、Claude、ChatGPT 與 Grok 的四平台雙向合併同步。
+4. **側邊欄折疊聯動相容性**：
+   - 當您點擊 Grok 側邊欄頂部的折疊按鈕收合側邊欄時，Nomad 資料夾樹將隨之平滑收合，展開時自動復原，操作體驗完全自然流暢。
 
 ---
 
@@ -166,4 +174,11 @@ Nomad AI Workspace 內建多種現代圖表與科學計算排版引擎：
   - 可微調側邊欄寬度、文字行高與對話段落間距。
 - **匯入與匯出 (Backup & Restore)**：
   - 隨時將本機所有資料夾結構、星標對話與提示詞匯出為獨立 JSON 備份檔。
+---
 
+## 7. 🔄 更新後重新載入方式 (How to Reload)
+
+1. 開啟 Chrome 擴充功能管理頁面：`chrome://extensions/`。
+2. 找到 **Nomad AI Workspace** 並點擊卡片右下角的 **「重新載入 (🔄)」** 圖示。
+3. 回到 [grok.com](https://grok.com/)、[claude.ai](https://claude.ai/)、[chatgpt.com](https://chatgpt.com/) 或 [gemini.google.com](https://gemini.google.com/) 重新整理頁面（`Cmd + R` 或 `F5`）。
+4. 即可立即享受最新功能與完美的側邊欄整合體驗！

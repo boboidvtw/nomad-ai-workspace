@@ -25,9 +25,15 @@
   - 新增 `nomad.sync.uploadGrok` 與 `nomad.sync.downloadGrok` 背景通訊端點。
   - 升級 `nomad.sync.syncAll` 總控路由，實現四大平台（Gemini / Claude / ChatGPT / Grok）雲端資料並行下載與合併。
   - 在 Options / Popup 雲端同步設定介面打造 4 欄位即時狀態總覽儀表板，獨立呈現各平台最新上傳與下載時間戳。
-- **品質加固 (Quality & Fixes)**：
+- **品質加固與排版修復 (Quality & Bug Fixes)**：
+  - **Grok 側邊欄排版防腐與佈局隔離加固 (Grok Sidebar Layout Stabilization)**：
+    - 修復 `GrokFolderManager` 在側邊欄尚未就緒時回退渲染至 `document.body` 導致頁面頂部 100% 寬度橫幅錯位的問題，建立嚴格 `if (!portalContainer) return null;` 門禁防線。
+    - 升級 `findGrokNav` 支援 Shadcn UI 核心架構（`[data-sidebar="sidebar"]`、`[data-sidebar="content"]`）與多語言側邊欄語意標籤偵測（`聊天`、`Chats`、`對話`、`專案`）。
+    - 增加 `offsetWidth <= 420px` 側邊欄寬度嚴格約束，排除任何全幅頂部導航列被誤判為注入錨點。
+    - 精確錨定於 Grok 側邊欄「聊天 (Chats)」列表正上方，與上方「專案」及下方「歷史對話」自然無縫嵌合。
+    - 在 `grok/style.css` 中將 `#nomad-grok-root` 設置為 `position: fixed; width: 0; height: 0; pointer-events: none; overflow: visible;`，徹底物理隔離，杜絕任何主畫面版面流擠壓。
   - 修正 `GoogleDriveSyncService` 中 ChatGPT 與 Gemini 上傳時狀態時間戳寫入的 key 鍵值問題。
-  - 新增 Grok 專屬單元測試與雙向合併測試，全專案通過 416 個測試檔案（4,128 項測試 100% 通過）。
+  - 增補 Grok 專屬單元測試與雙向合併測試，全專案 416 個測試檔案（4,130 項測試 100% 通過）。
 
 ---
 

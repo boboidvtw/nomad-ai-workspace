@@ -8,7 +8,7 @@
 > 專為 Google Gemini、Anthropic Claude、OpenAI ChatGPT 與 xAI Grok 打造的本地優先 (Local-First)、零信任 (Zero-Trust) 瀏覽器增強套件。在各官方 AI 側邊欄注入跨平台階層樹狀圖，並由個人 Google Drive 實體子目錄安全隔離存放。
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v1.1.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v1.2.0-green.svg)](CHANGELOG.md)
 [![Platforms](https://img.shields.io/badge/Platforms-Gemini%20%7C%20Claude%20%7C%20ChatGPT%20%7C%20Grok-orange.svg)](#-支援平台矩陣-supported-platforms)
 [![GitHub Stars](https://img.shields.io/github/stars/boboidvtw/nomad-ai-workspace?style=social)](https://github.com/boboidvtw/nomad-ai-workspace)
 [![PayPal Sponsor](https://img.shields.io/badge/Sponsor-PayPal-00457C.svg?logo=paypal&logoColor=white)](https://www.paypal.me/boboidvtw)

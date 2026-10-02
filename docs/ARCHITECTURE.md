@@ -1,3 +1,7 @@
+<p align="right">
+  <b>繁體中文</b> | <a href="ARCHITECTURE_EN.md">English</a>
+</p>
+
 # 🏛️ Nomad AI Workspace 架構總覽 (Architecture Overview)
 
 > 本文件詳述 **Nomad AI Workspace** 瀏覽器擴充套件之核心系統架構、模組切分、跨平台適配器與資料隔離同步機制。

@@ -8,7 +8,7 @@
 > A local-first, zero-trust browser enhancement suite designed for Google Gemini, Anthropic Claude, OpenAI ChatGPT, and xAI Grok. Injects cross-platform hierarchical sidebar folder trees into native AI interfaces, safely segregated in user-owned Google Drive subdirectories.
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v1.1.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v1.2.0-green.svg)](CHANGELOG.md)
 [![Platforms](https://img.shields.io/badge/Platforms-Gemini%20%7C%20Claude%20%7C%20ChatGPT%20%7C%20Grok-orange.svg)](#-supported-platform-matrix)
 [![GitHub Stars](https://img.shields.io/github/stars/boboidvtw/nomad-ai-workspace?style=social)](https://github.com/boboidvtw/nomad-ai-workspace)
 [![PayPal Sponsor](https://img.shields.io/badge/Sponsor-PayPal-00457C.svg?logo=paypal&logoColor=white)](https://www.paypal.me/boboidvtw)
