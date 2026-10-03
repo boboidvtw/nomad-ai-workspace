@@ -166,14 +166,22 @@ Nomad AI Workspace 內建多種現代圖表與科學計算排版引擎：
 
 點擊瀏覽器工具列上的 Nomad AI Workspace 圖示，開啟控制面板：
 
-- **雲端同步 (Cloud Sync)**：
-  - 登入個人 Google 帳號，一鍵啟用 Google Drive 實體子目錄隔離備份。
+- **Google Drive 四大平台獨立子目錄同步 (4-Platform Cloud Sync)**：
+  - 登入個人 Google 帳號，一鍵啟用 Google Drive 實體子目錄物理隔離備份：
+    - `Nomad Workspace Data/Gemini/gemini-folders.json`（Google Gemini）
+    - `Nomad Workspace Data/Claude/claude-folders.json`（Anthropic Claude）
+    - `Nomad Workspace Data/ChatGPT/chatgpt-folders.json`（OpenAI ChatGPT）
+    - `Nomad Workspace Data/Grok/grok-folders.json`（xAI Grok）
+  - 擴充套件 Options 與 Popup 控制面板提供 4 欄即時同步狀態總覽儀表板，獨立呈現各平台最新上傳與下載時間戳。
+  - 點擊「一鍵全平台同步 (All Platforms)」即可自動並行執行四大平台之雲端資料拉取、雙向時間戳衝突消解與非破壞性增量合併。
+- **零信任隱私架構 (Zero-Trust Privacy)**：
+  - 本地優先設計，透過 OAuth 2.0 直接於本機瀏覽器與個人 Google Drive 溝通，無任何第三方伺服器中轉，確保會話與提示詞隱私絕對安全。
   - 支援設定自訂 Google Cloud OAuth Client ID（詳細步驟請見 [Google Drive 授權指南](GOOGLE_DRIVE_SETUP.md)）。
-- **外觀與主題 (Appearance)**：
+- **外觀與主題 (Appearance & Layout)**：
   - 支援跟隨系統深淺色模式或手動強制設定。
   - 可微調側邊欄寬度、文字行高與對話段落間距。
 - **匯入與匯出 (Backup & Restore)**：
-  - 隨時將本機所有資料夾結構、星標對話與提示詞匯出為獨立 JSON 備份檔。
+  - 隨時將本機所有四大平台資料夾結構、星標對話與自訂提示詞匯出為獨立 JSON 備份檔，並支援跨裝置一鍵導入復原。
 ---
 
 ## 7. 🔄 更新後重新載入方式 (How to Reload)

@@ -1,0 +1,13 @@
+{
+  "name": "nomad-desktop",
+  "version": "0.1.0",
+  "description": "Nomad AI Workspace - All-in-One Multi-AI Super Station",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging"
+  },
+  "devDependencies": {
+    "electron": "^40.10.2"
+  }
+}

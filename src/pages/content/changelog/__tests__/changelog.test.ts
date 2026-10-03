@@ -7,8 +7,10 @@ import { StorageKeys } from '@/core/types/common';
 
 import {
   extractLocalizedContent,
+  getDocsUrl,
   hasUnreadChangelog,
   resolveChangelogImageUrl,
+  rewriteChangelogDocUrls,
   rewriteChangelogImageUrls,
 } from '../index';
 
@@ -276,5 +278,37 @@ describe('hasUnreadChangelog', () => {
       [StorageKeys.CHANGELOG_DISMISSED_VERSION]: EXTENSION_VERSION,
     });
     expect(await hasUnreadChangelog()).toBe(false);
+  });
+});
+
+describe('getDocsUrl', () => {
+  it('returns USER_GUIDE.md on GitHub for zh and zh_TW', () => {
+    expect(getDocsUrl('zh')).toBe(
+      'https://github.com/boboidvtw/nomad-ai-workspace/blob/main/docs/USER_GUIDE.md',
+    );
+    expect(getDocsUrl('zh_TW')).toBe(
+      'https://github.com/boboidvtw/nomad-ai-workspace/blob/main/docs/USER_GUIDE.md',
+    );
+  });
+
+  it('returns USER_GUIDE_EN.md on GitHub for en and other languages', () => {
+    expect(getDocsUrl('en')).toBe(
+      'https://github.com/boboidvtw/nomad-ai-workspace/blob/main/docs/USER_GUIDE_EN.md',
+    );
+    expect(getDocsUrl('ja')).toBe(
+      'https://github.com/boboidvtw/nomad-ai-workspace/blob/main/docs/USER_GUIDE_EN.md',
+    );
+  });
+});
+
+describe('rewriteChangelogDocUrls', () => {
+  it('rewrites guide links to localized documentation on GitHub', () => {
+    const input = 'Check out [timeline docs](/guide/timeline) for details.';
+    expect(rewriteChangelogDocUrls(input, 'zh_TW')).toBe(
+      'Check out [timeline docs](https://github.com/boboidvtw/nomad-ai-workspace/blob/main/docs/USER_GUIDE.md) for details.',
+    );
+    expect(rewriteChangelogDocUrls(input, 'en')).toBe(
+      'Check out [timeline docs](https://github.com/boboidvtw/nomad-ai-workspace/blob/main/docs/USER_GUIDE_EN.md) for details.',
+    );
   });
 });

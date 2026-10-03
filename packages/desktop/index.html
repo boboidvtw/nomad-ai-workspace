@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>Nomad AI Studio</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #090d16;
+      color: #f1f5f9;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+    /* Top Bar */
+    .top-bar {
+      height: 52px;
+      padding: 0 16px 0 80px; /* Leave space for macOS traffic lights */
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      -webkit-app-region: drag;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      -webkit-app-region: no-drag;
+    }
+    .btn-group {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 2px;
+    }
+    .btn-mode {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-mode:hover {
+      color: #f8fafc;
+    }
+    .btn-mode.active {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+    }
+    .platform-select {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Bottom Bar */
+    .bottom-bar {
+      height: 68px;
+      padding: 10px 16px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .targets-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .target-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.15s;
+    }
+    .target-label:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .target-label input {
+      accent-color: #38bdf8;
+      cursor: pointer;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-claude { background: #d97706; }
+    .dot-chatgpt { background: #10a37f; }
+    .dot-gemini { background: #2563eb; }
+    .dot-grok { background: #1d9bf0; }
+
+    .input-wrapper {
+      flex: 1;
+      position: relative;
+    }
+    .input-prompt {
+      width: 100%;
+      height: 44px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      resize: none;
+      user-select: text;
+      transition: border-color 0.2s;
+    }
+    .input-prompt:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    .btn-send {
+      height: 44px;
+      padding: 0 18px;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-send:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+    .btn-send:active {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="brand">
+      <span>🌐 Nomad AI Studio</span>
+      <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(56,189,248,0.15); color: #38bdf8; font-weight: 600;">SUPER STATION</span>
+    </div>
+
+    <div class="controls">
+      <!-- Layout Modes -->
+      <div class="btn-group">
+        <button class="btn-mode" id="btn-focus" onclick="setLayout('focus')">單欄專注</button>
+        <button class="btn-mode active" id="btn-dual" onclick="setLayout('dual')">雙欄並排</button>
+        <button class="btn-mode" id="btn-quad" onclick="setLayout('quad')">四宮格競技</button>
+      </div>
+
+      <!-- Selectors for Dual Mode -->
+      <div id="dual-selectors" style="display: flex; gap: 6px;">
+        <select id="dual-left" class="platform-select" onchange="updateDualSelection()">
+          <option value="claude" selected>Claude</option>
+          <option value="chatgpt">ChatGPT</option>
+          <option value="gemini">Gemini</option>
+          <option value="grok">Grok</option>
+        </select>
+        <span style="color: #64748b; font-size: 12px; align-self: center;">vs</span>
+        <select id="dual-right" class="platform-select" onchange="updateDualSelection()">
+          <option value="claude">Claude</option>
+          <option value="chatgpt" selected>ChatGPT</option>
+          <option value="gemini">Gemini</option>
+          <option value="grok">Grok</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Bar: Universal Dispatcher -->
+  <div class="bottom-bar">
+    <div class="targets-group">
+      <label class="target-label"><input type="checkbox" id="check-claude" checked><span class="dot dot-claude"></span>Claude</label>
+      <label class="target-label"><input type="checkbox" id="check-chatgpt" checked><span class="dot dot-chatgpt"></span>ChatGPT</label>
+      <label class="target-label"><input type="checkbox" id="check-gemini"><span class="dot dot-gemini"></span>Gemini</label>
+      <label class="target-label"><input type="checkbox" id="check-grok"><span class="dot dot-grok"></span>Grok</label>
+    </div>
+
+    <div class="input-wrapper">
+      <textarea id="prompt-input" class="input-prompt" placeholder="輸入問題，同步派發至選取的 AI 平臺... (Enter 送出, Shift + Enter 換行)"></textarea>
+    </div>
+
+    <button class="btn-send" onclick="handleSend()">
+      <span>一鍵同步發送</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
+  </div>
+
+  <script>
+    let currentLayout = 'dual';
+
+    function setLayout(mode) {
+      currentLayout = mode;
+      document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-' + mode).classList.add('active');
+
+      const dualSelectors = document.getElementById('dual-selectors');
+      dualSelectors.style.display = mode === 'dual' ? 'flex' : 'none';
+
+      if (mode === 'focus') {
+        const platform = document.getElementById('dual-left').value;
+        window.nomadDesktop.setLayout({ layout: 'focus', focus: platform });
+      } else if (mode === 'dual') {
+        updateDualSelection();
+      } else if (mode === 'quad') {
+        window.nomadDesktop.setLayout({ layout: 'quad' });
+      }
+    }
+
+    function updateDualSelection() {
+      const left = document.getElementById('dual-left').value;
+      const right = document.getElementById('dual-right').value;
+      window.nomadDesktop.setLayout({ layout: 'dual', dual: [left, right] });
+    }
+
+    function handleSend() {
+      const input = document.getElementById('prompt-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const targets = [];
+      if (document.getElementById('check-claude').checked) targets.push('claude');
+      if (document.getElementById('check-chatgpt').checked) targets.push('chatgpt');
+      if (document.getElementById('check-gemini').checked) targets.push('gemini');
+      if (document.getElementById('check-grok').checked) targets.push('grok');
+
+      if (targets.length === 0) {
+        alert('請至少勾選一個發送目標 AI！');
+        return;
+      }
+
+      window.nomadDesktop.dispatchPrompt({ prompt: text, targets });
+      input.value = '';
+    }
+
+    document.getElementById('prompt-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+  </script>
+</body>
+</html>

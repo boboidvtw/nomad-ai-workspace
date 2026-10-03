@@ -126,14 +126,13 @@ export function rewriteChangelogImageUrls(
 
 /**
  * Rewrite relative doc links (e.g. `/guide/timeline`) in changelog markdown
- * to full locale-aware URLs (e.g. `https://github.com/boboidvtw/nomad-ai-workspace/ja/guide/timeline`).
- * zh is the root locale and gets no prefix.
+ * to full documentation URLs pointing to the user guide.
  */
 export function rewriteChangelogDocUrls(markdown: string, lang: AppLanguage): string {
-  const base = 'https://github.com/boboidvtw/nomad-ai-workspace';
-  return markdown.replace(MARKDOWN_DOC_LINK_REGEX, (_full, text, path) => {
-    const url = lang === 'zh' ? `${base}${path}` : `${base}/${lang}${path}`;
-    return `[${text}](${url})`;
+  const base = 'https://github.com/boboidvtw/nomad-ai-workspace/blob/main/docs';
+  const docFile = lang === 'zh' || lang === 'zh_TW' ? 'USER_GUIDE.md' : 'USER_GUIDE_EN.md';
+  return markdown.replace(MARKDOWN_DOC_LINK_REGEX, (_full, text, _path) => {
+    return `[${text}](${base}/${docFile})`;
   });
 }
 
@@ -179,13 +178,14 @@ function t(key: TranslationKey, lang: AppLanguage): string {
 
 /**
  * Get the docs URL for the current language.
- * zh is the root locale (no prefix), others use /{locale}/ prefix.
+ * zh and zh_TW link to USER_GUIDE.md, other languages link to USER_GUIDE_EN.md.
  */
-function getDocsUrl(lang: AppLanguage): string {
-  const base = 'https://github.com/boboidvtw/nomad-ai-workspace';
-  const path = '/guide/getting-started';
-  if (lang === 'zh') return `${base}${path}`;
-  return `${base}/${lang}${path}`;
+export function getDocsUrl(lang: AppLanguage): string {
+  const base = 'https://github.com/boboidvtw/nomad-ai-workspace/blob/main/docs';
+  if (lang === 'zh' || lang === 'zh_TW') {
+    return `${base}/USER_GUIDE.md`;
+  }
+  return `${base}/USER_GUIDE_EN.md`;
 }
 
 /**
