@@ -1,10 +1,22 @@
 /**
  * Nomad AI Studio - Unified Session & Workspace Manager
- * Implements MMDD | 類型 | 主題 semantic naming and cross-platform workspace synchronization.
+ * Implements MMDD | 類型 | 主題 semantic naming, full-text dialogue search,
+ * and cross-platform workspace synchronization.
  * Governed by AGENTS.md Section 7.
  */
 
 const { store } = require("./store");
+
+const SEMANTIC_TYPES = [
+  "功能",
+  "修復",
+  "設計",
+  "優化",
+  "文件",
+  "探索",
+  "研究",
+  "發布",
+];
 
 const TYPE_KEYWORDS = [
   { type: "修復", keywords: ["修復", "修正", "debug", "bug", "報錯", "失敗", "例外", "異常", "fix", "error"] },
@@ -71,6 +83,67 @@ function extractTopic(promptText) {
 }
 
 /**
+ * Parse canonical semantic title format: MMDD | 類型 | 主題
+ */
+function parseSemanticTitle(title) {
+  if (!title || typeof title !== "string") return null;
+  const match = title.match(/^(\d{4})\s*\|\s*([^|]+)\s*\|\s*(.+)$/);
+  if (!match) return null;
+  const date = match[1];
+  const type = match[2].trim();
+  const topic = match[3].trim();
+  return {
+    date,
+    type,
+    topic,
+    isCanonical: SEMANTIC_TYPES.includes(type),
+  };
+}
+
+/**
+ * Get guaranteed semantic type for a workspace
+ */
+function getWorkspaceType(workspace) {
+  if (!workspace) return "設計";
+  const title = workspace.title || "";
+  const parsed = parseSemanticTitle(title);
+  if (parsed && SEMANTIC_TYPES.includes(parsed.type)) {
+    return parsed.type;
+  }
+  for (const t of SEMANTIC_TYPES) {
+    if (title.includes(t)) return t;
+  }
+  return inferType(title + " " + (workspace.promptSnippet || ""));
+}
+
+/**
+ * Extract context snippet centered around query tokens
+ */
+function extractMatchSnippet(text, tokens = [], maxChars = 100) {
+  if (!text || typeof text !== "string") return "";
+  const lower = text.toLowerCase();
+  let firstIdx = -1;
+  let matchLen = 0;
+  for (const token of tokens) {
+    const idx = lower.indexOf(token.toLowerCase());
+    if (idx !== -1 && (firstIdx === -1 || idx < firstIdx)) {
+      firstIdx = idx;
+      matchLen = token.length;
+    }
+  }
+  if (firstIdx === -1) {
+    return text.length > maxChars ? text.slice(0, maxChars) + "..." : text;
+  }
+  const half = Math.floor(maxChars / 2);
+  let start = Math.max(0, firstIdx - half);
+  let end = Math.min(text.length, firstIdx + matchLen + half);
+  let snippet = text.slice(start, end).trim();
+  if (start > 0) snippet = "..." + snippet;
+  if (end < text.length) snippet = snippet + "...";
+  return snippet;
+}
+
+/**
  * Create full canonical title: MMDD | 類型 | 主題
  */
 function createSemanticTitle(promptText, customType = null, customTopic = null) {
@@ -121,6 +194,7 @@ class SessionManager {
       updatedAt: new Date().toISOString(),
       completed: false,
       turns: 0,
+      history: [],
       urls: urls || {
         claude: "",
         chatgpt: "",
@@ -153,23 +227,214 @@ class SessionManager {
     return target;
   }
 
+  /**
+   * Add a completed turn to a workspace's history
+   */
+  addTurn(workspaceId, turn = {}) {
+    const list = [...this.getWorkspaces()];
+    const index = list.findIndex(w => w.id === workspaceId);
+    if (index === -1) return null;
+
+    const target = { ...list[index] };
+    const history = Array.isArray(target.history) ? [...target.history] : [];
+
+    const normalizedTurn = {
+      speaker: turn.speaker || "AI",
+      round: Number(turn.round) || 1,
+      type: turn.type || "turn-complete",
+      content: String(turn.content || turn.response || turn.responseSnippet || "").trim(),
+      timestamp: turn.timestamp || new Date().toISOString(),
+    };
+
+    history.push(normalizedTurn);
+    if (history.length > 200) {
+      history.shift();
+    }
+
+    target.history = history;
+    target.turns = history.length;
+    target.updatedAt = new Date().toISOString();
+
+    list[index] = target;
+    this.store.set("workspaces", list);
+    return target;
+  }
+
+  /**
+   * Deep full-text keyword search and semantic tag filter
+   */
+  searchWorkspaces(options = {}) {
+    const rawQuery = (options.query || options.q || "").trim();
+    const queryTokens = rawQuery ? rawQuery.toLowerCase().split(/\s+/).filter(Boolean) : [];
+    const filterType = options.type ? options.type.trim() : "all";
+    const filterMode = options.mode ? options.mode.trim() : "all";
+    const limit = Math.max(1, Number(options.limit) || 50);
+
+    const workspaces = this.getWorkspaces();
+    const results = [];
+
+    for (const ws of workspaces) {
+      const wsType = getWorkspaceType(ws);
+      const wsMode = ws.mode || "relay";
+
+      // 1. Tag / Type filter
+      if (filterType !== "all" && filterType !== "") {
+        const matchesType = (wsType === filterType) || (ws.title && ws.title.includes(filterType));
+        if (!matchesType) continue;
+      }
+
+      // 2. Mode filter
+      if (filterMode !== "all" && filterMode !== "") {
+        if (wsMode !== filterMode) continue;
+      }
+
+      // 3. Keyword matching across title, prompt, urls, and conversation history turns
+      const matches = [];
+      let score = 0;
+
+      if (queryTokens.length === 0) {
+        // Matched by filter alone
+        score = 10;
+      } else {
+        const titleLower = (ws.title || "").toLowerCase();
+        const promptLower = (ws.promptSnippet || "").toLowerCase();
+        const history = Array.isArray(ws.history) ? ws.history : [];
+
+        let allTokensMatched = true;
+
+        for (const token of queryTokens) {
+          let tokenFound = false;
+
+          // Check title
+          if (titleLower.includes(token)) {
+            tokenFound = true;
+            score += 40;
+            if (!matches.some(m => m.field === "title")) {
+              matches.push({
+                field: "title",
+                value: ws.title,
+                snippet: extractMatchSnippet(ws.title, queryTokens),
+              });
+            }
+          }
+
+          // Check prompt snippet
+          if (promptLower.includes(token)) {
+            tokenFound = true;
+            score += 25;
+            if (!matches.some(m => m.field === "prompt")) {
+              matches.push({
+                field: "prompt",
+                value: ws.promptSnippet,
+                snippet: extractMatchSnippet(ws.promptSnippet, queryTokens),
+              });
+            }
+          }
+
+          // Check URLs
+          if (ws.urls && typeof ws.urls === "object") {
+            for (const [platform, url] of Object.entries(ws.urls)) {
+              if (url && url.toLowerCase().includes(token)) {
+                tokenFound = true;
+                score += 15;
+                if (!matches.some(m => m.field === "url" && m.platform === platform)) {
+                  matches.push({
+                    field: "url",
+                    platform,
+                    value: url,
+                  });
+                }
+              }
+            }
+          }
+
+          // Check turns
+          for (let i = 0; i < history.length; i++) {
+            const turn = history[i];
+            const content = turn.content || turn.response || "";
+            const contentLower = content.toLowerCase();
+            const speakerLower = (turn.speaker || "").toLowerCase();
+
+            if (contentLower.includes(token) || speakerLower.includes(token)) {
+              tokenFound = true;
+              score += 20;
+              matches.push({
+                field: "turn",
+                round: turn.round || 1,
+                speaker: (turn.speaker || "AI").toUpperCase(),
+                snippet: extractMatchSnippet(content, queryTokens),
+                timestamp: turn.timestamp,
+              });
+            }
+          }
+
+          if (!tokenFound) {
+            allTokensMatched = false;
+            break;
+          }
+        }
+
+        if (!allTokensMatched) {
+          continue;
+        }
+      }
+
+      // Recency weighting
+      const updatedAtMs = ws.updatedAt ? new Date(ws.updatedAt).getTime() : 0;
+      if (updatedAtMs > 0) {
+        const hoursAgo = Math.max(0, (Date.now() - updatedAtMs) / (1000 * 3600));
+        score += Math.max(0, 10 - Math.min(10, hoursAgo / 24));
+      }
+
+      results.push({
+        workspace: ws,
+        workspaceId: ws.id,
+        title: ws.title,
+        type: wsType,
+        mode: ws.mode || "relay",
+        matches,
+        score,
+      });
+    }
+
+    // Sort by relevance score, then by update time
+    results.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const bTime = b.workspace.updatedAt ? new Date(b.workspace.updatedAt).getTime() : 0;
+      const aTime = a.workspace.updatedAt ? new Date(a.workspace.updatedAt).getTime() : 0;
+      return bTime - aTime;
+    });
+
+    const limited = results.slice(0, limit);
+
+    return {
+      success: true,
+      totalCount: workspaces.length,
+      matchCount: results.length,
+      query: rawQuery,
+      filterType,
+      filterMode,
+      workspaces: limited.map(r => r.workspace),
+      results: limited,
+    };
+  }
+
   captureActiveUrls(workspaceId) {
     const views = this.getViews();
     const urls = {};
     for (const [platform, item] of Object.entries(views)) {
       try {
         if (item && item.view && !item.view.webContents.isDestroyed()) {
-          const url = item.view.webContents.getURL();
-          if (url && !url.endsWith(".com/") && !url.endsWith(".ai/") && !url.endsWith("/app") && !url.includes("/new")) {
-            urls[platform] = url;
+          const currentUrl = item.view.webContents.getURL();
+          if (currentUrl && !currentUrl.startsWith("about:") && !currentUrl.startsWith("data:")) {
+            urls[platform] = currentUrl;
           }
         }
-      } catch (e) {}
+      } catch (err) {
+        console.warn(`[Nomad SessionManager] Failed to get URL for ${platform}:`, err.message);
+      }
     }
-    if (workspaceId && Object.keys(urls).length > 0) {
-      this.updateWorkspace(workspaceId, { urls });
-    }
-    return urls;
+    return this.updateWorkspace(workspaceId, { urls });
   }
 
   async switchWorkspace(workspaceId) {
@@ -204,7 +469,6 @@ class SessionManager {
     }
     return { success: true };
   }
-
 
   exportWorkspaceAsJson(workspaceId) {
     const list = this.getWorkspaces();
@@ -331,7 +595,7 @@ class SessionManager {
     return md;
   }
 
-    async applyInPageRenaming(platform, title) {
+  async applyInPageRenaming(platform, title) {
     const views = this.getViews();
     const item = views[platform];
     if (!item) return { ok: false, error: "Platform not found" };
@@ -364,10 +628,14 @@ class SessionManager {
 }
 
 module.exports = {
+  SEMANTIC_TYPES,
   TYPE_KEYWORDS,
   getTaiwanMMDD,
   inferType,
   extractTopic,
+  parseSemanticTitle,
+  getWorkspaceType,
+  extractMatchSnippet,
   createSemanticTitle,
   SessionManager,
 };

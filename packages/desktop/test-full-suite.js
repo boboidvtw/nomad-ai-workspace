@@ -282,6 +282,102 @@ async function runSuite() {
     record("10. 工作區重新命名、切換與刪除週期", false, e.message);
   }
 
+  // --- 測試 11: 對話紀錄全文搜尋與 8 大語義標籤過濾 ---
+  try {
+    const mockSearchWorkspace = {
+      workspaces: [
+        {
+          id: "ws-search-e2e-demo",
+          title: "1003 | 功能 | 智慧程式碼審查流水線",
+          promptSnippet: "實作基於 GitHub Actions 的自動化 PR 審查模組",
+          mode: "debate",
+          sequence: ["claude", "chatgpt"],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          completed: true,
+          turns: 2,
+          history: [
+            {
+              speaker: "claude",
+              round: 1,
+              content: "Claude 建議在 GitHub Actions 整合 ESLint 與 Vitest 覆蓋率檢查",
+              timestamp: new Date().toISOString(),
+            },
+            {
+              speaker: "chatgpt",
+              round: 1,
+              content: "ChatGPT 建議加入 SonarQube 與安全性依賴審計掃描",
+              timestamp: new Date().toISOString(),
+            },
+          ],
+          urls: {
+            claude: "https://claude.ai/new",
+            chatgpt: "https://chatgpt.com/",
+            gemini: "",
+            grok: "",
+          },
+        },
+        {
+          id: "ws-search-fix-demo",
+          title: "1003 | 修復 | 修正資料庫連線逾時問題",
+          promptSnippet: "修復連線池遺漏釋放問題",
+          mode: "relay",
+          sequence: ["claude", "chatgpt"],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          completed: true,
+          turns: 1,
+          history: [
+            {
+              speaker: "claude",
+              round: 1,
+              content: "已重構連線釋放機制，加入 finally 區塊保證關閉",
+              timestamp: new Date().toISOString(),
+            },
+          ],
+          urls: {},
+        }
+      ]
+    };
+
+    await request("/api/workspaces/import", {
+      method: "POST",
+      body: mockSearchWorkspace,
+    });
+
+    // 1. 標題關鍵字搜尋
+    const searchTitleRes = await request("/api/workspaces/search?q=程式碼審查");
+    const titleMatch = searchTitleRes.ok && searchTitleRes.data.matchCount >= 1 &&
+      searchTitleRes.data.results.some(r => r.workspaceId === "ws-search-e2e-demo");
+
+    // 2. 對話內文全文檢索 (搜尋歷史發言內提及的 SonarQube)
+    const searchTurnRes = await request("/api/workspaces/search?q=SonarQube");
+    const turnMatch = searchTurnRes.ok && searchTurnRes.data.matchCount >= 1 &&
+      searchTurnRes.data.results.some(r => r.workspaceId === "ws-search-e2e-demo" && r.matches.some(m => m.field === "turn"));
+
+    // 3. 8 大語義標籤過濾 (修復標籤)
+    const searchTypeRes = await request("/api/workspaces/search?type=修復");
+    const typeMatch = searchTypeRes.ok && searchTypeRes.data.matchCount >= 1 &&
+      searchTypeRes.data.results.some(r => r.workspaceId === "ws-search-fix-demo");
+
+    // 4. 複合檢索 (關鍵字 + 標籤)
+    const searchCombinedRes = await request("/api/workspaces/search?q=審查&type=功能");
+    const combinedMatch = searchCombinedRes.ok && searchCombinedRes.data.matchCount >= 1 &&
+      searchCombinedRes.data.results.some(r => r.workspaceId === "ws-search-e2e-demo");
+
+    // 清理測試資料
+    await request("/api/workspaces/delete", { method: "POST", body: { id: "ws-search-e2e-demo" } });
+    await request("/api/workspaces/delete", { method: "POST", body: { id: "ws-search-fix-demo" } });
+
+    if (titleMatch && turnMatch && typeMatch && combinedMatch) {
+      record("11. 對話紀錄全文搜尋與 8 大語義標籤過濾", true, "標題搜尋、歷史發言全文檢索 (SonarQube)、8 大語義標籤與複合篩選全部 100% 通過");
+    } else {
+      record("11. 對話紀錄全文搜尋與 8 大語義標籤過濾", false, `檢索未完全符合: title=${titleMatch}, turn=${turnMatch}, type=${typeMatch}, combined=${combinedMatch}`);
+    }
+  } catch (e) {
+    record("11. 對話紀錄全文搜尋與 8 大語義標籤過濾", false, e.message);
+  }
+
   // 清理測試建立的工作區
   if (createdWsId) {
     await request("/api/workspaces/delete", { method: "POST", body: { id: createdWsId } });

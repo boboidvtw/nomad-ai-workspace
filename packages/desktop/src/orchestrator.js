@@ -251,6 +251,7 @@ class MultiAiOrchestrator {
           nextSpeaker,
           responseSnippet: responseText.slice(0, 60),
           responseLength: responseText.length,
+          content: responseText,
         });
 
         // 3. Format next input for the next speaker

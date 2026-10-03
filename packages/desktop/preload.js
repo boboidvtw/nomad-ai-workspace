@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
   },
   // Unified Session & Workspace Manager (MMDD | 類型 | 主題)
   getWorkspaces: () => ipcRenderer.invoke("nomad:get-workspaces"),
+  searchWorkspaces: (options) => ipcRenderer.invoke("nomad:search-workspaces", options),
   createWorkspace: (options) => ipcRenderer.invoke("nomad:create-workspace", options),
   switchWorkspace: (id) => ipcRenderer.invoke("nomad:switch-workspace", id),
   renameWorkspace: (options) => ipcRenderer.invoke("nomad:rename-workspace", options),

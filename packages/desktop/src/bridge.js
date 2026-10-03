@@ -309,6 +309,37 @@ class LocalSyncBridge {
       }
 
             // 9. Workspace & Session Management Endpoints
+      if (pathname === "/api/workspaces/search") {
+        if (!this.sessionManager) {
+          return this.sendJson(res, 501, { success: false, errorCode: "BRIDGE_SESSION_MANAGER_NOT_CONFIGURED_001", message: "SessionManager not configured" });
+        }
+        let query = "";
+        let type = "all";
+        let mode = "all";
+        let limit = 50;
+
+        if (req.method === "GET") {
+          const parsedUrl = new URL(req.url, "http://127.0.0.1");
+          query = parsedUrl.searchParams.get("q") || parsedUrl.searchParams.get("query") || "";
+          type = parsedUrl.searchParams.get("type") || "all";
+          mode = parsedUrl.searchParams.get("mode") || "all";
+          if (parsedUrl.searchParams.get("limit")) {
+            limit = parseInt(parsedUrl.searchParams.get("limit"), 10) || 50;
+          }
+        } else if (req.method === "POST") {
+          const body = await this.readJsonBody(req);
+          query = body.query || body.q || "";
+          type = body.type || "all";
+          mode = body.mode || "all";
+          if (body.limit) limit = Number(body.limit) || 50;
+        } else {
+          return this.sendJson(res, 405, { success: false, errorCode: "METHOD_NOT_ALLOWED_001", message: "Method not allowed" });
+        }
+
+        const result = this.sessionManager.searchWorkspaces({ query, type, mode, limit });
+        return this.sendJson(res, 200, result);
+      }
+
       if (pathname === "/api/workspaces" && req.method === "GET") {
         const list = this.sessionManager ? this.sessionManager.getWorkspaces() : [];
         const activeId = this.sessionManager ? this.sessionManager.getActiveWorkspaceId() : null;

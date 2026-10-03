@@ -243,6 +243,24 @@ test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () =>
     const impJson = await impRes.json();
     assert.strictEqual(impJson.success, true);
     assert.strictEqual(impJson.importedCount, 1);
+
+    // 5. Search workspaces via GET & POST
+    const searchGetRes = await fetch(`${url}/api/workspaces/search?q=匯入測試&type=功能`);
+    assert.strictEqual(searchGetRes.status, 200);
+    const searchGetJson = await searchGetRes.json();
+    assert.strictEqual(searchGetJson.success, true);
+    assert.strictEqual(searchGetJson.matchCount, 1);
+    assert.strictEqual(searchGetJson.results[0].workspaceId, "ws-import-test");
+
+    const searchPostRes = await fetch(`${url}/api/workspaces/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: "匯入測試", type: "all" })
+    });
+    assert.strictEqual(searchPostRes.status, 200);
+    const searchPostJson = await searchPostRes.json();
+    assert.strictEqual(searchPostJson.success, true);
+    assert.strictEqual(searchPostJson.matchCount, 1);
   } finally {
     await bridge.stop();
   }

@@ -194,6 +194,12 @@ async function createMainWindow() {
         const activeWs = sessionManager?.getActiveWorkspace();
         if (activeWs) {
           sessionManager.captureActiveUrls(activeWs.id);
+          sessionManager.addTurn(activeWs.id, {
+            speaker: event.speaker,
+            round: event.round,
+            content: event.content || event.responseSnippet,
+            timestamp: new Date().toISOString(),
+          });
         }
       }
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -205,7 +211,12 @@ async function createMainWindow() {
       const activeWs = sessionManager?.getActiveWorkspace();
       if (activeWs) {
         sessionManager.captureActiveUrls(activeWs.id);
-        sessionManager.updateWorkspace(activeWs.id, { completed: true });
+        sessionManager.updateWorkspace(activeWs.id, {
+          completed: true,
+          history: (orchestrator && orchestrator.history && orchestrator.history.length > 0)
+            ? orchestrator.history
+            : (activeWs.history || [])
+        });
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
         }
@@ -441,6 +452,11 @@ ipcMain.handle('nomad:orchestration-start', async (event, options) => {
 });
 
 // Workspace & Session Management IPC Handlers
+ipcMain.handle('nomad:search-workspaces', (event, options) => {
+  if (!sessionManager) return { success: false, data: [] };
+  return sessionManager.searchWorkspaces(options);
+});
+
 ipcMain.handle('nomad:get-workspaces', () => {
   if (!sessionManager) return { activeWorkspaceId: null, workspaces: [] };
   return {

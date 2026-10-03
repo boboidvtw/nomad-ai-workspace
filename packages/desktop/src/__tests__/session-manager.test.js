@@ -152,3 +152,138 @@ test("SessionManager: exportOrchestrationHistoryAsMarkdown formats report with t
   assert.ok(md.includes("CLAUDE"));
   assert.ok(md.includes("CHATGPT"));
 });
+
+test("SessionManager: parseSemanticTitle parses standard format", () => {
+  const { parseSemanticTitle } = require("../session-manager.js");
+  const p1 = parseSemanticTitle("1003 | 功能 | 全文搜尋實作");
+  assert.strictEqual(p1.date, "1003");
+  assert.strictEqual(p1.type, "功能");
+  assert.strictEqual(p1.topic, "全文搜尋實作");
+  assert.strictEqual(p1.isCanonical, true);
+
+  const p2 = parseSemanticTitle("非標準標題");
+  assert.strictEqual(p2, null);
+});
+
+test("SessionManager: getWorkspaceType identifies 8 semantic types or falls back gracefully", () => {
+  const { getWorkspaceType } = require("../session-manager.js");
+  assert.strictEqual(getWorkspaceType({ title: "1003 | 修復 | 登入異常" }), "修復");
+  assert.strictEqual(getWorkspaceType({ title: "1003 | 優化 | 查詢效能" }), "優化");
+  assert.strictEqual(getWorkspaceType({ title: "1003 | 文件 | 架構手冊" }), "文件");
+  assert.strictEqual(getWorkspaceType({ title: "1003 | 探索 | WebGPU試驗" }), "探索");
+  assert.strictEqual(getWorkspaceType({ title: "1003 | 研究 | 競品調研" }), "研究");
+  assert.strictEqual(getWorkspaceType({ title: "1003 | 發布 | 部署流程" }), "發布");
+  assert.strictEqual(getWorkspaceType({ title: "1003 | 功能 | 搜尋過濾" }), "功能");
+  assert.strictEqual(getWorkspaceType({ title: "1003 | 設計 | 系統拓撲" }), "設計");
+  assert.strictEqual(getWorkspaceType({ title: "修復連線錯誤" }), "修復");
+});
+
+test("SessionManager: addTurn appends dialogue turns and updates timestamp and count", () => {
+  const mockStoreData = { workspaces: [] };
+  const mockStore = {
+    get: (k) => mockStoreData[k],
+    set: (k, v) => { mockStoreData[k] = v; return v; },
+  };
+
+  const mgr = new SessionManager({ store: mockStore });
+  const ws = mgr.createWorkspace({ prompt: "測試發言" });
+
+  const updated = mgr.addTurn(ws.id, {
+    speaker: "claude",
+    round: 1,
+    content: "Claude 提出了架構設計方案",
+  });
+
+  assert.strictEqual(updated.turns, 1);
+  assert.strictEqual(updated.history.length, 1);
+  assert.strictEqual(updated.history[0].speaker, "claude");
+  assert.strictEqual(updated.history[0].content, "Claude 提出了架構設計方案");
+
+  // Add second turn
+  const updated2 = mgr.addTurn(ws.id, {
+    speaker: "chatgpt",
+    round: 1,
+    content: "ChatGPT 進行了程式碼審查與補充",
+  });
+
+  assert.strictEqual(updated2.turns, 2);
+  assert.strictEqual(updated2.history.length, 2);
+  assert.strictEqual(updated2.history[1].speaker, "chatgpt");
+});
+
+test("SessionManager: searchWorkspaces performs keyword full-text search and tag filtering", () => {
+  const mockStoreData = { workspaces: [] };
+  const mockStore = {
+    get: (k) => mockStoreData[k],
+    set: (k, v) => { mockStoreData[k] = v; return v; },
+  };
+
+  const mgr = new SessionManager({ store: mockStore });
+
+  // Workspace 1: Bugfix
+  const ws1 = mgr.createWorkspace({
+    title: "1003 | 修復 | 修正資料庫逾時錯誤",
+    prompt: "處理連線池逾時 bug",
+    mode: "relay",
+  });
+  mgr.addTurn(ws1.id, {
+    speaker: "claude",
+    round: 1,
+    content: "診斷發現是 PostgreSQL 連線未正確釋放导致死鎖",
+  });
+
+  // Workspace 2: Feature
+  const ws2 = mgr.createWorkspace({
+    title: "1003 | 功能 | 新增全文搜尋與標籤過濾",
+    prompt: "實作跨平臺會話全文搜尋與 8 大語義標籤過濾",
+    mode: "debate",
+  });
+  mgr.addTurn(ws2.id, {
+    speaker: "chatgpt",
+    round: 1,
+    content: "建議使用高效 Token 分詞搭配 Snippet 邊界截取演算法",
+  });
+
+  // 1. Search by title keyword
+  const resTitle = mgr.searchWorkspaces({ query: "資料庫" });
+  assert.strictEqual(resTitle.success, true);
+  assert.strictEqual(resTitle.matchCount, 1);
+  assert.strictEqual(resTitle.results[0].workspaceId, ws1.id);
+  assert.strictEqual(resTitle.results[0].matches[0].field, "title");
+
+  // 2. Deep full-text search inside dialogue turns
+  const resTurn = mgr.searchWorkspaces({ query: "PostgreSQL" });
+  assert.strictEqual(resTurn.matchCount, 1);
+  assert.strictEqual(resTurn.results[0].workspaceId, ws1.id);
+  const turnMatch = resTurn.results[0].matches.find(m => m.field === "turn");
+  assert.ok(turnMatch);
+  assert.strictEqual(turnMatch.speaker, "CLAUDE");
+  assert.ok(turnMatch.snippet.includes("PostgreSQL"));
+
+  // 3. Search another turn keyword
+  const resTurn2 = mgr.searchWorkspaces({ query: "邊界截取" });
+  assert.strictEqual(resTurn2.matchCount, 1);
+  assert.strictEqual(resTurn2.results[0].workspaceId, ws2.id);
+
+  // 4. Tag / Type filtering
+  const resTypeFix = mgr.searchWorkspaces({ type: "修復" });
+  assert.strictEqual(resTypeFix.matchCount, 1);
+  assert.strictEqual(resTypeFix.results[0].workspaceId, ws1.id);
+
+  const resTypeFeat = mgr.searchWorkspaces({ type: "功能" });
+  assert.strictEqual(resTypeFeat.matchCount, 1);
+  assert.strictEqual(resTypeFeat.results[0].workspaceId, ws2.id);
+
+  // 5. Combined query and tag filtering
+  const resCombined = mgr.searchWorkspaces({ query: "搜尋", type: "功能" });
+  assert.strictEqual(resCombined.matchCount, 1);
+  assert.strictEqual(resCombined.results[0].workspaceId, ws2.id);
+
+  const resMismatch = mgr.searchWorkspaces({ query: "搜尋", type: "修復" });
+  assert.strictEqual(resMismatch.matchCount, 0);
+
+  // 6. Mode filtering
+  const resMode = mgr.searchWorkspaces({ mode: "debate" });
+  assert.strictEqual(resMode.matchCount, 1);
+  assert.strictEqual(resMode.results[0].workspaceId, ws2.id);
+});

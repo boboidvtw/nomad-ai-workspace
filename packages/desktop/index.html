@@ -191,6 +191,136 @@
     }
 
     
+    /* Workspace Search & Filter Styles */
+    .ws-search-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .ws-search-box:focus-within {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    .ws-search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 12px;
+      user-select: text;
+    }
+    .ws-search-input::placeholder {
+      color: #64748b;
+    }
+    .btn-search-clear {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 11px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      display: none;
+    }
+    .btn-search-clear:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .ws-filter-tags-scroll {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: thin;
+    }
+    .ws-filter-tags-scroll::-webkit-scrollbar {
+      height: 4px;
+    }
+    .ws-filter-tags-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+    .tag-pill {
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tag-pill:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #f1f5f9;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .tag-pill.active {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+      color: #38bdf8;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.25);
+    }
+
+    /* Type badge on cards */
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      border: 1px solid transparent;
+      flex-shrink: 0;
+    }
+    .type-badge-功能 { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3); }
+    .type-badge-修復 { background: rgba(244, 63, 94, 0.15); color: #fb7185; border-color: rgba(244, 63, 94, 0.3); }
+    .type-badge-設計 { background: rgba(129, 140, 248, 0.15); color: #a5b4fc; border-color: rgba(129, 140, 248, 0.3); }
+    .type-badge-優化 { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+    .type-badge-文件 { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+    .type-badge-探索 { background: rgba(192, 132, 252, 0.15); color: #d8b4fe; border-color: rgba(192, 132, 252, 0.3); }
+    .type-badge-研究 { background: rgba(20, 184, 166, 0.15); color: #2dd4bf; border-color: rgba(20, 184, 166, 0.3); }
+    .type-badge-發布 { background: rgba(251, 146, 60, 0.15); color: #fdba74; border-color: rgba(251, 146, 60, 0.3); }
+
+    .ws-match-snippet {
+      padding: 6px 8px;
+      background: rgba(0, 0, 0, 0.35);
+      border-left: 2px solid #38bdf8;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #cbd5e1;
+      line-height: 1.4;
+      word-break: break-all;
+    }
+    .ws-match-snippet mark {
+      background: rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      font-weight: 700;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    .search-highlight {
+      background: rgba(250, 204, 21, 0.25);
+      color: #fef08a;
+      padding: 0 1px;
+      border-radius: 2px;
+      font-weight: 700;
+    }
+
     /* Workspace Tab CSS */
     .ws-item-card {
       padding: 10px 12px;
@@ -698,6 +828,35 @@
         8 大維度：功能 / 修復 / 設計 / 優化 / 文件 / 探索 / 研究 / 發布。啟動圓桌任務時自動推斷並同調至各 AI 頁面！
       </div>
 
+      <!-- Search & 8-Tag Semantic Filter Bar -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="ws-search-box">
+          <span style="font-size: 12px; opacity: 0.7;">🔍</span>
+          <input
+            type="text"
+            id="ws-search-input"
+            class="ws-search-input"
+            placeholder="搜尋標題、對話內文、AI 發言或 Prompt..."
+            oninput="handleWsSearchInput(event)"
+            onkeydown="handleWsSearchKeyDown(event)"
+          />
+          <button id="btn-ws-search-clear" class="btn-search-clear" onclick="clearWsSearch()" title="清除搜尋 (Esc)">✕</button>
+        </div>
+
+        <!-- 8+1 Semantic Tag Pills -->
+        <div class="ws-filter-tags-scroll" id="ws-filter-tags">
+          <button class="tag-pill active" data-type="all" onclick="setWsTypeFilter('all')">全部</button>
+          <button class="tag-pill" data-type="功能" onclick="setWsTypeFilter('功能')">✨ 功能</button>
+          <button class="tag-pill" data-type="修復" onclick="setWsTypeFilter('修復')">🛠️ 修復</button>
+          <button class="tag-pill" data-type="設計" onclick="setWsTypeFilter('設計')">📐 設計</button>
+          <button class="tag-pill" data-type="優化" onclick="setWsTypeFilter('優化')">⚡ 優化</button>
+          <button class="tag-pill" data-type="文件" onclick="setWsTypeFilter('文件')">📝 文件</button>
+          <button class="tag-pill" data-type="探索" onclick="setWsTypeFilter('探索')">🧭 探索</button>
+          <button class="tag-pill" data-type="研究" onclick="setWsTypeFilter('研究')">🔬 研究</button>
+          <button class="tag-pill" data-type="發布" onclick="setWsTypeFilter('發布')">🚀 發布</button>
+        </div>
+      </div>
+
       <!-- Historical Workspaces List -->
       <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
         <span>歷史工作區紀錄</span>
@@ -991,6 +1150,102 @@
       activeWorkspace: null
     };
 
+    let wsSearchQuery = '';
+    let wsSelectedType = 'all';
+
+    const SEMANTIC_TYPES_CLIENT = ['功能', '修復', '設計', '優化', '文件', '探索', '研究', '發布'];
+
+    function getWorkspaceSemanticType(ws) {
+      if (!ws) return '設計';
+      const title = ws.title || '';
+      const match = title.match(/^(\d{4})\s*\|\s*([^|]+)\s*\|\s*(.+)$/);
+      if (match) {
+        const t = match[2].trim();
+        if (SEMANTIC_TYPES_CLIENT.includes(t)) return t;
+      }
+      for (const t of SEMANTIC_TYPES_CLIENT) {
+        if (title.includes(t)) return t;
+      }
+      return '設計';
+    }
+
+    function setWsTypeFilter(type) {
+      wsSelectedType = type;
+      document.querySelectorAll('#ws-filter-tags .tag-pill').forEach(btn => {
+        if (btn.dataset.type === type) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      renderWorkspaces();
+    }
+
+    function handleWsSearchInput(e) {
+      wsSearchQuery = e.target.value.trim();
+      const clearBtn = document.getElementById('btn-ws-search-clear');
+      if (clearBtn) {
+        clearBtn.style.display = wsSearchQuery ? 'block' : 'none';
+      }
+      renderWorkspaces();
+    }
+
+    function handleWsSearchKeyDown(e) {
+      if (e.key === 'Escape') {
+        clearWsSearch();
+      }
+    }
+
+    function clearWsSearch() {
+      wsSearchQuery = '';
+      wsSelectedType = 'all';
+      const input = document.getElementById('ws-search-input');
+      if (input) input.value = '';
+      const clearBtn = document.getElementById('btn-ws-search-clear');
+      if (clearBtn) clearBtn.style.display = 'none';
+      document.querySelectorAll('#ws-filter-tags .tag-pill').forEach(btn => {
+        if (btn.dataset.type === 'all') btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+      renderWorkspaces();
+    }
+
+    function highlightMatch(text, tokens) {
+      if (!text || !tokens || tokens.length === 0) return text;
+      let res = text;
+      tokens.forEach(tok => {
+        if (!tok) return;
+        const escaped = tok.replace(/[-\[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+        const regex = new RegExp(`(${escaped})`, 'gi');
+        res = res.replace(regex, '<mark class="search-highlight">$1</mark>');
+      });
+      return res;
+    }
+
+    function extractSnippetClient(text, tokens, maxChars = 90) {
+      if (!text) return '';
+      const lower = text.toLowerCase();
+      let firstIdx = -1;
+      let matchLen = 0;
+      for (const token of tokens) {
+        const idx = lower.indexOf(token);
+        if (idx !== -1 && (firstIdx === -1 || idx < firstIdx)) {
+          firstIdx = idx;
+          matchLen = token.length;
+        }
+      }
+      if (firstIdx === -1) {
+        return text.length > maxChars ? text.slice(0, maxChars) + '...' : text;
+      }
+      const half = Math.floor(maxChars / 2);
+      let start = Math.max(0, firstIdx - half);
+      let end = Math.min(text.length, firstIdx + matchLen + half);
+      let snippet = text.slice(start, end).trim();
+      if (start > 0) snippet = '...' + snippet;
+      if (end < text.length) snippet = snippet + '...';
+      return snippet;
+    }
+
     async function loadWorkspaces() {
       if (!window.nomadDesktop || !window.nomadDesktop.getWorkspaces) return;
       try {
@@ -1026,32 +1281,101 @@
         if (topTitle) topTitle.textContent = '新協作對話';
       }
 
+      const totalWorkspaces = (workspacesState.workspaces || []);
+      const queryTokens = wsSearchQuery ? wsSearchQuery.toLowerCase().split(/\s+/).filter(Boolean) : [];
+
+      // Client-side instant filter across title, prompt, and dialogue history
+      const filtered = totalWorkspaces.filter(ws => {
+        const type = getWorkspaceSemanticType(ws);
+        if (wsSelectedType !== 'all' && type !== wsSelectedType && (!ws.title || !ws.title.includes(wsSelectedType))) {
+          return false;
+        }
+        if (queryTokens.length === 0) return true;
+
+        const titleLower = (ws.title || '').toLowerCase();
+        const promptLower = (ws.promptSnippet || '').toLowerCase();
+        const history = Array.isArray(ws.history) ? ws.history : [];
+
+        return queryTokens.every(tok => {
+          if (titleLower.includes(tok)) return true;
+          if (promptLower.includes(tok)) return true;
+          return history.some(h => {
+            const c = (h.content || h.response || '').toLowerCase();
+            const spk = (h.speaker || '').toLowerCase();
+            return c.includes(tok) || spk.includes(tok);
+          });
+        });
+      });
+
       if (badge) {
-        badge.textContent = `${workspacesState.workspaces.length} 個工作區`;
+        if (wsSearchQuery || wsSelectedType !== 'all') {
+          badge.textContent = `篩選 ${filtered.length} / ${totalWorkspaces.length} 個`;
+        } else {
+          badge.textContent = `${totalWorkspaces.length} 個工作區`;
+        }
       }
 
       if (listContainer) {
-        if (!workspacesState.workspaces || workspacesState.workspaces.length === 0) {
+        if (totalWorkspaces.length === 0) {
           listContainer.innerHTML = '<div style="color: #64748b; font-size: 11px; text-align: center; padding: 20px;">尚無歷史會話紀錄</div>';
           return;
         }
 
-        listContainer.innerHTML = workspacesState.workspaces.map(ws => {
+        if (filtered.length === 0) {
+          listContainer.innerHTML = `
+            <div style="color: #64748b; font-size: 11px; text-align: center; padding: 24px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <span>🔍 沒有找到符合條件的工作區</span>
+              <button class="btn-ws-op" onclick="clearWsSearch()" style="margin-top: 4px;">重置搜尋與標籤</button>
+            </div>
+          `;
+          return;
+        }
+
+        listContainer.innerHTML = filtered.map(ws => {
           const isActive = ws.id === workspacesState.activeWorkspaceId;
           const timeStr = ws.updatedAt ? new Date(ws.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
           const hasUrls = ws.urls && Object.values(ws.urls).some(Boolean);
+          const wsType = getWorkspaceSemanticType(ws);
+
+          // Find matching turn snippet if query provided
+          let turnSnippetHtml = '';
+          if (queryTokens.length > 0 && Array.isArray(ws.history)) {
+            const matchedTurn = ws.history.find(h => {
+              const c = (h.content || h.response || '').toLowerCase();
+              return queryTokens.some(tok => c.includes(tok));
+            });
+            if (matchedTurn) {
+              const speaker = (matchedTurn.speaker || 'AI').toUpperCase();
+              const rawContent = matchedTurn.content || matchedTurn.response || '';
+              const snippet = extractSnippetClient(rawContent, queryTokens);
+              turnSnippetHtml = `
+                <div class="ws-match-snippet">
+                  <span style="color: #38bdf8; font-weight: 700;">💬 ${speaker} (第 ${matchedTurn.round || 1} 輪):</span>
+                  <span>${highlightMatch(escapeHtml(snippet), queryTokens)}</span>
+                </div>
+              `;
+            }
+          }
+
+          const highlightedTitle = queryTokens.length > 0
+            ? highlightMatch(escapeHtml(ws.title), queryTokens)
+            : escapeHtml(ws.title);
 
           return `
             <div class="ws-item-card ${isActive ? 'active' : ''}">
               <div class="ws-title-row">
-                <span style="color: ${isActive ? '#38bdf8' : '#e2e8f0'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;" title="${escapeHtml(ws.title)}">
-                  ${isActive ? '👉 ' : ''}${escapeHtml(ws.title)}
-                </span>
-                <div style="display: flex; gap: 4px;">
+                <div style="display: flex; align-items: center; gap: 6px; overflow: hidden; max-width: 270px;">
+                  <span class="type-badge type-badge-${wsType}">${wsType}</span>
+                  <span style="color: ${isActive ? '#38bdf8' : '#e2e8f0'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(ws.title)}">
+                    ${isActive ? '👉 ' : ''}${highlightedTitle}
+                  </span>
+                </div>
+                <div style="display: flex; gap: 4px; flex-shrink: 0;">
                   <button class="btn-ws-op btn-ws-restore" onclick="handleSwitchWorkspace('${ws.id}')" title="同步切換所有 AI 視圖至此會話">切換</button>
                   <button class="btn-ws-op" onclick="handleDeleteWorkspace('${ws.id}')" title="刪除紀錄">✕</button>
                 </div>
               </div>
+              ${turnSnippetHtml}
               <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #64748b;">
                 <span>${timeStr} · ${ws.mode || 'relay'}</span>
                 <span>${hasUrls ? '🔗 網址已同步' : '未儲存網址'}</span>
