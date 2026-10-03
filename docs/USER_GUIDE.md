@@ -191,12 +191,13 @@ Nomad AI Workspace 內建多種現代圖表與科學計算排版引擎：
 
 除了瀏覽器擴充功能外，Nomad AI Workspace 亦提供了基於 Electron 的原生獨立桌面應用程式——**Nomad AI Studio**，專為需要高頻在四大頂尖 AI 間進行同屏對比與並發提問的專業人士設計。
 
-### 7.1 動態自訂分欄佈局 (Dynamic Grid & Layout Modes)
+### 7.1 動態自訂分欄佈局與單欄專注啟動 (Dynamic Grid, Focus Startup & Lazy Loading)
 點擊頂部導航列的版面按鈕或平臺晶片，即可瞬間切換或自由組合：
+- **⚡ 預設 ChatGPT 單欄專注 (Focus 1-Column)**：全螢幕單一視窗，享受無干擾的深度推理工作流。工作站**預設以 ChatGPT 作為第一主頁面啟動**，大幅精簡開機時的系統記憶體與 CPU 佔用。
+- **💤 智能延遲載入 (Lazy Loading)**：啟動時僅加載主引擎，其他平台（Claude、Gemini、Grok）採取按需延遲載入技術，僅在切換版面時才平滑喚醒，兼顧極致效能與資源節省。
 - **四宮格競技 (Quad Grid)**：全螢幕同屏展示 Claude、ChatGPT、Gemini 與 Grok，四家模型回答即時橫向對比。
 - **三欄對比 (Triple 3-Column)**：三等分並排顯示三家大模型，適合多視角綜合交叉驗證。
 - **雙欄並排 (Dual 2-Column)**：精選兩大主流模型並排顯示，並支援 **4:6 / 5:5 / 6:4** 左右分割比例切換。
-- **單欄專注 (Focus 1-Column)**：全螢幕單一視窗，享受無干擾的深度推理工作流。
 - **動態平臺晶片 (Platform Chips)**：頂部導航列支援自由點擊開關 Claude、ChatGPT、Gemini、Grok 任一平臺，彈性依工作需求自由組合。
 
 ### 7.2 各平臺獨立縮放控制 (Independent Zoom Controls)
@@ -207,7 +208,8 @@ Nomad AI Workspace 內建多種現代圖表與科學計算排版引擎：
 
 ### 7.3 全域快捷喚醒與系統選單列 (Global Shortcut & Tray Resident)
 - **⚡ 全域喚醒快捷鍵**：按下 `Cmd + Shift + Space`（Windows 為 `Ctrl + Shift + Space`），無論身處任何全螢幕應用程式或桌面，一鍵即刻喚出或隱藏工作台。
-- **🍎 系統常駐選單列 (Tray Icon)**：macOS 頂部選單列與 Windows 系統列常駐圖示，點擊即可切換視窗，右鍵支援快速切換版面、調整全域縮放、開機自動啟動或徹底退出。
+- **🍎 macOS 原生透明選單列圖標 (Apple HIG Template)**：全新採用純向量透明 Apple HIG 規範模板圖標（`trayTemplate.png` 與 `@2x` 高清 Retina 規格），完美自適應 macOS 系統「淺色模式」與「深色模式」動態反色，徹底告別實心方塊瑕疵。
+- **右鍵快捷選單**：右鍵點擊選單列圖標即可快速切換版面（單欄專注 / 雙欄 / 三欄 / 四宮格）、調整全域縮放、查看本地中繼狀態、切換開機自動啟動或徹底退出。
 - **後台常駐運行**：點擊視窗左上角關閉按鈕預設最小化隱藏至系統列，保持會話不中斷。
 
 ### 7.4 本地數據同步中繼通道 (Local Sync Bridge API)
@@ -236,17 +238,23 @@ Nomad AI Studio 領先業界實現**四大頂級 AI 互相對話、接力推理�
 - **目標平台核選**：可自由勾選要派發提問的平台（Claude、ChatGPT、Gemini、Grok，預設全選）。
 - **即時並發派發**：輸入問題後按下 `Enter`（或點擊 **「一鍵同步發送 🚀」**），系統會同時將 Prompt 填入各平台輸入框並自動觸發送出（支援換行 `Shift + Enter`）。
 
-### 7.7 帳號安全與會話持久化 (Session Persistence)
+### 7.7 對話紀錄全文檢索與 8 大工程語義標籤過濾 (Full-Text Search & Semantic Tags)
+工作區提供高效的歷史會話全文檢索與標籤多維度過濾系統：
+- **🔍 即時模糊全文檢索**：支援不分大小寫即時匹配對話標題、正文歷史訊息、使用者 Prompt 與自訂標籤，快速調閱過往思考脈絡。
+- **🏷️ 8 大工程語義標籤過濾**：緊密對齊工程規範標準（`功能`, `修復`, `設計`, `優化`, `文件`, `探索`, `研究`, `發布`），點擊即可一鍵多選過濾。
+- **動態計數徽章**：即時呈現各標籤及搜尋結果之匹配會話數量，檢索結果一目了然。
+
+### 7.8 帳號安全與會話持久化 (Session Persistence)
 - **本地獨立存儲**：所有 Cookie 與登入憑證均隔離存放於本機 `~/Library/Application Support/nomad-desktop` 目錄。
 - **一次登入，永久記住**：四大 AI 帳號只需在工作站內登入一次，關閉程式或重新開機後仍完整保持登入狀態。
 - **零中繼隱私**：直接與各官方站點建立安全 TLS 連線，無任何代理伺服器或第三方數據庫介入。
 
-### 7.8 安裝與啟動方式 (Installation & Launch)
+### 7.9 安裝與啟動方式 (Installation & Launch)
 - **官方 GitHub Releases 下載各平台安裝包**：
   - 前往 [GitHub Releases 最新發布頁](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest) 直接下載對應系統安裝包：
-    - 🍏 **macOS**：下載 `Nomad-AI-Studio-1.3.0-arm64.dmg` 拖曳至 Applications 安裝（或下載綠色版 Zip）。
-    - 🪟 **Windows**：下載 `Nomad-AI-Studio-Setup-1.3.0.exe` 雙擊自動引導安裝。
-    - 🐧 **Linux**：下載 `Nomad-AI-Studio-1.3.0.AppImage`（賦予執行權限即可運行）或 `.deb` 安裝包。
+    - 🍏 **macOS**：下載 `Nomad-AI-Studio-1.4.0-arm64.dmg` 拖曳至 Applications 安裝（或下載綠色版 Zip）。
+    - 🪟 **Windows**：下載 `Nomad-AI-Studio-Setup-1.4.0.exe` 雙擊自動引導安裝。
+    - 🐧 **Linux**：下載 `Nomad-AI-Studio-1.4.0.AppImage`（賦予執行權限即可運行）或 `.deb` 安裝包。
 - **本機已編譯 App**：已編譯為 `/Applications/Nomad AI Studio.app`，亦可在桌面雙擊 `Nomad AI Studio.app` 直接開啟。
 - **開發者命令列啟動**：在專案目錄執行：
   ```bash

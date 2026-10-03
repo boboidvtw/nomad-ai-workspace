@@ -202,9 +202,10 @@ Toggle between layouts or customize visible engines with header controls and chi
 - Provides `+`, `-` fine adjustments, **"Reset 100%"**, and **"Global Quick Zoom (85% / 100% / 115%)"**.
 - Zoom preferences are automatically persisted locally.
 
-### 7.3 Global Shortcut & System Tray Resident
+### 7.3 Global Shortcut & System Tray Resident (Transparent Apple HIG Icon)
 - **⚡ Global Summon Shortcut**: Press `Cmd + Shift + Space` (Windows: `Ctrl + Shift + Space`) to summon or hide the workstation from any app or workspace.
-- **🍎 System Tray Menu**: Resident icon in macOS Menu Bar and Windows System Tray with quick layout switching, zoom presets, launch at login, and quit options.
+- **🍎 Native Transparent macOS Menu Bar Tray Icon**: Brand-new Apple HIG-compliant stencil icon (`trayTemplate.png` and `@2x` Retina) with 100% transparency, automatically inverting between macOS Dark and Light modes.
+- **Right-Click Tray Menu**: Right-click the tray icon to quickly switch layouts (Focus / Dual / Triple / Quad), adjust global zoom, check local bridge status, toggle launch-at-login, or quit completely.
 - **Background Resident**: Closing the window minimizes to tray, keeping your sessions alive.
 
 ### 7.4 Local Sync Bridge API
@@ -233,17 +234,23 @@ Nomad AI Studio introduces industry-first autonomous multi-AI collaboration, deb
 - **Target Selection**: Check or uncheck target AI engines (Claude, ChatGPT, Gemini, Grok — all selected by default).
 - **Simultaneous Submission**: Press `Enter` (or click **"Dispatch All 🚀"**) to populate the prompt into all selected AI inputs and automatically trigger submission (use `Shift + Enter` for newlines).
 
-### 7.7 Zero-Trust Security & Session Persistence
+### 7.7 Dialogue Full-Text Search & 8-Tag Semantic Filtering
+The workspace includes a high-performance historical conversation retrieval and multi-dimensional filtering engine:
+- **🔍 Instant Fuzzy Full-Text Search**: Case-insensitive real-time matching across session titles, full message history, user prompts, and custom tags.
+- **🏷️ 8 Engineering Semantic Tags**: Aligned with software engineering lifecycle tags (`Feature`, `Bugfix`, `Design`, `Refactor`, `Docs`, `PoC`, `Research`, `Release`) with one-click multi-filtering.
+- **Live Match Counters**: Badge indicators update dynamically to show matching conversation counts for each query and tag.
+
+### 7.8 Zero-Trust Security & Session Persistence
 - **Local Isolated Storage**: All cookies and authentication credentials are saved locally in `~/Library/Application Support/nomad-desktop`.
 - **Persistent Logins**: Log in once to each AI service; sessions persist across application restarts.
 - **Direct Official Connection**: All traffic routes directly to official AI endpoints via TLS with zero proxy or intermediary telemetry servers.
 
-### 7.8 Installation & Quick Launch
+### 7.9 Installation & Quick Launch
 - **Official GitHub Releases Multi-Platform Packages**:
   - Visit the [GitHub Releases Latest Page](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest) to download binaries for your OS:
-    - 🍏 **macOS**: Download `Nomad-AI-Studio-1.3.0-arm64.dmg` and drag into Applications (or use the portable zip).
-    - 🪟 **Windows**: Download `Nomad-AI-Studio-Setup-1.3.0.exe` and double-click to install.
-    - 🐧 **Linux**: Download `Nomad-AI-Studio-1.3.0.AppImage` (chmod +x to run) or the `.deb` package.
+    - 🍏 **macOS**: Download `Nomad-AI-Studio-1.4.0-arm64.dmg` and drag into Applications (or use the portable zip).
+    - 🪟 **Windows**: Download `Nomad-AI-Studio-Setup-1.4.0.exe` and double-click to install.
+    - 🐧 **Linux**: Download `Nomad-AI-Studio-1.4.0.AppImage` (chmod +x to run) or the `.deb` package.
 - **Local Pre-installed App**: Available in `/Applications/Nomad AI Studio.app` and on your Desktop.
 - **Command Line Launch**:
   ```bash

@@ -1,6 +1,6 @@
 {
   "name": "nomad-ai-studio",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Nomad AI Studio - All-in-One Multi-AI Super Station",
   "main": "main.js",
   "scripts": {

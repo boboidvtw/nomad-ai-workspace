@@ -8,7 +8,7 @@
 > 專為 Google Gemini、Anthropic Claude、OpenAI ChatGPT 與 xAI Grok 打造的本地優先 (Local-First)、零信任 (Zero-Trust) 瀏覽器增強套件。在各官方 AI 側邊欄注入跨平台階層樹狀圖，並由個人 Google Drive 實體子目錄安全隔離存放。
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v1.3.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-v1.4.0-green.svg)](CHANGELOG.md)
 [![Platforms](https://img.shields.io/badge/Platforms-Gemini%20%7C%20Claude%20%7C%20ChatGPT%20%7C%20Grok-orange.svg)](#-支援平台矩陣-supported-platforms)
 [![GitHub Stars](https://img.shields.io/github/stars/boboidvtw/nomad-ai-workspace?style=social)](https://github.com/boboidvtw/nomad-ai-workspace)
 [![PayPal Sponsor](https://img.shields.io/badge/Sponsor-PayPal-00457C.svg?logo=paypal&logoColor=white)](https://www.paypal.me/boboidvtw)
@@ -28,6 +28,9 @@
 - **跨平台側邊欄階層整合**：無論開啟哪個 AI 官方頁面，側邊欄均可呈現統一的多 AI 階層樹狀清單，標示鮮明的官方色彩徽章並支援一鍵無縫跳轉。
 - **通用提示詞管理器與 Super Orb**：一次維護，在各大 AI 頁面一鍵點選喚起、支援 `/` 斜線命令與動態模板變數填寫。
 - **🖥️ Nomad AI Studio 獨立桌面超級工作站**：全新推出基於 Electron 40 的獨立桌面客戶端（`packages/desktop`），支援 Quad（四分割九宮格）、Dual（雙欄並排）與 Focus（單欄專注）佈局，同屏聚合四大 AI。
+- **⚡ 預設 ChatGPT 單欄專注啟動與延遲載入**：啟動時預設載入 ChatGPT 單欄專注模式，背景延遲載入其他引擎，極大化啟動速度並節省系統記憶體。
+- **🔍 對話紀錄全文檢索與 8 大語義標籤**：工作區歷史會話正文與標籤極速模糊搜尋，8 大工程語義標籤一鍵多維度過濾。
+- **🧭 macOS 原生透明選單列圖標**：全新符合 Apple HIG 規範的透明鏤空羅盤圖標與 Retina @2x，自適應深色/淺色外觀。
 - **⚡ 跨 AI 一鍵同步提問**：底部全域統一提問列，一鍵同步派發問題至 Claude、ChatGPT、Gemini、Grok 並自動送出，實時橫向對比解答。
 - **📦 全平台原生安裝包支援**：支援 macOS（`.dmg` / `.zip`）、Windows（`.exe`）與 Linux（`.AppImage` / `.deb`），可至 [GitHub Releases 最新發布頁](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest) 直接下載安裝。
 - **100% Client-Side 零伺服器**：不存在任何中繼伺服器，所有資料僅在瀏覽器本機快取與個人 Google Drive 之間直連傳輸。
