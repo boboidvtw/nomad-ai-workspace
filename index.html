@@ -1292,6 +1292,83 @@
         </div>
       </div>
 
+      <!-- CARD: NOMAD AI STUDIO (AI SUPER STATION) -->
+      <div class="card" data-category="ai" id="card-nomad-studio">
+        <div>
+          <div class="card-top">
+            <div class="card-title-group">
+              <span class="card-icon">🌐</span>
+              <div>
+                <h2>Nomad AI Studio</h2>
+                <div class="card-subtitle">All-in-One Multi-AI Super Station & Sync Bridge</div>
+              </div>
+            </div>
+            <div class="status-badge offline" id="badge-nomad-studio">
+              <span id="nomad-studio-status-text">OFFLINE</span>
+            </div>
+          </div>
+
+          <div class="card-tags" style="margin-top:0.75rem;">
+            <span class="tag primary">Electron 40</span>
+            <span class="tag accent">4-AI Split</span>
+            <span class="tag cyan">Sync Bridge :8765</span>
+            <span class="tag">Cmd+Shift+Space</span>
+          </div>
+
+          <div class="card-desc" style="margin-top:0.75rem;">
+            四大頂級 AI (Claude、ChatGPT、Gemini、Grok) 同屏分欄超級工作站，具備全域快捷喚醒、動態佈局縮放控制與本地同步中繼 (Local Sync Bridge)。
+          </div>
+        </div>
+
+        <div>
+          <div class="card-meta">
+            <div class="meta-row">
+              <span class="meta-label">中繼端點</span>
+              <span class="meta-val">http://127.0.0.1:8765</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">全域召喚</span>
+              <span class="meta-val">Cmd + Shift + Space</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">本機路徑</span>
+              <span class="meta-val">~/Developer/nomad-ai-workspace/packages/desktop</span>
+            </div>
+          </div>
+
+          <div class="card-pipelines-drawer" id="drawer-card-nomad-studio">
+            <div class="pipeline-row">
+              <div class="pipeline-info">
+                <span class="pipeline-name">⚡ 檢查中繼狀態</span>
+                <span class="pipeline-cmd">curl -s http://127.0.0.1:8765/api/status</span>
+              </div>
+              <button class="btn-copy" onclick="copyText('curl -s http://127.0.0.1:8765/api/status')">📋 複製</button>
+            </div>
+            <div class="pipeline-row">
+              <div class="pipeline-info">
+                <span class="pipeline-name">🚀 喚出桌面工作台</span>
+                <span class="pipeline-cmd">curl -s -X POST http://127.0.0.1:8765/api/window -H "Content-Type: application/json" -d '{"action":"show"}'</span>
+              </div>
+              <button class="btn-copy" onclick="copyText('curl -s -X POST http://127.0.0.1:8765/api/window -H "Content-Type: application/json" -d '{"action":"show"}'')">📋 複製</button>
+            </div>
+            <div class="pipeline-row">
+              <div class="pipeline-info">
+                <span class="pipeline-name">💬 跨平臺同步提問</span>
+                <span class="pipeline-cmd">curl -s -X POST http://127.0.0.1:8765/api/prompt -H "Content-Type: application/json" -d '{"prompt":"你好！"}'</span>
+              </div>
+              <button class="btn-copy" onclick="copyText('curl -s -X POST http://127.0.0.1:8765/api/prompt -H "Content-Type: application/json" -d '{"prompt":"你好！"}'')">📋 複製</button>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn btn-primary" onclick="fetch('http://127.0.0.1:8765/api/window',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'show'})}).catch(()=>alert('請先啟動 Nomad AI Studio (npm run desktop)'))">⚡ 召喚工作台</button>
+            <button class="btn-pipeline-toggle" onclick="toggleCardPipelines('card-nomad-studio')">⚙️ 快捷管線</button>
+            <button class="btn-copy" onclick="copyText('http://127.0.0.1:8765')">📋 複製端點</button>
+            <a href="https://github.com/boboidvtw/nomad-ai-workspace" target="_blank" class="btn btn-secondary">📦 Upstream GitHub</a>
+          </div>
+        </div>
+      </div>
+
       <!-- CARD 2: LM STUDIO (AI) -->
       <div class="card" data-category="ai" id="card-lmstudio">
         <div>
@@ -2948,6 +3025,20 @@
         document.getElementById("badge-laya").className = "status-badge offline";
         document.getElementById("laya-latency-val").innerText = "OFFLINE";
         document.getElementById("hud-laya-latency").innerText = "OFFLINE";
+      }
+
+      // Nomad AI Studio (Local Sync Bridge)
+      const studio = await checkServiceProbe({ probeUrl: "http://127.0.0.1:8765/api/status" });
+      const bStudio = document.getElementById("badge-nomad-studio");
+      if (bStudio) {
+        if (studio.online) {
+          currentOnline++;
+          bStudio.className = "status-badge online";
+          document.getElementById("nomad-studio-status-text").innerText = "ONLINE (" + studio.latency + "ms)";
+        } else {
+          bStudio.className = "status-badge offline";
+          document.getElementById("nomad-studio-status-text").innerText = "OFFLINE";
+        }
       }
 
       // 2. LM Studio
