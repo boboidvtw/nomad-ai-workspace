@@ -120,74 +120,70 @@ export default function ChatGPTFolderManager() {
 
   const content = (
     <div className="nomad-chatgpt-folder-manager font-sans text-xs select-none mb-1">
-      {/* Header Bar */}
-      <div className="flex items-center justify-between px-2 py-1.5 border-b border-white/5">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50 flex-shrink-0" />
-          <span className={`font-semibold tracking-wide ${textPrimary}`}>Nomad 資料夾</span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          {/* Cloud Sync Button */}
-          <button
-            type="button"
-            className={`p-1 rounded ${bgHover} ${textMuted} hover:text-emerald-400 transition-colors`}
-            title="同步 ChatGPT 資料夾至 Google Drive"
-            disabled={isSyncing}
-            onClick={handleSyncToDrive}
-          >
-            {isSyncing ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
-            ) : (
-              <Cloud className="w-3.5 h-3.5" />
-            )}
-          </button>
-
-          {/* Full Multi-AI Tree Button */}
-          <button
-            type="button"
-            className={`p-1 rounded ${bgHover} ${textMuted} hover:text-emerald-400 transition-colors`}
-            title="開啟 Nomad 多平台總覽樹"
-            onClick={() => setTreeModalOpen(true)}
-          >
-            <Layers className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Add Folder Button */}
-          <button
-            type="button"
-            className={`p-1 rounded ${bgHover} text-emerald-400 hover:text-emerald-300 transition-colors`}
-            title="新增資料夾"
-            onClick={() => setAddModalOpen(true)}
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Folder Tree List */}
-      <FolderList
-        folders={folders}
-        titleCache={conversationTitleIndex}
-        isDarkTheme={isDarkTheme}
-        onToggleExpanded={toggleExpanded}
-        onRename={(folder) => setRenameTarget(folder)}
-        onDelete={(folder) => removeFolder(folder.id)}
-        onRemoveConversation={(convId, _folderId) => moveConversationToFolder(convId, null)}
-        onDropConversation={(convId, folderId) => moveConversationToFolder(convId, folderId)}
-      />
-
-      {/* Multi-AI Cross-Platform Workspace section */}
-      <div
-        className="nomad-multi-ai-section"
-        style={{
-          borderTop: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
-          marginTop: "12px",
-          paddingTop: "8px",
-        }}
+      <MultiAISidebarTree
+        currentPlatform="chatgpt"
+        theme={isDarkTheme ? "dark" : "light"}
+        onOpenSyncSettings={handleSyncToDrive}
       >
-        <MultiAISidebarTree currentPlatform="chatgpt" theme={isDarkTheme ? "dark" : "light"} onOpenSyncSettings={handleSyncToDrive} />
-      </div>
+        <div className="nomad-local-folder-section pb-2 mb-1">
+          {/* Header Bar */}
+          <div className="flex items-center justify-between px-2 py-1.5 border-b border-white/5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50 flex-shrink-0" />
+              <span className={`font-semibold tracking-wide ${textPrimary}`}>Nomad 資料夾</span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              {/* Cloud Sync Button */}
+              <button
+                type="button"
+                className={`p-1 rounded ${bgHover} ${textMuted} hover:text-emerald-400 transition-colors`}
+                title="同步 ChatGPT 資料夾至 Google Drive"
+                disabled={isSyncing}
+                onClick={handleSyncToDrive}
+              >
+                {isSyncing ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                ) : (
+                  <Cloud className="w-3.5 h-3.5" />
+                )}
+              </button>
+
+              {/* Full Multi-AI Tree Button */}
+              <button
+                type="button"
+                className={`p-1 rounded ${bgHover} ${textMuted} hover:text-emerald-400 transition-colors`}
+                title="開啟 Nomad 多平台總覽樹"
+                onClick={() => setTreeModalOpen(true)}
+              >
+                <Layers className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Add Folder Button */}
+              <button
+                type="button"
+                className={`p-1 rounded ${bgHover} text-emerald-400 hover:text-emerald-300 transition-colors`}
+                title="新增資料夾"
+                onClick={() => setAddModalOpen(true)}
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Folder Tree List */}
+          <FolderList
+            folders={folders}
+            titleCache={conversationTitleIndex}
+            isDarkTheme={isDarkTheme}
+            onToggleExpanded={toggleExpanded}
+            onRename={(folder) => setRenameTarget(folder)}
+            onDelete={(folder) => removeFolder(folder.id)}
+            onRemoveConversation={(convId, _folderId) => moveConversationToFolder(convId, null)}
+            onDropConversation={(convId, folderId) => moveConversationToFolder(convId, folderId)}
+          />
+        </div>
+      </MultiAISidebarTree>
 
       {/* Modals & Dialogs */}
       <FolderManagerModals

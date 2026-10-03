@@ -18,6 +18,7 @@ describe("MultiAISidebarTree component", () => {
 
   beforeEach(() => {
     (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+    try { localStorage.clear(); } catch {}
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -313,5 +314,86 @@ describe("MultiAISidebarTree component", () => {
       type: "gv.openConversation",
       url: "https://claude.ai/chat/cc1",
     });
+  });
+
+  it("supports collapsible Nomad Workspace header (expands and collapses when header is clicked)", async () => {
+    await act(async () => {
+      root.render(<MultiAISidebarTree currentPlatform="claude" theme="dark" />);
+    });
+
+    const headerEl = container.querySelector('[role="button"][aria-expanded]') as HTMLElement;
+    expect(headerEl).not.toBeNull();
+    expect(headerEl.getAttribute("aria-expanded")).toBe("true");
+    expect(container.textContent).toContain("Google Gemini");
+    expect(container.textContent).toContain("Anthropic Claude");
+
+    // Click header to collapse
+    await act(async () => {
+      headerEl.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(headerEl.getAttribute("aria-expanded")).toBe("false");
+    expect(container.textContent).not.toContain("Google Gemini");
+    expect(container.textContent).not.toContain("Anthropic Claude");
+
+    // Click header again to re-expand
+    await act(async () => {
+      headerEl.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(headerEl.getAttribute("aria-expanded")).toBe("true");
+    expect(container.textContent).toContain("Google Gemini");
+  });
+
+  it("renders embedded children inside Nomad Workspace and hides them when collapsed", async () => {
+    await act(async () => {
+      root.render(
+        <MultiAISidebarTree currentPlatform="claude" theme="dark">
+          <div data-testid="test-embedded-folder-manager">
+            <span>資料夾測試區塊</span>
+          </div>
+        </MultiAISidebarTree>
+      );
+    });
+
+    // When expanded, embedded children are rendered
+    const embedded = container.querySelector('[data-testid="test-embedded-folder-manager"]');
+    expect(embedded).not.toBeNull();
+    expect(container.textContent).toContain("資料夾測試區塊");
+
+    // Click header to collapse
+    const headerEl = container.querySelector('[role="button"][aria-expanded]') as HTMLElement;
+    await act(async () => {
+      headerEl.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // When collapsed, embedded children are hidden
+    expect(container.querySelector('[data-testid="test-embedded-folder-manager"]')).toBeNull();
+    expect(container.textContent).not.toContain("資料夾測試區塊");
+  });
+
+  it("does not toggle collapse when cloud sync button in header is clicked", async () => {
+    const onOpenSyncSpy = vi.fn();
+    await act(async () => {
+      root.render(
+        <MultiAISidebarTree
+          currentPlatform="claude"
+          theme="dark"
+          onOpenSyncSettings={onOpenSyncSpy}
+        />
+      );
+    });
+
+    const headerEl = container.querySelector('[role="button"][aria-expanded]') as HTMLElement;
+    const syncBtn = container.querySelector('button[title="Google Drive 雲端同步設定"]') as HTMLButtonElement;
+    expect(syncBtn).not.toBeNull();
+
+    await act(async () => {
+      syncBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(onOpenSyncSpy).toHaveBeenCalled();
+    // Workspace should remain expanded
+    expect(headerEl.getAttribute("aria-expanded")).toBe("true");
   });
 });

@@ -412,133 +412,131 @@ export default function FolderManager() {
 
   return createPortal(
     <div className={`text-sm ${theme.rootText}`}>
-      <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-black/5 dark:border-white/5 pb-2">
-        <div className={`text-xs font-medium ${theme.headerText}`}>{t('folders.title')}</div>
-        <div className="flex items-center gap-1.5">
-          {/* 1. Google Drive Auth (User Profile) */}
-          <button
-            type="button"
-            className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg} ${syncState?.isAuthenticated ? 'text-emerald-500 hover:text-emerald-400' : ''}`}
-            onClick={handleAuthClick}
-            title={syncState?.isAuthenticated ? '已連結 Google Drive (點擊登出)' : '連結 Google Drive'}
-          >
-            <User className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-
-          {/* 2. Local Backup (FolderOpen) */}
-          <button
-            type="button"
-            className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg}`}
-            onClick={handleLocalBackupClick}
-            title="本地備份與還原 (匯出/匯入)"
-          >
-            <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-
-          {/* 3. Cloud Sync (Cloud / RefreshCw) */}
-          <button
-            type="button"
-            className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg} ${syncState?.isSyncing ? 'animate-spin text-amber-500' : ''}`}
-            onClick={handleSyncClick}
-            title={syncState?.isSyncing ? '雲端同步中...' : '與 Google Drive 雙向同步'}
-            disabled={syncState?.isSyncing}
-          >
-            {syncState?.isSyncing ? (
-              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-            ) : (
-              <Cloud className="h-3.5 w-3.5" aria-hidden="true" />
-            )}
-          </button>
-
-          {/* 4. Options / Settings (Settings) */}
-          <button
-            type="button"
-            className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg}`}
-            onClick={handleSettingsClick}
-            title="開啟選項設定頁面"
-          >
-            <Settings className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-
-          {/* 5. New Folder (Plus) */}
-          <button
-            type="button"
-            className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg}`}
-            onClick={() => {
-              setIsCreatingFolder((v) => !v);
-              setNewFolderName('');
-            }}
-            aria-label={t('folders.newFolderAria')}
-            title={t('folders.newFolderAria')}
-          >
-            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-
-      {isCreatingFolder ? (
-        <div className="mb-2 flex items-center gap-2 px-2">
-          <input
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            className={`w-full rounded-md border px-2 py-1 text-sm focus:outline-none focus:ring-1 ${theme.input}`}
-            placeholder={t('folders.folderName')}
-            aria-label={t('folders.folderName')}
-            onKeyDown={(e) => {
-              if (e.key !== 'Enter') return;
-              void handleCreateFolder();
-            }}
-          />
-          <button
-            type="button"
-            className={`rounded-md px-2 py-1 text-xs transition-colors ${theme.rootText} ${theme.hoverBg}`}
-            onClick={() => void handleCreateFolder()}
-            aria-label={t('folders.createFolderAria')}
-          >
-            {t('common.save')}
-          </button>
-          <button
-            type="button"
-            className={`rounded-md px-2 py-1 text-xs transition-colors ${theme.mutedText} ${theme.hoverBg}`}
-            onClick={() => {
-              setIsCreatingFolder(false);
-              setNewFolderName('');
-            }}
-            aria-label={t('folders.cancelCreateAria')}
-          >
-            {t('common.cancel')}
-          </button>
-        </div>
-      ) : null}
-
-      <div className="mt-1">
-        <FolderList
-          folders={folders}
-          theme={theme}
-          conversationIndex={conversationIndex}
-          conversationTitleIndex={conversationTitleIndex}
-          editingFolderId={editingFolderId}
-          editingName={editingName}
-          onEditingNameChange={setEditingName}
-          onRenameStart={handleRenameStart}
-          onRenameCommit={handleRenameCommit}
-          onDelete={handleDeleteFolder}
-          onToggleExpanded={(folderId) => void toggleExpanded(folderId)}
-          onDropConversationToFolder={handleFolderDrop}
-          onConversationContextMenu={handleConversationContextMenu}
-        />
-      </div>
-
-      <div
-        className="nomad-multi-ai-section"
-        style={{
-          borderTop: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
-          marginTop: "12px",
-          paddingTop: "8px",
-        }}
+      <MultiAISidebarTree
+        currentPlatform="claude"
+        theme={isDarkTheme ? "dark" : "light"}
+        onOpenSyncSettings={handleSyncClick}
       >
-        <MultiAISidebarTree currentPlatform="claude" theme={isDarkTheme ? "dark" : "light"} onOpenSyncSettings={handleSyncClick} />
-      </div>
+        {/* 原最上方的「資料夾」區塊，移入 Nomad Workspace 內 */}
+        <div className="nomad-local-folder-section pb-2 mb-1">
+          <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-black/5 dark:border-white/5 pb-2">
+            <div className={`text-xs font-medium ${theme.headerText}`}>{t('folders.title')}</div>
+            <div className="flex items-center gap-1.5">
+              {/* 1. Google Drive Auth (User Profile) */}
+              <button
+                type="button"
+                className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg} ${syncState?.isAuthenticated ? 'text-emerald-500 hover:text-emerald-400' : ''}`}
+                onClick={handleAuthClick}
+                title={syncState?.isAuthenticated ? '已連結 Google Drive (點擊登出)' : '連結 Google Drive'}
+              >
+                <User className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+
+              {/* 2. Local Backup (FolderOpen) */}
+              <button
+                type="button"
+                className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg}`}
+                onClick={handleLocalBackupClick}
+                title="本地備份與還原 (匯出/匯入)"
+              >
+                <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+
+              {/* 3. Cloud Sync (Cloud / RefreshCw) */}
+              <button
+                type="button"
+                className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg} ${syncState?.isSyncing ? 'animate-spin text-amber-500' : ''}`}
+                onClick={handleSyncClick}
+                title={syncState?.isSyncing ? '雲端同步中...' : '與 Google Drive 雙向同步'}
+                disabled={syncState?.isSyncing}
+              >
+                {syncState?.isSyncing ? (
+                  <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : (
+                  <Cloud className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+              </button>
+
+              {/* 4. Options / Settings (Settings) */}
+              <button
+                type="button"
+                className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg}`}
+                onClick={handleSettingsClick}
+                title="開啟選項設定頁面"
+              >
+                <Settings className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+
+              {/* 5. New Folder (Plus) */}
+              <button
+                type="button"
+                className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg}`}
+                onClick={() => {
+                  setIsCreatingFolder((v) => !v);
+                  setNewFolderName('');
+                }}
+                aria-label={t('folders.newFolderAria')}
+                title={t('folders.newFolderAria')}
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+
+          {isCreatingFolder ? (
+            <div className="mb-2 flex items-center gap-2 px-2">
+              <input
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                className={`w-full rounded-md border px-2 py-1 text-sm focus:outline-none focus:ring-1 ${theme.input}`}
+                placeholder={t('folders.folderName')}
+                aria-label={t('folders.folderName')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') return;
+                  void handleCreateFolder();
+                }}
+              />
+              <button
+                type="button"
+                className={`rounded-md px-2 py-1 text-xs transition-colors ${theme.rootText} ${theme.hoverBg}`}
+                onClick={() => void handleCreateFolder()}
+                aria-label={t('folders.createFolderAria')}
+              >
+                {t('common.save')}
+              </button>
+              <button
+                type="button"
+                className={`rounded-md px-2 py-1 text-xs transition-colors ${theme.mutedText} ${theme.hoverBg}`}
+                onClick={() => {
+                  setIsCreatingFolder(false);
+                  setNewFolderName('');
+                }}
+                aria-label={t('folders.cancelCreateAria')}
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          ) : null}
+
+          <div className="mt-1">
+            <FolderList
+              folders={folders}
+              theme={theme}
+              conversationIndex={conversationIndex}
+              conversationTitleIndex={conversationTitleIndex}
+              editingFolderId={editingFolderId}
+              editingName={editingName}
+              onEditingNameChange={setEditingName}
+              onRenameStart={handleRenameStart}
+              onRenameCommit={handleRenameCommit}
+              onDelete={handleDeleteFolder}
+              onToggleExpanded={(folderId) => void toggleExpanded(folderId)}
+              onDropConversationToFolder={handleFolderDrop}
+              onConversationContextMenu={handleConversationContextMenu}
+            />
+          </div>
+        </div>
+      </MultiAISidebarTree>
 
       <FolderManagerModals
         folders={folders}

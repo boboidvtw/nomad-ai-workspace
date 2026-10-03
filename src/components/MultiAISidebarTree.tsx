@@ -24,6 +24,10 @@ interface Props {
   theme?: 'dark' | 'light';
   className?: string;
   onOpenSyncSettings?: () => void;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+  showHeader?: boolean;
+  children?: React.ReactNode;
 }
 
 export const MultiAISidebarTree: React.FC<Props> = ({
@@ -31,8 +35,41 @@ export const MultiAISidebarTree: React.FC<Props> = ({
   theme = 'dark',
   className = '',
   onOpenSyncSettings,
+  collapsible = true,
+  defaultCollapsed,
+  showHeader = true,
+  children,
 }) => {
   const { geminiFolders, claudeFolders, chatgptFolders, grokFolders } = useCrossPlatformFolders();
+
+  // Track collapsed/expanded state of entire Nomad Workspace section
+  const [isWorkspaceCollapsed, setIsWorkspaceCollapsed] = useState<boolean>(() => {
+    if (typeof defaultCollapsed === 'boolean') {
+      return defaultCollapsed;
+    }
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem('nomad_workspace_collapsed');
+        if (stored !== null) {
+          return stored === 'true';
+        }
+      }
+    } catch {}
+    return false;
+  });
+
+  const toggleWorkspaceCollapse = () => {
+    if (!collapsible) return;
+    setIsWorkspaceCollapsed((prev) => {
+      const next = !prev;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('nomad_workspace_collapsed', String(next));
+        }
+      } catch {}
+      return next;
+    });
+  };
   
   // Track collapsed/expanded state of platform root nodes
   const [expandedPlatforms, setExpandedPlatforms] = useState<Record<PlatformId, boolean>>({
@@ -270,16 +307,42 @@ export const MultiAISidebarTree: React.FC<Props> = ({
   return (
     <div className={`nomad-sidebar-tree select-none ${className}`}>
       {/* Header bar */}
-      <div className={`flex items-center justify-between px-3 py-2 border-b ${borderSubtle}`}>
+      {showHeader && (
+      <div
+        className={`flex items-center justify-between px-3 py-2 border-b ${borderSubtle} ${
+          collapsible ? `cursor-pointer ${bgHover} transition-colors` : ''
+        }`}
+        onClick={collapsible ? toggleWorkspaceCollapse : undefined}
+        role={collapsible ? 'button' : undefined}
+        tabIndex={collapsible ? 0 : undefined}
+        aria-expanded={collapsible ? !isWorkspaceCollapsed : undefined}
+        onKeyDown={(e) => {
+          if (collapsible && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            toggleWorkspaceCollapse();
+          }
+        }}
+      >
         <div className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+          {collapsible && (
+            isWorkspaceCollapsed ? (
+              <ChevronRight className="w-3.5 h-3.5 opacity-70 flex-shrink-0" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 opacity-70 flex-shrink-0" />
+            )
+          )}
+          <Sparkles className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
           <span className={`text-xs font-semibold tracking-wide ${textPrimary}`}>
             Nomad Workspace
           </span>
         </div>
         {onOpenSyncSettings && (
           <button
-            onClick={onOpenSyncSettings}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenSyncSettings();
+            }}
             className={`p-1 rounded ${bgHover} text-xs opacity-70 hover:opacity-100 transition-opacity`}
             title="Google Drive 雲端同步設定"
           >
@@ -287,9 +350,18 @@ export const MultiAISidebarTree: React.FC<Props> = ({
           </button>
         )}
       </div>
+      )}
 
-      {/* Platform Hierarchical Root Nodes */}
-      <div className="py-2 space-y-1 overflow-y-auto max-h-[calc(100vh-280px)]">
+      {(!showHeader || !isWorkspaceCollapsed) && (
+        <div className="nomad-workspace-body">
+          {children && (
+            <div className={`nomad-workspace-embedded-folders px-1 pt-1 pb-1 border-b ${borderSubtle}`}>
+              {children}
+            </div>
+          )}
+
+          {/* Platform Hierarchical Root Nodes */}
+          <div className="py-2 space-y-1 overflow-y-auto max-h-[calc(100vh-280px)]">
         {/* 1. Google Gemini Node */}
         {(() => {
           const cfg = SUPPORTED_PLATFORMS.gemini;
@@ -497,7 +569,9 @@ export const MultiAISidebarTree: React.FC<Props> = ({
             </div>
           );
         })()}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

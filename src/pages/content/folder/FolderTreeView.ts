@@ -130,6 +130,14 @@ function debug(level: 'log' | 'warn', ...args: unknown[]): void {
 /** Renders the folder tree and activity view, and owns their local preferences and editors. */
 export class FolderTreeView {
   private multiAiRoot: Root | null = null;
+  private isWorkspaceCollapsed: boolean = (() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        return localStorage.getItem('nomad_workspace_collapsed') === 'true';
+      }
+    } catch {}
+    return false;
+  })();
   private foldersCollapsed: boolean = false;
   private folderProjectEnabled: boolean = false;
   private folderTreeIndent: number = FOLDER_TREE_INDENT_DEFAULT;
@@ -236,22 +244,36 @@ export class FolderTreeView {
     const panel = document.createElement('div');
     panel.className = 'gv-folder-container';
 
+    // 1. Create Nomad Workspace master header
+    const workspaceHeader = this.createWorkspaceHeader();
+    panel.appendChild(workspaceHeader);
+
+    // 2. Create Nomad Workspace collapsible body
+    const workspaceBody = document.createElement('div');
+    workspaceBody.className = 'nomad-workspace-body';
+
+    // Local folders container holding Gemini local folders & controls
+    const localFoldersContainer = document.createElement('div');
+    localFoldersContainer.className = 'nomad-gemini-local-folders pb-2 mb-1';
+
     // Create multi-select mode indicator
     const indicator = this.options.selection.createMultiSelectIndicator();
-    panel.appendChild(indicator);
+    localFoldersContainer.appendChild(indicator);
 
     // Create header
     const header = this.createHeader();
-    panel.appendChild(header);
+    localFoldersContainer.appendChild(header);
 
     if (this.folderSearchEnabled) {
       const search = this.createFolderSearch();
-      panel.appendChild(search);
+      localFoldersContainer.appendChild(search);
     }
 
     // Create folders list
     const foldersList = this.createFoldersList();
-    panel.appendChild(foldersList);
+    localFoldersContainer.appendChild(foldersList);
+
+    workspaceBody.appendChild(localFoldersContainer);
 
     // Multi-AI Cross-Platform Workspace section
     const multiAiContainer = document.createElement('div');
@@ -259,11 +281,107 @@ export class FolderTreeView {
     multiAiContainer.style.borderTop = '1px solid rgba(255, 255, 255, 0.08)';
     multiAiContainer.style.marginTop = '12px';
     multiAiContainer.style.paddingTop = '8px';
-    panel.appendChild(multiAiContainer);
+    workspaceBody.appendChild(multiAiContainer);
     this.mountMultiAITree(multiAiContainer);
+
+    panel.appendChild(workspaceBody);
+
+    if (this.isWorkspaceCollapsed) {
+      workspaceBody.style.display = 'none';
+    }
 
     this.updateAvailability(panel);
     return panel;
+  }
+
+  private createWorkspaceHeader(): HTMLElement {
+    const header = document.createElement('div');
+    header.className = 'nomad-workspace-header flex items-center justify-between px-3 py-2 border-b border-white/10 select-none cursor-pointer';
+    header.setAttribute('role', 'button');
+    header.setAttribute('tabindex', '0');
+    header.setAttribute('aria-expanded', String(!this.isWorkspaceCollapsed));
+
+    const left = document.createElement('div');
+    left.className = 'flex items-center gap-1.5';
+
+    const chevron = document.createElement('span');
+    chevron.className = 'nomad-workspace-chevron flex-shrink-0 opacity-70';
+    chevron.replaceChildren(
+      this.isWorkspaceCollapsed ? createChevronRightIcon(14) : createChevronDownIcon(14)
+    );
+
+    const sparkles = document.createElement('span');
+    sparkles.className = 'text-blue-400 flex-shrink-0';
+    sparkles.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`;
+
+    const title = document.createElement('span');
+    title.className = 'text-xs font-semibold tracking-wide text-zinc-200';
+    title.textContent = 'Nomad Workspace';
+
+    left.appendChild(chevron);
+    left.appendChild(sparkles);
+    left.appendChild(title);
+    header.appendChild(left);
+
+    const right = document.createElement('div');
+    right.className = 'flex items-center gap-1';
+
+    const syncBtn = document.createElement('button');
+    syncBtn.type = 'button';
+    syncBtn.className = 'p-1 rounded text-xs opacity-70 hover:opacity-100 hover:bg-white/5 transition-opacity';
+    syncBtn.title = 'Google Drive 雲端同步設定';
+    syncBtn.replaceChildren(createCloudIcon(14));
+    syncBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      try {
+        if (typeof chrome !== 'undefined' && chrome.runtime?.openOptionsPage) {
+          chrome.runtime.openOptionsPage();
+        }
+      } catch {}
+    });
+    right.appendChild(syncBtn);
+    header.appendChild(right);
+
+    const toggle = () => {
+      this.isWorkspaceCollapsed = !this.isWorkspaceCollapsed;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('nomad_workspace_collapsed', String(this.isWorkspaceCollapsed));
+        }
+      } catch {}
+      this.applyWorkspaceCollapsedState();
+    };
+
+    header.addEventListener('click', toggle);
+    header.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle();
+      }
+    });
+
+    return header;
+  }
+
+  private applyWorkspaceCollapsedState(): void {
+    const container = this.options.runtime.panel;
+    if (!container) return;
+
+    const header = container.querySelector<HTMLElement>('.nomad-workspace-header');
+    const body = container.querySelector<HTMLElement>('.nomad-workspace-body');
+    const chevron = container.querySelector<HTMLElement>('.nomad-workspace-chevron');
+
+    if (header) {
+      header.setAttribute('aria-expanded', String(!this.isWorkspaceCollapsed));
+    }
+    if (chevron) {
+      chevron.replaceChildren(
+        this.isWorkspaceCollapsed ? createChevronRightIcon(14) : createChevronDownIcon(14)
+      );
+    }
+    if (body) {
+      body.style.display = this.isWorkspaceCollapsed ? 'none' : '';
+    }
   }
 
   private createHeader(): HTMLElement {
@@ -1396,7 +1514,11 @@ export class FolderTreeView {
 
     if (next) {
       const list = this.options.runtime.panel.querySelector('.gv-folder-list');
-      this.options.runtime.panel.insertBefore(this.createFolderSearch(), list);
+      if (list?.parentElement) {
+        list.parentElement.insertBefore(this.createFolderSearch(), list);
+      } else {
+        this.options.runtime.panel.appendChild(this.createFolderSearch());
+      }
     }
 
     this.options.onRefresh();
@@ -1678,6 +1800,7 @@ export class FolderTreeView {
         React.createElement(MultiAISidebarTree, {
           currentPlatform: 'gemini',
           theme: isDarkMode() ? 'dark' : 'light',
+          showHeader: false,
         })
       );
     } catch (e) {
