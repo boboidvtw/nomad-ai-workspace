@@ -1,7 +1,9 @@
 const { app, BrowserWindow, WebContentsView, session, ipcMain, screen } = require('electron');
 const path = require('path');
 
-const EXTENSION_PATH = path.resolve(__dirname, '../../dist_chrome');
+const EXTENSION_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'dist_chrome')
+  : path.resolve(__dirname, '../../dist_chrome');
 
 const PLATFORMS = {
   claude: { name: 'Claude', url: 'https://claude.ai', color: '#D97706' },
@@ -79,15 +81,20 @@ async function createMainWindow() {
     console.error('[Nomad Desktop] Failed to load extension:', err);
   }
 
+  const isMac = process.platform === 'darwin';
+  const iconPath = isMac
+    ? path.join(__dirname, 'nomad.icns')
+    : (process.platform === 'win32' ? path.join(__dirname, 'nomad.ico') : path.join(__dirname, 'nomad.png'));
+
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 920,
     minWidth: 960,
     minHeight: 640,
     title: 'Nomad AI Studio',
-    titleBarStyle: 'hiddenInset',
+    titleBarStyle: isMac ? 'hiddenInset' : 'default',
     backgroundColor: '#0f172a',
-    icon: path.join(__dirname, 'nomad.icns'),
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
