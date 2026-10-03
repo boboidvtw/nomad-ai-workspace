@@ -32,6 +32,8 @@
       "nomad.icns",
       "nomad.ico",
       "nomad.png",
+      "trayTemplate.png",
+      "trayTemplate@2x.png",
       "src/**/*"
     ],
     "extraResources": [

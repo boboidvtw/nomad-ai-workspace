@@ -33,13 +33,12 @@ class TrayAndShortcutManager {
 
   createTray() {
     const isMac = process.platform === 'darwin';
-    const iconFile = isMac ? 'nomad.png' : (process.platform === 'win32' ? 'nomad.ico' : 'nomad.png');
+    const iconFile = isMac ? 'trayTemplate.png' : (process.platform === 'win32' ? 'nomad.ico' : 'nomad.png');
     const iconPath = path.join(__dirname, '..', iconFile);
 
     try {
       let icon = nativeImage.createFromPath(iconPath);
       if (isMac) {
-        icon = icon.resize({ width: 18, height: 18 });
         icon.setTemplateImage(true);
       }
 
