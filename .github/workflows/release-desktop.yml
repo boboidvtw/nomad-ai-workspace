@@ -35,7 +35,7 @@ jobs:
           node-version: 22
 
       - name: Install Root Dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build WebExtension Extension (dist_chrome)
         run: npm run build
