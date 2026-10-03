@@ -189,12 +189,33 @@ Open the Nomad control center via the extension icon in your browser toolbar:
 Beyond browser extensions, Nomad AI Workspace offers a native standalone desktop application built on Electron 40 — **Nomad AI Studio**, engineered for professionals requiring high-frequency multi-AI concurrent prompt dispatching and side-by-side comparison.
 
 ### 7.1 Dynamic Multi-View Layouts
-Toggle between three layouts instantly using the header navigation buttons:
-- **Quad (4-Split Grid)**: Displays Claude, ChatGPT, Gemini, and Grok on a single screen simultaneously for immediate cross-model output verification.
-- **Dual (2-Column Side-by-Side)**: Side-by-side comparison between two selected models for in-depth reasoning cross-checks.
+Toggle between layouts or customize visible engines with header controls and chips:
+- **Quad (4-Split Grid)**: Displays Claude, ChatGPT, Gemini, and Grok on a single screen simultaneously.
+- **Triple (3-Column Split)**: Three equal columns for tripartite cross-checking.
+- **Dual (2-Column Side-by-Side)**: Side-by-side comparison, supporting **4:6 / 5:5 / 6:4** split ratios.
 - **Focus (Single Column)**: Full-width view dedicated to one AI engine for distraction-free deep work.
+- **Dynamic Platform Chips**: Freely toggle Claude, ChatGPT, Gemini, and Grok chips on/off to customize active panels.
 
-### 7.2 1-Click Concurrent Prompt Dispatcher
+### 7.2 Independent Per-Platform Zoom Controls
+- Click **"🔍 Zoom"** in the top bar to open the zoom control popover.
+- Individually set zoom factor (50% ~ 200%) for Claude, ChatGPT, Gemini, and Grok.
+- Provides `+`, `-` fine adjustments, **"Reset 100%"**, and **"Global Quick Zoom (85% / 100% / 115%)"**.
+- Zoom preferences are automatically persisted locally.
+
+### 7.3 Global Shortcut & System Tray Resident
+- **⚡ Global Summon Shortcut**: Press `Cmd + Shift + Space` (Windows: `Ctrl + Shift + Space`) to summon or hide the workstation from any app or workspace.
+- **🍎 System Tray Menu**: Resident icon in macOS Menu Bar and Windows System Tray with quick layout switching, zoom presets, launch at login, and quit options.
+- **Background Resident**: Closing the window minimizes to tray, keeping your sessions alive.
+
+### 7.4 Local Sync Bridge API
+Built-in zero-dependency local HTTP RPC & SSE streaming bridge listening on `http://127.0.0.1:8765` (loopback only):
+- **Health & Status**: `GET /api/status` (layout, active platforms, zoom factors, window state).
+- **Remote Prompt Dispatch**: `POST /api/prompt` (`{"prompt": "...", "targets": ["claude", "chatgpt"]}`).
+- **Remote Layout & Zoom**: `POST /api/layout`, `POST /api/zoom`.
+- **Window Summon**: `POST /api/window` (`{"action": "show"}`).
+- **Nomad Dashboard Integration**: Seamlessly monitored and triggered via Nomad Dashboard.
+
+### 7.5 1-Click Concurrent Prompt Dispatcher
 - **Unified Global Input Bar**: Persistent composer at the bottom of the workstation.
 - **Target Selection**: Check or uncheck target AI engines (Claude, ChatGPT, Gemini, Grok — all selected by default).
 - **Simultaneous Submission**: Press `Enter` (or click **"Dispatch All 🚀"**) to populate the prompt into all selected AI inputs and automatically trigger submission (use `Shift + Enter` for newlines).

@@ -1,5 +1,10 @@
-const { app, BrowserWindow, WebContentsView, session, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, WebContentsView, session, ipcMain, screen, Menu } = require('electron');
 const path = require('path');
+const { store } = require('./src/store');
+const { calculateLayoutBounds, ALL_PLATFORMS } = require('./src/layout-engine');
+const { PLATFORM_INJECTORS } = require('./src/injectors');
+const { LocalSyncBridge } = require('./src/bridge');
+const { TrayAndShortcutManager } = require('./src/tray');
 
 const EXTENSION_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'dist_chrome')
@@ -14,71 +19,72 @@ const PLATFORMS = {
 
 let mainWindow = null;
 const views = {};
-let currentLayout = 'dual'; // 'focus', 'dual', 'quad'
-let activeFocusPlatform = 'claude';
-let activeDualPlatforms = ['claude', 'chatgpt'];
+let trayManager = null;
+let bridge = null;
+app.isQuitting = false;
 
 const TOP_BAR_HEIGHT = 52;
 const BOTTOM_BAR_HEIGHT = 68;
 
 function updateViewBounds() {
-  if (!mainWindow) return;
+  if (!mainWindow || mainWindow.isDestroyed()) return;
   const [winWidth, winHeight] = mainWindow.getContentSize();
-  const contentHeight = Math.max(100, winHeight - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT);
+  const layout = store.get('layout') || 'dual';
+  const activePlatforms = store.get('activePlatforms') || ['claude', 'chatgpt'];
+  const splitRatio = store.get('splitRatio') || 0.5;
 
-  // Hide all views first
-  for (const key of Object.keys(views)) {
-    views[key].view.setVisible(false);
+  const boundsMap = calculateLayoutBounds({
+    winWidth,
+    winHeight,
+    topBarHeight: TOP_BAR_HEIGHT,
+    bottomBarHeight: BOTTOM_BAR_HEIGHT,
+    layout,
+    activePlatforms,
+    splitRatio,
+  });
+
+  for (const [key, item] of Object.entries(views)) {
+    const b = boundsMap[key];
+    if (b && b.visible) {
+      item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
+      item.view.setVisible(true);
+    } else {
+      item.view.setVisible(false);
+    }
   }
+}
 
-  if (currentLayout === 'focus') {
-    const v = views[activeFocusPlatform]?.view;
-    if (v) {
-      v.setBounds({ x: 0, y: TOP_BAR_HEIGHT, width: winWidth, height: contentHeight });
-      v.setVisible(true);
+function applyZoom(platform, factor) {
+  const item = views[platform];
+  if (item && item.view && item.view.webContents) {
+    try {
+      item.view.webContents.setZoomFactor(factor);
+    } catch (e) {
+      console.warn(`[Nomad Desktop] Failed to set zoom for ${platform}:`, e.message);
     }
-  } else if (currentLayout === 'dual') {
-    const halfWidth = Math.floor(winWidth / 2);
-    const [p1, p2] = activeDualPlatforms;
-    const v1 = views[p1]?.view;
-    const v2 = views[p2]?.view;
+  }
+}
 
-    if (v1) {
-      v1.setBounds({ x: 0, y: TOP_BAR_HEIGHT, width: halfWidth, height: contentHeight });
-      v1.setVisible(true);
-    }
-    if (v2) {
-      v2.setBounds({ x: halfWidth, y: TOP_BAR_HEIGHT, width: winWidth - halfWidth, height: contentHeight });
-      v2.setVisible(true);
-    }
-  } else if (currentLayout === 'quad') {
-    const halfWidth = Math.floor(winWidth / 2);
-    const halfHeight = Math.floor(contentHeight / 2);
-    const keys = ['claude', 'chatgpt', 'gemini', 'grok'];
-
-    keys.forEach((key, index) => {
-      const v = views[key]?.view;
-      if (!v) return;
-      const col = index % 2;
-      const row = Math.floor(index / 2);
-      const x = col === 0 ? 0 : halfWidth;
-      const y = TOP_BAR_HEIGHT + (row === 0 ? 0 : halfHeight);
-      const w = col === 0 ? halfWidth : winWidth - halfWidth;
-      const h = row === 0 ? halfHeight : contentHeight - halfHeight;
-
-      v.setBounds({ x, y, width: w, height: h });
-      v.setVisible(true);
-    });
+function applyAllZooms() {
+  for (const p of ALL_PLATFORMS) {
+    const factor = store.getZoom(p);
+    applyZoom(p, factor);
   }
 }
 
 async function createMainWindow() {
-  // Load unpacked extension
+  // 1. Initialize persistent store in user data
+  store.init(path.join(app.getPath('userData'), 'nomad-studio-settings.json'));
+
+  // 2. Load unpacked extension if available
   try {
-    const ext = await session.defaultSession.loadExtension(EXTENSION_PATH, { allowFileAccess: true });
+    const extLoader = session.defaultSession.extensions?.loadExtension
+      ? (p, opts) => session.defaultSession.extensions.loadExtension(p, opts)
+      : (p, opts) => session.defaultSession.loadExtension(p, opts);
+    const ext = await extLoader(EXTENSION_PATH, { allowFileAccess: true });
     console.log(`[Nomad Desktop] Loaded Extension: ${ext.name} (v${ext.version})`);
   } catch (err) {
-    console.error('[Nomad Desktop] Failed to load extension:', err);
+    console.warn('[Nomad Desktop] Extension not loaded (may be packaged or not built):', err.message);
   }
 
   const isMac = process.platform === 'darwin';
@@ -104,7 +110,7 @@ async function createMainWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-  // Initialize WebContentsViews for all 4 platforms
+  // 3. Initialize WebContentsViews for all 4 platforms
   for (const [key, p] of Object.entries(PLATFORMS)) {
     const view = new WebContentsView({
       webPreferences: {
@@ -114,407 +120,122 @@ async function createMainWindow() {
     });
 
     view.webContents.loadURL(p.url);
+    view.webContents.on('did-finish-load', () => {
+      const zoom = store.getZoom(key);
+      if (zoom && zoom !== 1.0) {
+        view.webContents.setZoomFactor(zoom);
+      }
+    });
+
     mainWindow.contentView.addChildView(view);
     views[key] = { view, ...p };
   }
 
   mainWindow.on('resize', updateViewBounds);
+
   mainWindow.once('ready-to-show', () => {
     updateViewBounds();
+    applyAllZooms();
     mainWindow.show();
   });
+
+  // 4. Initialize Local Sync Bridge
+  bridge = new LocalSyncBridge({
+    port: store.get('bridgePort') || 8765,
+    host: '127.0.0.1',
+    getStatus: () => ({
+      layout: store.get('layout'),
+      activePlatforms: store.get('activePlatforms'),
+      splitRatio: store.get('splitRatio'),
+      zoomFactors: store.getAll().zoomFactors,
+      windowVisible: mainWindow ? mainWindow.isVisible() : false,
+    }),
+    onDispatchPrompt: async ({ prompt, targets }) => {
+      const results = await dispatchPromptToTargets(prompt, targets);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:prompt-dispatched', { prompt, targets, results });
+      }
+      return results;
+    },
+    onSetLayout: (data) => {
+      if (data.layout) store.set('layout', data.layout);
+      if (data.activePlatforms) store.set('activePlatforms', data.activePlatforms);
+      if (data.splitRatio) store.set('splitRatio', data.splitRatio);
+      updateViewBounds();
+      trayManager?.updateContextMenu();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:remote-update', store.getAll());
+      }
+      return store.getAll();
+    },
+    onSetZoom: (data) => {
+      if (data.platform && typeof data.factor === 'number') {
+        store.setZoom(data.platform, data.factor);
+        applyZoom(data.platform, data.factor);
+      } else if (data.zoomFactors) {
+        store.update({ zoomFactors: data.zoomFactors });
+        applyAllZooms();
+      }
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:remote-update', store.getAll());
+      }
+      return store.getAll().zoomFactors;
+    },
+    onToggleWindow: (action) => {
+      if (!mainWindow) return { visible: false };
+      if (action === 'show') {
+        mainWindow.show();
+        mainWindow.focus();
+      } else if (action === 'hide') {
+        mainWindow.hide();
+      } else {
+        trayManager?.toggleWindow();
+      }
+      return { visible: mainWindow.isVisible() };
+    },
+  });
+
+  try {
+    await bridge.start();
+  } catch (err) {
+    console.error('[Nomad Desktop] Failed to start local sync bridge:', err);
+  }
+
+  // 5. Initialize Tray and Global Shortcuts
+  trayManager = new TrayAndShortcutManager({
+    mainWindow,
+    store,
+    bridge,
+    onLayoutChange: (layout) => {
+      store.set('layout', layout);
+      if (layout === 'focus') store.set('activePlatforms', ['claude']);
+      else if (layout === 'dual') store.set('activePlatforms', ['claude', 'chatgpt']);
+      else if (layout === 'triple') store.set('activePlatforms', ['claude', 'chatgpt', 'gemini']);
+      else if (layout === 'quad') store.set('activePlatforms', ALL_PLATFORMS);
+      updateViewBounds();
+      trayManager.updateContextMenu();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:remote-update', store.getAll());
+      }
+    },
+    onZoomChange: (globalFactor) => {
+      for (const p of ALL_PLATFORMS) {
+        store.setZoom(p, globalFactor);
+        applyZoom(p, globalFactor);
+      }
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:remote-update', store.getAll());
+      }
+    },
+  });
+
+  trayManager.init();
 }
 
-// IPC Handlers
-ipcMain.on('nomad:set-layout', (event, { layout, focus, dual }) => {
-  if (layout) currentLayout = layout;
-  if (focus) activeFocusPlatform = focus;
-  if (dual) activeDualPlatforms = dual;
-  updateViewBounds();
-});
-
-const PLATFORM_INJECTORS = {
-  claude: (text) => `(function() {
-    try {
-      const text = ${JSON.stringify(text)};
-      const input = document.querySelector('div.ProseMirror[contenteditable="true"]') ||
-                    document.querySelector('div[contenteditable="true"]');
-      if (!input) return { ok: false, error: 'Claude input not found' };
-      input.focus();
-      const sel = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(input);
-      range.collapse(false);
-      if (sel) { sel.removeAllRanges(); sel.addRange(range); }
-      let ok = false;
-      try { ok = document.execCommand('insertText', false, text); } catch(e) {}
-      if (!ok) {
-        while (input.firstChild) { input.removeChild(input.firstChild); }
-        const p = document.createElement('p');
-        p.textContent = text;
-        input.appendChild(p);
-      }
-      input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-      
-      setTimeout(() => {
-        const btn = document.querySelector('button[aria-label*="Send"]') ||
-                    document.querySelector('button[aria-label*="發送"]') ||
-                    document.querySelector('button[aria-label*="发送"]') ||
-                    document.querySelector('button:has(svg.lucide-arrow-up)');
-        if (btn && !btn.disabled) {
-          btn.focus();
-          btn.click();
-        } else {
-          input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
-        }
-      }, 300);
-      return { ok: true, input: input.tagName };
-    } catch(err) {
-      return { ok: false, error: err.message };
-    }
-  })()`,
-
-  chatgpt: (text) => `(function() {
-    try {
-      const text = ${JSON.stringify(text)};
-      const input = document.querySelector('#prompt-textarea') ||
-                    document.querySelector('div[contenteditable="true"][id*="prompt"]') ||
-                    document.querySelector('div[contenteditable="true"]');
-      if (!input) return { ok: false, error: 'ChatGPT input not found' };
-      input.focus();
-      
-      const sel = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(input);
-      range.collapse(false);
-      if (sel) { sel.removeAllRanges(); sel.addRange(range); }
-      let ok = false;
-      try { ok = document.execCommand('insertText', false, text); } catch(e) {}
-      if (!ok) {
-        const p = input.querySelector('p');
-        if (p) p.textContent = text;
-        else {
-          const newP = document.createElement('p');
-          newP.textContent = text;
-          input.appendChild(newP);
-        }
-      }
-      input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-      
-      setTimeout(() => {
-        const btn = document.querySelector('button[data-testid="send-button"]') ||
-                    document.querySelector('button[aria-label*="傳送"]') ||
-                    document.querySelector('button[aria-label*="发送"]') ||
-                    document.querySelector('button[aria-label*="Send"]');
-        if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') {
-          btn.focus();
-          btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
-          btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-          btn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
-          btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
-          btn.click();
-        }
-        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
-      }, 350);
-      return { ok: true, input: input.tagName };
-    } catch(err) {
-      return { ok: false, error: err.message };
-    }
-  })()`,
-
-  gemini: (text) => `(function() {
-    try {
-      const text = ${JSON.stringify(text)};
-      
-      // 1. Locate editable element
-      let input = null;
-      const selectors = [
-        'rich-textarea .ql-editor[contenteditable="true"]',
-        'rich-textarea [contenteditable="true"]',
-        'rich-textarea > div[contenteditable="true"]',
-        'div.ql-editor[contenteditable="true"]',
-        'rich-textarea div[role="textbox"]',
-        '.text-input-field [contenteditable="true"]',
-        'div[contenteditable="true"][role="textbox"]',
-        '[contenteditable="true"][aria-label*="提示"]',
-        '[contenteditable="true"][aria-label*="prompt"]'
-      ];
-      
-      for (const sel of selectors) {
-        const el = document.querySelector(sel);
-        if (el && (el.getBoundingClientRect().height > 0 || el.offsetParent !== null)) {
-          input = el;
-          break;
-        }
-      }
-      
-      if (!input) {
-        const rich = document.querySelector('rich-textarea');
-        if (rich) {
-          rich.click();
-          input = rich.querySelector('[contenteditable="true"]') || rich.querySelector('.ql-editor') || rich.querySelector('p')?.parentElement;
-        }
-      }
-      
-      if (!input) {
-        return { ok: false, error: 'Gemini input element not found' };
-      }
-      
-      input.focus();
-      input.click();
-      input.classList.remove('ql-blank');
-      
-      // 2. Clear placeholder content and prepare selection inside <p>
-      const targetNode = input.querySelector('p') || input;
-      const sel = window.getSelection();
-      if (sel) {
-        const range = document.createRange();
-        range.selectNodeContents(targetNode);
-        range.collapse(false);
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-      
-      // 3. Insert text using execCommand (Quill-friendly)
-      let ok = false;
-      try {
-        ok = document.execCommand('insertText', false, text);
-      } catch (e) {}
-      
-      // 4. Safe DOM fallback without violating Google Trusted Types (never set innerHTML!)
-      if (!ok) {
-        let p = input.querySelector('p');
-        if (!p) {
-          p = document.createElement('p');
-          input.appendChild(p);
-        }
-        p.textContent = text;
-      }
-      
-      // 5. Fire synthetic input and change events
-      input.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: text }));
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-      
-      // 6. Submit trigger with retry loop for Angular button activation
-      const clickSend = () => {
-        const sendBtnSelectors = [
-          'div[class*="send-button-container"] button',
-          '.send-button-container button',
-          'button.send-button',
-          'button[aria-label*="傳送"]',
-          'button[aria-label*="發送"]',
-          'button[aria-label*="送出"]',
-          'button[aria-label*="Send"]',
-          'button[aria-label*="send"]',
-          'button[data-tooltip*="Send"]',
-          'button[mattooltip*="Send"]',
-          'button mat-icon[fonticon="send"]',
-          'button mat-icon[fonticon="play_arrow"]'
-        ];
-        
-        let btn = null;
-        for (const s of sendBtnSelectors) {
-          const el = document.querySelector(s);
-          if (el) {
-            btn = el.tagName.toLowerCase() === 'button' ? el : el.closest('button');
-            if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') break;
-          }
-        }
-        
-        if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') {
-          btn.focus();
-          btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
-          btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-          btn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
-          btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
-          btn.click();
-          return true;
-        }
-        return false;
-      };
-      
-      setTimeout(() => {
-        if (!clickSend()) {
-          setTimeout(() => {
-            if (!clickSend()) {
-              setTimeout(() => {
-                if (!clickSend()) {
-                  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-                  input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-                }
-              }, 300);
-            }
-          }, 250);
-        }
-      }, 150);
-      
-      return { ok: true, input: input.tagName };
-    } catch (err) {
-      return { ok: false, error: err.message, stack: err.stack };
-    }
-  })()`,
-
-  grok: (text) => `(function() {
-    try {
-      const text = ${JSON.stringify(text)};
-      
-      // 1. Locate Grok chat input (textarea or contenteditable)
-      const inputCandidates = [
-        'form textarea',
-        'textarea[placeholder*="斜線"]',
-        'textarea[placeholder*="命令"]',
-        'textarea[placeholder*="Ask"]',
-        'textarea[placeholder*="Grok"]',
-        'textarea',
-        'form [contenteditable="true"]',
-        '[contenteditable="true"][role="textbox"]',
-        '[contenteditable="true"]',
-        '[data-testid*="input"]'
-      ];
-      
-      let input = null;
-      const visibleMatches = [];
-      for (const sel of inputCandidates) {
-        const els = document.querySelectorAll(sel);
-        for (const el of els) {
-          if (el instanceof HTMLElement) {
-            const rect = el.getBoundingClientRect();
-            if (rect.width > 60 && rect.height > 20) {
-              visibleMatches.push({ el, area: rect.width * rect.height });
-            }
-          }
-        }
-      }
-      
-      if (visibleMatches.length > 0) {
-        visibleMatches.sort((a, b) => b.area - a.area);
-        input = visibleMatches[0].el;
-      } else {
-        input = document.querySelector('textarea, [contenteditable="true"]');
-      }
-      
-      if (!input) {
-        return { ok: false, error: 'Grok input element not found' };
-      }
-      
-      input.focus();
-      input.click();
-      
-      // 2. Set text based on element type
-      if (input.tagName.toLowerCase() === 'textarea') {
-        const ta = input;
-        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
-        if (nativeSetter) {
-          nativeSetter.call(ta, text);
-        } else {
-          ta.value = text;
-        }
-        
-        try {
-          if (typeof ta.setRangeText === 'function') {
-            ta.setRangeText(text, 0, ta.value.length, 'end');
-          }
-        } catch(e) {}
-        
-        ta.dispatchEvent(new Event('input', { bubbles: true }));
-        ta.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: text }));
-        ta.dispatchEvent(new Event('change', { bubbles: true }));
-      } else {
-        // Contenteditable element
-        const sel = window.getSelection();
-        if (sel) {
-          const range = document.createRange();
-          range.selectNodeContents(input);
-          range.collapse(false);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
-        let ok = false;
-        try {
-          ok = document.execCommand('insertText', false, text);
-        } catch(e) {}
-        if (!ok) {
-          input.textContent = text;
-        }
-        input.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: text }));
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-      
-      // 3. Submission logic (form submit, button click, or Enter key)
-      const trySubmit = () => {
-        const form = input.closest('form');
-        
-        const btnSelectors = [
-          'button[type="submit"]',
-          'button[aria-label*="Submit"]',
-          'button[aria-label*="Send"]',
-          'button[aria-label*="傳送"]',
-          'button[aria-label*="送出"]',
-          'button[data-testid*="send"]',
-          'button[data-testid*="submit"]',
-          'button:has(svg.lucide-arrow-up)',
-          'button:has(svg[data-icon="arrow-up"])',
-          'form button:last-of-type'
-        ];
-        
-        let sendBtn = null;
-        for (const s of btnSelectors) {
-          try {
-            const b = document.querySelector(s);
-            if (b && !b.disabled && b.getAttribute('aria-disabled') !== 'true') {
-              sendBtn = b;
-              break;
-            }
-          } catch(e) {}
-        }
-        
-        if (sendBtn) {
-          sendBtn.focus();
-          sendBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
-          sendBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-          sendBtn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
-          sendBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
-          sendBtn.click();
-          return true;
-        }
-        
-        if (form) {
-          try {
-            form.requestSubmit();
-            return true;
-          } catch(e) {}
-        }
-        
-        return false;
-      };
-      
-      setTimeout(() => {
-        if (!trySubmit()) {
-          setTimeout(() => {
-            if (!trySubmit()) {
-              setTimeout(() => {
-                if (!trySubmit()) {
-                  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-                  input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-                }
-              }, 300);
-            }
-          }, 250);
-        }
-      }, 150);
-      
-      return { ok: true, input: input.tagName };
-    } catch (err) {
-      return { ok: false, error: err.message, stack: err.stack };
-    }
-  })()`
-};
-
-ipcMain.on('nomad:dispatch-prompt', async (event, { prompt, targets }) => {
+async function dispatchPromptToTargets(prompt, targets) {
   console.log(`[Nomad Desktop] Dispatching prompt to [${targets.join(', ')}]: "${prompt.slice(0, 30)}..."`);
-  
+  const results = {};
+
   for (const target of targets) {
     const item = views[target];
     if (!item) continue;
@@ -524,25 +245,77 @@ ipcMain.on('nomad:dispatch-prompt', async (event, { prompt, targets }) => {
 
     try {
       const res = await wc.executeJavaScript(injector(prompt));
+      results[target] = { ok: true, data: res };
       console.log(`[Nomad Desktop] Inject result for ${target}:`, res);
     } catch (e) {
+      results[target] = { ok: false, error: e.message };
       console.warn(`[Nomad Desktop] Inject failed for ${target}:`, e.message);
     }
   }
+
+  return results;
+}
+
+// IPC Handlers
+ipcMain.handle('nomad:get-settings', () => {
+  return {
+    ...store.getAll(),
+    platforms: PLATFORMS,
+  };
 });
 
-app.on('before-quit', async () => {
-  try {
-    await session.defaultSession.cookies.flushStore();
-  } catch (e) {
-    // ignore
+ipcMain.on('nomad:set-layout', (event, { layout, activePlatforms, focus, dual, splitRatio }) => {
+  if (layout) store.set('layout', layout);
+  if (activePlatforms) {
+    store.set('activePlatforms', activePlatforms);
+  } else if (focus) {
+    store.set('activePlatforms', [focus]);
+  } else if (dual) {
+    store.set('activePlatforms', dual);
+  }
+  if (typeof splitRatio === 'number') {
+    store.set('splitRatio', splitRatio);
+  }
+  updateViewBounds();
+  trayManager?.updateContextMenu();
+});
+
+ipcMain.on('nomad:set-zoom', (event, { platform, factor }) => {
+  if (platform && typeof factor === 'number') {
+    store.setZoom(platform, factor);
+    applyZoom(platform, factor);
   }
 });
 
+ipcMain.on('nomad:dispatch-prompt', async (event, { prompt, targets }) => {
+  await dispatchPromptToTargets(prompt, targets);
+});
+
+// App Lifecycle
+app.on('before-quit', async () => {
+  app.isQuitting = true;
+  trayManager?.destroy();
+  if (bridge) {
+    try { await bridge.stop(); } catch (e) {}
+  }
+  try {
+    await session.defaultSession.cookies.flushStore();
+  } catch (e) {}
+});
+
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createMainWindow();
+  } else if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+  }
 });
+
+app.whenReady().then(createMainWindow);

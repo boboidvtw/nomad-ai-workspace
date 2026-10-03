@@ -10,7 +10,8 @@
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac",
     "dist:win": "electron-builder --win",
-    "dist:linux": "electron-builder --linux"
+    "dist:linux": "electron-builder --linux",
+    "test": "node --test src/__tests__/*.test.js"
   },
   "devDependencies": {
     "electron": "^40.10.2",
@@ -30,7 +31,8 @@
       "index.html",
       "nomad.icns",
       "nomad.ico",
-      "nomad.png"
+      "nomad.png",
+      "src/**/*"
     ],
     "extraResources": [
       {

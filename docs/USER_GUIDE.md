@@ -191,13 +191,34 @@ Nomad AI Workspace 內建多種現代圖表與科學計算排版引擎：
 
 除了瀏覽器擴充功能外，Nomad AI Workspace 亦提供了基於 Electron 的原生獨立桌面應用程式——**Nomad AI Studio**，專為需要高頻在四大頂尖 AI 間進行同屏對比與並發提問的專業人士設計。
 
-### 7.1 三大多視窗動態版面 (Layout Modes)
-點擊頂部導航列的版面按鈕，即可瞬間在三種模式間流暢切換：
-- **四分割九宮格 (Quad 4-Split Grid)**：全螢幕同屏展示 Claude、ChatGPT、Gemini 與 Grok，四家模型回答即時橫向對比。
-- **雙欄對話 (Dual 2-Column)**：精選兩大主流模型並排顯示，便於深入探討與邏輯互校。
+### 7.1 動態自訂分欄佈局 (Dynamic Grid & Layout Modes)
+點擊頂部導航列的版面按鈕或平臺晶片，即可瞬間切換或自由組合：
+- **四宮格競技 (Quad Grid)**：全螢幕同屏展示 Claude、ChatGPT、Gemini 與 Grok，四家模型回答即時橫向對比。
+- **三欄對比 (Triple 3-Column)**：三等分並排顯示三家大模型，適合多視角綜合交叉驗證。
+- **雙欄並排 (Dual 2-Column)**：精選兩大主流模型並排顯示，並支援 **4:6 / 5:5 / 6:4** 左右分割比例切換。
 - **單欄專注 (Focus 1-Column)**：全螢幕單一視窗，享受無干擾的深度推理工作流。
+- **動態平臺晶片 (Platform Chips)**：頂部導航列支援自由點擊開關 Claude、ChatGPT、Gemini、Grok 任一平臺，彈性依工作需求自由組合。
 
-### 7.2 跨 AI 一鍵同步提問 (1-Click Concurrent Prompt Sync)
+### 7.2 各平臺獨立縮放控制 (Independent Zoom Controls)
+- 點擊頂部 **「🔍 視圖縮放」** 展開縮放控制面板。
+- 支援為 Claude、ChatGPT、Gemini、Grok 各自獨立設置縮放比例（50% ~ 200%），適配不同高 DPI 螢幕與字體偏好。
+- 提供 `+`、`-` 精細步進調整、**「重置 100%」** 與 **「全域快速縮放 (85% / 100% / 115%)」** 預設值。
+- 所有縮放比例與版面設定自動持久化於本機配置。
+
+### 7.3 全域快捷喚醒與系統選單列 (Global Shortcut & Tray Resident)
+- **⚡ 全域喚醒快捷鍵**：按下 `Cmd + Shift + Space`（Windows 為 `Ctrl + Shift + Space`），無論身處任何全螢幕應用程式或桌面，一鍵即刻喚出或隱藏工作台。
+- **🍎 系統常駐選單列 (Tray Icon)**：macOS 頂部選單列與 Windows 系統列常駐圖示，點擊即可切換視窗，右鍵支援快速切換版面、調整全域縮放、開機自動啟動或徹底退出。
+- **後台常駐運行**：點擊視窗左上角關閉按鈕預設最小化隱藏至系統列，保持會話不中斷。
+
+### 7.4 本地數據同步中繼通道 (Local Sync Bridge API)
+Nomad AI Studio 內建輕量、高效的本地 HTTP RPC 與 SSE 串流服務，預設監聽 `http://127.0.0.1:8765`（僅限本地 Loopback 存取，極致安全）：
+- **健康度與狀態**：`GET /api/status`（傳回版面、在線平臺、縮放與視窗狀態）。
+- **遠端一鍵同步提問**：`POST /api/prompt`（傳入 `{"prompt": "...", "targets": ["claude", "chatgpt"]}`）。
+- **遠端佈局與縮放切換**：`POST /api/layout`、`POST /api/zoom`。
+- **視窗召喚控制**：`POST /api/window`（傳入 `{"action": "show"}`）。
+- **與 Nomad Dashboard 深度整合**：可在 Nomad Dashboard 直接掌握工作台運行狀態並一鍵遠端喚出。
+
+### 7.5 跨 AI 一鍵同步提問 (1-Click Concurrent Prompt Sync)
 - **統一底部輸入列**：工作站底部常駐跨 AI 統一輸入框。
 - **目標平台核選**：可自由勾選要派發提問的平台（Claude、ChatGPT、Gemini、Grok，預設全選）。
 - **即時並發派發**：輸入問題後按下 `Enter`（或點擊 **「一鍵同步發送 🚀」**），系統會同時將 Prompt 填入各平台輸入框並自動觸發送出（支援換行 `Shift + Enter`）。

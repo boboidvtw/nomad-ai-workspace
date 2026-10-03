@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-TW" class="dark">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>Nomad AI Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nomad AI Studio - All-in-One Multi-AI Super Station</title>
   <style>
     * {
       box-sizing: border-box;
@@ -11,44 +12,55 @@
       user-select: none;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #090d16;
-      color: #f1f5f9;
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      overflow: hidden;
       height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      overflow: hidden;
     }
+
     /* Top Bar */
     .top-bar {
       height: 52px;
-      padding: 0 16px 0 80px; /* Leave space for macOS traffic lights */
-      background: rgba(15, 23, 42, 0.85);
+      padding: 0 16px;
+      padding-left: 80px; /* Space for macOS traffic light window controls */
+      background: rgba(15, 23, 42, 0.88);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       align-items: center;
       justify-content: space-between;
       -webkit-app-region: drag;
+      z-index: 100;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      font-size: 13px;
       font-weight: 700;
-      font-size: 14px;
       letter-spacing: 0.5px;
-      background: linear-gradient(135deg, #38bdf8, #818cf8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #f8fafc;
+    }
+    .badge-super {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      font-weight: 700;
+      letter-spacing: 0.8px;
     }
     .controls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       -webkit-app-region: no-drag;
     }
+
     .btn-group {
       display: flex;
       background: rgba(255, 255, 255, 0.05);
@@ -60,7 +72,7 @@
       background: transparent;
       border: none;
       color: #94a3b8;
-      padding: 5px 12px;
+      padding: 5px 11px;
       font-size: 12px;
       font-weight: 600;
       border-radius: 6px;
@@ -69,21 +81,166 @@
     }
     .btn-mode:hover {
       color: #f8fafc;
+      background: rgba(255, 255, 255, 0.05);
     }
     .btn-mode.active {
       background: rgba(56, 189, 248, 0.2);
       color: #38bdf8;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
     }
-    .platform-select {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #cbd5e1;
-      padding: 5px 10px;
+
+    /* Platform Chips */
+    .platform-chips {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      padding: 4px 9px;
       border-radius: 6px;
-      font-size: 12px;
-      outline: none;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .chip:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #f8fafc;
+    }
+    .chip.active {
+      border-color: currentColor;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .chip-claude.active { color: #f59e0b; }
+    .chip-chatgpt.active { color: #10a37f; }
+    .chip-gemini.active { color: #3b82f6; }
+    .chip-grok.active { color: #38bdf8; }
+
+    /* Split Ratio Buttons */
+    .ratio-group {
+      display: flex;
+      gap: 3px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .btn-ratio {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      padding: 3px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-ratio:hover { color: #cbd5e1; }
+    .btn-ratio.active { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+
+    /* Quick Action Pills */
+    .pill-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pill-info:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+    }
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+
+    /* Modal / Popover */
+    .popover-panel {
+      position: absolute;
+      top: 56px;
+      right: 16px;
+      width: 320px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+      display: none;
+      z-index: 200;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .popover-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #f8fafc;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
+    }
+    .zoom-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .zoom-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+    .zoom-ctrls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-step {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-step:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
+    .zoom-val {
+      min-width: 36px;
+      text-align: center;
+      font-weight: 600;
+      color: #38bdf8;
+    }
+
+    /* Content Placeholder / Background */
+    .content-area {
+      flex: 1;
+      background: #090d16;
     }
 
     /* Bottom Bar */
@@ -96,11 +253,12 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      z-index: 100;
     }
     .targets-group {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     .target-label {
       display: flex;
@@ -115,19 +273,9 @@
       border: 1px solid rgba(255, 255, 255, 0.06);
       transition: all 0.15s;
     }
-    .target-label:hover {
-      background: rgba(255, 255, 255, 0.08);
-    }
-    .target-label input {
-      accent-color: #38bdf8;
-      cursor: pointer;
-    }
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-    }
+    .target-label:hover { background: rgba(255, 255, 255, 0.08); }
+    .target-label input { accent-color: #38bdf8; cursor: pointer; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
     .dot-claude { background: #d97706; }
     .dot-chatgpt { background: #10a37f; }
     .dot-gemini { background: #2563eb; }
@@ -175,9 +323,7 @@
       filter: brightness(1.1);
       transform: translateY(-1px);
     }
-    .btn-send:active {
-      transform: translateY(0);
-    }
+    .btn-send:active { transform: translateY(0); }
   </style>
 </head>
 <body>
@@ -185,35 +331,107 @@
   <div class="top-bar">
     <div class="brand">
       <span>🌐 Nomad AI Studio</span>
-      <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(56,189,248,0.15); color: #38bdf8; font-weight: 600;">SUPER STATION</span>
+      <span class="badge-super">SUPER STATION</span>
     </div>
 
     <div class="controls">
       <!-- Layout Modes -->
       <div class="btn-group">
-        <button class="btn-mode" id="btn-focus" onclick="setLayout('focus')">單欄專注</button>
-        <button class="btn-mode active" id="btn-dual" onclick="setLayout('dual')">雙欄並排</button>
-        <button class="btn-mode" id="btn-quad" onclick="setLayout('quad')">四宮格競技</button>
+        <button class="btn-mode" id="btn-focus" onclick="handleLayoutClick('focus')">單欄專注</button>
+        <button class="btn-mode active" id="btn-dual" onclick="handleLayoutClick('dual')">雙欄並排</button>
+        <button class="btn-mode" id="btn-triple" onclick="handleLayoutClick('triple')">三欄對比</button>
+        <button class="btn-mode" id="btn-quad" onclick="handleLayoutClick('quad')">四宮格競技</button>
       </div>
 
-      <!-- Selectors for Dual Mode -->
-      <div id="dual-selectors" style="display: flex; gap: 6px;">
-        <select id="dual-left" class="platform-select" onchange="updateDualSelection()">
-          <option value="claude" selected>Claude</option>
-          <option value="chatgpt">ChatGPT</option>
-          <option value="gemini">Gemini</option>
-          <option value="grok">Grok</option>
-        </select>
-        <span style="color: #64748b; font-size: 12px; align-self: center;">vs</span>
-        <select id="dual-right" class="platform-select" onchange="updateDualSelection()">
-          <option value="claude">Claude</option>
-          <option value="chatgpt" selected>ChatGPT</option>
-          <option value="gemini">Gemini</option>
-          <option value="grok">Grok</option>
-        </select>
+      <!-- Platform Active Chips -->
+      <div class="platform-chips">
+        <div class="chip chip-claude active" id="chip-claude" onclick="togglePlatform('claude')"><span class="dot dot-claude"></span>Claude</div>
+        <div class="chip chip-chatgpt active" id="chip-chatgpt" onclick="togglePlatform('chatgpt')"><span class="dot dot-chatgpt"></span>ChatGPT</div>
+        <div class="chip chip-gemini" id="chip-gemini" onclick="togglePlatform('gemini')"><span class="dot dot-gemini"></span>Gemini</div>
+        <div class="chip chip-grok" id="chip-grok" onclick="togglePlatform('grok')"><span class="dot dot-grok"></span>Grok</div>
+      </div>
+
+      <!-- Split Ratio selector for Dual Mode -->
+      <div class="ratio-group" id="dual-ratios">
+        <button class="btn-ratio" id="ratio-40" onclick="setRatio(0.4)">4:6</button>
+        <button class="btn-ratio active" id="ratio-50" onclick="setRatio(0.5)">5:5</button>
+        <button class="btn-ratio" id="ratio-60" onclick="setRatio(0.6)">6:4</button>
+      </div>
+
+      <!-- Zoom Popover Toggle -->
+      <div class="pill-info" onclick="toggleZoomPanel()">
+        <span>🔍 視圖縮放</span>
+      </div>
+
+      <!-- Local Bridge Status Pill -->
+      <div class="pill-info" id="bridge-pill" onclick="copyBridgeInfo()" title="點擊複製 Local Sync Bridge API 位址">
+        <span class="pulse-dot"></span>
+        <span id="bridge-status-text">Bridge :8765</span>
+      </div>
+
+      <!-- Global Shortcut Legend Pill -->
+      <div class="pill-info" style="cursor: default;" title="macOS 全域喚醒快捷鍵">
+        <span>⚡ Cmd+Shift+Space</span>
       </div>
     </div>
   </div>
+
+  <!-- Zoom Controls Popover -->
+  <div class="popover-panel" id="zoom-panel">
+    <div class="popover-header">
+      <span>各平臺獨立縮放控制</span>
+      <span style="cursor: pointer; color: #94a3b8;" onclick="toggleZoomPanel()">✕</span>
+    </div>
+
+    <div class="zoom-row">
+      <div class="zoom-label"><span class="dot dot-claude"></span>Claude</div>
+      <div class="zoom-ctrls">
+        <button class="btn-step" onclick="adjustZoom('claude', -0.05)">-</button>
+        <span class="zoom-val" id="zoom-val-claude">100%</span>
+        <button class="btn-step" onclick="adjustZoom('claude', 0.05)">+</button>
+        <button class="btn-step" style="width: auto; padding: 0 5px; font-size: 10px;" onclick="resetZoom('claude')">重置</button>
+      </div>
+    </div>
+
+    <div class="zoom-row">
+      <div class="zoom-label"><span class="dot dot-chatgpt"></span>ChatGPT</div>
+      <div class="zoom-ctrls">
+        <button class="btn-step" onclick="adjustZoom('chatgpt', -0.05)">-</button>
+        <span class="zoom-val" id="zoom-val-chatgpt">100%</span>
+        <button class="btn-step" onclick="adjustZoom('chatgpt', 0.05)">+</button>
+        <button class="btn-step" style="width: auto; padding: 0 5px; font-size: 10px;" onclick="resetZoom('chatgpt')">重置</button>
+      </div>
+    </div>
+
+    <div class="zoom-row">
+      <div class="zoom-label"><span class="dot dot-gemini"></span>Gemini</div>
+      <div class="zoom-ctrls">
+        <button class="btn-step" onclick="adjustZoom('gemini', -0.05)">-</button>
+        <span class="zoom-val" id="zoom-val-gemini">100%</span>
+        <button class="btn-step" onclick="adjustZoom('gemini', 0.05)">+</button>
+        <button class="btn-step" style="width: auto; padding: 0 5px; font-size: 10px;" onclick="resetZoom('gemini')">重置</button>
+      </div>
+    </div>
+
+    <div class="zoom-row">
+      <div class="zoom-label"><span class="dot dot-grok"></span>Grok</div>
+      <div class="zoom-ctrls">
+        <button class="btn-step" onclick="adjustZoom('grok', -0.05)">-</button>
+        <span class="zoom-val" id="zoom-val-grok">100%</span>
+        <button class="btn-step" onclick="adjustZoom('grok', 0.05)">+</button>
+        <button class="btn-step" style="width: auto; padding: 0 5px; font-size: 10px;" onclick="resetZoom('grok')">重置</button>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px; display: flex; gap: 6px;">
+      <button class="btn-step" style="flex: 1; height: 26px; font-size: 11px;" onclick="setGlobalZoom(0.85)">全部 85%</button>
+      <button class="btn-step" style="flex: 1; height: 26px; font-size: 11px;" onclick="setGlobalZoom(1.0)">全部 100%</button>
+      <button class="btn-step" style="flex: 1; height: 26px; font-size: 11px;" onclick="setGlobalZoom(1.15)">全部 115%</button>
+    </div>
+  </div>
+
+  <!-- Content Space for WebContentsViews -->
+  <div class="content-area"></div>
 
   <!-- Bottom Bar: Universal Dispatcher -->
   <div class="bottom-bar">
@@ -235,31 +453,186 @@
   </div>
 
   <script>
-    let currentLayout = 'dual';
+    const ALL_PLATFORMS = ['claude', 'chatgpt', 'gemini', 'grok'];
+    let state = {
+      layout: 'dual',
+      activePlatforms: ['claude', 'chatgpt'],
+      splitRatio: 0.5,
+      zoomFactors: { claude: 1.0, chatgpt: 1.0, gemini: 1.0, grok: 1.0 },
+      bridgePort: 8765,
+    };
 
-    function setLayout(mode) {
-      currentLayout = mode;
-      document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
-      document.getElementById('btn-' + mode).classList.add('active');
+    // Initialize state from Main process
+    async function init() {
+      if (window.nomadDesktop && window.nomadDesktop.getSettings) {
+        const loaded = await window.nomadDesktop.getSettings();
+        state = { ...state, ...loaded };
+      }
+      renderUI();
 
-      const dualSelectors = document.getElementById('dual-selectors');
-      dualSelectors.style.display = mode === 'dual' ? 'flex' : 'none';
+      // Listen to remote changes via bridge or tray
+      if (window.nomadDesktop && window.nomadDesktop.onRemoteUpdate) {
+        window.nomadDesktop.onRemoteUpdate((updated) => {
+          state = { ...state, ...updated };
+          renderUI();
+        });
+      }
 
-      if (mode === 'focus') {
-        const platform = document.getElementById('dual-left').value;
-        window.nomadDesktop.setLayout({ layout: 'focus', focus: platform });
-      } else if (mode === 'dual') {
-        updateDualSelection();
-      } else if (mode === 'quad') {
-        window.nomadDesktop.setLayout({ layout: 'quad' });
+      if (window.nomadDesktop && window.nomadDesktop.onPromptDispatched) {
+        window.nomadDesktop.onPromptDispatched(({ prompt }) => {
+          console.log('[Nomad UI] Remote prompt dispatched:', prompt);
+        });
       }
     }
 
-    function updateDualSelection() {
-      const left = document.getElementById('dual-left').value;
-      const right = document.getElementById('dual-right').value;
-      window.nomadDesktop.setLayout({ layout: 'dual', dual: [left, right] });
+    function renderUI() {
+      // 1. Layout Mode buttons
+      document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById('btn-' + state.layout);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      // 2. Dual ratios visibility
+      const ratioGroup = document.getElementById('dual-ratios');
+      if (ratioGroup) {
+        ratioGroup.style.display = (state.layout === 'dual' || (state.layout === 'custom' && state.activePlatforms.length === 2)) ? 'flex' : 'none';
+        document.querySelectorAll('.btn-ratio').forEach(b => b.classList.remove('active'));
+        const r = Math.round(state.splitRatio * 100);
+        const rBtn = document.getElementById('ratio-' + r);
+        if (rBtn) rBtn.classList.add('active');
+      }
+
+      // 3. Platform Chips
+      ALL_PLATFORMS.forEach(p => {
+        const chip = document.getElementById('chip-' + p);
+        if (chip) {
+          if (state.activePlatforms.includes(p)) {
+            chip.classList.add('active');
+          } else {
+            chip.classList.remove('active');
+          }
+        }
+      });
+
+      // 4. Zoom Values in Popover
+      ALL_PLATFORMS.forEach(p => {
+        const el = document.getElementById('zoom-val-' + p);
+        if (el) {
+          const z = Math.round((state.zoomFactors[p] || 1.0) * 100);
+          el.textContent = z + '%';
+        }
+      });
+
+      // 5. Sync Target Checkboxes with active visible platforms
+      ALL_PLATFORMS.forEach(p => {
+        const chk = document.getElementById('check-' + p);
+        if (chk && !chk.dataset.userEdited) {
+          chk.checked = state.activePlatforms.includes(p);
+        }
+      });
+
+      // 6. Bridge text
+      const bridgeText = document.getElementById('bridge-status-text');
+      if (bridgeText && state.bridgePort) {
+        bridgeText.textContent = `Bridge :${state.bridgePort}`;
+      }
     }
+
+    function handleLayoutClick(mode) {
+      state.layout = mode;
+      if (mode === 'focus') {
+        state.activePlatforms = [state.activePlatforms[0] || 'claude'];
+      } else if (mode === 'dual') {
+        state.activePlatforms = ['claude', 'chatgpt'];
+      } else if (mode === 'triple') {
+        state.activePlatforms = ['claude', 'chatgpt', 'gemini'];
+      } else if (mode === 'quad') {
+        state.activePlatforms = [...ALL_PLATFORMS];
+      }
+
+      notifyLayout();
+      renderUI();
+    }
+
+    function togglePlatform(platform) {
+      const idx = state.activePlatforms.indexOf(platform);
+      if (idx >= 0) {
+        if (state.activePlatforms.length <= 1) return; // Keep at least one
+        state.activePlatforms.splice(idx, 1);
+      } else {
+        state.activePlatforms.push(platform);
+      }
+
+      state.layout = 'custom';
+      notifyLayout();
+      renderUI();
+    }
+
+    function setRatio(ratio) {
+      state.splitRatio = ratio;
+      notifyLayout();
+      renderUI();
+    }
+
+    function notifyLayout() {
+      if (window.nomadDesktop && window.nomadDesktop.setLayout) {
+        window.nomadDesktop.setLayout({
+          layout: state.layout,
+          activePlatforms: state.activePlatforms,
+          splitRatio: state.splitRatio,
+        });
+      }
+    }
+
+    function toggleZoomPanel() {
+      const panel = document.getElementById('zoom-panel');
+      panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function adjustZoom(platform, delta) {
+      const current = state.zoomFactors[platform] || 1.0;
+      const next = Math.min(2.0, Math.max(0.5, Math.round((current + delta) * 100) / 100));
+      state.zoomFactors[platform] = next;
+
+      if (window.nomadDesktop && window.nomadDesktop.setZoom) {
+        window.nomadDesktop.setZoom({ platform, factor: next });
+      }
+      renderUI();
+    }
+
+    function resetZoom(platform) {
+      state.zoomFactors[platform] = 1.0;
+      if (window.nomadDesktop && window.nomadDesktop.setZoom) {
+        window.nomadDesktop.setZoom({ platform, factor: 1.0 });
+      }
+      renderUI();
+    }
+
+    function setGlobalZoom(factor) {
+      ALL_PLATFORMS.forEach(p => {
+        state.zoomFactors[p] = factor;
+        if (window.nomadDesktop && window.nomadDesktop.setZoom) {
+          window.nomadDesktop.setZoom({ platform: p, factor });
+        }
+      });
+      renderUI();
+    }
+
+    function copyBridgeInfo() {
+      const url = `http://127.0.0.1:${state.bridgePort || 8765}`;
+      navigator.clipboard.writeText(url);
+      const textEl = document.getElementById('bridge-status-text');
+      const orig = textEl.textContent;
+      textEl.textContent = '已複製位址!';
+      setTimeout(() => { textEl.textContent = orig; }, 1500);
+    }
+
+    // Manual checkbox toggle marks it as user-edited
+    ALL_PLATFORMS.forEach(p => {
+      const chk = document.getElementById('check-' + p);
+      if (chk) {
+        chk.addEventListener('change', () => { chk.dataset.userEdited = 'true'; });
+      }
+    });
 
     function handleSend() {
       const input = document.getElementById('prompt-input');
@@ -267,10 +640,9 @@
       if (!text) return;
 
       const targets = [];
-      if (document.getElementById('check-claude').checked) targets.push('claude');
-      if (document.getElementById('check-chatgpt').checked) targets.push('chatgpt');
-      if (document.getElementById('check-gemini').checked) targets.push('gemini');
-      if (document.getElementById('check-grok').checked) targets.push('grok');
+      ALL_PLATFORMS.forEach(p => {
+        if (document.getElementById('check-' + p).checked) targets.push(p);
+      });
 
       if (targets.length === 0) {
         alert('請至少勾選一個發送目標 AI！');
@@ -287,6 +659,8 @@
         handleSend();
       }
     });
+
+    init();
   </script>
 </body>
 </html>
