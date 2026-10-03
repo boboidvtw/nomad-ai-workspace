@@ -11,4 +11,14 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
   onPromptDispatched: (callback) => {
     ipcRenderer.on('nomad:prompt-dispatched', (event, data) => callback(data));
   },
+
+  // Multi-AI Autonomous Orchestration & Dialogue
+  orchestrationStart: (options) => ipcRenderer.invoke('nomad:orchestration-start', options),
+  orchestrationPause: () => ipcRenderer.invoke('nomad:orchestration-pause'),
+  orchestrationResume: () => ipcRenderer.invoke('nomad:orchestration-resume'),
+  orchestrationStop: () => ipcRenderer.invoke('nomad:orchestration-stop'),
+  orchestrationStatus: () => ipcRenderer.invoke('nomad:orchestration-status'),
+  onOrchestrationStep: (callback) => {
+    ipcRenderer.on('nomad:orchestration-step', (event, data) => callback(data));
+  },
 });

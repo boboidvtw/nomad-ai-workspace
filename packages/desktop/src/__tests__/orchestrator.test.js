@@ -1,0 +1,114 @@
+const test = require('node:test');
+const assert = require('node:assert');
+const { MultiAiOrchestrator } = require('../orchestrator.js');
+
+test('Orchestrator: Validates initial inputs and rejects invalid configs', async () => {
+  const orch = new MultiAiOrchestrator();
+
+  // Empty prompt
+  const res1 = await orch.start({ prompt: '   ' });
+  assert.strictEqual(res1.success, false);
+  assert.strictEqual(res1.errorCode, 'ORCHESTRATOR_START_EMPTY_PROMPT_002');
+
+  // Sequence with < 2 platforms
+  const res2 = await orch.start({ prompt: 'Hello', sequence: ['claude'] });
+  assert.strictEqual(res2.success, false);
+  assert.strictEqual(res2.errorCode, 'ORCHESTRATOR_START_INVALID_SEQUENCE_003');
+});
+
+test('Orchestrator: Executes full round-robin relay sequence with state events', async () => {
+  const promptsInjected = [];
+  const eventsEmitted = [];
+
+  const mockResponses = {
+    claude: 'Claude architecture proposal v1',
+    chatgpt: 'ChatGPT security review and code patch',
+  };
+
+  const orch = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    pollIntervalMs: 5,
+    injectPrompt: async (platform, text) => {
+      promptsInjected.push({ platform, text });
+      return { ok: true };
+    },
+    extractResponse: async (platform) => {
+      return { ok: true, text: mockResponses[platform] || 'Mock output' };
+    },
+    checkStreaming: async () => {
+      return { ok: true, isStreaming: false };
+    },
+    onStep: (event) => {
+      eventsEmitted.push(event.type);
+    },
+  });
+
+  orch.turnDelayMs = 5;
+
+  const startRes = await orch.start({
+    prompt: 'Initial Goal',
+    sequence: ['claude', 'chatgpt'],
+    mode: 'relay',
+    maxRounds: 1,
+    turnDelayMs: 5,
+  });
+
+  assert.strictEqual(startRes.success, true);
+
+  // Wait for loop completion
+  let attempts = 0;
+  while (orch.status === 'running' && attempts < 30) {
+    await new Promise((r) => setTimeout(r, 20));
+    attempts++;
+  }
+
+  assert.strictEqual(orch.status, 'completed');
+  assert.strictEqual(promptsInjected.length, 2);
+  assert.strictEqual(promptsInjected[0].platform, 'claude');
+  assert.strictEqual(promptsInjected[0].text, 'Initial Goal');
+
+  assert.strictEqual(promptsInjected[1].platform, 'chatgpt');
+  assert.ok(promptsInjected[1].text.includes('CLAUDE 的階段性輸出與任務交接'));
+  assert.ok(promptsInjected[1].text.includes('Claude architecture proposal v1'));
+
+  // Events check
+  assert.ok(eventsEmitted.includes('turn-start'));
+  assert.ok(eventsEmitted.includes('turn-complete'));
+  assert.ok(eventsEmitted.includes('completed'));
+});
+
+test('Orchestrator: Pause, resume and stop controls', async () => {
+  const orch = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    pollIntervalMs: 10,
+    injectPrompt: async () => ({ ok: true }),
+    extractResponse: async () => ({ ok: true, text: 'Sample output' }),
+    checkStreaming: async () => ({ ok: true, isStreaming: false }),
+  });
+
+  orch.turnDelayMs = 50;
+
+  await orch.start({
+    prompt: 'Testing controls',
+    sequence: ['claude', 'chatgpt', 'gemini'],
+    maxRounds: 2,
+    turnDelayMs: 50,
+  });
+
+  assert.strictEqual(orch.status, 'running');
+
+  // Pause
+  const pRes = orch.pause();
+  assert.strictEqual(pRes.success, true);
+  assert.strictEqual(orch.status, 'paused');
+
+  // Resume
+  const rRes = orch.resume();
+  assert.strictEqual(rRes.success, true);
+  assert.strictEqual(orch.status, 'running');
+
+  // Stop
+  const sRes = orch.stop();
+  assert.strictEqual(sRes.success, true);
+  assert.strictEqual(orch.status, 'stopped');
+});

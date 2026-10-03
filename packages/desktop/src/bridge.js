@@ -16,6 +16,7 @@ class LocalSyncBridge {
    * @param {Function} [options.onSetLayout] - Callback for layout changes
    * @param {Function} [options.onSetZoom] - Callback for zoom adjustments
    * @param {Function} [options.onToggleWindow] - Callback for window summon/hide
+   * @param {Object} [options.orchestrator] - MultiAiOrchestrator instance
    */
   constructor(options = {}) {
     this.port = options.port || 8765;
@@ -25,9 +26,14 @@ class LocalSyncBridge {
     this.onSetLayout = options.onSetLayout || (() => ({}));
     this.onSetZoom = options.onSetZoom || (() => ({}));
     this.onToggleWindow = options.onToggleWindow || (() => ({}));
+    this.orchestrator = options.orchestrator || null;
 
     this.server = null;
     this.sseClients = new Set();
+  }
+
+  setOrchestrator(orchestrator) {
+    this.orchestrator = orchestrator;
   }
 
   start() {
@@ -135,6 +141,7 @@ class LocalSyncBridge {
       // 1. Health & Status
       if ((pathname === '/' || pathname === '/health' || pathname === '/api/status') && req.method === 'GET') {
         const appState = await Promise.resolve(this.getStatus());
+        const orchStatus = this.orchestrator ? this.orchestrator.getStatus() : null;
         return this.sendJson(res, 200, {
           success: true,
           data: {
@@ -142,6 +149,7 @@ class LocalSyncBridge {
             version: '1.3.0',
             bridgePort: this.port,
             timestamp: new Date().toISOString(),
+            orchestrator: orchStatus,
             ...appState,
           },
         });
@@ -223,6 +231,58 @@ class LocalSyncBridge {
         const result = await Promise.resolve(this.onToggleWindow(action));
         this.broadcast('window-state', result);
         return this.sendJson(res, 200, { success: true, data: result });
+      }
+
+      // 7. Multi-AI Orchestration Endpoints
+      if (pathname === '/api/orchestration/status' && req.method === 'GET') {
+        if (!this.orchestrator) {
+          return this.sendJson(res, 503, {
+            success: false,
+            errorCode: 'ORCHESTRATOR_UNAVAILABLE_503',
+            message: 'Multi-AI Orchestrator is not initialized.',
+          });
+        }
+        return this.sendJson(res, 200, {
+          success: true,
+          data: this.orchestrator.getStatus(),
+        });
+      }
+
+      if (pathname === '/api/orchestration/start' && req.method === 'POST') {
+        if (!this.orchestrator) {
+          return this.sendJson(res, 503, {
+            success: false,
+            errorCode: 'ORCHESTRATOR_UNAVAILABLE_503',
+            message: 'Multi-AI Orchestrator is not initialized.',
+          });
+        }
+        const body = await this.readJsonBody(req);
+        const startRes = await this.orchestrator.start(body);
+        return this.sendJson(res, startRes.success ? 200 : 400, startRes);
+      }
+
+      if (pathname === '/api/orchestration/pause' && req.method === 'POST') {
+        if (!this.orchestrator) {
+          return this.sendJson(res, 503, { success: false, errorCode: 'ORCHESTRATOR_UNAVAILABLE_503' });
+        }
+        const resData = this.orchestrator.pause();
+        return this.sendJson(res, 200, resData);
+      }
+
+      if (pathname === '/api/orchestration/resume' && req.method === 'POST') {
+        if (!this.orchestrator) {
+          return this.sendJson(res, 503, { success: false, errorCode: 'ORCHESTRATOR_UNAVAILABLE_503' });
+        }
+        const resData = this.orchestrator.resume();
+        return this.sendJson(res, 200, resData);
+      }
+
+      if (pathname === '/api/orchestration/stop' && req.method === 'POST') {
+        if (!this.orchestrator) {
+          return this.sendJson(res, 503, { success: false, errorCode: 'ORCHESTRATOR_UNAVAILABLE_503' });
+        }
+        const resData = this.orchestrator.stop();
+        return this.sendJson(res, 200, resData);
       }
 
       // 404 Route Not Found

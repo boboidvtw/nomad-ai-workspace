@@ -209,23 +209,36 @@ Toggle between layouts or customize visible engines with header controls and chi
 
 ### 7.4 Local Sync Bridge API
 Built-in zero-dependency local HTTP RPC & SSE streaming bridge listening on `http://127.0.0.1:8765` (loopback only):
-- **Health & Status**: `GET /api/status` (layout, active platforms, zoom factors, window state).
+- **Health & Status**: `GET /api/status` (layout, active platforms, zoom factors, orchestrator state, window visibility).
 - **Remote Prompt Dispatch**: `POST /api/prompt` (`{"prompt": "...", "targets": ["claude", "chatgpt"]}`).
 - **Remote Layout & Zoom**: `POST /api/layout`, `POST /api/zoom`.
 - **Window Summon**: `POST /api/window` (`{"action": "show"}`).
+- **Orchestration RPC**: `POST /api/orchestration/start`, `/pause`, `/resume`, `/stop`, `GET /api/orchestration/status`.
 - **Nomad Dashboard Integration**: Seamlessly monitored and triggered via Nomad Dashboard.
 
-### 7.5 1-Click Concurrent Prompt Dispatcher
+### 7.5 Multi-AI Autonomous Orchestration & Dialogue
+Nomad AI Studio introduces industry-first autonomous multi-AI collaboration, debate, and task handoff:
+- **Header Trigger**: Click the glowing violet **"🤝 AI Round-Table"** button in the top bar to open the orchestration drawer.
+- **3 Classical Collaboration Modes**:
+  - 🔄 **Sequential Relay**: `Claude ➔ ChatGPT ➔ Gemini ➔ Grok` — as each AI finishes, the system extracts the key output and hands it off with a context-rich prompt template to the next model.
+  - ⚔️ **Debate & Review**: One model proposes, and another model critiques, audits, and stress-tests for edge cases and vulnerabilities.
+  - 👑 **Master & Workers**: A master coordinator AI breaks down complex goals into subtasks and delegates them to specialized engines.
+- **Automated Stream Detection & Safeguards**:
+  - Dedicated DOM Response Extractors and Streaming Detectors wait for output stabilization before handoff.
+  - Configurable round limits (1 ~ 5 rounds), turn delays, and one-click Pause/Stop controls prevent infinite loops.
+  - Live status HUD and chronological conversation relay log.
+
+### 7.6 1-Click Concurrent Prompt Dispatcher
 - **Unified Global Input Bar**: Persistent composer at the bottom of the workstation.
 - **Target Selection**: Check or uncheck target AI engines (Claude, ChatGPT, Gemini, Grok — all selected by default).
 - **Simultaneous Submission**: Press `Enter` (or click **"Dispatch All 🚀"**) to populate the prompt into all selected AI inputs and automatically trigger submission (use `Shift + Enter` for newlines).
 
-### 7.3 Zero-Trust Security & Session Persistence
+### 7.7 Zero-Trust Security & Session Persistence
 - **Local Isolated Storage**: All cookies and authentication credentials are saved locally in `~/Library/Application Support/nomad-desktop`.
 - **Persistent Logins**: Log in once to each AI service; sessions persist across application restarts.
 - **Direct Official Connection**: All traffic routes directly to official AI endpoints via TLS with zero proxy or intermediary telemetry servers.
 
-### 7.4 Installation & Quick Launch
+### 7.8 Installation & Quick Launch
 - **Official GitHub Releases Multi-Platform Packages**:
   - Visit the [GitHub Releases Latest Page](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest) to download binaries for your OS:
     - 🍏 **macOS**: Download `Nomad-AI-Studio-1.3.0-arm64.dmg` and drag into Applications (or use the portable zip).

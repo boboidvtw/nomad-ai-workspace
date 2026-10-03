@@ -212,23 +212,36 @@ Nomad AI Workspace 內建多種現代圖表與科學計算排版引擎：
 
 ### 7.4 本地數據同步中繼通道 (Local Sync Bridge API)
 Nomad AI Studio 內建輕量、高效的本地 HTTP RPC 與 SSE 串流服務，預設監聽 `http://127.0.0.1:8765`（僅限本地 Loopback 存取，極致安全）：
-- **健康度與狀態**：`GET /api/status`（傳回版面、在線平臺、縮放與視窗狀態）。
+- **健康度與狀態**：`GET /api/status`（傳回版面、在線平臺、縮放、協作中樞與視窗狀態）。
 - **遠端一鍵同步提問**：`POST /api/prompt`（傳入 `{"prompt": "...", "targets": ["claude", "chatgpt"]}`）。
 - **遠端佈局與縮放切換**：`POST /api/layout`、`POST /api/zoom`。
 - **視窗召喚控制**：`POST /api/window`（傳入 `{"action": "show"}`）。
+- **跨 AI 協作控制端點**：`POST /api/orchestration/start`、`/pause`、`/resume`、`/stop`、`GET /api/orchestration/status`。
 - **與 Nomad Dashboard 深度整合**：可在 Nomad Dashboard 直接掌握工作台運行狀態並一鍵遠端喚出。
 
-### 7.5 跨 AI 一鍵同步提問 (1-Click Concurrent Prompt Sync)
+### 7.5 跨 AI 圓桌協作、接力通話與任務指派 (Multi-AI Autonomous Orchestration)
+Nomad AI Studio 領先業界實現**四大頂級 AI 互相對話、接力推理與分工指派**的自動化機制：
+- **頂部一鍵開啟**：點擊頂部紫光徽章 **「🤝 AI 圓桌協作」**，即可展開右側專屬調度中樞抽屜。
+- **三大經典協作模式**：
+  - 🔄 **鏈式接力 (Sequential Relay)**：`Claude ➔ ChatGPT ➔ Gemini ➔ Grok`，每一位 AI 回應完成後，系統自動擷取其精華觀點，套用專業交接範本指派給下一位 AI 接續深化。
+  - ⚔️ **交叉辯論與審計 (Debate & Review)**：方案產出後自動指派另一模型進行安全性審計、挑刺與漏洞挖掘，實現紅藍攻防與邏輯互校。
+  - 👑 **主控指揮 (Master & Workers)**：協調大模型將複雜目標拆解為子模組，分發予專長模型實作後匯報。
+- **自動化監控與防護**：
+  - 內建各平臺 DOM 響應擷取器（Response Extractors）與流式生成檢測器（Streaming Detectors），自動於輸出穩態時精準交棒。
+  - 支援最大輪數限制（1 ~ 5 輪）與即時暫停/終止，杜絕無窮迴圈與過度消耗。
+  - 即時顯示當前發言 AI、接棒狀態與完整的對話接力歷史日誌。
+
+### 7.6 跨 AI 一鍵同步提問 (1-Click Concurrent Prompt Sync)
 - **統一底部輸入列**：工作站底部常駐跨 AI 統一輸入框。
 - **目標平台核選**：可自由勾選要派發提問的平台（Claude、ChatGPT、Gemini、Grok，預設全選）。
 - **即時並發派發**：輸入問題後按下 `Enter`（或點擊 **「一鍵同步發送 🚀」**），系統會同時將 Prompt 填入各平台輸入框並自動觸發送出（支援換行 `Shift + Enter`）。
 
-### 7.3 帳號安全與會話持久化 (Session Persistence)
+### 7.7 帳號安全與會話持久化 (Session Persistence)
 - **本地獨立存儲**：所有 Cookie 與登入憑證均隔離存放於本機 `~/Library/Application Support/nomad-desktop` 目錄。
 - **一次登入，永久記住**：四大 AI 帳號只需在工作站內登入一次，關閉程式或重新開機後仍完整保持登入狀態。
 - **零中繼隱私**：直接與各官方站點建立安全 TLS 連線，無任何代理伺服器或第三方數據庫介入。
 
-### 7.4 安裝與啟動方式 (Installation & Launch)
+### 7.8 安裝與啟動方式 (Installation & Launch)
 - **官方 GitHub Releases 下載各平台安裝包**：
   - 前往 [GitHub Releases 最新發布頁](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest) 直接下載對應系統安裝包：
     - 🍏 **macOS**：下載 `Nomad-AI-Studio-1.3.0-arm64.dmg` 拖曳至 Applications 安裝（或下載綠色版 Zip）。

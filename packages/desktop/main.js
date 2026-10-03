@@ -3,6 +3,8 @@ const path = require('path');
 const { store } = require('./src/store');
 const { calculateLayoutBounds, ALL_PLATFORMS } = require('./src/layout-engine');
 const { PLATFORM_INJECTORS } = require('./src/injectors');
+const { PLATFORM_EXTRACTORS } = require('./src/extractors');
+const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
 const { TrayAndShortcutManager } = require('./src/tray');
 
@@ -21,6 +23,7 @@ let mainWindow = null;
 const views = {};
 let trayManager = null;
 let bridge = null;
+let orchestrator = null;
 app.isQuitting = false;
 
 const TOP_BAR_HEIGHT = 52;
@@ -139,10 +142,54 @@ async function createMainWindow() {
     mainWindow.show();
   });
 
-  // 4. Initialize Local Sync Bridge
+  // 4. Initialize Multi-AI Orchestrator Engine
+  orchestrator = new MultiAiOrchestrator({
+    injectPrompt: async (platform, text) => {
+      return await dispatchPromptToTargets(text, [platform]);
+    },
+    extractResponse: async (platform) => {
+      const item = views[platform];
+      if (!item) return { ok: false, error: 'Platform view not found' };
+      const extractorScript = PLATFORM_EXTRACTORS[platform]?.getLatestResponse();
+      if (!extractorScript) return { ok: false, error: 'Extractor script not found' };
+      try {
+        const res = await item.view.webContents.executeJavaScript(extractorScript);
+        return res || { ok: false, error: 'Empty script result' };
+      } catch (err) {
+        return { ok: false, error: err.message };
+      }
+    },
+    checkStreaming: async (platform) => {
+      const item = views[platform];
+      if (!item) return { ok: false, isStreaming: false };
+      const statusScript = PLATFORM_EXTRACTORS[platform]?.checkStatus();
+      if (!statusScript) return { ok: false, isStreaming: false };
+      try {
+        const res = await item.view.webContents.executeJavaScript(statusScript);
+        return res || { ok: true, isStreaming: false };
+      } catch (err) {
+        return { ok: false, isStreaming: false, error: err.message };
+      }
+    },
+    onStep: (event) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:orchestration-step', event);
+      }
+      bridge?.broadcast('orchestration-step', event);
+    },
+    onComplete: (summary) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:orchestration-step', { type: 'completed', summary });
+      }
+      bridge?.broadcast('orchestration-completed', summary);
+    },
+  });
+
+  // 5. Initialize Local Sync Bridge
   bridge = new LocalSyncBridge({
     port: store.get('bridgePort') || 8765,
     host: '127.0.0.1',
+    orchestrator,
     getStatus: () => ({
       layout: store.get('layout'),
       activePlatforms: store.get('activePlatforms'),
@@ -201,7 +248,7 @@ async function createMainWindow() {
     console.error('[Nomad Desktop] Failed to start local sync bridge:', err);
   }
 
-  // 5. Initialize Tray and Global Shortcuts
+  // 6. Initialize Tray and Global Shortcuts
   trayManager = new TrayAndShortcutManager({
     mainWindow,
     store,
@@ -291,10 +338,39 @@ ipcMain.on('nomad:dispatch-prompt', async (event, { prompt, targets }) => {
   await dispatchPromptToTargets(prompt, targets);
 });
 
+// Multi-AI Orchestration IPC Handlers
+ipcMain.handle('nomad:orchestration-start', async (event, options) => {
+  if (!orchestrator) return { success: false, errorCode: 'ORCHESTRATOR_NOT_READY' };
+  return await orchestrator.start(options);
+});
+
+ipcMain.handle('nomad:orchestration-pause', async () => {
+  if (!orchestrator) return { success: false, errorCode: 'ORCHESTRATOR_NOT_READY' };
+  return orchestrator.pause();
+});
+
+ipcMain.handle('nomad:orchestration-resume', async () => {
+  if (!orchestrator) return { success: false, errorCode: 'ORCHESTRATOR_NOT_READY' };
+  return orchestrator.resume();
+});
+
+ipcMain.handle('nomad:orchestration-stop', async () => {
+  if (!orchestrator) return { success: false, errorCode: 'ORCHESTRATOR_NOT_READY' };
+  return orchestrator.stop();
+});
+
+ipcMain.handle('nomad:orchestration-status', async () => {
+  if (!orchestrator) return { status: 'offline' };
+  return orchestrator.getStatus();
+});
+
 // App Lifecycle
 app.on('before-quit', async () => {
   app.isQuitting = true;
   trayManager?.destroy();
+  if (orchestrator) {
+    orchestrator.stop();
+  }
   if (bridge) {
     try { await bridge.stop(); } catch (e) {}
   }

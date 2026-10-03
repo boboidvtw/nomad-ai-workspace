@@ -163,6 +163,21 @@
       background: rgba(255, 255, 255, 0.08);
       color: #f8fafc;
     }
+    .btn-roundtable {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(99, 102, 241, 0.25));
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      color: #c4b5fd;
+    }
+    .btn-roundtable:hover {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(99, 102, 241, 0.4));
+      color: #ede9fe;
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+    }
+    .btn-roundtable.active {
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: white;
+      box-shadow: 0 0 16px rgba(124, 58, 237, 0.4);
+    }
     .pulse-dot {
       width: 7px;
       height: 7px;
@@ -170,8 +185,12 @@
       background: #10b981;
       box-shadow: 0 0 8px #10b981;
     }
+    .pulse-purple {
+      background: #a855f7;
+      box-shadow: 0 0 8px #a855f7;
+    }
 
-    /* Modal / Popover */
+    /* Modals & Popovers */
     .popover-panel {
       position: absolute;
       top: 56px;
@@ -235,6 +254,136 @@
       text-align: center;
       font-weight: 600;
       color: #38bdf8;
+    }
+
+    /* AI Orchestrator Drawer Panel */
+    .orch-drawer {
+      position: absolute;
+      top: 52px;
+      right: 0;
+      width: 420px;
+      height: calc(100vh - 52px - 68px);
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(24px);
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6);
+      display: none;
+      flex-direction: column;
+      z-index: 150;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .orch-header {
+      padding: 14px 18px;
+      background: rgba(30, 41, 59, 0.5);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .orch-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      user-select: text;
+    }
+    .orch-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+    }
+    .orch-mode-selector {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-orch-mode {
+      flex: 1;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      color: #cbd5e1;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .btn-orch-mode.active {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: #a78bfa;
+      color: #c4b5fd;
+      font-weight: 700;
+    }
+    .orch-textarea {
+      width: 100%;
+      height: 80px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 10px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+      resize: vertical;
+    }
+    .orch-textarea:focus {
+      border-color: #a78bfa;
+    }
+    .orch-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-orch-action {
+      flex: 1;
+      height: 36px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .btn-orch-start {
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: white;
+    }
+    .btn-orch-start:hover { filter: brightness(1.1); }
+    .btn-orch-pause { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; }
+    .btn-orch-stop { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+    .orch-status-box {
+      padding: 10px 12px;
+      background: rgba(139, 92, 246, 0.08);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 8px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .orch-log-item {
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .orch-log-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
     }
 
     /* Content Placeholder / Background */
@@ -358,6 +507,12 @@
         <button class="btn-ratio" id="ratio-60" onclick="setRatio(0.6)">6:4</button>
       </div>
 
+      <!-- AI Round-Table Orchestration Trigger Button -->
+      <div class="pill-info btn-roundtable" id="btn-roundtable" onclick="toggleOrchDrawer()">
+        <span class="pulse-dot pulse-purple"></span>
+        <span>🤝 AI 圓桌協作</span>
+      </div>
+
       <!-- Zoom Popover Toggle -->
       <div class="pill-info" onclick="toggleZoomPanel()">
         <span>🔍 視圖縮放</span>
@@ -430,6 +585,85 @@
     </div>
   </div>
 
+  <!-- AI Orchestrator Drawer Panel -->
+  <div class="orch-drawer" id="orch-drawer">
+    <div class="orch-header">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 16px;">🤝</span>
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: #f8fafc;">跨 AI 圓桌協作與任務指派</div>
+          <div style="font-size: 10px; color: #94a3b8;">多 AI 自主通話、接力推理與交叉審查</div>
+        </div>
+      </div>
+      <span style="cursor: pointer; color: #94a3b8; font-size: 14px;" onclick="toggleOrchDrawer()">✕</span>
+    </div>
+
+    <div class="orch-body">
+      <!-- Mode Selection -->
+      <div class="orch-section-title">協作模式</div>
+      <div class="orch-mode-selector">
+        <button class="btn-orch-mode active" id="mode-relay" onclick="setOrchMode('relay')">🔄 任務接力</button>
+        <button class="btn-orch-mode" id="mode-debate" onclick="setOrchMode('debate')">⚔️ 交叉辯論</button>
+        <button class="btn-orch-mode" id="mode-master" onclick="setOrchMode('master')">👑 主控分工</button>
+      </div>
+
+      <!-- Sequence & Rounds -->
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 2;">
+          <div class="orch-section-title" style="margin-bottom: 5px;">發言接力順序</div>
+          <div style="font-size: 11px; color: #38bdf8; font-weight: 600;" id="orch-sequence-text">
+            Claude ➔ ChatGPT ➔ Gemini ➔ Grok
+          </div>
+        </div>
+        <div style="flex: 1;">
+          <div class="orch-section-title" style="margin-bottom: 5px;">最大輪數</div>
+          <select id="orch-rounds" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; border-radius: 6px; padding: 4px 6px; font-size: 12px; outline: none;">
+            <option value="1">1 輪</option>
+            <option value="2" selected>2 輪</option>
+            <option value="3">3 輪</option>
+            <option value="5">5 輪</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Initial Task Prompt -->
+      <div class="orch-section-title">初始議題與目標任務</div>
+      <textarea id="orch-task-input" class="orch-textarea" placeholder="輸入要讓 AI 互相探討、接力推進的議題或代碼任務...&#10;例如：請 Claude 先提出分佈式快取架構方案，ChatGPT 進行安全性審查並挑刺，Gemini 補充雲原生實作，Grok 壓力測試邊界情況。"></textarea>
+
+      <!-- Control Buttons -->
+      <div class="orch-actions">
+        <button class="btn-orch-action btn-orch-start" id="btn-orch-start" onclick="handleOrchStart()">
+          <span>▶️ 啟動圓桌協作</span>
+        </button>
+        <button class="btn-orch-action btn-orch-pause" id="btn-orch-pause" onclick="handleOrchPause()" style="display: none;">
+          <span>⏸️ 暫停</span>
+        </button>
+        <button class="btn-orch-action btn-orch-stop" id="btn-orch-stop" onclick="handleOrchStop()" style="display: none;">
+          <span>⏹️ 終止</span>
+        </button>
+      </div>
+
+      <!-- Live Status HUD -->
+      <div class="orch-status-box" id="orch-status-box" style="display: none;">
+        <div style="display: flex; justify-content: space-between; font-weight: 700;">
+          <span id="orch-status-label" style="color: #c4b5fd;">運行狀態: 協作進行中</span>
+          <span id="orch-round-label" style="color: #94a3b8;">第 1/2 輪</span>
+        </div>
+        <div id="orch-speaker-label" style="color: #38bdf8; font-weight: 600;">
+          🟢 Claude 發言思考中...
+        </div>
+      </div>
+
+      <!-- Relay History Logs -->
+      <div class="orch-section-title">對話接力日誌</div>
+      <div id="orch-log-container" style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 11px; color: #64748b; font-style: italic; text-align: center; padding: 12px 0;">
+          尚未啟動協作。點擊上方按鈕開始 AI 自主通話！
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Content Space for WebContentsViews -->
   <div class="content-area"></div>
 
@@ -462,6 +696,13 @@
       bridgePort: 8765,
     };
 
+    let orchState = {
+      mode: 'relay',
+      sequence: ['claude', 'chatgpt', 'gemini', 'grok'],
+      status: 'idle',
+      logs: [],
+    };
+
     // Initialize state from Main process
     async function init() {
       if (window.nomadDesktop && window.nomadDesktop.getSettings) {
@@ -481,6 +722,13 @@
       if (window.nomadDesktop && window.nomadDesktop.onPromptDispatched) {
         window.nomadDesktop.onPromptDispatched(({ prompt }) => {
           console.log('[Nomad UI] Remote prompt dispatched:', prompt);
+        });
+      }
+
+      // Listen to Orchestration events
+      if (window.nomadDesktop && window.nomadDesktop.onOrchestrationStep) {
+        window.nomadDesktop.onOrchestrationStep((stepEvent) => {
+          handleOrchStepEvent(stepEvent);
         });
       }
     }
@@ -556,7 +804,7 @@
     function togglePlatform(platform) {
       const idx = state.activePlatforms.indexOf(platform);
       if (idx >= 0) {
-        if (state.activePlatforms.length <= 1) return; // Keep at least one
+        if (state.activePlatforms.length <= 1) return;
         state.activePlatforms.splice(idx, 1);
       } else {
         state.activePlatforms.push(platform);
@@ -624,6 +872,122 @@
       const orig = textEl.textContent;
       textEl.textContent = '已複製位址!';
       setTimeout(() => { textEl.textContent = orig; }, 1500);
+    }
+
+    // Orchestration Controls
+    function toggleOrchDrawer() {
+      const drawer = document.getElementById('orch-drawer');
+      const btn = document.getElementById('btn-roundtable');
+      const isVisible = drawer.style.display === 'flex';
+      drawer.style.display = isVisible ? 'none' : 'flex';
+      if (!isVisible) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    }
+
+    function setOrchMode(mode) {
+      orchState.mode = mode;
+      document.querySelectorAll('.btn-orch-mode').forEach(b => b.classList.remove('active'));
+      document.getElementById('mode-' + mode).classList.add('active');
+    }
+
+    async function handleOrchStart() {
+      const input = document.getElementById('orch-task-input');
+      const prompt = input.value.trim();
+      if (!prompt) {
+        alert('請先輸入初始協作議題或目標任務！');
+        return;
+      }
+
+      const rounds = parseInt(document.getElementById('orch-rounds').value, 10) || 2;
+      const sequence = state.activePlatforms.length >= 2 ? [...state.activePlatforms] : [...ALL_PLATFORMS];
+
+      document.getElementById('btn-orch-start').style.display = 'none';
+      document.getElementById('btn-orch-pause').style.display = 'flex';
+      document.getElementById('btn-orch-stop').style.display = 'flex';
+      document.getElementById('orch-status-box').style.display = 'flex';
+
+      const res = await window.nomadDesktop.orchestrationStart({
+        prompt,
+        sequence,
+        mode: orchState.mode,
+        maxRounds: rounds,
+      });
+
+      if (!res.success) {
+        alert('啟動失敗: ' + (res.message || res.errorCode));
+        handleOrchStopUI();
+      }
+    }
+
+    async function handleOrchPause() {
+      const btn = document.getElementById('btn-orch-pause');
+      if (orchState.status === 'paused') {
+        await window.nomadDesktop.orchestrationResume();
+        btn.innerHTML = '<span>⏸️ 暫停</span>';
+      } else {
+        await window.nomadDesktop.orchestrationPause();
+        btn.innerHTML = '<span>▶️ 繼續</span>';
+      }
+    }
+
+    async function handleOrchStop() {
+      await window.nomadDesktop.orchestrationStop();
+      handleOrchStopUI();
+    }
+
+    function handleOrchStopUI() {
+      document.getElementById('btn-orch-start').style.display = 'flex';
+      document.getElementById('btn-orch-pause').style.display = 'none';
+      document.getElementById('btn-orch-stop').style.display = 'none';
+      document.getElementById('orch-status-box').style.display = 'none';
+      orchState.status = 'idle';
+    }
+
+    function handleOrchStepEvent(event) {
+      orchState.status = event.status || orchState.status;
+      const statusBox = document.getElementById('orch-status-box');
+      const roundLabel = document.getElementById('orch-round-label');
+      const speakerLabel = document.getElementById('orch-speaker-label');
+      const logContainer = document.getElementById('orch-log-container');
+
+      if (event.round && event.maxRounds) {
+        roundLabel.textContent = `第 ${event.round}/${event.maxRounds} 輪`;
+      }
+
+      if (event.type === 'turn-start') {
+        statusBox.style.display = 'flex';
+        speakerLabel.textContent = `🟢 ${event.speaker.toUpperCase()} 思考發言中...`;
+      } else if (event.type === 'waiting-response') {
+        speakerLabel.textContent = `⏳ 等待 ${event.speaker.toUpperCase()} 完成輸出...`;
+      } else if (event.type === 'turn-complete') {
+        speakerLabel.textContent = `✅ ${event.speaker.toUpperCase()} 完成，準備接力給 ${event.nextSpeaker ? event.nextSpeaker.toUpperCase() : ''}...`;
+
+        // Add log entry
+        const card = document.createElement('div');
+        card.className = 'orch-log-item';
+        card.innerHTML = `
+          <div class="orch-log-header">
+            <span style="color: #38bdf8;">【第 ${event.round} 輪】${event.speaker.toUpperCase()}</span>
+            <span style="color: #64748b;">${new Date().toLocaleTimeString()}</span>
+          </div>
+          <div style="color: #e2e8f0; max-height: 80px; overflow-y: auto; white-space: pre-wrap;">${escapeHtml(event.responseSnippet)}...</div>
+        `;
+        // Clear placeholder if first
+        if (logContainer.children.length === 1 && logContainer.children[0].innerText.includes('尚未啟動')) {
+          logContainer.innerHTML = '';
+        }
+        logContainer.prepend(card);
+      } else if (event.type === 'completed' || event.type === 'stopped') {
+        handleOrchStopUI();
+        speakerLabel.textContent = event.type === 'completed' ? '🎉 多 AI 協作全數達成！' : '協作已終止';
+      }
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     // Manual checkbox toggle marks it as user-edited

@@ -119,3 +119,52 @@ test('Bridge: Layout, Zoom and Window control endpoints', async () => {
     await bridge.stop();
   }
 });
+
+test('Bridge: Orchestration endpoints (status, start, pause, resume, stop)', async () => {
+  let startedWith = null;
+  const mockOrch = {
+    getStatus: () => ({ status: 'idle', round: 1 }),
+    start: async (opts) => { startedWith = opts; return { success: true, data: { started: true } }; },
+    pause: () => ({ success: true, status: 'paused' }),
+    resume: () => ({ success: true, status: 'running' }),
+    stop: () => ({ success: true, status: 'stopped' }),
+  };
+
+  const bridge = new LocalSyncBridge({
+    port: 19879,
+    host: '127.0.0.1',
+    orchestrator: mockOrch,
+  });
+
+  const { url } = await bridge.start();
+
+  try {
+    // 1. Status
+    const stRes = await fetch(`${url}/api/orchestration/status`);
+    const stJson = await stRes.json();
+    assert.strictEqual(stJson.success, true);
+    assert.strictEqual(stJson.data.status, 'idle');
+
+    // 2. Start
+    const startRes = await fetch(`${url}/api/orchestration/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: 'Orchestration prompt', sequence: ['claude', 'chatgpt'] }),
+    });
+    const startJson = await startRes.json();
+    assert.strictEqual(startJson.success, true);
+    assert.strictEqual(startedWith.prompt, 'Orchestration prompt');
+
+    // 3. Pause, Resume, Stop
+    const pRes = await fetch(`${url}/api/orchestration/pause`, { method: 'POST' });
+    assert.strictEqual((await pRes.json()).status, 'paused');
+
+    const rRes = await fetch(`${url}/api/orchestration/resume`, { method: 'POST' });
+    assert.strictEqual((await rRes.json()).status, 'running');
+
+    const sRes = await fetch(`${url}/api/orchestration/stop`, { method: 'POST' });
+    assert.strictEqual((await sRes.json()).status, 'stopped');
+  } finally {
+    await bridge.stop();
+  }
+});
