@@ -1,6 +1,6 @@
 {
   "name": "nomad-ai-workspace",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Unified local-first workspace for Gemini, Claude, ChatGPT, and Grok with hierarchical multi-AI sidebar and segregated Google Drive sync.",
   "packageManager": "bun@1.3.12",
   "license": "GPL-3.0",

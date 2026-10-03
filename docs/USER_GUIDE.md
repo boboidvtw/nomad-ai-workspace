@@ -184,7 +184,40 @@ Nomad AI Workspace 內建多種現代圖表與科學計算排版引擎：
   - 隨時將本機所有四大平台資料夾結構、星標對話與自訂提示詞匯出為獨立 JSON 備份檔，並支援跨裝置一鍵導入復原。
 ---
 
-## 7. 🔄 更新後重新載入方式 (How to Reload)
+
+---
+
+## 7. 🖥️ Nomad AI Studio 獨立桌面超級工作站 (Standalone Desktop Workstation)
+
+除了瀏覽器擴充功能外，Nomad AI Workspace 亦提供了基於 Electron 的原生獨立桌面應用程式——**Nomad AI Studio**，專為需要高頻在四大頂尖 AI 間進行同屏對比與並發提問的專業人士設計。
+
+### 7.1 三大多視窗動態版面 (Layout Modes)
+點擊頂部導航列的版面按鈕，即可瞬間在三種模式間流暢切換：
+- **四分割九宮格 (Quad 4-Split Grid)**：全螢幕同屏展示 Claude、ChatGPT、Gemini 與 Grok，四家模型回答即時橫向對比。
+- **雙欄對話 (Dual 2-Column)**：精選兩大主流模型並排顯示，便於深入探討與邏輯互校。
+- **單欄專注 (Focus 1-Column)**：全螢幕單一視窗，享受無干擾的深度推理工作流。
+
+### 7.2 跨 AI 一鍵同步提問 (1-Click Concurrent Prompt Sync)
+- **統一底部輸入列**：工作站底部常駐跨 AI 統一輸入框。
+- **目標平台核選**：可自由勾選要派發提問的平台（Claude、ChatGPT、Gemini、Grok，預設全選）。
+- **即時並發派發**：輸入問題後按下 `Enter`（或點擊 **「一鍵同步發送 🚀」**），系統會同時將 Prompt 填入各平台輸入框並自動觸發送出（支援換行 `Shift + Enter`）。
+
+### 7.3 帳號安全與會話持久化 (Session Persistence)
+- **本地獨立存儲**：所有 Cookie 與登入憑證均隔離存放於本機 `~/Library/Application Support/nomad-desktop` 目錄。
+- **一次登入，永久記住**：四大 AI 帳號只需在工作站內登入一次，關閉程式或重新開機後仍完整保持登入狀態。
+- **零中繼隱私**：直接與各官方站點建立安全 TLS 連線，無任何代理伺服器或第三方數據庫介入。
+
+### 7.4 安裝與啟動方式 (Installation & Launch)
+- **macOS 原生 App**：已編譯為 `/Applications/Nomad AI Studio.app`，亦可在桌面雙擊 `Nomad AI Studio.app` 直接開啟。
+- **開發者命令列啟動**：在專案目錄執行：
+  ```bash
+  npm run desktop
+  ```
+  若需調試開發者工具，可執行 `npm run desktop:dev`。
+
+---
+
+## 8. 🔄 更新後重新載入方式 (How to Reload)
 
 1. 開啟 Chrome 擴充功能管理頁面：`chrome://extensions/`。
 2. 找到 **Nomad AI Workspace** 並點擊卡片右下角的 **「重新載入 (🔄)」** 圖示。

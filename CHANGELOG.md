@@ -4,6 +4,26 @@
 
 ---
 
+## [1.3.0] - 2026-10-03
+
+### 🤖 專案里程碑：Nomad AI Studio 獨立桌面超級工作站與四大 AI 同屏同步提問 (Nomad AI Studio Workstation & 4-AI Prompt Sync)
+全新推出基於 Electron 40 的獨立桌面端（`packages/desktop`），正式實現 Google Gemini、Anthropic Claude、OpenAI ChatGPT 與 xAI Grok 四大 AI 的全螢幕同屏聚合工作台與跨平台一鍵並發同步提問。
+
+### 🚀 新增功能 (Added)
+- **Nomad AI Studio 獨立桌面超級工作站 (`packages/desktop`)**：
+  - 基於 Electron 40 與現代 `WebContentsView` 構建高性能同屏聚合工作站，打破多標籤頁手動切換的認知負擔。
+  - **動態多視窗版面**：支援 Quad（四分割九宮格對比）、Dual（雙欄並排對話）與 Focus（單欄專注）三大版面秒級無縫切換。
+  - **跨 AI 一鍵並發同步提問 (Concurrent Prompt Dispatcher)**：底部全域統一輸入框，選取目標 AI 引擎（預設全選），一鍵將同一題目同步派發並自動觸發提交。
+  - **四大 AI 專屬注入適配器 (Platform Injector Pipeline)**：
+    - **Claude**：ProseMirror 富文本游標定位與發送按鈕觸發。
+    - **ChatGPT**：`#prompt-textarea` 聚焦、PointerEvent/MouseEvent 組合事件序列與 Enter 鍵發送。
+    - **Google Gemini**：突破 Google CSP **Trusted Types (`TrustedHTML`)** 限制，全原生 DOM 節點工廠安全注入；精確鎖定 Quill `<p>` 游標，配合 Angular 變更檢測階梯式重試（150ms/400ms/700ms）。
+    - **xAI Grok**：適配繁中語系 Placeholder、多面積可視區域智能鎖定主輸入框，調用 React 18 原生原型鏈 Setter（`HTMLTextAreaElement.prototype.value`）與 `setRangeText`，支援 Form `requestSubmit` 與動態 Lucide 發送箭頭按鈕點擊。
+  - **零信任本地會話持久化**：獨立本地 Session 存儲於 `~/Library/Application Support/nomad-desktop`，一次登入永久保持，完全無中繼伺服器介入。
+  - **macOS 原生應用程式與 Retina 圖示**：已安裝雙重本地原生 App（`/Applications/Nomad AI Studio.app` 及 `~/Desktop/Nomad AI Studio.app`），並可於專案根目錄執行 `npm run desktop` 或 `npm run desktop:dev` 開發模式。
+
+---
+
 ## [1.2.0] - 2026-10-02
 
 ### 🤖 專案里程碑：xAI Grok 官方深度適配與四大 AI 雲端同步中樞 (Grok Platform Support & 4-Platform Sync)

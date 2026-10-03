@@ -181,7 +181,40 @@ Open the Nomad control center via the extension icon in your browser toolbar:
 
 ---
 
-## 7. 🔄 How to Reload After Updates
+
+---
+
+## 7. 🖥️ Nomad AI Studio Standalone Desktop Workstation
+
+Beyond browser extensions, Nomad AI Workspace offers a native standalone desktop application built on Electron 40 — **Nomad AI Studio**, engineered for professionals requiring high-frequency multi-AI concurrent prompt dispatching and side-by-side comparison.
+
+### 7.1 Dynamic Multi-View Layouts
+Toggle between three layouts instantly using the header navigation buttons:
+- **Quad (4-Split Grid)**: Displays Claude, ChatGPT, Gemini, and Grok on a single screen simultaneously for immediate cross-model output verification.
+- **Dual (2-Column Side-by-Side)**: Side-by-side comparison between two selected models for in-depth reasoning cross-checks.
+- **Focus (Single Column)**: Full-width view dedicated to one AI engine for distraction-free deep work.
+
+### 7.2 1-Click Concurrent Prompt Dispatcher
+- **Unified Global Input Bar**: Persistent composer at the bottom of the workstation.
+- **Target Selection**: Check or uncheck target AI engines (Claude, ChatGPT, Gemini, Grok — all selected by default).
+- **Simultaneous Submission**: Press `Enter` (or click **"Dispatch All 🚀"**) to populate the prompt into all selected AI inputs and automatically trigger submission (use `Shift + Enter` for newlines).
+
+### 7.3 Zero-Trust Security & Session Persistence
+- **Local Isolated Storage**: All cookies and authentication credentials are saved locally in `~/Library/Application Support/nomad-desktop`.
+- **Persistent Logins**: Log in once to each AI service; sessions persist across application restarts.
+- **Direct Official Connection**: All traffic routes directly to official AI endpoints via TLS with zero proxy or intermediary telemetry servers.
+
+### 7.4 Installation & Quick Launch
+- **macOS Native App**: Available in `/Applications/Nomad AI Studio.app` and on your Desktop.
+- **Command Line Launch**:
+  ```bash
+  npm run desktop
+  ```
+  For development with DevTools enabled, run `npm run desktop:dev`.
+
+---
+
+## 8. 🔄 How to Reload After Updates
 
 1. Open Chrome extension management page at `chrome://extensions/`.
 2. Locate **Nomad AI Workspace** and click the **Reload (🔄)** icon in the bottom-right corner.
