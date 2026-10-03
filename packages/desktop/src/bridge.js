@@ -29,6 +29,7 @@ class LocalSyncBridge {
     this.orchestrator = options.orchestrator || null;
     this.onInspectPlatform = options.onInspectPlatform || null;
     this.onEvalScript = options.onEvalScript || null;
+    this.sessionManager = options.sessionManager || null;
 
     this.server = null;
     this.sseClients = new Set();
@@ -304,6 +305,49 @@ class LocalSyncBridge {
         }
         const result = await Promise.resolve(this.onEvalScript(body.platform, body.script));
         return this.sendJson(res, 200, { success: true, data: result });
+      }
+
+            // 9. Workspace & Session Management Endpoints
+      if (pathname === "/api/workspaces" && req.method === "GET") {
+        const list = this.sessionManager ? this.sessionManager.getWorkspaces() : [];
+        const activeId = this.sessionManager ? this.sessionManager.getActiveWorkspaceId() : null;
+        return this.sendJson(res, 200, { success: true, data: { workspaces: list, activeId } });
+      }
+
+      if (pathname === "/api/workspaces/create" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        if (!this.sessionManager) {
+          return this.sendJson(res, 501, { success: false, message: "SessionManager not configured" });
+        }
+        const ws = this.sessionManager.createWorkspace(body);
+        return this.sendJson(res, 200, { success: true, data: ws });
+      }
+
+      if (pathname === "/api/workspaces/switch" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        if (!this.sessionManager) {
+          return this.sendJson(res, 501, { success: false, message: "SessionManager not configured" });
+        }
+        const result = await this.sessionManager.switchWorkspace(body.id);
+        return this.sendJson(res, result.success ? 200 : 404, result);
+      }
+
+      if (pathname === "/api/workspaces/rename" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        if (!this.sessionManager) {
+          return this.sendJson(res, 501, { success: false, message: "SessionManager not configured" });
+        }
+        const updated = this.sessionManager.updateWorkspace(body.id, { title: body.title });
+        return this.sendJson(res, updated ? 200 : 404, { success: Boolean(updated), data: updated });
+      }
+
+      if (pathname === "/api/workspaces/delete" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        if (!this.sessionManager) {
+          return this.sendJson(res, 501, { success: false, message: "SessionManager not configured" });
+        }
+        const result = this.sessionManager.deleteWorkspace(body.id);
+        return this.sendJson(res, 200, result);
       }
 
       // 404 Route Not Found

@@ -1,3 +1,4 @@
+const { createSemanticTitle } = require("./session-manager");
 /**
  * Nomad AI Studio - Multi-AI Orchestrator Engine
  * Autonomous dialogue, task handoff, and debate coordination across AI engines.
@@ -5,24 +6,24 @@
  */
 
 const DEFAULT_TEMPLATES = {
-  relay: (from, to, text) => 
-`【來自 ${from.toUpperCase()} 的階段性輸出與任務交接】：
+  relay: (from, to, text, title) => 
+`${title ? `【協作專案主題】：${title}\n` : ""}【來自 ${from.toUpperCase()} 的階段性輸出與任務交接】：
 ----------------------------------------
 ${text}
 ----------------------------------------
 【指派給 ${to.toUpperCase()} 的接續任務】：
 請以你的專業架構視角接續推進上述內容，補充實作細節、優化潛在缺陷，並為下一階段提供明確方向。`,
 
-  debate: (from, to, text) =>
-`【來自 ${from.toUpperCase()} 的方案與論點】：
+  debate: (from, to, text, title) =>
+`${title ? `【協作專案主題】：${title}\n` : ""}【來自 ${from.toUpperCase()} 的方案與論點】：
 ----------------------------------------
 ${text}
 ----------------------------------------
 【${to.toUpperCase()} 交叉審計與辯駁任務】：
 請嚴格審查上述方案，挑出潛在缺陷、安全性漏洞與邊界條件，並提出更具說服力的改良方案。`,
 
-  master: (from, to, text) =>
-`【協調中樞指派任務】：
+  master: (from, to, text, title) =>
+`${title ? `【協作專案主題】：${title}\n` : ""}【協調中樞指派任務】：
 ----------------------------------------
 ${text}
 ----------------------------------------
@@ -58,6 +59,7 @@ class MultiAiOrchestrator {
     this.maxRounds = 2;
     this.turnDelayMs = 2500;
     this.customTemplate = null;
+    this.canonicalTitle = null;
 
     this.currentRound = 0;
     this.currentSpeakerIndex = 0;
@@ -69,6 +71,7 @@ class MultiAiOrchestrator {
   getStatus() {
     return {
       status: this.status,
+      canonicalTitle: this.canonicalTitle || null,
       mode: this.mode,
       sequence: this.sequence,
       maxRounds: this.maxRounds,
@@ -86,6 +89,7 @@ class MultiAiOrchestrator {
     maxRounds = 2,
     turnDelayMs = 2500,
     customTemplate = null,
+    canonicalTitle = null,
   }) {
     if (this.status === "running") {
       return {
@@ -117,6 +121,7 @@ class MultiAiOrchestrator {
     this.maxRounds = Math.min(10, Math.max(1, Number(maxRounds) || 2));
     this.turnDelayMs = Math.max(0, Number(turnDelayMs) ?? 2500);
     this.customTemplate = customTemplate;
+    this.canonicalTitle = canonicalTitle || createSemanticTitle(prompt);
     this.isAborted = false;
     this.isPaused = false;
     this.currentRound = 1;
@@ -146,6 +151,7 @@ class MultiAiOrchestrator {
         mode: this.mode,
         sequence: this.sequence,
         maxRounds: this.maxRounds,
+        canonicalTitle: this.canonicalTitle,
       },
     };
   }
@@ -182,6 +188,7 @@ class MultiAiOrchestrator {
       type,
       timestamp: new Date().toISOString(),
       status: this.status,
+      canonicalTitle: this.canonicalTitle || null,
       round: this.currentRound,
       maxRounds: this.maxRounds,
       speaker: this.sequence[this.currentSpeakerIndex],
@@ -195,7 +202,7 @@ class MultiAiOrchestrator {
   }
 
   async runLoop(initialPrompt) {
-    let currentInput = initialPrompt;
+    let currentInput = this.canonicalTitle ? `【協作專案主題】：${this.canonicalTitle}\n----------------------------------------\n${initialPrompt}` : initialPrompt;
 
     while (this.currentRound <= this.maxRounds && !this.isAborted) {
       for (let i = 0; i < this.sequence.length; i++) {
@@ -248,7 +255,7 @@ class MultiAiOrchestrator {
 
         // 3. Format next input for the next speaker
         const templateFn = this.customTemplate || DEFAULT_TEMPLATES[this.mode] || DEFAULT_TEMPLATES.relay;
-        currentInput = templateFn(speaker, nextSpeaker, responseText);
+        currentInput = templateFn(speaker, nextSpeaker, responseText, this.canonicalTitle);
 
         // Turn delay
         if (!this.isAborted && (i < this.sequence.length - 1 || this.currentRound < this.maxRounds)) {

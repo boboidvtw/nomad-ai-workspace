@@ -190,6 +190,57 @@
       box-shadow: 0 0 8px #a855f7;
     }
 
+    
+    /* Workspace Tab CSS */
+    .ws-item-card {
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .ws-item-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .ws-item-card.active {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.06);
+    }
+    .ws-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .btn-ws-op {
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-ws-op:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+    .btn-ws-restore {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .btn-ws-restore:hover {
+      background: rgba(56, 189, 248, 0.3);
+      color: #fff;
+    }
+
     /* Right Dock / Sidebar Drawer */
     .right-sidebar {
       position: absolute;
@@ -507,6 +558,12 @@
         <button class="btn-ratio" id="ratio-60" onclick="setRatio(0.6)">6:4</button>
       </div>
 
+      <!-- Workspace Pill -->
+      <div class="pill-info" id="btn-workspace-pill" onclick="openSidebarTab('ws')" title="點擊檢視與切換當前會話工作區 (MMDD | 類型 | 主題)">
+        <span>📁</span>
+        <span id="top-workspace-title" style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #38bdf8; font-weight: 700;">新協作對話</span>
+      </div>
+
       <!-- AI Round-Table Orchestration Trigger Button -->
       <div class="pill-info btn-roundtable" id="btn-roundtable" onclick="openSidebarTab('orch')">
         <span class="pulse-dot pulse-purple"></span>
@@ -535,8 +592,9 @@
   <div class="right-sidebar" id="right-sidebar">
     <div class="sidebar-header">
       <div class="sidebar-tabs">
-        <button class="btn-tab active" id="tab-btn-orch" onclick="switchSidebarTab('orch')">🤝 AI 圓桌協作</button>
-        <button class="btn-tab" id="tab-btn-zoom" onclick="switchSidebarTab('zoom')">🔍 視圖縮放與設定</button>
+        <button class="btn-tab active" id="tab-btn-orch" onclick="switchSidebarTab('orch')">🤝 圓桌接力</button>
+        <button class="btn-tab" id="tab-btn-ws" onclick="switchSidebarTab('ws')">📁 會話工作區</button>
+        <button class="btn-tab" id="tab-btn-zoom" onclick="switchSidebarTab('zoom')">🔍 縮放調控</button>
       </div>
       <span style="cursor: pointer; color: #94a3b8; font-size: 15px; padding: 2px 6px;" onclick="closeSidebar()">✕</span>
     </div>
@@ -607,7 +665,42 @@
       </div>
     </div>
 
-    <!-- TAB 2: VIEW ZOOM & SETTINGS -->
+    <!-- TAB 2: WORKSPACE & SESSION MANAGER -->
+    <div class="sidebar-content" id="tab-content-ws" style="display: none;">
+      <!-- Active Workspace Card -->
+      <div class="section-title">目前作用中會話 (Active Session)</div>
+      <div class="active-ws-card" style="padding: 12px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 13px; font-weight: 700; color: #38bdf8;" id="ws-active-title">新協作對話</span>
+          <button class="btn-ws-op" onclick="promptRenameActiveWs()" title="手動微調標題">✏️ 重新命名</button>
+        </div>
+        <div style="font-size: 11px; color: #94a3b8;" id="ws-active-time">建立時間: 剛才</div>
+        <div style="display: flex; gap: 6px; font-size: 10px;" id="ws-active-platforms"></div>
+      </div>
+
+      <!-- Action: New Multi-AI Session -->
+      <button class="btn-orch-action" onclick="handleNewSession()" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white; width: 100%;">
+        <span>➕ 開啟全新跨平臺協作對話 (New Session)</span>
+      </button>
+
+      <!-- Protocol Legend -->
+      <div style="padding: 8px 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 6px; font-size: 11px; color: #94a3b8; line-height: 1.5;">
+        <div style="color: #cbd5e1; font-weight: 600; margin-bottom: 2px;">🏷️ 語義對話命名遵循 AGENTS.md 第 7 節</div>
+        標準格式：<code style="color: #38bdf8;">MMDD | 類型 | 主題</code><br>
+        8 大維度：功能 / 修復 / 設計 / 優化 / 文件 / 探索 / 研究 / 發布。啟動圓桌任務時自動推斷並同調至各 AI 頁面！
+      </div>
+
+      <!-- Historical Workspaces List -->
+      <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>歷史工作區紀錄</span>
+        <span style="font-size: 10px; color: #64748b;" id="ws-count-badge">0 個</span>
+      </div>
+      <div id="ws-list-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto;">
+        <!-- Workspaces rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- TAB 3: VIEW ZOOM & SETTINGS -->
     <div class="sidebar-content" id="tab-content-zoom" style="display: none;">
       <div class="section-title">各平臺獨立縮放控制 (50% ~ 200%)</div>
 
@@ -855,6 +948,8 @@
 
       btnRound.classList.toggle('active', tab === 'orch');
       btnZoom.classList.toggle('active', tab === 'zoom');
+      const btnWs = document.getElementById('btn-workspace-pill');
+      if (btnWs) btnWs.classList.toggle('active', tab === 'ws');
 
       if (window.nomadDesktop && window.nomadDesktop.setDrawer) {
         window.nomadDesktop.setDrawer({ open: true });
@@ -864,13 +959,127 @@
     function switchSidebarTab(tab) {
       state.activeSidebarTab = tab;
       document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
-      document.getElementById('tab-btn-' + tab).classList.add('active');
+      const tabBtn = document.getElementById('tab-btn-' + tab);
+      if (tabBtn) tabBtn.classList.add('active');
 
       document.getElementById('tab-content-orch').style.display = tab === 'orch' ? 'flex' : 'none';
+      const wsTab = document.getElementById('tab-content-ws');
+      if (wsTab) wsTab.style.display = tab === 'ws' ? 'flex' : 'none';
       document.getElementById('tab-content-zoom').style.display = tab === 'zoom' ? 'flex' : 'none';
 
       document.getElementById('btn-roundtable').classList.toggle('active', tab === 'orch');
+      const wsPill = document.getElementById('btn-workspace-pill');
+      if (wsPill) wsPill.classList.toggle('active', tab === 'ws');
       document.getElementById('btn-zoom-toggle').classList.toggle('active', tab === 'zoom');
+
+      if (tab === 'ws') {
+        loadWorkspaces();
+      }
+    }
+
+    let workspacesState = {
+      workspaces: [],
+      activeWorkspaceId: null,
+      activeWorkspace: null
+    };
+
+    async function loadWorkspaces() {
+      if (!window.nomadDesktop || !window.nomadDesktop.getWorkspaces) return;
+      try {
+        const data = await window.nomadDesktop.getWorkspaces();
+        workspacesState = data || { workspaces: [], activeWorkspaceId: null };
+        renderWorkspaces();
+      } catch (err) {
+        console.warn('Failed to load workspaces:', err);
+      }
+    }
+
+    function renderWorkspaces() {
+      const topTitle = document.getElementById('top-workspace-title');
+      const activeTitle = document.getElementById('ws-active-title');
+      const activeTime = document.getElementById('ws-active-time');
+      const activePlatforms = document.getElementById('ws-active-platforms');
+      const listContainer = document.getElementById('ws-list-container');
+      const badge = document.getElementById('ws-count-badge');
+
+      const active = workspacesState.activeWorkspace || (workspacesState.workspaces && workspacesState.workspaces[0]);
+      if (active) {
+        if (topTitle) topTitle.textContent = active.title || '協作會話';
+        if (activeTitle) activeTitle.textContent = active.title || '協作會話';
+        if (activeTime) {
+          const t = active.createdAt ? new Date(active.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '剛剛';
+          activeTime.textContent = `建立時間: ${t} (${active.mode === 'debate' ? '交叉辯論' : '任務接力'})`;
+        }
+        if (activePlatforms) {
+          const seq = active.sequence || ['claude', 'chatgpt'];
+          activePlatforms.innerHTML = seq.map(p => `<span class="chip chip-${p} active" style="padding: 2px 6px; font-size: 10px;">${p.toUpperCase()}</span>`).join('');
+        }
+      } else {
+        if (topTitle) topTitle.textContent = '新協作對話';
+      }
+
+      if (badge) {
+        badge.textContent = `${workspacesState.workspaces.length} 個工作區`;
+      }
+
+      if (listContainer) {
+        if (!workspacesState.workspaces || workspacesState.workspaces.length === 0) {
+          listContainer.innerHTML = '<div style="color: #64748b; font-size: 11px; text-align: center; padding: 20px;">尚無歷史會話紀錄</div>';
+          return;
+        }
+
+        listContainer.innerHTML = workspacesState.workspaces.map(ws => {
+          const isActive = ws.id === workspacesState.activeWorkspaceId;
+          const timeStr = ws.updatedAt ? new Date(ws.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+          const hasUrls = ws.urls && Object.values(ws.urls).some(Boolean);
+
+          return `
+            <div class="ws-item-card ${isActive ? 'active' : ''}">
+              <div class="ws-title-row">
+                <span style="color: ${isActive ? '#38bdf8' : '#e2e8f0'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;" title="${escapeHtml(ws.title)}">
+                  ${isActive ? '👉 ' : ''}${escapeHtml(ws.title)}
+                </span>
+                <div style="display: flex; gap: 4px;">
+                  <button class="btn-ws-op btn-ws-restore" onclick="handleSwitchWorkspace('${ws.id}')" title="同步切換所有 AI 視圖至此會話">切換</button>
+                  <button class="btn-ws-op" onclick="handleDeleteWorkspace('${ws.id}')" title="刪除紀錄">✕</button>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #64748b;">
+                <span>${timeStr} · ${ws.mode || 'relay'}</span>
+                <span>${hasUrls ? '🔗 網址已同步' : '未儲存網址'}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    async function handleSwitchWorkspace(id) {
+      if (!window.nomadDesktop || !window.nomadDesktop.switchWorkspace) return;
+      await window.nomadDesktop.switchWorkspace(id);
+      await loadWorkspaces();
+    }
+
+    async function handleNewSession() {
+      if (!window.nomadDesktop || !window.nomadDesktop.newSession) return;
+      await window.nomadDesktop.newSession();
+      await loadWorkspaces();
+    }
+
+    async function promptRenameActiveWs() {
+      const active = workspacesState.activeWorkspace || (workspacesState.workspaces && workspacesState.workspaces[0]);
+      if (!active) return;
+      const newTitle = prompt('請輸入新的會話工作區名稱 (建議格式: MMDD | 類型 | 主題)：', active.title);
+      if (newTitle && newTitle.trim()) {
+        await window.nomadDesktop.renameWorkspace({ id: active.id, title: newTitle.trim() });
+        await loadWorkspaces();
+      }
+    }
+
+    async function handleDeleteWorkspace(id) {
+      if (!confirm('確定要刪除此工作區紀錄嗎？')) return;
+      await window.nomadDesktop.deleteWorkspace(id);
+      await loadWorkspaces();
     }
 
     function closeSidebar() {
@@ -878,6 +1087,8 @@
       document.getElementById('right-sidebar').style.display = 'none';
       document.getElementById('btn-roundtable').classList.remove('active');
       document.getElementById('btn-zoom-toggle').classList.remove('active');
+      const btnWs = document.getElementById('btn-workspace-pill');
+      if (btnWs) btnWs.classList.remove('active');
 
       if (window.nomadDesktop && window.nomadDesktop.setDrawer) {
         window.nomadDesktop.setDrawer({ open: false });

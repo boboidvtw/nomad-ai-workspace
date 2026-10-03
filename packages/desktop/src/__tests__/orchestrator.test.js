@@ -65,7 +65,8 @@ test('Orchestrator: Executes full round-robin relay sequence with state events',
   assert.strictEqual(orch.status, 'completed');
   assert.strictEqual(promptsInjected.length, 2);
   assert.strictEqual(promptsInjected[0].platform, 'claude');
-  assert.strictEqual(promptsInjected[0].text, 'Initial Goal');
+  assert.ok(promptsInjected[0].text.includes('Initial Goal'));
+  assert.ok(promptsInjected[0].text.includes('【協作專案主題】'));
 
   assert.strictEqual(promptsInjected[1].platform, 'chatgpt');
   assert.ok(promptsInjected[1].text.includes('CLAUDE 的階段性輸出與任務交接'));

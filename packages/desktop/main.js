@@ -7,6 +7,7 @@ const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
 const { TrayAndShortcutManager } = require('./src/tray');
+const { SessionManager } = require('./src/session-manager');
 
 const EXTENSION_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'dist_chrome')
@@ -24,6 +25,7 @@ const views = {};
 let trayManager = null;
 let bridge = null;
 let orchestrator = null;
+let sessionManager = null;
 let isDrawerOpen = false;
 app.isQuitting = false;
 
@@ -145,6 +147,12 @@ async function createMainWindow() {
     mainWindow.show();
   });
 
+  // 3.5 Initialize SessionManager
+  sessionManager = new SessionManager({
+    store,
+    getViews: () => views,
+  });
+
   // 4. Initialize Multi-AI Orchestrator Engine
   orchestrator = new MultiAiOrchestrator({
     injectPrompt: async (platform, text) => {
@@ -174,13 +182,32 @@ async function createMainWindow() {
         return { ok: false, isStreaming: false, error: err.message };
       }
     },
-    onStep: (event) => {
+    onStep: async (event) => {
+      if (event.type === 'turn-complete' && event.speaker && event.canonicalTitle) {
+        try {
+          await sessionManager?.applyInPageRenaming(event.speaker, event.canonicalTitle);
+        } catch (e) {
+          console.warn("[Nomad Desktop] Action failed:", e.message);
+        }
+        const activeWs = sessionManager?.getActiveWorkspace();
+        if (activeWs) {
+          sessionManager.captureActiveUrls(activeWs.id);
+        }
+      }
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('nomad:orchestration-step', event);
       }
       bridge?.broadcast('orchestration-step', event);
     },
-    onComplete: (summary) => {
+    onComplete: async (summary) => {
+      const activeWs = sessionManager?.getActiveWorkspace();
+      if (activeWs) {
+        sessionManager.captureActiveUrls(activeWs.id);
+        sessionManager.updateWorkspace(activeWs.id, { completed: true });
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
+        }
+      }
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('nomad:orchestration-step', { type: 'completed', summary });
       }
@@ -193,6 +220,7 @@ async function createMainWindow() {
     port: store.get('bridgePort') || 8765,
     host: '127.0.0.1',
     orchestrator,
+    sessionManager,
     getStatus: () => ({
       layout: store.get('layout'),
       activePlatforms: store.get('activePlatforms'),
@@ -387,7 +415,100 @@ ipcMain.on('nomad:dispatch-prompt', async (event, { prompt, targets }) => {
 // Multi-AI Orchestration IPC Handlers
 ipcMain.handle('nomad:orchestration-start', async (event, options) => {
   if (!orchestrator) return { success: false, errorCode: 'ORCHESTRATOR_NOT_READY' };
-  return await orchestrator.start(options);
+  let ws = sessionManager?.getActiveWorkspace();
+  if (!ws || options.title) {
+    ws = sessionManager?.createWorkspace({
+      title: options.title,
+      prompt: options.prompt,
+      sequence: options.sequence || options.speakers,
+      mode: options.mode,
+    });
+  } else if (options.prompt && !ws.title) {
+    sessionManager?.updateWorkspace(ws.id, {
+      title: options.title,
+      prompt: options.prompt,
+    });
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('nomad:workspaces-updated', sessionManager?.getAllWorkspaces() || []);
+  }
+  return await orchestrator.start({
+    ...options,
+    canonicalTitle: ws?.title,
+  });
+});
+
+// Workspace & Session Management IPC Handlers
+ipcMain.handle('nomad:get-workspaces', () => {
+  if (!sessionManager) return { activeWorkspaceId: null, workspaces: [] };
+  return {
+    activeWorkspaceId: sessionManager.getActiveWorkspaceId(),
+    activeWorkspace: sessionManager.getActiveWorkspace(),
+    workspaces: sessionManager.getAllWorkspaces(),
+  };
+});
+
+ipcMain.handle('nomad:switch-workspace', async (event, workspaceId) => {
+  if (!sessionManager) return { success: false, error: 'SessionManager not ready' };
+  const res = await sessionManager.switchWorkspace(workspaceId);
+  if (res.success && mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
+  }
+  return res;
+});
+
+ipcMain.handle('nomad:create-workspace', (event, data) => {
+  if (!sessionManager) return null;
+  const ws = sessionManager.createWorkspace(data);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
+  }
+  return ws;
+});
+
+ipcMain.handle('nomad:rename-workspace', (event, { id, title }) => {
+  if (!sessionManager) return null;
+  const ws = sessionManager.updateWorkspace(id, { title });
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
+  }
+  return ws;
+});
+
+ipcMain.handle('nomad:delete-workspace', (event, id) => {
+  if (!sessionManager) return false;
+  const ok = sessionManager.deleteWorkspace(id);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
+  }
+  return ok;
+});
+
+ipcMain.handle('nomad:new-session', async () => {
+  if (!sessionManager) return { success: false };
+  const newUrls = {
+    claude: 'https://claude.ai/new',
+    chatgpt: 'https://chatgpt.com/?model=gpt-4o',
+    gemini: 'https://gemini.google.com/app',
+    grok: 'https://grok.com/',
+  };
+  for (const [key, url] of Object.entries(newUrls)) {
+    if (views[key]?.view) {
+      try {
+        views[key].view.webContents.loadURL(url);
+      } catch (e) {
+        console.warn("[Nomad Desktop] Action failed:", e.message);
+      }
+    }
+  }
+  const ws = sessionManager.createWorkspace({
+    title: '新協作對話',
+    urls: newUrls,
+  });
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
+  }
+  return { success: true, workspace: ws };
 });
 
 ipcMain.handle('nomad:orchestration-pause', async () => {
