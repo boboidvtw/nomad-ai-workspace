@@ -544,7 +544,7 @@ ipcMain.handle('nomad:new-session', async () => {
   if (!sessionManager) return { success: false };
   const newUrls = {
     claude: 'https://claude.ai/new',
-    chatgpt: 'https://chatgpt.com/?model=gpt-4o',
+    chatgpt: 'https://chatgpt.com/',
     gemini: 'https://gemini.google.com/app',
     grok: 'https://grok.com/',
   };

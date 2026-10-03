@@ -225,8 +225,8 @@ async function runSuite() {
           completed: true,
           turns: 2,
           urls: {
-            claude: "https://claude.ai/chat/imported-1",
-            chatgpt: "https://chatgpt.com/c/imported-1",
+            claude: "https://claude.ai/new",
+            chatgpt: "https://chatgpt.com/",
             gemini: "",
             grok: "",
           },
@@ -286,6 +286,16 @@ async function runSuite() {
   if (createdWsId) {
     await request("/api/workspaces/delete", { method: "POST", body: { id: createdWsId } });
   }
+
+  // 確保測試完畢後將所有視圖恢復為乾淨的首頁網址，避免干擾使用者操作
+  await request("/api/debug/eval", {
+    method: "POST",
+    body: { platform: "chatgpt", script: "location.href = \"https://chatgpt.com/\";" }
+  }).catch(() => {});
+  await request("/api/debug/eval", {
+    method: "POST",
+    body: { platform: "claude", script: "location.href = \"https://claude.ai/new\";" }
+  }).catch(() => {});
 
   console.log("================================================================================");
   console.log("📊 測試統計結果總覽：");
