@@ -9,7 +9,8 @@ test('Store: Defaults are loaded when file does not exist', () => {
   const tmpFile = path.join(os.tmpdir(), `nomad-test-store-${Date.now()}.json`);
   const store = new SettingsStore(tmpFile).init();
 
-  assert.strictEqual(store.get('layout'), 'dual');
+  assert.strictEqual(store.get('layout'), 'focus');
+  assert.deepStrictEqual(store.get('activePlatforms'), ['chatgpt']);
   assert.strictEqual(store.get('shortcut'), 'CommandOrControl+Shift+Space');
   assert.strictEqual(store.get('bridgePort'), 8765);
   assert.strictEqual(store.getZoom('claude'), 1.0);

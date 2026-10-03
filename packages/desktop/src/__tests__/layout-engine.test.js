@@ -81,17 +81,17 @@ test('Layout Engine: Quad mode tiles 4 views in 2x2 grid', () => {
     activePlatforms: ALL_PLATFORMS,
   });
 
-  // Top-left
-  assert.strictEqual(bounds.claude.visible, true);
-  assert.strictEqual(bounds.claude.x, 0);
-  assert.strictEqual(bounds.claude.y, 50);
-  assert.strictEqual(bounds.claude.width, 600);
-  assert.strictEqual(bounds.claude.height, 350);
-
-  // Top-right
+  // Top-left (ChatGPT is primary index 0)
   assert.strictEqual(bounds.chatgpt.visible, true);
-  assert.strictEqual(bounds.chatgpt.x, 600);
+  assert.strictEqual(bounds.chatgpt.x, 0);
   assert.strictEqual(bounds.chatgpt.y, 50);
+  assert.strictEqual(bounds.chatgpt.width, 600);
+  assert.strictEqual(bounds.chatgpt.height, 350);
+
+  // Top-right (Claude is index 1)
+  assert.strictEqual(bounds.claude.visible, true);
+  assert.strictEqual(bounds.claude.x, 600);
+  assert.strictEqual(bounds.claude.y, 50);
 
   // Bottom-left
   assert.strictEqual(bounds.gemini.visible, true);

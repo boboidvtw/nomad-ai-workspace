@@ -8,12 +8,12 @@ const path = require('path');
 
 const DEFAULT_SETTINGS = {
   shortcut: 'CommandOrControl+Shift+Space',
-  layout: 'dual', // 'focus', 'dual', 'triple', 'quad', 'custom'
-  activePlatforms: ['claude', 'chatgpt'],
+  layout: 'focus', // 'focus', 'dual', 'triple', 'quad', 'custom'
+  activePlatforms: ['chatgpt'],
   splitRatio: 0.5,
   zoomFactors: {
-    claude: 1.0,
     chatgpt: 1.0,
+    claude: 1.0,
     gemini: 1.0,
     grok: 1.0,
   },

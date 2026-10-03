@@ -667,22 +667,22 @@
     <div class="controls">
       <!-- Layout Modes -->
       <div class="btn-group">
-        <button class="btn-mode" id="btn-focus" onclick="handleLayoutClick('focus')">單欄專注</button>
-        <button class="btn-mode active" id="btn-dual" onclick="handleLayoutClick('dual')">雙欄並排</button>
+        <button class="btn-mode active" id="btn-focus" onclick="handleLayoutClick('focus')">單欄專注</button>
+        <button class="btn-mode" id="btn-dual" onclick="handleLayoutClick('dual')">雙欄並排</button>
         <button class="btn-mode" id="btn-triple" onclick="handleLayoutClick('triple')">三欄對比</button>
         <button class="btn-mode" id="btn-quad" onclick="handleLayoutClick('quad')">四宮格競技</button>
       </div>
 
       <!-- Platform Active Chips -->
       <div class="platform-chips">
-        <div class="chip chip-claude active" id="chip-claude" onclick="togglePlatform('claude')"><span class="dot dot-claude"></span>Claude</div>
         <div class="chip chip-chatgpt active" id="chip-chatgpt" onclick="togglePlatform('chatgpt')"><span class="dot dot-chatgpt"></span>ChatGPT</div>
+        <div class="chip chip-claude" id="chip-claude" onclick="togglePlatform('claude')"><span class="dot dot-claude"></span>Claude</div>
         <div class="chip chip-gemini" id="chip-gemini" onclick="togglePlatform('gemini')"><span class="dot dot-gemini"></span>Gemini</div>
         <div class="chip chip-grok" id="chip-grok" onclick="togglePlatform('grok')"><span class="dot dot-grok"></span>Grok</div>
       </div>
 
       <!-- Split Ratio selector for Dual Mode -->
-      <div class="ratio-group" id="dual-ratios">
+      <div class="ratio-group" id="dual-ratios" style="display: none;">
         <button class="btn-ratio" id="ratio-40" onclick="setRatio(0.4)">4:6</button>
         <button class="btn-ratio active" id="ratio-50" onclick="setRatio(0.5)">5:5</button>
         <button class="btn-ratio" id="ratio-60" onclick="setRatio(0.6)">6:4</button>
@@ -933,8 +933,8 @@
   <!-- Bottom Bar: Universal Dispatcher -->
   <div class="bottom-bar">
     <div class="targets-group">
-      <label class="target-label"><input type="checkbox" id="check-claude" checked><span class="dot dot-claude"></span>Claude</label>
       <label class="target-label"><input type="checkbox" id="check-chatgpt" checked><span class="dot dot-chatgpt"></span>ChatGPT</label>
+      <label class="target-label"><input type="checkbox" id="check-claude"><span class="dot dot-claude"></span>Claude</label>
       <label class="target-label"><input type="checkbox" id="check-gemini"><span class="dot dot-gemini"></span>Gemini</label>
       <label class="target-label"><input type="checkbox" id="check-grok"><span class="dot dot-grok"></span>Grok</label>
     </div>
@@ -950,12 +950,12 @@
   </div>
 
   <script>
-    const ALL_PLATFORMS = ['claude', 'chatgpt', 'gemini', 'grok'];
+    const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok'];
     let state = {
-      layout: 'dual',
-      activePlatforms: ['claude', 'chatgpt'],
+      layout: 'focus',
+      activePlatforms: ['chatgpt'],
       splitRatio: 0.5,
-      zoomFactors: { claude: 1.0, chatgpt: 1.0, gemini: 1.0, grok: 1.0 },
+      zoomFactors: { chatgpt: 1.0, claude: 1.0, gemini: 1.0, grok: 1.0 },
       bridgePort: 8765,
       isSidebarOpen: false,
       activeSidebarTab: 'orch',
@@ -963,7 +963,7 @@
 
     let orchState = {
       mode: 'relay',
-      sequence: ['claude', 'chatgpt', 'gemini', 'grok'],
+      sequence: ['chatgpt', 'claude', 'gemini', 'grok'],
       status: 'idle',
       logs: [],
     };
@@ -1053,11 +1053,11 @@
     function handleLayoutClick(mode) {
       state.layout = mode;
       if (mode === 'focus') {
-        state.activePlatforms = [state.activePlatforms[0] || 'claude'];
+        state.activePlatforms = [state.activePlatforms[0] || 'chatgpt'];
       } else if (mode === 'dual') {
-        state.activePlatforms = ['claude', 'chatgpt'];
+        state.activePlatforms = ['chatgpt', 'claude'];
       } else if (mode === 'triple') {
-        state.activePlatforms = ['claude', 'chatgpt', 'gemini'];
+        state.activePlatforms = ['chatgpt', 'claude', 'gemini'];
       } else if (mode === 'quad') {
         state.activePlatforms = [...ALL_PLATFORMS];
       }

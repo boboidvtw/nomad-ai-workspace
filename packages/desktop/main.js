@@ -16,8 +16,8 @@ const EXTENSION_PATH = app.isPackaged
   : path.resolve(__dirname, '../../dist_chrome');
 
 const PLATFORMS = {
-  claude: { name: 'Claude', url: 'https://claude.ai', color: '#D97706' },
   chatgpt: { name: 'ChatGPT', url: 'https://chatgpt.com', color: '#10A37F' },
+  claude: { name: 'Claude', url: 'https://claude.ai', color: '#D97706' },
   gemini: { name: 'Gemini', url: 'https://gemini.google.com', color: '#2563EB' },
   grok: { name: 'Grok', url: 'https://grok.com', color: '#1D9BF0' },
 };
@@ -35,11 +35,25 @@ const TOP_BAR_HEIGHT = 52;
 const BOTTOM_BAR_HEIGHT = 68;
 const DRAWER_WIDTH = 420;
 
+function ensurePlatformLoaded(key) {
+  const item = views[key];
+  if (!item) return;
+  if (!item.isLoaded) {
+    item.isLoaded = true;
+    console.log(`[Nomad Desktop] Lazy-loading platform: ${key} (${item.url})`);
+    try {
+      item.view.webContents.loadURL(item.url);
+    } catch (e) {
+      console.warn(`[Nomad Desktop] Failed to load URL for ${key}:`, e.message);
+    }
+  }
+}
+
 function updateViewBounds() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const [winWidth, winHeight] = mainWindow.getContentSize();
-  const layout = store.get('layout') || 'dual';
-  const activePlatforms = store.get('activePlatforms') || ['claude', 'chatgpt'];
+  const layout = store.get('layout') || 'focus';
+  const activePlatforms = store.get('activePlatforms') || ['chatgpt'];
   const splitRatio = store.get('splitRatio') || 0.5;
 
   const boundsMap = calculateLayoutBounds({
@@ -56,6 +70,7 @@ function updateViewBounds() {
   for (const [key, item] of Object.entries(views)) {
     const b = boundsMap[key];
     if (b && b.visible) {
+      ensurePlatformLoaded(key);
       item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
       item.view.setVisible(true);
     } else {
@@ -66,7 +81,7 @@ function updateViewBounds() {
 
 function applyZoom(platform, factor) {
   const item = views[platform];
-  if (item && item.view && item.view.webContents) {
+  if (item && item.isLoaded && item.view && item.view.webContents) {
     try {
       item.view.webContents.setZoomFactor(factor);
     } catch (e) {
@@ -120,7 +135,8 @@ async function createMainWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-  // 3. Initialize WebContentsViews for all 4 platforms
+  // 3. Initialize WebContentsViews for all 4 platforms with on-demand lazy loading
+  const initialActive = store.get('activePlatforms') || ['chatgpt'];
   for (const [key, p] of Object.entries(PLATFORMS)) {
     const view = new WebContentsView({
       webPreferences: {
@@ -129,7 +145,8 @@ async function createMainWindow() {
       },
     });
 
-    view.webContents.loadURL(p.url);
+    const shouldLoadImmediately = initialActive.includes(key);
+
     view.webContents.on('did-finish-load', () => {
       const zoom = store.getZoom(key);
       if (zoom && zoom !== 1.0) {
@@ -138,7 +155,11 @@ async function createMainWindow() {
     });
 
     mainWindow.contentView.addChildView(view);
-    views[key] = { view, ...p };
+    views[key] = { view, isLoaded: false, ...p };
+
+    if (shouldLoadImmediately) {
+      ensurePlatformLoaded(key);
+    }
   }
 
   mainWindow.on('resize', updateViewBounds);
@@ -274,6 +295,7 @@ async function createMainWindow() {
       return store.getAll().zoomFactors;
     },
         onInspectPlatform: async (platform) => {
+      ensurePlatformLoaded(platform);
       const item = views[platform];
       if (!item) return { ok: false, error: "Platform view not found" };
       const wc = item.view.webContents;
@@ -301,6 +323,7 @@ async function createMainWindow() {
       return { ok: true, platform, extRes, statRes, debugDom };
     },
     onEvalScript: async (platform, script) => {
+      ensurePlatformLoaded(platform);
       const item = views[platform];
       if (!item) return { ok: false, error: "Platform view not found" };
       try {
@@ -337,9 +360,9 @@ async function createMainWindow() {
     bridge,
     onLayoutChange: (layout) => {
       store.set('layout', layout);
-      if (layout === 'focus') store.set('activePlatforms', ['claude']);
-      else if (layout === 'dual') store.set('activePlatforms', ['claude', 'chatgpt']);
-      else if (layout === 'triple') store.set('activePlatforms', ['claude', 'chatgpt', 'gemini']);
+      if (layout === 'focus') store.set('activePlatforms', ['chatgpt']);
+      else if (layout === 'dual') store.set('activePlatforms', ['chatgpt', 'claude']);
+      else if (layout === 'triple') store.set('activePlatforms', ['chatgpt', 'claude', 'gemini']);
       else if (layout === 'quad') store.set('activePlatforms', ALL_PLATFORMS);
       updateViewBounds();
       trayManager.updateContextMenu();
@@ -366,6 +389,7 @@ async function dispatchPromptToTargets(prompt, targets) {
   const results = {};
 
   for (const target of targets) {
+    ensurePlatformLoaded(target);
     const item = views[target];
     if (!item) continue;
     const wc = item.view.webContents;

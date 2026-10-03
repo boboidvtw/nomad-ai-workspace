@@ -3,7 +3,7 @@
  * Pure function calculation of WebContentsView bounds.
  */
 
-const ALL_PLATFORMS = ['claude', 'chatgpt', 'gemini', 'grok'];
+const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok'];
 
 /**
  * Calculates bounds and visibility for all platforms.
@@ -24,8 +24,8 @@ function calculateLayoutBounds({
   winHeight,
   topBarHeight = 52,
   bottomBarHeight = 68,
-  layout = 'dual',
-  activePlatforms = ['claude', 'chatgpt'],
+  layout = 'focus',
+  activePlatforms = ['chatgpt'],
   splitRatio = 0.5,
   drawerWidth = 0,
 }) {
@@ -42,7 +42,7 @@ function calculateLayoutBounds({
   // Filter valid active platforms
   const active = (activePlatforms && activePlatforms.length > 0)
     ? activePlatforms.filter(p => ALL_PLATFORMS.includes(p))
-    : ['claude'];
+    : ['chatgpt'];
 
   // Determine effective mode
   let effectiveMode = layout;
@@ -54,7 +54,7 @@ function calculateLayoutBounds({
   }
 
   if (effectiveMode === 'focus' || active.length === 1) {
-    const p = active[0] || 'claude';
+    const p = active[0] || 'chatgpt';
     bounds[p] = {
       x: 0,
       y: topBarHeight,
@@ -64,7 +64,7 @@ function calculateLayoutBounds({
     };
   } else if (effectiveMode === 'dual' || active.length === 2) {
     const p1 = active[0];
-    const p2 = active[1] || ALL_PLATFORMS.find(k => k !== p1) || 'chatgpt';
+    const p2 = active[1] || ALL_PLATFORMS.find(k => k !== p1) || 'claude';
 
     // Clamp split ratio between 0.2 and 0.8
     const ratio = Math.min(0.8, Math.max(0.2, Number(splitRatio) || 0.5));

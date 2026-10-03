@@ -383,6 +383,9 @@ async function runSuite() {
     await request("/api/workspaces/delete", { method: "POST", body: { id: createdWsId } });
   }
 
+  // 恢復預設「單欄專注 (ChatGPT)」版面
+  await request("/api/layout", { method: "POST", body: { layout: "focus", activePlatforms: ["chatgpt"] } }).catch(() => {});
+
   // 確保測試完畢後將所有視圖恢復為乾淨的首頁網址，避免干擾使用者操作
   await request("/api/debug/eval", {
     method: "POST",
