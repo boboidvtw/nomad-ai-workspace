@@ -1,3 +1,4 @@
+const fs = require('fs');
 const test = require('node:test');
 const assert = require('node:assert');
 const { LocalSyncBridge } = require('../bridge.js');
@@ -164,6 +165,84 @@ test('Bridge: Orchestration endpoints (status, start, pause, resume, stop)', asy
 
     const sRes = await fetch(`${url}/api/orchestration/stop`, { method: 'POST' });
     assert.strictEqual((await sRes.json()).status, 'stopped');
+  } finally {
+    await bridge.stop();
+  }
+});
+
+
+test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () => {
+  const { SessionManager } = require("../session-manager");
+  const mockStoreData = { workspaces: [] };
+  const sessionManager = new SessionManager({
+    store: {
+      get: (k) => mockStoreData[k],
+      set: (k, v) => { mockStoreData[k] = v; return v; },
+    }
+  });
+
+  const ws = sessionManager.createWorkspace({
+    prompt: "設計全端分散式系統",
+    sequence: ["claude", "chatgpt"],
+  });
+
+  const mockOrch = {
+    getStatus: () => ({ status: "completed", canonicalTitle: "1003 | 設計 | 全端分散式", mode: "relay", sequence: ["claude", "chatgpt"] }),
+    history: [
+      { type: "user-prompt", speaker: "user", content: "請架構系統" },
+      { type: "turn-complete", speaker: "claude", round: 1, content: "Claude 方案 v1" },
+    ]
+  };
+
+  const bridge = new LocalSyncBridge({
+    port: 19880,
+    host: "127.0.0.1",
+    sessionManager,
+    orchestrator: mockOrch,
+  });
+
+  const { url } = await bridge.start();
+
+  try {
+    // 1. Export workspaces JSON
+    const expRes = await fetch(`${url}/api/workspaces/export`);
+    assert.strictEqual(expRes.status, 200);
+    const expJson = await expRes.json();
+    assert.strictEqual(expJson.success, true);
+    assert.strictEqual(expJson.data.workspaces.length, 1);
+
+    // 2. Export markdown
+    const mdRes = await fetch(`${url}/api/orchestration/export-markdown`);
+    assert.strictEqual(mdRes.status, 200);
+    const mdJson = await mdRes.json();
+    assert.strictEqual(mdJson.success, true);
+    assert.ok(mdJson.data.markdown.includes("Claude 方案 v1"));
+
+    // 3. Export to file
+    const fileRes = await fetch(`${url}/api/export-to-file`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "markdown", content: mdJson.data.markdown, filename: "test_report" })
+    });
+    assert.strictEqual(fileRes.status, 200);
+    const fileJson = await fileRes.json();
+    assert.strictEqual(fileJson.success, true);
+    assert.ok(fs.existsSync(fileJson.filePath));
+    // Clean up test file
+    fs.unlinkSync(fileJson.filePath);
+
+    // 4. Import workspaces
+    const impRes = await fetch(`${url}/api/workspaces/import`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data: [{ id: "ws-import-test", title: "1003 | 功能 | 匯入測試", promptSnippet: "匯入測試" }]
+      })
+    });
+    assert.strictEqual(impRes.status, 200);
+    const impJson = await impRes.json();
+    assert.strictEqual(impJson.success, true);
+    assert.strictEqual(impJson.importedCount, 1);
   } finally {
     await bridge.stop();
   }

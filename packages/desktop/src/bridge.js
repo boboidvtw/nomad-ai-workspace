@@ -5,6 +5,7 @@
  */
 
 const http = require('http');
+const fs = require('fs');
 
 class LocalSyncBridge {
   /**
@@ -350,7 +351,73 @@ class LocalSyncBridge {
         return this.sendJson(res, 200, result);
       }
 
-      // 404 Route Not Found
+
+      if (pathname === "/api/workspaces/export" && req.method === "GET") {
+        if (!this.sessionManager) {
+          return this.sendJson(res, 501, { success: false, message: "SessionManager not configured" });
+        }
+        const parsedUrl = new URL(req.url, "http://127.0.0.1");
+        const id = parsedUrl.searchParams.get("id");
+        if (id) {
+          const json = this.sessionManager.exportWorkspaceAsJson(id);
+          if (!json) return this.sendJson(res, 404, { success: false, message: "Workspace not found" });
+          return this.sendJson(res, 200, { success: true, data: JSON.parse(json) });
+        }
+        const allJson = this.sessionManager.exportAllWorkspacesAsJson();
+        return this.sendJson(res, 200, { success: true, data: JSON.parse(allJson) });
+      }
+
+      if (pathname === "/api/workspaces/import" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        if (!this.sessionManager) {
+          return this.sendJson(res, 501, { success: false, message: "SessionManager not configured" });
+        }
+        const result = this.sessionManager.importWorkspacesFromJson(body.data || body);
+        return this.sendJson(res, result.success ? 200 : 400, result);
+      }
+
+      if (pathname === "/api/orchestration/export-markdown" && (req.method === "GET" || req.method === "POST")) {
+        let history = [];
+        let title = "協作任務對話報告";
+        let mode = "relay";
+        let sequence = ["claude", "chatgpt"];
+
+        if (req.method === "POST") {
+          const body = await this.readJsonBody(req);
+          history = body.history || [];
+          title = body.title || title;
+          mode = body.mode || mode;
+          sequence = body.sequence || sequence;
+        } else if (this.orchestrator) {
+          const status = this.orchestrator.getStatus();
+          history = this.orchestrator.history || [];
+          title = status.canonicalTitle || title;
+          mode = status.mode || mode;
+          sequence = status.sequence || sequence;
+        }
+
+        const mgr = this.sessionManager || new (require("./session-manager").SessionManager)();
+        const markdown = mgr.exportOrchestrationHistoryAsMarkdown({ title, mode, sequence, history });
+        return this.sendJson(res, 200, { success: true, data: { markdown, title } });
+      }
+
+      if (pathname === "/api/export-to-file" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        const { type, content, filename } = body;
+        const os = require("os");
+        const pathMod = require("path");
+        const exportDir = pathMod.join(os.homedir(), "Desktop", "Nomad_AI_Exports");
+        if (!fs.existsSync(exportDir)) {
+          fs.mkdirSync(exportDir, { recursive: true });
+        }
+        const safeName = (filename || ("nomad_export_" + Date.now())).replace(/[\\/:*?"<>|]/g, "_");
+        const ext = type === "markdown" ? ".md" : ".json";
+        const filePath = pathMod.join(exportDir, safeName + ext);
+        fs.writeFileSync(filePath, typeof content === "string" ? content : JSON.stringify(content, null, 2), "utf8");
+        return this.sendJson(res, 200, { success: true, filePath, exportDir });
+      }
+
+            // 404 Route Not Found
       return this.sendJson(res, 404, {
         success: false,
         errorCode: 'BRIDGE_ROUTER_NOT_FOUND_404',

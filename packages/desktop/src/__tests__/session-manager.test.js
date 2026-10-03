@@ -88,3 +88,67 @@ test("SessionManager: workspace lifecycle (create, update, switch, delete)", asy
   assert.strictEqual(delRes.success, true);
   assert.strictEqual(mgr.getWorkspaces().length, 0);
 });
+
+
+test("SessionManager: export and import workspaces via JSON", () => {
+  const mockStoreData = { workspaces: [] };
+  const mockStore = {
+    get: (k) => mockStoreData[k],
+    set: (k, v) => { mockStoreData[k] = v; return v; },
+  };
+
+  const mgr = new SessionManager({ store: mockStore });
+  const ws1 = mgr.createWorkspace({
+    prompt: "實作使用者驗證模組",
+    mode: "relay",
+    sequence: ["claude", "chatgpt"],
+  });
+
+  // Export single
+  const jsonSingle = mgr.exportWorkspaceAsJson(ws1.id);
+  assert.ok(jsonSingle.includes(ws1.id));
+  assert.ok(jsonSingle.includes("實作"));
+
+  // Export all
+  const jsonAll = mgr.exportAllWorkspacesAsJson();
+  const parsedAll = JSON.parse(jsonAll);
+  assert.strictEqual(parsedAll.workspaces.length, 1);
+  assert.strictEqual(parsedAll.version, "1.0.0");
+
+  // Import into new manager
+  const newStoreData = { workspaces: [] };
+  const newMgr = new SessionManager({
+    store: {
+      get: (k) => newStoreData[k],
+      set: (k, v) => { newStoreData[k] = v; return v; }
+    }
+  });
+
+  const importRes = newMgr.importWorkspacesFromJson(jsonAll);
+  assert.strictEqual(importRes.success, true);
+  assert.strictEqual(importRes.importedCount, 1);
+  assert.strictEqual(newMgr.getWorkspaces().length, 1);
+  assert.strictEqual(newMgr.getWorkspaces()[0].id, ws1.id);
+});
+
+test("SessionManager: exportOrchestrationHistoryAsMarkdown formats report with timestamps and turns", () => {
+  const mgr = new SessionManager();
+  const md = mgr.exportOrchestrationHistoryAsMarkdown({
+    title: "1003 | 設計 | 快取系統",
+    mode: "debate",
+    sequence: ["claude", "chatgpt"],
+    history: [
+      { type: "user-prompt", speaker: "user", content: "請討論快取穿透防禦" },
+      { type: "turn-complete", speaker: "claude", round: 1, content: "建議使用布隆過濾器 (Bloom Filter)" },
+      { type: "turn-complete", speaker: "chatgpt", round: 1, content: "補充：需注意布隆過濾器無法刪除元素之缺陷，建議結合布穀鳥過濾器" },
+    ]
+  });
+
+  assert.ok(md.includes("多 AI 圓桌協作對話報告：1003 | 設計 | 快取系統"));
+  assert.ok(md.includes("交叉辯論"));
+  assert.ok(md.includes("請討論快取穿透防禦"));
+  assert.ok(md.includes("布隆過濾器"));
+  assert.ok(md.includes("布穀鳥過濾器"));
+  assert.ok(md.includes("CLAUDE"));
+  assert.ok(md.includes("CHATGPT"));
+});

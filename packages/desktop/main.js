@@ -1,4 +1,6 @@
-const { app, BrowserWindow, WebContentsView, session, ipcMain, screen, Menu } = require('electron');
+const { app, BrowserWindow, WebContentsView, session, ipcMain, screen, Menu, shell, dialog } = require('electron');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { store } = require('./src/store');
 const { calculateLayoutBounds, ALL_PLATFORMS } = require('./src/layout-engine');
@@ -482,6 +484,60 @@ ipcMain.handle('nomad:delete-workspace', (event, id) => {
     mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
   }
   return ok;
+});
+
+
+ipcMain.handle("nomad:export-markdown", async (event, customOpts = {}) => {
+  if (!sessionManager) return { success: false, error: "SessionManager not ready" };
+  const history = customOpts.history || (orchestrator ? orchestrator.history : []);
+  const title = customOpts.title || (orchestrator ? orchestrator.getStatus().canonicalTitle : "多AI協作報告");
+  const mode = customOpts.mode || (orchestrator ? orchestrator.mode : "relay");
+  const sequence = customOpts.sequence || (orchestrator ? orchestrator.sequence : ["claude", "chatgpt"]);
+
+  const markdown = sessionManager.exportOrchestrationHistoryAsMarkdown({ title, mode, sequence, history });
+  const exportDir = path.join(os.homedir(), "Desktop", "Nomad_AI_Exports");
+  if (!fs.existsSync(exportDir)) {
+    fs.mkdirSync(exportDir, { recursive: true });
+  }
+
+  const safeTitle = (title || "nomad_report").replace(/[\\/:*?"<>|\s]/g, "_");
+  const filename = safeTitle + "_" + Date.now() + ".md";
+  const filePath = path.join(exportDir, filename);
+  fs.writeFileSync(filePath, markdown, "utf8");
+
+  return { success: true, filePath, exportDir, filename, markdown };
+});
+
+ipcMain.handle("nomad:export-workspaces", async () => {
+  if (!sessionManager) return { success: false, error: "SessionManager not ready" };
+  const json = sessionManager.exportAllWorkspacesAsJson();
+  const exportDir = path.join(os.homedir(), "Desktop", "Nomad_AI_Exports");
+  if (!fs.existsSync(exportDir)) {
+    fs.mkdirSync(exportDir, { recursive: true });
+  }
+  const filename = "nomad_workspaces_" + Date.now() + ".json";
+  const filePath = path.join(exportDir, filename);
+  fs.writeFileSync(filePath, json, "utf8");
+
+  return { success: true, filePath, exportDir, filename, data: JSON.parse(json) };
+});
+
+ipcMain.handle("nomad:import-workspaces", async (event, rawJsonOrObj) => {
+  if (!sessionManager) return { success: false, error: "SessionManager not ready" };
+  const result = sessionManager.importWorkspacesFromJson(rawJsonOrObj);
+  if (result.success && mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("nomad:workspaces-updated", sessionManager.getAllWorkspaces());
+  }
+  return result;
+});
+
+ipcMain.handle("nomad:open-export-folder", async () => {
+  const exportDir = path.join(os.homedir(), "Desktop", "Nomad_AI_Exports");
+  if (!fs.existsSync(exportDir)) {
+    fs.mkdirSync(exportDir, { recursive: true });
+  }
+  await shell.openPath(exportDir);
+  return { success: true, path: exportDir };
 });
 
 ipcMain.handle('nomad:new-session', async () => {

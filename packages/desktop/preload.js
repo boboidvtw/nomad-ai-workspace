@@ -29,6 +29,10 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
   renameWorkspace: (options) => ipcRenderer.invoke("nomad:rename-workspace", options),
   deleteWorkspace: (id) => ipcRenderer.invoke("nomad:delete-workspace", id),
   newSession: () => ipcRenderer.invoke("nomad:new-session"),
+  exportMarkdown: (options) => ipcRenderer.invoke("nomad:export-markdown", options),
+  exportWorkspaces: () => ipcRenderer.invoke("nomad:export-workspaces"),
+  importWorkspaces: (data) => ipcRenderer.invoke("nomad:import-workspaces", data),
+  openExportFolder: () => ipcRenderer.invoke("nomad:open-export-folder"),
   onWorkspacesUpdated: (callback) => {
     ipcRenderer.on("nomad:workspaces-updated", (event, data) => callback(data));
   },

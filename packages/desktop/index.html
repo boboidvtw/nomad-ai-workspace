@@ -683,6 +683,14 @@
         <span>➕ 開啟全新跨平臺協作對話 (New Session)</span>
       </button>
 
+      <!-- Backup & Restore Operations -->
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-ws-op" onclick="handleExportWorkspaces()" style="flex: 1; padding: 6px; font-weight: 600; text-align: center;" title="匯出所有工作區為 JSON 備份檔">📤 匯出工作區</button>
+        <button class="btn-ws-op" onclick="triggerImportFileInput()" style="flex: 1; padding: 6px; font-weight: 600; text-align: center;" title="匯入歷史工作區 JSON 備份">📥 匯入工作區</button>
+        <button class="btn-ws-op" onclick="handleOpenExportFolder()" style="padding: 6px 10px; font-weight: 600;" title="開啟本機匯出檔案資料夾">📂 開啟資料夾</button>
+      </div>
+      <input type="file" id="ws-import-file-input" accept=".json" style="display: none;" onchange="handleImportFileSelected(event)">
+
       <!-- Protocol Legend -->
       <div style="padding: 8px 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 6px; font-size: 11px; color: #94a3b8; line-height: 1.5;">
         <div style="color: #cbd5e1; font-weight: 600; margin-bottom: 2px;">🏷️ 語義對話命名遵循 AGENTS.md 第 7 節</div>
@@ -1051,6 +1059,65 @@
             </div>
           `;
         }).join('');
+      }
+    }
+
+    
+    async function handleExportOrchMarkdown() {
+      if (!window.nomadDesktop || !window.nomadDesktop.exportMarkdown) return;
+      const res = await window.nomadDesktop.exportMarkdown({
+        title: (workspacesState.activeWorkspace && workspacesState.activeWorkspace.title) || orchState.canonicalTitle || "多AI圓桌對話",
+        mode: orchState.mode,
+        sequence: orchState.sequence,
+        history: orchState.history || []
+      });
+      if (res && res.success) {
+        alert("🎉 對話報告已成功匯出至：\n" + res.filePath);
+      } else {
+        alert("匯出失敗：" + (res && res.error));
+      }
+    }
+
+    async function handleExportWorkspaces() {
+      if (!window.nomadDesktop || !window.nomadDesktop.exportWorkspaces) return;
+      const res = await window.nomadDesktop.exportWorkspaces();
+      if (res && res.success) {
+        alert("🎉 工作區備份已匯出至：\n" + res.filePath);
+      } else {
+        alert("匯出失敗：" + (res && res.error));
+      }
+    }
+
+    function triggerImportFileInput() {
+      const input = document.getElementById("ws-import-file-input");
+      if (input) input.click();
+    }
+
+    async function handleImportFileSelected(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const content = evt.target.result;
+          const res = await window.nomadDesktop.importWorkspaces(content);
+          if (res && res.success) {
+            alert("🎉 成功匯入 " + res.importedCount + " 個工作區！");
+            await loadWorkspaces();
+          } else {
+            alert("匯入失敗: " + (res && res.error));
+          }
+        } catch (err) {
+          alert("讀取檔案失敗: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    }
+
+    async function handleOpenExportFolder() {
+      if (window.nomadDesktop && window.nomadDesktop.openExportFolder) {
+        await window.nomadDesktop.openExportFolder();
       }
     }
 

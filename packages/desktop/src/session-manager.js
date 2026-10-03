@@ -205,7 +205,133 @@ class SessionManager {
     return { success: true };
   }
 
-  async applyInPageRenaming(platform, title) {
+
+  exportWorkspaceAsJson(workspaceId) {
+    const list = this.getWorkspaces();
+    const ws = list.find(w => w.id === workspaceId);
+    if (!ws) return null;
+    return JSON.stringify(ws, null, 2);
+  }
+
+  exportAllWorkspacesAsJson() {
+    const list = this.getWorkspaces();
+    return JSON.stringify({
+      version: "1.0.0",
+      exportedAt: new Date().toISOString(),
+      activeWorkspaceId: this.getActiveWorkspaceId(),
+      workspaces: list,
+    }, null, 2);
+  }
+
+  importWorkspacesFromJson(jsonStringOrObj) {
+    let data;
+    try {
+      data = typeof jsonStringOrObj === "string" ? JSON.parse(jsonStringOrObj) : jsonStringOrObj;
+    } catch (e) {
+      return { success: false, error: "JSON 解析失敗: " + e.message };
+    }
+
+    let itemsToImport = [];
+    if (Array.isArray(data)) {
+      itemsToImport = data;
+    } else if (data && Array.isArray(data.workspaces)) {
+      itemsToImport = data.workspaces;
+    } else if (data && typeof data === "object" && (data.title || data.id)) {
+      itemsToImport = [data];
+    } else {
+      return { success: false, error: "無效的工作區資料格式" };
+    }
+
+    const currentList = [...this.getWorkspaces()];
+    let importedCount = 0;
+
+    for (const item of itemsToImport) {
+      if (!item || typeof item !== "object") continue;
+      const id = item.id || ("ws-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4));
+      const title = item.title || createSemanticTitle(item.promptSnippet || "匯入會話");
+      const normalized = {
+        id,
+        title,
+        promptSnippet: item.promptSnippet || "",
+        mode: item.mode || "relay",
+        sequence: Array.isArray(item.sequence) ? item.sequence : ["claude", "chatgpt"],
+        createdAt: item.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        completed: Boolean(item.completed),
+        turns: Number(item.turns) || 0,
+        history: Array.isArray(item.history) ? item.history : [],
+        urls: {
+          claude: item.urls?.claude || "",
+          chatgpt: item.urls?.chatgpt || "",
+          gemini: item.urls?.gemini || "",
+          grok: item.urls?.grok || "",
+        },
+      };
+
+      const existingIdx = currentList.findIndex(w => w.id === id);
+      if (existingIdx >= 0) {
+        currentList[existingIdx] = { ...currentList[existingIdx], ...normalized };
+      } else {
+        currentList.unshift(normalized);
+      }
+      importedCount++;
+    }
+
+    if (currentList.length > 100) {
+      currentList.length = 100;
+    }
+
+    this.store.set("workspaces", currentList);
+    if (!this.getActiveWorkspaceId() && currentList.length > 0) {
+      this.store.set("activeWorkspaceId", currentList[0].id);
+    }
+
+    return {
+      success: true,
+      importedCount,
+      totalCount: currentList.length,
+      activeWorkspaceId: this.getActiveWorkspaceId(),
+    };
+  }
+
+  exportOrchestrationHistoryAsMarkdown({ title, mode = "relay", sequence = [], history = [] }) {
+    const dateStr = new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false });
+    const modeMap = { relay: "🔄 任務接力 (Relay)", debate: "⚔️ 交叉辯論 (Debate)", master: "👑 主控分工 (Master)" };
+    const modeName = modeMap[mode] || mode;
+
+    let md = "# 🤝 多 AI 圓桌協作對話報告：" + (title || "未命名任務") + "\n\n";
+    md += "- **產出時間**：" + dateStr + " (UTC+8)\n";
+    md += "- **協作架構**：" + modeName + "\n";
+    md += "- **協作序列**：" + sequence.map(s => s.toUpperCase()).join(" ➔ ") + "\n";
+    md += "- **紀錄總筆數**：" + history.length + " 條\n\n";
+    md += "---\n\n";
+
+    const userPrompt = history.find(h => h.type === "user-prompt" || h.speaker === "user");
+    if (userPrompt) {
+      md += "## 🎯 初始協作目標與議題\n\n```\n" + (userPrompt.content || "") + "\n```\n\n---\n\n";
+    }
+
+    md += "## 💬 多平臺階段性發言與交接歷史\n\n";
+
+    const aiTurns = history.filter(h => h.type !== "user-prompt" && h.speaker !== "user");
+    if (aiTurns.length === 0) {
+      md += "*(尚未產生 AI 發言紀錄)*\n";
+    } else {
+      aiTurns.forEach((item, idx) => {
+        const speaker = (item.speaker || "AI").toUpperCase();
+        const roundText = item.round ? "【第 " + item.round + " 輪】" : "";
+        const time = item.timestamp ? new Date(item.timestamp).toLocaleTimeString("zh-TW", { hour12: false }) : "";
+        md += "### " + (idx + 1) + ". " + roundText + " 🤖 " + speaker + " (" + time + ")\n\n";
+        md += (item.content || item.response || "") + "\n\n";
+        md += "---\n\n";
+      });
+    }
+
+    md += "\n> 本報告由 **Nomad AI Studio** 自動匯出生成 · 跨平臺 AI 協同工作站\n";
+    return md;
+  }
+
+    async applyInPageRenaming(platform, title) {
     const views = this.getViews();
     const item = views[platform];
     if (!item) return { ok: false, error: "Platform not found" };
