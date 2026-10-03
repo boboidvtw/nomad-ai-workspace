@@ -27,6 +27,9 @@ However, existing multi-AI workflows face two critical pain points:
 - **Physical Subdirectory Isolation**: Platform conversations and configurations are segregated into independent subdirectories within your personal Google Drive, guaranteeing data autonomy and zero cross-contamination.
 - **Cross-Platform Sidebar Integration**: Injects a unified multi-AI folder tree directly into the official web interfaces of Gemini, Claude, and ChatGPT, complete with brand-colored badges and zero-latency platform switching.
 - **Universal Prompt Manager & Nomad Super Orb**: Craft a prompt once and recall it anywhere with `/` slash commands, interactive variable modal fill-ins, and a flagship floating orb equipped with Apple Watch-style dual-track activity usage rings.
+- **🖥️ Nomad AI Studio Standalone Desktop Workstation**: Brand new Electron 40 desktop client (`packages/desktop`) aggregating 4 frontier AIs with Quad (4-panel grid), Dual (split-screen), and Focus (single-view) layouts.
+- **⚡ Concurrent Prompt Injection**: Broadcast questions to Claude, ChatGPT, Gemini, and Grok simultaneously from a unified input bar with automatic prompt submission and instant side-by-side benchmark comparison.
+- **📦 Multi-Platform Native Package Support**: Available for macOS (`.dmg` / `.zip`), Windows (`.exe`), and Linux (`.AppImage` / `.deb`), downloadable directly from [GitHub Releases](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest).
 - **100% Client-Side Zero Server Architecture**: No intermediary backend servers exist. All data synchronizes directly between the local browser sandbox and your personal Google Drive via client-side OAuth 2.0.
 
 ---

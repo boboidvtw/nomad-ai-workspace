@@ -208,7 +208,12 @@ Nomad AI Workspace 內建多種現代圖表與科學計算排版引擎：
 - **零中繼隱私**：直接與各官方站點建立安全 TLS 連線，無任何代理伺服器或第三方數據庫介入。
 
 ### 7.4 安裝與啟動方式 (Installation & Launch)
-- **macOS 原生 App**：已編譯為 `/Applications/Nomad AI Studio.app`，亦可在桌面雙擊 `Nomad AI Studio.app` 直接開啟。
+- **官方 GitHub Releases 下載各平台安裝包**：
+  - 前往 [GitHub Releases 最新發布頁](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest) 直接下載對應系統安裝包：
+    - 🍏 **macOS**：下載 `Nomad-AI-Studio-1.3.0-arm64.dmg` 拖曳至 Applications 安裝（或下載綠色版 Zip）。
+    - 🪟 **Windows**：下載 `Nomad-AI-Studio-Setup-1.3.0.exe` 雙擊自動引導安裝。
+    - 🐧 **Linux**：下載 `Nomad-AI-Studio-1.3.0.AppImage`（賦予執行權限即可運行）或 `.deb` 安裝包。
+- **本機已編譯 App**：已編譯為 `/Applications/Nomad AI Studio.app`，亦可在桌面雙擊 `Nomad AI Studio.app` 直接開啟。
 - **開發者命令列啟動**：在專案目錄執行：
   ```bash
   npm run desktop

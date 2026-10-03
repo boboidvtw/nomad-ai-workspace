@@ -205,7 +205,12 @@ Toggle between three layouts instantly using the header navigation buttons:
 - **Direct Official Connection**: All traffic routes directly to official AI endpoints via TLS with zero proxy or intermediary telemetry servers.
 
 ### 7.4 Installation & Quick Launch
-- **macOS Native App**: Available in `/Applications/Nomad AI Studio.app` and on your Desktop.
+- **Official GitHub Releases Multi-Platform Packages**:
+  - Visit the [GitHub Releases Latest Page](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest) to download binaries for your OS:
+    - 🍏 **macOS**: Download `Nomad-AI-Studio-1.3.0-arm64.dmg` and drag into Applications (or use the portable zip).
+    - 🪟 **Windows**: Download `Nomad-AI-Studio-Setup-1.3.0.exe` and double-click to install.
+    - 🐧 **Linux**: Download `Nomad-AI-Studio-1.3.0.AppImage` (chmod +x to run) or the `.deb` package.
+- **Local Pre-installed App**: Available in `/Applications/Nomad AI Studio.app` and on your Desktop.
 - **Command Line Launch**:
   ```bash
   npm run desktop

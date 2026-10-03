@@ -29,6 +29,7 @@
 - **通用提示詞管理器與 Super Orb**：一次維護，在各大 AI 頁面一鍵點選喚起、支援 `/` 斜線命令與動態模板變數填寫。
 - **🖥️ Nomad AI Studio 獨立桌面超級工作站**：全新推出基於 Electron 40 的獨立桌面客戶端（`packages/desktop`），支援 Quad（四分割九宮格）、Dual（雙欄並排）與 Focus（單欄專注）佈局，同屏聚合四大 AI。
 - **⚡ 跨 AI 一鍵同步提問**：底部全域統一提問列，一鍵同步派發問題至 Claude、ChatGPT、Gemini、Grok 並自動送出，實時橫向對比解答。
+- **📦 全平台原生安裝包支援**：支援 macOS（`.dmg` / `.zip`）、Windows（`.exe`）與 Linux（`.AppImage` / `.deb`），可至 [GitHub Releases 最新發布頁](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest) 直接下載安裝。
 - **100% Client-Side 零伺服器**：不存在任何中繼伺服器，所有資料僅在瀏覽器本機快取與個人 Google Drive 之間直連傳輸。
 
 ---
