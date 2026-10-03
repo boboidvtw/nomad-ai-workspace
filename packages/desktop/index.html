@@ -997,6 +997,8 @@
         speakerLabel.textContent = `🟢 ${event.speaker.toUpperCase()} 思考發言中...`;
       } else if (event.type === 'waiting-response') {
         speakerLabel.textContent = `⏳ 等待 ${event.speaker.toUpperCase()} 完成輸出...`;
+      } else if (event.type === 'response-progress') {
+        speakerLabel.textContent = `⏳ ${event.speaker.toUpperCase()} 輸出中 (${event.charCount} 字)...`;
       } else if (event.type === 'turn-complete') {
         speakerLabel.textContent = `✅ ${event.speaker.toUpperCase()} 完成，準備接力給 ${event.nextSpeaker ? event.nextSpeaker.toUpperCase() : ''}...`;
 

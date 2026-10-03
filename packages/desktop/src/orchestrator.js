@@ -38,21 +38,23 @@ class MultiAiOrchestrator {
    * @param {Function} options.checkStreaming - async (platform) => { ok: boolean, isStreaming: boolean }
    * @param {number} [options.initialWaitMs=2000] - Initial delay before polling
    * @param {number} [options.pollIntervalMs=800] - Polling interval
+   * @param {number} [options.maxWaitMs=45000] - Max wait time per AI turn in ms
    * @param {Function} [options.onStep] - (event) => void
    * @param {Function} [options.onComplete] - (summary) => void
    */
   constructor(options = {}) {
     this.injectPrompt = options.injectPrompt || (async () => ({ ok: true }));
-    this.extractResponse = options.extractResponse || (async () => ({ ok: true, text: '' }));
+    this.extractResponse = options.extractResponse || (async () => ({ ok: true, text: "" }));
     this.checkStreaming = options.checkStreaming || (async () => ({ ok: true, isStreaming: false }));
     this.initialWaitMs = options.initialWaitMs ?? 2000;
     this.pollIntervalMs = options.pollIntervalMs ?? 800;
+    this.maxWaitMs = options.maxWaitMs ?? 45000;
     this.onStep = options.onStep || (() => {});
     this.onComplete = options.onComplete || (() => {});
 
-    this.status = 'idle'; // 'idle' | 'running' | 'paused' | 'stopped' | 'completed' | 'error'
-    this.mode = 'relay';
-    this.sequence = ['claude', 'chatgpt'];
+    this.status = "idle"; // "idle" | "running" | "paused" | "stopped" | "completed" | "error"
+    this.mode = "relay";
+    this.sequence = ["claude", "chatgpt"];
     this.maxRounds = 2;
     this.turnDelayMs = 2500;
     this.customTemplate = null;
@@ -79,37 +81,37 @@ class MultiAiOrchestrator {
 
   async start({
     prompt,
-    sequence = ['claude', 'chatgpt'],
-    mode = 'relay',
+    sequence = ["claude", "chatgpt"],
+    mode = "relay",
     maxRounds = 2,
     turnDelayMs = 2500,
     customTemplate = null,
   }) {
-    if (this.status === 'running') {
+    if (this.status === "running") {
       return {
         success: false,
-        errorCode: 'ORCHESTRATOR_START_ALREADY_RUNNING_001',
-        message: 'Orchestrator is already running a session.',
+        errorCode: "ORCHESTRATOR_START_ALREADY_RUNNING_001",
+        message: "Orchestrator is already running a session.",
       };
     }
 
-    if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
       return {
         success: false,
-        errorCode: 'ORCHESTRATOR_START_EMPTY_PROMPT_002',
-        message: 'Initial prompt must be a non-empty string.',
+        errorCode: "ORCHESTRATOR_START_EMPTY_PROMPT_002",
+        message: "Initial prompt must be a non-empty string.",
       };
     }
 
     if (!Array.isArray(sequence) || sequence.length < 2) {
       return {
         success: false,
-        errorCode: 'ORCHESTRATOR_START_INVALID_SEQUENCE_003',
-        message: 'Sequence must contain at least 2 AI platforms for collaboration.',
+        errorCode: "ORCHESTRATOR_START_INVALID_SEQUENCE_003",
+        message: "Sequence must contain at least 2 AI platforms for collaboration.",
       };
     }
 
-    this.status = 'running';
+    this.status = "running";
     this.mode = mode;
     this.sequence = sequence;
     this.maxRounds = Math.min(10, Math.max(1, Number(maxRounds) || 2));
@@ -124,17 +126,17 @@ class MultiAiOrchestrator {
     // Record initial prompt
     this.history.push({
       timestamp: new Date().toISOString(),
-      speaker: 'user',
-      type: 'user-prompt',
+      speaker: "user",
+      type: "user-prompt",
       content: prompt.trim(),
       round: 1,
     });
 
     // Run execution loop in background
     this.runLoop(prompt.trim()).catch((err) => {
-      console.error('[Nomad Orchestrator] Execution loop crashed:', err);
-      this.status = 'error';
-      this.emitStep('error', { error: err.message });
+      console.error("[Nomad Orchestrator] Execution loop crashed:", err);
+      this.status = "error";
+      this.emitStep("error", { error: err.message });
     });
 
     return {
@@ -149,30 +151,30 @@ class MultiAiOrchestrator {
   }
 
   pause() {
-    if (this.status === 'running') {
+    if (this.status === "running") {
       this.isPaused = true;
-      this.status = 'paused';
-      this.emitStep('paused', { round: this.currentRound, speaker: this.sequence[this.currentSpeakerIndex] });
-      return { success: true, status: 'paused' };
+      this.status = "paused";
+      this.emitStep("paused", { round: this.currentRound, speaker: this.sequence[this.currentSpeakerIndex] });
+      return { success: true, status: "paused" };
     }
-    return { success: false, message: 'Not currently running' };
+    return { success: false, message: "Not currently running" };
   }
 
   resume() {
-    if (this.status === 'paused') {
+    if (this.status === "paused") {
       this.isPaused = false;
-      this.status = 'running';
-      this.emitStep('resumed', { round: this.currentRound, speaker: this.sequence[this.currentSpeakerIndex] });
-      return { success: true, status: 'running' };
+      this.status = "running";
+      this.emitStep("resumed", { round: this.currentRound, speaker: this.sequence[this.currentSpeakerIndex] });
+      return { success: true, status: "running" };
     }
-    return { success: false, message: 'Not currently paused' };
+    return { success: false, message: "Not currently paused" };
   }
 
   stop() {
     this.isAborted = true;
-    this.status = 'stopped';
-    this.emitStep('stopped', { round: this.currentRound });
-    return { success: true, status: 'stopped' };
+    this.status = "stopped";
+    this.emitStep("stopped", { round: this.currentRound });
+    return { success: true, status: "stopped" };
   }
 
   emitStep(type, data) {
@@ -188,7 +190,7 @@ class MultiAiOrchestrator {
     try {
       this.onStep(payload);
     } catch (e) {
-      console.warn('[Nomad Orchestrator] onStep callback failed:', e);
+      console.warn("[Nomad Orchestrator] onStep callback failed:", e);
     }
   }
 
@@ -209,7 +211,7 @@ class MultiAiOrchestrator {
         const speaker = this.sequence[i];
         const nextSpeaker = this.sequence[(i + 1) % this.sequence.length];
 
-        this.emitStep('turn-start', {
+        this.emitStep("turn-start", {
           speaker,
           nextSpeaker,
           inputSnippet: currentInput.slice(0, 60),
@@ -220,11 +222,11 @@ class MultiAiOrchestrator {
           await this.injectPrompt(speaker, currentInput);
         } catch (err) {
           console.error(`[Nomad Orchestrator] Failed to inject prompt to ${speaker}:`, err);
-          this.emitStep('inject-error', { speaker, error: err.message });
+          this.emitStep("inject-error", { speaker, error: err.message });
         }
 
-        // 2. Wait for speaker's response to generate and settle
-        this.emitStep('waiting-response', { speaker });
+        // 2. Wait for speaker response to generate and settle
+        this.emitStep("waiting-response", { speaker });
         const responseText = await this.waitForSettledResponse(speaker);
 
         if (this.isAborted) break;
@@ -232,12 +234,12 @@ class MultiAiOrchestrator {
         this.history.push({
           timestamp: new Date().toISOString(),
           speaker,
-          type: 'assistant-response',
+          type: "assistant-response",
           content: responseText,
           round: this.currentRound,
         });
 
-        this.emitStep('turn-complete', {
+        this.emitStep("turn-complete", {
           speaker,
           nextSpeaker,
           responseSnippet: responseText.slice(0, 60),
@@ -260,24 +262,26 @@ class MultiAiOrchestrator {
     }
 
     if (!this.isAborted) {
-      this.status = 'completed';
+      this.status = "completed";
       const summary = {
         totalRounds: this.currentRound - 1,
-        totalTurns: this.history.length - 1, // minus initial prompt
+        totalTurns: this.history.length - 1,
         history: this.history,
       };
-      this.emitStep('completed', summary);
+      this.emitStep("completed", summary);
       try {
         this.onComplete(summary);
       } catch (e) {}
     }
   }
 
-  async waitForSettledResponse(platform, maxWaitMs = 120000, pollIntervalMs = this.pollIntervalMs) {
+  async waitForSettledResponse(platform, maxWaitMs = this.maxWaitMs, pollIntervalMs = this.pollIntervalMs) {
     const startTime = Date.now();
     let lastLength = -1;
     let stableCount = 0;
-    let baselineText = '';
+    let streamingStableCount = 0;
+    let baselineText = "";
+    let pollCount = 0;
 
     if (this.initialWaitMs > 0) {
       await this.sleep(this.initialWaitMs);
@@ -296,13 +300,27 @@ class MultiAiOrchestrator {
         ]);
 
         const isStreaming = statusRes?.isStreaming ?? false;
-        const text = responseRes?.text || '';
+        const text = (responseRes?.text || "").trim();
+        pollCount++;
 
-        // If platform is not streaming and text is non-empty
+        // Monotonic text accumulation: never overwrite with shorter/empty text
+        if (text && text.length > baselineText.length) {
+          baselineText = text;
+        }
+
+        // Emit real-time response progress
+        this.emitStep("response-progress", {
+          speaker: platform,
+          charCount: baselineText.length,
+          isStreaming,
+        });
+
+        // Condition 1: Streaming is officially finished AND we have non-empty text
         if (!isStreaming && text.length > 0) {
           if (text.length === lastLength) {
             stableCount++;
             if (stableCount >= 2) {
+              console.log(`[Nomad Orchestrator] [${platform}] Settled cleanly: length=${text.length}`);
               return text;
             }
           } else {
@@ -311,18 +329,29 @@ class MultiAiOrchestrator {
           }
         } else {
           stableCount = 0;
-          lastLength = text.length;
         }
 
-        baselineText = text;
+        // Condition 2: Adaptive completion if isStreaming is erroneously stuck on true
+        // If text is substantial (> 40 chars) and hasn't changed for 5 polls (~4s)
+        if (text.length > 40 && text.length === lastLength) {
+          streamingStableCount++;
+          if (streamingStableCount >= 5) {
+            console.log(`[Nomad Orchestrator] [${platform}] Settled via adaptive inactivity: length=${text.length}`);
+            return text;
+          }
+        } else {
+          streamingStableCount = 0;
+          lastLength = text.length;
+        }
       } catch (e) {
-        // Continue polling
+        console.warn(`[Nomad Orchestrator] [${platform}] Poll error:`, e.message);
       }
 
       await this.sleep(pollIntervalMs);
     }
 
     // Return whatever text has been extracted if timeout or aborted
+    console.log(`[Nomad Orchestrator] [${platform}] Exited wait loop with text length=${baselineText.length}`);
     return baselineText || `[${platform} 回應擷取超時或已結束]`;
   }
 

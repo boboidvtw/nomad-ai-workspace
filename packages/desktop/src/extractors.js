@@ -12,7 +12,8 @@ const PLATFORM_EXTRACTORS = {
           '[data-testid="assistant-message"]',
           'div[data-message-author-role="assistant"]',
           '.standard-markdown',
-          'div.grid:has(.font-claude-message)'
+          'div.grid:has(.font-claude-message)',
+          'div[class*="font-claude"]'
         ];
         let target = null;
         for (const sel of selectors) {
@@ -22,8 +23,8 @@ const PLATFORM_EXTRACTORS = {
             break;
           }
         }
-        if (!target) return { ok: false, error: 'No Claude assistant response found' };
-        const text = (target.innerText || target.textContent || '').trim();
+        if (!target) return { ok: false, error: "No Claude assistant response found" };
+        const text = (target.innerText || target.textContent || "").trim();
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
@@ -33,8 +34,15 @@ const PLATFORM_EXTRACTORS = {
     checkStatus: () => `(function() {
       try {
         const stopBtn = document.querySelector('button[aria-label*="Stop"], button[aria-label*="停止"], button:has(svg.lucide-square)');
-        const isStreaming = Boolean(stopBtn && !stopBtn.disabled && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
-        return { ok: true, isStreaming };
+        const isStopVisible = Boolean(stopBtn && !stopBtn.disabled && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
+        
+        const sendBtn = document.querySelector('button[aria-label*="Send"], button[aria-label*="發送"], button[aria-label*="发送"], button:has(svg.lucide-arrow-up)');
+        const isSendActive = Boolean(sendBtn && !sendBtn.disabled && (sendBtn.offsetParent !== null || sendBtn.getBoundingClientRect().height > 0));
+
+        if (isSendActive && !isStopVisible) {
+          return { ok: true, isStreaming: false };
+        }
+        return { ok: true, isStreaming: isStopVisible };
       } catch (err) {
         return { ok: false, isStreaming: false, error: err.message };
       }
@@ -44,11 +52,15 @@ const PLATFORM_EXTRACTORS = {
   chatgpt: {
     getLatestResponse: () => `(function() {
       try {
+        // Modern ChatGPT selectors (2025/2026): assistant-message, MarkdownRoot, search-unit-key
         const selectors = [
+          '[data-markdown-text-style="assistant-message"]',
+          'div[class*="MarkdownRoot"]',
+          '[data-content-search-unit-key*="assistant"]',
+          '[data-chatgpt-search-unit-key*="assistant"]',
           '[data-message-author-role="assistant"]',
-          'article[data-turn="assistant"]',
-          'div[class*="agent-turn"]',
-          '.markdown'
+          '.markdown',
+          'article[data-testid*="conversation-turn"]'
         ];
         let target = null;
         for (const sel of selectors) {
@@ -58,8 +70,8 @@ const PLATFORM_EXTRACTORS = {
             break;
           }
         }
-        if (!target) return { ok: false, error: 'No ChatGPT assistant response found' };
-        const text = (target.innerText || target.textContent || '').trim();
+        if (!target) return { ok: false, error: "No ChatGPT assistant response found" };
+        const text = (target.innerText || target.textContent || "").trim();
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
@@ -68,9 +80,16 @@ const PLATFORM_EXTRACTORS = {
 
     checkStatus: () => `(function() {
       try {
-        const stopBtn = document.querySelector('button[data-testid="stop-button"], button[aria-label*="Stop"], button[aria-label*="停止"]');
-        const isStreaming = Boolean(stopBtn && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
-        return { ok: true, isStreaming };
+        const stopBtn = document.querySelector('button[aria-label*="停止"], button[aria-label*="Stop"], button[data-testid="stop-button"]');
+        const isStopVisible = Boolean(stopBtn && !stopBtn.disabled && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
+
+        const sendBtn = document.querySelector('button[aria-label*="傳送"], button[aria-label*="Send"], button[aria-label*="发送"], button[data-testid="send-button"]');
+        const isSendVisible = Boolean(sendBtn && (sendBtn.offsetParent !== null || sendBtn.getBoundingClientRect().height > 0));
+
+        if (isSendVisible && !isStopVisible) {
+          return { ok: true, isStreaming: false };
+        }
+        return { ok: true, isStreaming: isStopVisible };
       } catch (err) {
         return { ok: false, isStreaming: false, error: err.message };
       }
@@ -81,12 +100,15 @@ const PLATFORM_EXTRACTORS = {
     getLatestResponse: () => `(function() {
       try {
         const selectors = [
+          'div.markdown.markdown-main-panel',
           'message-content',
+          'structured-content-container.model-response-text',
+          'model-response-content',
+          'div.response-content',
+          'div.response-container-content',
+          '.response-container',
           'model-response',
-          '.model-response',
-          '[data-message-author-role="model"]',
-          '[aria-label="Gemini response"]',
-          '.presented-response-container'
+          '.model-response'
         ];
         let target = null;
         for (const sel of selectors) {
@@ -96,8 +118,8 @@ const PLATFORM_EXTRACTORS = {
             break;
           }
         }
-        if (!target) return { ok: false, error: 'No Gemini model response found' };
-        const text = (target.innerText || target.textContent || '').trim();
+        if (!target) return { ok: false, error: "No Gemini model response found" };
+        const text = (target.innerText || target.textContent || "").trim();
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
@@ -107,8 +129,16 @@ const PLATFORM_EXTRACTORS = {
     checkStatus: () => `(function() {
       try {
         const stopBtn = document.querySelector('button[aria-label*="停止"], button[aria-label*="Stop"], .stop-button, button.mat-mdc-button-base:has(mat-icon[fonticon="stop"])');
-        const isStreaming = Boolean(stopBtn && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
-        return { ok: true, isStreaming };
+        const isStopVisible = Boolean(stopBtn && !stopBtn.disabled && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
+
+        const sendBtn = document.querySelector('button[aria-label*="傳送"], button[aria-label*="發送"], button[aria-label*="发送"], button[aria-label*="Send"], button.send-button');
+        const isSendActive = Boolean(sendBtn && !sendBtn.disabled && sendBtn.getAttribute("aria-disabled") !== "true" && (sendBtn.offsetParent !== null || sendBtn.getBoundingClientRect().height > 0));
+
+        if (isSendActive && !isStopVisible) {
+          return { ok: true, isStreaming: false };
+        }
+
+        return { ok: true, isStreaming: isStopVisible };
       } catch (err) {
         return { ok: false, isStreaming: false, error: err.message };
       }
@@ -122,7 +152,8 @@ const PLATFORM_EXTRACTORS = {
           'div[data-testid*="response"]',
           '.message-bubble:not(:has(textarea))',
           'div[class*="response"]',
-          '.prose'
+          '.prose',
+          'div.response-content'
         ];
         let target = null;
         for (const sel of selectors) {
@@ -136,8 +167,8 @@ const PLATFORM_EXTRACTORS = {
           const bubbles = document.querySelectorAll('div[class*="bubble"], div[role="listitem"]');
           if (bubbles.length > 0) target = bubbles[bubbles.length - 1];
         }
-        if (!target) return { ok: false, error: 'No Grok response found' };
-        const text = (target.innerText || target.textContent || '').trim();
+        if (!target) return { ok: false, error: "No Grok response found" };
+        const text = (target.innerText || target.textContent || "").trim();
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
@@ -147,8 +178,16 @@ const PLATFORM_EXTRACTORS = {
     checkStatus: () => `(function() {
       try {
         const stopBtn = document.querySelector('button[aria-label*="Stop"], button[aria-label*="停止"], button:has(svg.lucide-square)');
-        const isStreaming = Boolean(stopBtn && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
-        return { ok: true, isStreaming };
+        const isStopVisible = Boolean(stopBtn && !stopBtn.disabled && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
+        
+        const sendBtn = document.querySelector('button[aria-label*="Send"], button[aria-label*="傳送"], button[data-testid*="send"]');
+        const isSendVisible = Boolean(sendBtn && !sendBtn.disabled && (sendBtn.offsetParent !== null || sendBtn.getBoundingClientRect().height > 0));
+
+        if (isSendVisible && !isStopVisible) {
+          return { ok: true, isStreaming: false };
+        }
+
+        return { ok: true, isStreaming: isStopVisible };
       } catch (err) {
         return { ok: false, isStreaming: false, error: err.message };
       }

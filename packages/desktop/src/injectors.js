@@ -47,8 +47,9 @@ const PLATFORM_INJECTORS = {
   chatgpt: (text) => `(function() {
     try {
       const text = ${JSON.stringify(text)};
-      const input = document.querySelector('#prompt-textarea') ||
-                    document.querySelector('div[contenteditable="true"][id*="prompt"]') ||
+      const input = document.querySelector('div.ProseMirror[contenteditable="true"]') ||
+                    document.querySelector('#prompt-textarea') ||
+                    document.querySelector('div[contenteditable="true"][role="textbox"]') ||
                     document.querySelector('div[contenteditable="true"]');
       if (!input) return { ok: false, error: 'ChatGPT input not found' };
       input.focus();
@@ -168,7 +169,8 @@ const PLATFORM_INJECTORS = {
       
       // 6. Submit trigger with retry loop for Angular button activation
       const clickSend = () => {
-        let btn = document.querySelector('button[aria-label*="發送"]') ||
+        let btn = document.querySelector('button[aria-label*="傳送"]') ||
+                  document.querySelector('button[aria-label*="發送"]') ||
                   document.querySelector('button[aria-label*="发送"]') ||
                   document.querySelector('button[aria-label*="Send"]') ||
                   document.querySelector('button.send-button') ||

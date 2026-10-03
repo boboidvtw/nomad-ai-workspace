@@ -112,3 +112,41 @@ test('Orchestrator: Pause, resume and stop controls', async () => {
   assert.strictEqual(sRes.success, true);
   assert.strictEqual(orch.status, 'stopped');
 });
+
+test("Orchestrator: Settles via adaptive inactivity even if isStreaming remains true", async () => {
+  const longText = "This is a detailed mock AI response containing more than forty characters for testing adaptive settlement.";
+  const orch = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    pollIntervalMs: 5,
+    maxWaitMs: 1000,
+    extractResponse: async () => ({ ok: true, text: longText }),
+    checkStreaming: async () => ({ ok: true, isStreaming: true }), // Intentionally stuck on streaming
+  });
+
+  const startTime = Date.now();
+  const text = await orch.waitForSettledResponse("chatgpt", 1000, 5);
+  const elapsed = Date.now() - startTime;
+
+  assert.strictEqual(text, longText);
+  // Should settle in ~5 polls * 5ms = ~25-50ms, much faster than 1000ms maxWaitMs
+  assert.ok(elapsed < 400, "Should settle via adaptive inactivity before maxWaitMs");
+});
+
+test("Orchestrator: Retains monotonic baseline text if subsequent extract poll glitches", async () => {
+  let callCount = 0;
+  const goodText = "Valid captured text before temporary glitch occurred.";
+  const orch = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    pollIntervalMs: 5,
+    maxWaitMs: 50,
+    extractResponse: async () => {
+      callCount++;
+      if (callCount === 1) return { ok: true, text: goodText };
+      return { ok: false, error: "Network glitch" }; // Returns empty text on subsequent polls
+    },
+    checkStreaming: async () => ({ ok: true, isStreaming: false }),
+  });
+
+  const text = await orch.waitForSettledResponse("gemini", 50, 5);
+  assert.strictEqual(text, goodText);
+});

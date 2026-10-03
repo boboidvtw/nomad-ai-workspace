@@ -232,6 +232,43 @@ async function createMainWindow() {
       }
       return store.getAll().zoomFactors;
     },
+        onInspectPlatform: async (platform) => {
+      const item = views[platform];
+      if (!item) return { ok: false, error: "Platform view not found" };
+      const wc = item.view.webContents;
+      const extScript = PLATFORM_EXTRACTORS[platform]?.getLatestResponse();
+      const statScript = PLATFORM_EXTRACTORS[platform]?.checkStatus();
+      let extRes = null;
+      let statRes = null;
+      let debugDom = null;
+      try { if (extScript) extRes = await wc.executeJavaScript(extScript); } catch (e) { extRes = { ok: false, error: e.message }; }
+      try { if (statScript) statRes = await wc.executeJavaScript(statScript); } catch (e) { statRes = { ok: false, error: e.message }; }
+      try {
+        debugDom = await wc.executeJavaScript(`(function() {
+          return {
+            url: location.href,
+            title: document.title,
+            bodyTextSnippet: (document.body ? document.body.innerText : "").slice(0, 300),
+            articleCount: document.querySelectorAll("article").length,
+            turnCount: document.querySelectorAll("[data-testid*=\"conversation-turn\"]").length,
+            markdownCount: document.querySelectorAll(".markdown").length,
+            responseContainerCount: document.querySelectorAll(".response-container").length,
+            messageContentCount: document.querySelectorAll("message-content").length
+          };
+        })()`);
+      } catch (e) { debugDom = { error: e.message }; }
+      return { ok: true, platform, extRes, statRes, debugDom };
+    },
+    onEvalScript: async (platform, script) => {
+      const item = views[platform];
+      if (!item) return { ok: false, error: "Platform view not found" };
+      try {
+        const result = await item.view.webContents.executeJavaScript(script);
+        return { ok: true, result };
+      } catch (e) {
+        return { ok: false, error: e.message };
+      }
+    },
     onToggleWindow: (action) => {
       if (!mainWindow) return { visible: false };
       if (action === 'show') {

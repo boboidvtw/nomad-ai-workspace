@@ -27,6 +27,8 @@ class LocalSyncBridge {
     this.onSetZoom = options.onSetZoom || (() => ({}));
     this.onToggleWindow = options.onToggleWindow || (() => ({}));
     this.orchestrator = options.orchestrator || null;
+    this.onInspectPlatform = options.onInspectPlatform || null;
+    this.onEvalScript = options.onEvalScript || null;
 
     this.server = null;
     this.sseClients = new Set();
@@ -283,6 +285,25 @@ class LocalSyncBridge {
         }
         const resData = this.orchestrator.stop();
         return this.sendJson(res, 200, resData);
+      }
+
+            // 8. Diagnostics & Debug Endpoints
+      if (pathname === '/api/debug/inspect-platform' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        if (!this.onInspectPlatform) {
+          return this.sendJson(res, 501, { success: false, message: 'onInspectPlatform not implemented' });
+        }
+        const result = await Promise.resolve(this.onInspectPlatform(body.platform));
+        return this.sendJson(res, 200, { success: true, data: result });
+      }
+
+      if (pathname === '/api/debug/eval' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        if (!this.onEvalScript) {
+          return this.sendJson(res, 501, { success: false, message: 'onEvalScript not implemented' });
+        }
+        const result = await Promise.resolve(this.onEvalScript(body.platform, body.script));
+        return this.sendJson(res, 200, { success: true, data: result });
       }
 
       // 404 Route Not Found
