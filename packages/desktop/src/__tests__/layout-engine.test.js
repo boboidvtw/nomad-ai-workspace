@@ -115,3 +115,16 @@ test('Layout Engine: Custom mode adapts dynamically based on number of active pl
   assert.strictEqual(three.grok.visible, true);
   assert.strictEqual(three.chatgpt.visible, false);
 });
+
+test('Layout Engine: Subtracts drawerWidth when drawer is open', () => {
+  const boundsWithDrawer = calculateLayoutBounds({
+    winWidth: 1440,
+    winHeight: 900,
+    layout: 'focus',
+    activePlatforms: ['claude'],
+    drawerWidth: 420,
+  });
+
+  assert.strictEqual(boundsWithDrawer.claude.visible, true);
+  assert.strictEqual(boundsWithDrawer.claude.width, 1020); // 1440 - 420
+});

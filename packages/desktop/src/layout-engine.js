@@ -16,6 +16,7 @@ const ALL_PLATFORMS = ['claude', 'chatgpt', 'gemini', 'grok'];
  * @param {string} [params.layout='dual'] - Layout mode: 'focus' | 'dual' | 'triple' | 'quad' | 'custom'
  * @param {string[]} [params.activePlatforms=['claude', 'chatgpt']] - Platforms currently displayed
  * @param {number} [params.splitRatio=0.5] - Split ratio for dual layout (0.2 ~ 0.8)
+ * @param {number} [params.drawerWidth=0] - Right sidebar/drawer width
  * @returns {Record<string, { x: number, y: number, width: number, height: number, visible: boolean }>}
  */
 function calculateLayoutBounds({
@@ -26,9 +27,11 @@ function calculateLayoutBounds({
   layout = 'dual',
   activePlatforms = ['claude', 'chatgpt'],
   splitRatio = 0.5,
+  drawerWidth = 0,
 }) {
   const contentHeight = Math.max(100, (winHeight || 900) - topBarHeight - bottomBarHeight);
-  const width = Math.max(200, winWidth || 1200);
+  const totalWidth = Math.max(200, winWidth || 1200);
+  const width = Math.max(200, totalWidth - (Math.max(0, Number(drawerWidth)) || 0));
 
   // Initialize all platforms as invisible
   const bounds = {};

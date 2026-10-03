@@ -24,10 +24,12 @@ const views = {};
 let trayManager = null;
 let bridge = null;
 let orchestrator = null;
+let isDrawerOpen = false;
 app.isQuitting = false;
 
 const TOP_BAR_HEIGHT = 52;
 const BOTTOM_BAR_HEIGHT = 68;
+const DRAWER_WIDTH = 420;
 
 function updateViewBounds() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -44,6 +46,7 @@ function updateViewBounds() {
     layout,
     activePlatforms,
     splitRatio,
+    drawerWidth: isDrawerOpen ? DRAWER_WIDTH : 0,
   });
 
   for (const [key, item] of Object.entries(views)) {
@@ -196,6 +199,7 @@ async function createMainWindow() {
       splitRatio: store.get('splitRatio'),
       zoomFactors: store.getAll().zoomFactors,
       windowVisible: mainWindow ? mainWindow.isVisible() : false,
+      isDrawerOpen,
     }),
     onDispatchPrompt: async ({ prompt, targets }) => {
       const results = await dispatchPromptToTargets(prompt, targets);
@@ -332,6 +336,11 @@ ipcMain.on('nomad:set-zoom', (event, { platform, factor }) => {
     store.setZoom(platform, factor);
     applyZoom(platform, factor);
   }
+});
+
+ipcMain.on('nomad:set-drawer', (event, { open }) => {
+  isDrawerOpen = Boolean(open);
+  updateViewBounds();
 });
 
 ipcMain.on('nomad:dispatch-prompt', async (event, { prompt, targets }) => {
