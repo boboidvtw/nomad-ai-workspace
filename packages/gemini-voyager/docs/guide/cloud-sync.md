@@ -1,0 +1,46 @@
+# 云同步
+
+将文件夹、灵感库（Prompts）等数据同步到您的个人云端。所有受支持的浏览器都可使用 Google Drive；Safari 直装版还可选择 iCloud。
+
+## 功能特点
+
+- **多端同步**：利用 Google Drive 或 iCloud，在多台电脑上同步配置。
+- **全面覆盖**：支持同步文件夹、提示词库、星标、分支、时间线层级、高亮、个性化设置和插件配置。
+- **数据安全**：数据存储在您自己的 Google Drive 或 iCloud 私有数据库中，不经过 Voyager 服务器。
+- **灵活同步**：支持手动上传、下载合并数据。
+
+## 如何使用
+
+1. 在 Gemini™ 页面点击右下角的扩展图标，打开设置面板。
+2. 找到 **云同步** 区域。
+3. Safari 可选择 **Google Drive** 或 **iCloud**；其他浏览器使用 Google Drive。
+4. Google Drive 需要完成 Google 授权；iCloud 只需确保 Mac 已登录 iCloud。
+5. 点击 **上传到云端**，或点击 **从云端下载合并** 将云端数据合并到本机。
+
+同步为手动触发，不会在后台自动上传。切换服务不会自动搬运数据，也不会同时写入两个服务；切换后请手动上传一次。
+
+## 同步内容
+
+Voyager 会把不同类型的数据保存为独立备份，避免某一类数据覆盖其他内容。Google Drive 中是 JSON 文件；iCloud 中保存于 Voyager 的私有 CloudKit 数据库：
+
+- `gemini-voyager-settings.json`：跨设备的个性化设置，例如会话排序、文件夹字号、颜色和输入行为。
+- `gemini-voyager-plugins.json`：插件安装、启用状态及插件内部设置。插件所需的网站权限仍需在每台设备上单独授权。
+- 文件夹、提示词、星标、分支、时间线层级和高亮分别使用各自的同步文件；高亮内容仅在开启高亮云同步后上传。
+
+窗口坐标、缓存、访问令牌、设备 ID 和临时任务状态不会写入个性化设置文件。
+
+### 💡 极速同步
+
+最简单的方法是在左侧侧边栏的**文件夹区域顶部**，直接点击“上传到云端”或“下载并合并”按钮。
+
+<img src="/assets/cloud-sync.png" alt="云同步快捷按钮" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 10px; max-width: 600px;"/>
+
+::: warning
+**安全建议：双重保护**  
+虽然云同步提供了极大的便利，但为了您的数据万无一失，我们强烈建议您定期通过**本地文件方式**手动备份核心数据。
+
+1. **导出全量配置**：在设置面板底部的“备份与恢复”中导出包含所有设置、文件夹和提示词的完整备份。
+   <img src="/assets/manual-export-all.png" alt="导出全量配置" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 10px; max-width: 600px;"/>
+2. **导出所有文件夹**：在设置面板的“文件夹”区域点击“导出”，仅备份所有文件夹结构及对话，不包含提示词。
+   <img src="/assets/manual-folder-export.png" alt="导出所有文件夹" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 10px; max-width: 600px;"/>
+   :::

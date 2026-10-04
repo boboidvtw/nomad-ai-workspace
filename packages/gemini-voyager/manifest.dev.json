@@ -1,0 +1,67 @@
+{
+  "action": {
+    "default_icon": "public/dev-icon-32.png",
+    "default_popup": "src/pages/popup/index.html"
+  },
+  "icons": {
+    "128": "public/dev-icon-128.png"
+  },
+  "permissions": ["storage", "identity", "scripting", "alarms", "activeTab"],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "contentStyle.css",
+        "changelog-activity-view.png",
+        "watermark-native-steps.png",
+        "dev-icon-128.png",
+        "dev-icon-32.png",
+        "icon-32.png",
+        "icon-128.png",
+        "mascot-logo.png",
+        "fetchInterceptor.js",
+        "claude-usage-observer.js",
+        "response-complete-observer.js",
+        "usage-observer.js",
+        "conversation-history-observer.js",
+        "prevent-auto-scroll.js",
+        "assets/*.js",
+        "assets/*.png"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://gemini.google.com/*",
+        "https://business.gemini.google/*",
+        "https://aistudio.google.com/*",
+        "https://aistudio.google.cn/*"
+      ],
+      "js": ["src/pages/content/index.tsx"],
+      "css": ["contentStyle.css"]
+    },
+    {
+      "matches": ["https://gemini.google.com/*", "https://business.gemini.google/*"],
+      "js": ["src/pages/content/usageObserverLoader.ts"],
+      "run_at": "document_start"
+    }
+  ],
+  "host_permissions": [
+    "https://gemini.google.com/*",
+    "https://business.gemini.google/*",
+    "https://aistudio.google.com/*",
+    "https://aistudio.google.cn/*",
+    "https://*.googleapis.com/*",
+    "https://accounts.google.com/*",
+    "https://*.googleusercontent.com/*",
+    "https://lh3.google.com/*",
+    "https://*.ggpht.com/*"
+  ],
+  "optional_host_permissions": ["https://chatgpt.com/*", "<all_urls>"],
+  "background": {
+    "service_worker": "src/pages/background/index.ts",
+    "type": "module"
+  },
+  "version": "1.9.0"
+}

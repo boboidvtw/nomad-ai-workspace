@@ -1,0 +1,38 @@
+name: Issue Claim
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+jobs:
+  enforce-claim-policy:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.issue.pull_request == null &&
+      (
+        (github.event_name == 'issues' && github.event.label.name == 'community-only') ||
+        (github.event_name == 'issue_comment' &&
+          (contains(github.event.comment.body, '/claim') ||
+           contains(github.event.comment.body, '/unclaim') ||
+           contains(github.event.comment.body, '/approve')))
+      )
+
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout policy
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Enforce claim policy
+        id: check
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { handleIssuePolicy } = require('./scripts/community-issue-policy.cjs');
+            await handleIssuePolicy({ github, context });

@@ -1,0 +1,157 @@
+{
+  "$schema": "https://voyager.nagi.fun/plugin.schema.json",
+  "id": "voyager.claude-reading-width",
+  "name": "Claude · Comfortable Reading Width",
+  "version": "1.4.1",
+  "description": "Widen Claude's conversation to one centered, adjustable column, with user and assistant messages aligned together.",
+  "changelog": "Follows Claude's new outer column cap (max-w-[50.5rem]) so the reading width applies again.",
+  "i18n": {
+    "zh": {
+      "name": "Claude · 舒适阅读宽度",
+      "description": "将 Claude 的对话拓宽为居中、可调节的单栏，用户与助手的消息统一左对齐。",
+      "settings": {
+        "width": {
+          "label": "阅读宽度（px）",
+          "minLabel": "更窄",
+          "maxLabel": "更宽"
+        }
+      },
+      "changelog": "跟进 Claude 新增的外层列宽上限（max-w-[50.5rem]），阅读宽度重新生效。"
+    },
+    "zh_TW": {
+      "name": "Claude · 舒適閱讀寬度",
+      "description": "將 Claude 的對話拓寬為置中、可調整的單欄，使用者與助理的訊息統一靠左對齊。",
+      "settings": {
+        "width": {
+          "label": "閱讀寬度（px）",
+          "minLabel": "更窄",
+          "maxLabel": "更寬"
+        }
+      },
+      "changelog": "跟進 Claude 新增的外層欄寬上限（max-w-[50.5rem]），閱讀寬度重新生效。"
+    },
+    "ja": {
+      "name": "Claude · 快適な読書幅",
+      "description": "Claude の会話を中央寄せの調整可能な 1 カラムに広げ、ユーザーとアシスタントのメッセージを揃えて表示します。",
+      "settings": {
+        "width": {
+          "label": "読書幅（px）",
+          "minLabel": "狭く",
+          "maxLabel": "広く"
+        }
+      },
+      "changelog": "Claude が追加した外側の列幅上限（max-w-[50.5rem]）に追従し、読書幅が再び効くようにしました。"
+    },
+    "ko": {
+      "name": "Claude · 편안한 읽기 너비",
+      "description": "Claude의 대화를 가운데 정렬된 조절 가능한 단일 열로 넓히고, 사용자와 어시스턴트 메시지를 같은 정렬로 맞춥니다.",
+      "settings": {
+        "width": {
+          "label": "읽기 너비(px)",
+          "minLabel": "좁게",
+          "maxLabel": "넓게"
+        }
+      },
+      "changelog": "Claude가 추가한 바깥쪽 열 너비 상한(max-w-[50.5rem])을 따라가 읽기 너비가 다시 적용됩니다."
+    },
+    "fr": {
+      "name": "Claude · Largeur de lecture confortable",
+      "description": "Élargit la conversation de Claude en une seule colonne centrée et ajustable, avec les messages de l'utilisateur et de l'assistant alignés ensemble.",
+      "settings": {
+        "width": {
+          "label": "Largeur de lecture (px)",
+          "minLabel": "Plus étroit",
+          "maxLabel": "Plus large"
+        }
+      },
+      "changelog": "Suit la nouvelle limite de largeur externe de Claude (max-w-[50.5rem]) pour que la largeur de lecture s'applique à nouveau."
+    },
+    "es": {
+      "name": "Claude · Ancho de lectura cómodo",
+      "description": "Amplía la conversación de Claude en una sola columna centrada y ajustable, con los mensajes del usuario y del asistente alineados juntos.",
+      "settings": {
+        "width": {
+          "label": "Ancho de lectura (px)",
+          "minLabel": "Más estrecho",
+          "maxLabel": "Más ancho"
+        }
+      },
+      "changelog": "Sigue el nuevo límite de ancho exterior de Claude (max-w-[50.5rem]) para que el ancho de lectura vuelva a aplicarse."
+    },
+    "pt": {
+      "name": "Claude · Largura de leitura confortável",
+      "description": "Amplia a conversa do Claude em uma única coluna centralizada e ajustável, com as mensagens do usuário e do assistente alinhadas juntas.",
+      "settings": {
+        "width": {
+          "label": "Largura de leitura (px)",
+          "minLabel": "Mais estreito",
+          "maxLabel": "Mais largo"
+        }
+      },
+      "changelog": "Acompanha o novo limite de largura externo do Claude (max-w-[50.5rem]) para que a largura de leitura volte a valer."
+    },
+    "ru": {
+      "name": "Claude · Удобная ширина чтения",
+      "description": "Расширяет диалог Claude до одной центрированной колонки с настраиваемой шириной, выравнивая сообщения пользователя и ассистента вместе.",
+      "settings": {
+        "width": {
+          "label": "Ширина чтения (px)",
+          "minLabel": "Уже",
+          "maxLabel": "Шире"
+        }
+      },
+      "changelog": "Учитывает новый внешний предел ширины колонки Claude (max-w-[50.5rem]), чтобы ширина чтения снова применялась."
+    },
+    "ar": {
+      "name": "Claude · عرض قراءة مريح",
+      "description": "يوسّع محادثة Claude إلى عمود واحد موسّط قابل للتعديل، مع محاذاة رسائل المستخدم والمساعد معًا.",
+      "settings": {
+        "width": {
+          "label": "عرض القراءة (px)",
+          "minLabel": "أضيق",
+          "maxLabel": "أوسع"
+        }
+      },
+      "changelog": "يواكب حدّ عرض العمود الخارجي الجديد في Claude (max-w-[50.5rem]) حتى يعود عرض القراءة إلى العمل."
+    }
+  },
+  "author": "voyager-official",
+  "category": "readability",
+  "license": "MIT",
+  "homepage": "https://github.com/voyager-crew/voyager/tree/main/src/features/plugins/catalog/sites/claude/plugins/reading-width",
+  "engine": ">=1.2.0",
+  "tier": "declarative",
+  "matches": ["https://claude.ai/*", "https://*.frame.claudeusercontent.com/*"],
+  "contributes": {
+    "settings": {
+      "width": {
+        "type": "number",
+        "label": "Reading width (px)",
+        "minLabel": "Narrower",
+        "maxLabel": "Wider",
+        "default": 768,
+        "min": 600,
+        "max": 1600
+      }
+    },
+    "styles": [
+      {
+        "file": "style.css"
+      }
+    ],
+    "domOps": [
+      {
+        "op": "addClass",
+        "target": "body",
+        "className": "gv-plugin-claude-readable"
+      },
+      {
+        "op": "setStyle",
+        "target": "body",
+        "styles": {
+          "--gv-plugin-reading-width": "{{width}}px"
+        }
+      }
+    ]
+  }
+}

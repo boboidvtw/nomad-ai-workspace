@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "announcements": [
+    {
+      "id": "safari-app-rename-2026-07",
+      "level": "warning",
+      "startsAt": "2026-07-18T00:00:00Z",
+      "endsAt": "2026-10-01T00:00:00Z",
+      "minExtensionVersion": "1.5.0",
+      "maxExtensionVersion": "1.5.7",
+      "platforms": ["safari"],
+      "requiresAction": true,
+      "locales": {
+        "default": {
+          "title": "Action needed: Safari app renamed to Voyager",
+          "body": "The Safari app was renamed from “Gemini Voyager” to “Voyager”. Before updating, please migrate once so you don’t end up with two apps installed. Your folders, prompts and settings are preserved.",
+          "link": "https://voyager.nagi.fun/en/guide/safari-migration",
+          "linkLabel": "How to migrate"
+        },
+        "zh": {
+          "title": "需要操作：Safari App 已更名为 Voyager",
+          "body": "Safari 宿主 App 从「Gemini Voyager」更名为「Voyager」。更新前请按指南迁移一次，避免两个 App 并存。你的文件夹、灵感库和设置都会保留。",
+          "link": "https://voyager.nagi.fun/guide/safari-migration",
+          "linkLabel": "查看迁移指南"
+        },
+        "zh_TW": {
+          "title": "需要操作：Safari App 已更名為 Voyager",
+          "body": "Safari 宿主 App 由「Gemini Voyager」更名為「Voyager」。更新前請依指南遷移一次，避免兩個 App 並存。你的資料夾、靈感庫與設定都會保留。",
+          "link": "https://voyager.nagi.fun/zh_TW/guide/safari-migration",
+          "linkLabel": "查看遷移指南"
+        },
+        "ja": {
+          "title": "要対応：Safari アプリ名が Voyager に変更されました",
+          "body": "Safari のホストアプリ名が「Gemini Voyager」から「Voyager」に変わりました。更新前に一度移行し、アプリが二重にならないようにしてください。フォルダ・プロンプト・設定は保持されます。",
+          "link": "https://voyager.nagi.fun/ja/guide/safari-migration",
+          "linkLabel": "移行手順を見る"
+        },
+        "fr": {
+          "title": "Action requise : l’app Safari renommée Voyager",
+          "body": "L’app Safari a été renommée de « Gemini Voyager » en « Voyager ». Avant de mettre à jour, effectuez la migration une fois pour éviter d’avoir deux apps installées. Vos dossiers, prompts et réglages sont conservés.",
+          "link": "https://voyager.nagi.fun/fr/guide/safari-migration",
+          "linkLabel": "Voir le guide"
+        },
+        "es": {
+          "title": "Acción necesaria: la app de Safari ahora es Voyager",
+          "body": "La app de Safari cambió de nombre de «Gemini Voyager» a «Voyager». Antes de actualizar, haz la migración una vez para no tener dos apps instaladas. Tus carpetas, prompts y ajustes se conservan.",
+          "link": "https://voyager.nagi.fun/es/guide/safari-migration",
+          "linkLabel": "Ver guía de migración"
+        },
+        "pt": {
+          "title": "Ação necessária: app do Safari renomeado para Voyager",
+          "body": "O app do Safari foi renomeado de “Gemini Voyager” para “Voyager”. Antes de atualizar, faça a migração uma vez para não ficar com dois apps instalados. Suas pastas, prompts e configurações são preservados.",
+          "link": "https://voyager.nagi.fun/pt/guide/safari-migration",
+          "linkLabel": "Ver guia de migração"
+        },
+        "ar": {
+          "title": "إجراء مطلوب: أُعيدت تسمية تطبيق Safari إلى Voyager",
+          "body": "أُعيدت تسمية تطبيق Safari من «Gemini Voyager» إلى «Voyager». قبل التحديث، نفّذ النقل مرة واحدة حتى لا يتبقى لديك تطبيقان. تُحفَظ مجلداتك وموجّهاتك وإعداداتك.",
+          "link": "https://voyager.nagi.fun/ar/guide/safari-migration",
+          "linkLabel": "دليل النقل"
+        },
+        "ru": {
+          "title": "Требуется действие: приложение Safari переименовано в Voyager",
+          "body": "Приложение Safari переименовано с «Gemini Voyager» на «Voyager». Перед обновлением выполните перенос один раз, чтобы не осталось двух приложений. Ваши папки, промпты и настройки сохранятся.",
+          "link": "https://voyager.nagi.fun/ru/guide/safari-migration",
+          "linkLabel": "Инструкция по переносу"
+        },
+        "ko": {
+          "title": "조치 필요: Safari 앱이 Voyager로 변경되었습니다",
+          "body": "Safari 앱 이름이 「Gemini Voyager」에서 「Voyager」로 변경되었습니다. 업데이트 전에 한 번 마이그레이션하여 두 앱이 함께 남지 않도록 하세요. 폴더, 프롬프트, 설정은 유지됩니다.",
+          "link": "https://voyager.nagi.fun/ko/guide/safari-migration",
+          "linkLabel": "마이그레이션 안내 보기"
+        }
+      }
+    },
+    {
+      "id": "gemini-page-format-change-2026-06",
+      "level": "warning",
+      "startsAt": "2026-06-16T00:00:00Z",
+      "endsAt": "2026-07-16T00:00:00Z",
+      "minExtensionVersion": "1.4.9",
+      "platforms": ["chrome", "edge", "firefox", "safari"],
+      "locales": {
+        "default": {
+          "title": "Gemini page format changed",
+          "body": "Gemini changed its page structure; Voyager now uses multi-anchor detection and self-healing remounts to keep injection stable."
+        },
+        "zh": {
+          "title": "Gemini 网页格式发生变化",
+          "body": "Gemini 调整了页面结构；Voyager 已通过多锚点探测和自愈重挂载，让功能挂载保持稳定。"
+        },
+        "zh_TW": {
+          "title": "Gemini 網頁格式發生變化",
+          "body": "Gemini 調整了頁面結構；Voyager 已透過多錨點偵測與自我修復重掛載，讓功能掛載保持穩定。"
+        },
+        "ja": {
+          "title": "Gemini のページ構造が変更されました",
+          "body": "Gemini のページ構造変更に対応し、Voyager は複数アンカー検出と自己修復リマウントで機能のマウントを安定させました。"
+        },
+        "fr": {
+          "title": "La structure de Gemini a changé",
+          "body": "Gemini a modifié sa structure de page ; Voyager utilise désormais plusieurs points d'ancrage et un remontage automatique pour stabiliser l'injection."
+        },
+        "es": {
+          "title": "Cambió la estructura de Gemini",
+          "body": "Gemini cambió la estructura de la página; Voyager ahora usa detección de varios anclajes y remontaje automático para mantener estable la inyección."
+        },
+        "pt": {
+          "title": "A estrutura do Gemini mudou",
+          "body": "O Gemini mudou a estrutura da página; o Voyager agora usa detecção de múltiplas âncoras e remontagem automática para manter a injeção estável."
+        },
+        "ar": {
+          "title": "تغيّر تنسيق صفحة Gemini",
+          "body": "غيّر Gemini بنية الصفحة؛ يستخدم Voyager الآن اكتشاف عدة نقاط تثبيت وإعادة تركيب تلقائية للحفاظ على ثبات الحقن."
+        },
+        "ru": {
+          "title": "Структура страницы Gemini изменилась",
+          "body": "Gemini изменил структуру страницы; Voyager теперь использует поиск нескольких якорей и самовосстанавливающееся повторное монтирование для стабильной вставки."
+        },
+        "ko": {
+          "title": "Gemini 페이지 구조가 변경되었습니다",
+          "body": "Gemini 페이지 구조 변경에 맞춰 Voyager는 다중 앵커 감지와 자동 재마운트로 기능 주입을 안정적으로 유지합니다."
+        }
+      }
+    }
+  ]
+}
