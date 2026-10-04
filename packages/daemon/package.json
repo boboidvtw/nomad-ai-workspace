@@ -1,0 +1,26 @@
+{
+  "name": "@nomad/daemon",
+  "version": "1.4.0",
+  "description": "Nomad Core Daemon - Unified Background Gateway, Microservice Prober & Dashboard Host",
+  "main": "index.js",
+  "bin": {
+    "nomad-daemon": "./bin/nomad-daemon.js"
+  },
+  "scripts": {
+    "start": "node bin/nomad-daemon.js run",
+    "daemon:start": "node bin/nomad-daemon.js start",
+    "daemon:stop": "node bin/nomad-daemon.js stop",
+    "daemon:status": "node bin/nomad-daemon.js status",
+    "probe": "node bin/nomad-daemon.js probe",
+    "test": "node --test src/__tests__/*.test.js"
+  },
+  "keywords": [
+    "nomad",
+    "daemon",
+    "gateway",
+    "microservice-probe",
+    "rpc"
+  ],
+  "author": "bobo li",
+  "license": "GPL-3.0"
+}

@@ -654,6 +654,58 @@
       transform: translateY(-1px);
     }
     .btn-send:active { transform: translateY(0); }
+
+    .btn-hud {
+      cursor: pointer;
+      border: 1px solid rgba(16, 185, 129, 0.3) !important;
+      background: rgba(16, 185, 129, 0.08) !important;
+    }
+    .btn-hud:hover {
+      background: rgba(16, 185, 129, 0.16) !important;
+      border-color: rgba(16, 185, 129, 0.5) !important;
+    }
+    .btn-hud.active {
+      background: rgba(16, 185, 129, 0.25) !important;
+      border-color: #10b981 !important;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+    .pulse-emerald {
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .pulse-gray {
+      background: #64748b;
+      box-shadow: none;
+    }
+    .hud-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: all 0.2s;
+    }
+    .hud-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      background: rgba(22, 32, 54, 0.85);
+    }
+    .hud-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .hud-card-body {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
   </style>
 </head>
 <body>
@@ -701,6 +753,11 @@
       </div>
 
       <!-- Zoom Popover Toggle -->
+            <!-- System Cockpit HUD Pill -->
+      <div class="pill-info btn-hud" id="btn-hud-pill" onclick="openSidebarTab('hud')" title="開啟本機微服務與決策儀表板 (HUD)">
+        <span class="pulse-dot pulse-emerald" id="hud-pulse-dot"></span>
+        <span id="hud-top-label" style="font-weight: 600; color: #6ee7b7;">🖥️ 系統 HUD</span>
+      </div>
       <div class="pill-info" id="btn-zoom-toggle" onclick="openSidebarTab('zoom')">
         <span>🔍 視圖縮放</span>
       </div>
@@ -725,6 +782,7 @@
         <button class="btn-tab active" id="tab-btn-orch" onclick="switchSidebarTab('orch')">🤝 圓桌接力</button>
         <button class="btn-tab" id="tab-btn-ws" onclick="switchSidebarTab('ws')">📁 會話工作區</button>
         <button class="btn-tab" id="tab-btn-zoom" onclick="switchSidebarTab('zoom')">🔍 縮放調控</button>
+        <button class="btn-tab" id="tab-btn-hud" onclick="switchSidebarTab('hud')">🖥️ 系統 HUD</button>
       </div>
       <span style="cursor: pointer; color: #94a3b8; font-size: 15px; padding: 2px 6px;" onclick="closeSidebar()">✕</span>
     </div>
@@ -1123,7 +1181,65 @@
       }
     }
 
-    function switchSidebarTab(tab) {
+    async function loadHudProbe() {
+      const port = state.bridgePort || 8765;
+      const grid = document.getElementById('hud-services-grid');
+      const pulseDot = document.getElementById('hud-pulse-dot');
+      try {
+        const res = await fetch(`http://127.0.0.1:${port}/api/probe?timeout=250`);
+        const json = await res.json();
+        if (json && json.success && json.data && json.data.services) {
+          const svcs = json.data.services;
+          const allHealthy = json.data.summary.allEssentialOnline;
+          if (pulseDot) {
+            pulseDot.className = 'pulse-dot ' + (allHealthy ? 'pulse-emerald' : 'pulse-gray');
+          }
+
+          if (grid) {
+            grid.innerHTML = svcs.map(s => `
+              <div class="hud-card" style="border-left: 3px solid ${s.online ? '#10b981' : '#64748b'};">
+                <div class="hud-card-header">
+                  <span style="color: ${s.online ? '#f8fafc' : '#94a3b8'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${s.name}</span>
+                  <span>${s.online ? '🟢' : '⚪'}</span>
+                </div>
+                <div class="hud-card-body">
+                  <span>Port ${s.port}</span>
+                  <span style="color: ${s.online ? '#34d399' : '#64748b'};">${s.online ? s.latencyMs + 'ms' : '離線'}</span>
+                </div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        if (grid) {
+          grid.innerHTML = `<div style="grid-column: span 2; font-size: 11px; color: #ef4444; text-align: center; padding: 10px;">⚠️ 探針連線失敗 (${err.message})</div>`;
+        }
+      }
+    }
+
+    function openDashboardInBrowser() {
+      const port = state.bridgePort || 8765;
+      const url = `http://127.0.0.1:${port}/dashboard`;
+      if (window.nomadDesktop && window.nomadDesktop.openExternal) {
+        window.nomadDesktop.openExternal(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    }
+
+    function copyApiEndpoint() {
+      const port = state.bridgePort || 8765;
+      const url = `http://127.0.0.1:${port}/api/status`;
+      navigator.clipboard.writeText(url);
+      const btnText = document.getElementById('btn-copy-status-text');
+      if (btnText) {
+        const orig = btnText.textContent;
+        btnText.textContent = '已複製!';
+        setTimeout(() => { btnText.textContent = orig; }, 1500);
+      }
+    }
+
+        function switchSidebarTab(tab) {
       state.activeSidebarTab = tab;
       document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
       const tabBtn = document.getElementById('tab-btn-' + tab);
@@ -1133,6 +1249,15 @@
       const wsTab = document.getElementById('tab-content-ws');
       if (wsTab) wsTab.style.display = tab === 'ws' ? 'flex' : 'none';
       document.getElementById('tab-content-zoom').style.display = tab === 'zoom' ? 'flex' : 'none';
+      const hudTab = document.getElementById('tab-content-hud');
+      if (hudTab) hudTab.style.display = tab === 'hud' ? 'flex' : 'none';
+
+      const hudPill = document.getElementById('btn-hud-pill');
+      if (hudPill) hudPill.classList.toggle('active', tab === 'hud');
+
+      if (tab === 'hud') {
+        loadHudProbe();
+      }
 
       document.getElementById('btn-roundtable').classList.toggle('active', tab === 'orch');
       const wsPill = document.getElementById('btn-workspace-pill');

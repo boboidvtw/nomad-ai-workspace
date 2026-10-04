@@ -51,7 +51,15 @@
     "hooks:install": "node scripts/install-git-hooks.cjs",
     "prepare": "node scripts/install-git-hooks.cjs",
     "desktop": "cd packages/desktop && ./node_modules/.bin/electron .",
-    "desktop:dev": "cd packages/desktop && ./node_modules/.bin/electron . --enable-logging"
+    "desktop:dev": "cd packages/desktop && ./node_modules/.bin/electron . --enable-logging",
+    "daemon": "node packages/daemon/bin/nomad-daemon.js run",
+    "daemon:start": "node packages/daemon/bin/nomad-daemon.js start",
+    "daemon:stop": "node packages/daemon/bin/nomad-daemon.js stop",
+    "daemon:restart": "node packages/daemon/bin/nomad-daemon.js restart",
+    "daemon:status": "node packages/daemon/bin/nomad-daemon.js status",
+    "probe": "node packages/daemon/bin/nomad-daemon.js probe",
+    "dashboard": "node packages/daemon/bin/nomad-daemon.js run",
+    "test:monorepo": "node --test packages/core/src/__tests__/*.test.js && node --test packages/daemon/src/__tests__/*.test.js && npm --prefix packages/desktop run test"
   },
   "type": "module",
   "dependencies": {
@@ -111,5 +119,8 @@
   },
   "overrides": {
     "rollup": "^4.24.0"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

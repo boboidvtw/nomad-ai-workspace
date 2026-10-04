@@ -34,7 +34,8 @@
       "nomad.png",
       "trayTemplate.png",
       "trayTemplate@2x.png",
-      "src/**/*"
+      "src/**/*",
+      "node_modules/@nomad/**/*"
     ],
     "extraResources": [
       {

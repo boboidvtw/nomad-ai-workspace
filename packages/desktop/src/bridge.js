@@ -6,6 +6,9 @@
 
 const http = require('http');
 const fs = require('fs');
+const path = require('path');
+const { probeAllServices } = require('./prober');
+const { serveDashboard } = require('./static-handler');
 
 class LocalSyncBridge {
   /**
@@ -142,6 +145,19 @@ class LocalSyncBridge {
     const pathname = parsedUrl.pathname;
 
     try {
+      // 0. Dashboard static hosting
+      if (pathname === '/dashboard' || pathname === '/dashboard/' || pathname === '/dashboard/index.html') {
+        serveDashboard(req, res);
+        return;
+      }
+
+      // 0.1 Microservice health probe
+      if (pathname === '/api/probe' && req.method === 'GET') {
+        const timeoutMs = parseInt(parsedUrl.searchParams.get('timeout') || '350', 10);
+        const probeRes = await probeAllServices(undefined, timeoutMs);
+        return this.sendJson(res, 200, probeRes);
+      }
+
       // 1. Health & Status
       if ((pathname === '/' || pathname === '/health' || pathname === '/api/status') && req.method === 'GET') {
         const appState = await Promise.resolve(this.getStatus());
@@ -150,7 +166,7 @@ class LocalSyncBridge {
           success: true,
           data: {
             app: 'Nomad AI Studio',
-            version: '1.3.0',
+            version: '1.4.0',
             bridgePort: this.port,
             timestamp: new Date().toISOString(),
             orchestrator: orchStatus,

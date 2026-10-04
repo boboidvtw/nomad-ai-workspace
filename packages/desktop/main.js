@@ -1,3 +1,4 @@
+const { probeAllServices } = require('./src/prober');
 const { app, BrowserWindow, WebContentsView, session, ipcMain, screen, Menu, shell, dialog } = require('electron');
 const fs = require('fs');
 const os = require('os');

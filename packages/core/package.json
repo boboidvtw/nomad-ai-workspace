@@ -1,0 +1,17 @@
+{
+  "name": "@nomad/core",
+  "version": "1.4.0",
+  "description": "Nomad Shared Core Protocol, Result Pattern & Error Code Registry",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test src/__tests__/*.test.js"
+  },
+  "keywords": [
+    "nomad",
+    "core",
+    "result-pattern",
+    "protocol"
+  ],
+  "author": "bobo li",
+  "license": "GPL-3.0"
+}

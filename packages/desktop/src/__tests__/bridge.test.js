@@ -265,3 +265,29 @@ test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () =>
     await bridge.stop();
   }
 });
+
+test('Bridge: Serves /dashboard and /api/probe endpoints', async () => {
+  const bridge = new LocalSyncBridge({
+    port: 19881,
+    host: '127.0.0.1',
+  });
+
+  const { url } = await bridge.start();
+
+  try {
+    // 1. Test /dashboard
+    const dashRes = await fetch(url + '/dashboard');
+    assert.strictEqual(dashRes.status, 200);
+    const html = await dashRes.text();
+    assert.ok(html.includes('Nomad Dashboard'));
+
+    // 2. Test /api/probe
+    const probeRes = await fetch(url + '/api/probe');
+    assert.strictEqual(probeRes.status, 200);
+    const probeJson = await probeRes.json();
+    assert.strictEqual(probeJson.success, true);
+    assert.ok(probeJson.data.services.length > 0);
+  } finally {
+    await bridge.stop();
+  }
+});
