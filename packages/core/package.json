@@ -13,5 +13,6 @@
     "protocol"
   ],
   "author": "bobo li",
-  "license": "GPL-3.0"
+  "license": "GPL-3.0",
+  "types": "index.d.ts"
 }

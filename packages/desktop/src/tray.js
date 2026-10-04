@@ -101,6 +101,12 @@ class TrayAndShortcutManager {
             checked: currentLayout === 'quad',
             click: () => this.onLayoutChange('quad'),
           },
+          {
+            label: '六宮格矩陣 (Hexa 6-Grid)',
+            type: 'radio',
+            checked: currentLayout === 'hexa',
+            click: () => this.onLayoutChange('hexa'),
+          },
         ],
       },
       {

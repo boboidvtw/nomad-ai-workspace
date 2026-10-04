@@ -1,0 +1,80 @@
+name: Monorepo CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Monorepo Unit & Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Run Monorepo Test Suite
+        run: npm run test:monorepo
+
+  typecheck:
+    name: TypeScript Static Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Run Typecheck
+        run: npm run typecheck
+
+  desktop-smoke:
+    name: Desktop Build Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Root Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build WebExtension Extension Bundle
+        run: npm run build
+
+      - name: Install Desktop Dependencies
+        working-directory: packages/desktop
+        run: npm install
+
+      - name: Test Desktop App Packaging (Unpacked Dir)
+        working-directory: packages/desktop
+        run: npx electron-builder --dir --linux

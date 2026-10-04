@@ -13,7 +13,7 @@ try {
   MONITORED_SERVICES = core.MONITORED_SERVICES;
 } catch (e) {
   try {
-    const core = require('../../core');
+    const core = require('@nomad/core');
     ok = core.ok;
     err = core.err;
     ErrorCodes = core.ErrorCodes;

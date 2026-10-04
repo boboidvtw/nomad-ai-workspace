@@ -12,7 +12,7 @@ try {
   ErrorCodes = core.ErrorCodes;
 } catch (e) {
   try {
-    const core = require('../../core');
+    const core = require('@nomad/core');
     err = core.err;
     ErrorCodes = core.ErrorCodes;
   } catch (e2) {

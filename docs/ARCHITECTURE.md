@@ -47,6 +47,13 @@ graph TB
     StaticServer <== "iframe 嵌入" ==> HUD
 ```
 
+### 🤝 主從協調與反向代理機制 (Primary-Secondary Handshake Protocol)
+為徹底消除 Daemon 與 Desktop Studio 搶佔 Port 8765 的痛點，系統實作了智慧主從代理通道：
+1. **單一統一對外端口 (SSOT Port 8765)**：所有外部腳本、瀏覽器套件與 CLI 工具永遠呼叫 `http://127.0.0.1:8765`。
+2. **自動向 Daemon 握手註冊**：若 Daemon 已在線，Studio 啟動時自動使用備用連接埠（如 8766），並向 Daemon 發送 `POST /api/studio/register`，每 10 秒發送一次心跳檢測。
+3. **無縫請求轉發 (Transparent Reverse Proxy)**：Daemon 收到任何桌面端操作請求（`/api/prompt`、`/api/layout`、`/api/zoom`、`/api/orchestrate` 等）時，自動以內部代理轉發給當前活躍的 Studio 實體；若 Studio 離線，Daemon 則回傳結構化離線狀態 (`DAEMON_STUDIO_OFFLINE_001`)。
+4. **無感獨立模式 (Zero-Config Standalone Fallback)**：若 Daemon 未啟動，Studio 會直接綁定 Port 8765 獨立服務，完全向下相容。
+
 ### 套件目錄職責清單
 1. **`packages/core` (`@nomad/core`)**：定義全域通用的 `Result<T, E>` 零異常合約、標準化 `ErrorCodes` 命名空間與端口定義。
 2. **`packages/daemon` (`@nomad/daemon`)**：跨平台常駐背景行程，提供 PID 管理、多服務健康探針 (`/api/probe`) 與靜態 Web 伺服器。

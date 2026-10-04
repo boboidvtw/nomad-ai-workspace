@@ -193,6 +193,94 @@ const PLATFORM_EXTRACTORS = {
       }
     })()`,
   },
+
+  deepseek: {
+    getLatestResponse: () => `(function() {
+      try {
+        const selectors = [
+          '.ds-markdown',
+          '.ds-message--assistant',
+          'div[class*="message-assistant"]',
+          '.markdown',
+          'div.chat-message:has(.ds-markdown)'
+        ];
+        let target = null;
+        for (const sel of selectors) {
+          const els = document.querySelectorAll(sel);
+          if (els.length > 0) {
+            target = els[els.length - 1];
+            break;
+          }
+        }
+        if (!target) return { ok: false, error: "No DeepSeek response found" };
+        const text = (target.innerText || target.textContent || "").trim();
+        return { ok: true, text, length: text.length };
+      } catch (err) {
+        return { ok: false, error: err.message };
+      }
+    })()`,
+
+    checkStatus: () => `(function() {
+      try {
+        const stopBtn = document.querySelector('button[aria-label*="Stop"], button[aria-label*="停止"], div[class*="stop"]');
+        const isStopVisible = Boolean(stopBtn && !stopBtn.disabled && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
+
+        const sendBtn = document.querySelector('div[class*="send-button"], button[type="submit"]');
+        const isSendActive = Boolean(sendBtn && !sendBtn.disabled && (sendBtn.offsetParent !== null || sendBtn.getBoundingClientRect().height > 0));
+
+        if (isSendActive && !isStopVisible) {
+          return { ok: true, isStreaming: false };
+        }
+        return { ok: true, isStreaming: isStopVisible };
+      } catch (err) {
+        return { ok: false, isStreaming: false, error: err.message };
+      }
+    })()`,
+  },
+
+  perplexity: {
+    getLatestResponse: () => `(function() {
+      try {
+        const selectors = [
+          '.prose',
+          'div[class*="answer"]',
+          'div[dir="auto"].text-textOff',
+          '.markdown',
+          'div.break-words'
+        ];
+        let target = null;
+        for (const sel of selectors) {
+          const els = document.querySelectorAll(sel);
+          if (els.length > 0) {
+            target = els[els.length - 1];
+            break;
+          }
+        }
+        if (!target) return { ok: false, error: "No Perplexity response found" };
+        const text = (target.innerText || target.textContent || "").trim();
+        return { ok: true, text, length: text.length };
+      } catch (err) {
+        return { ok: false, error: err.message };
+      }
+    })()`,
+
+    checkStatus: () => `(function() {
+      try {
+        const stopBtn = document.querySelector('button[aria-label*="Stop"], button:has(svg.lucide-square)');
+        const isStopVisible = Boolean(stopBtn && !stopBtn.disabled && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
+
+        const submitBtn = document.querySelector('button[aria-label*="Submit"], button[aria-label*="Send"]');
+        const isSubmitActive = Boolean(submitBtn && !submitBtn.disabled && (submitBtn.offsetParent !== null || submitBtn.getBoundingClientRect().height > 0));
+
+        if (isSubmitActive && !isStopVisible) {
+          return { ok: true, isStreaming: false };
+        }
+        return { ok: true, isStreaming: isStopVisible };
+      } catch (err) {
+        return { ok: false, isStreaming: false, error: err.message };
+      }
+    })()`,
+  },
 };
 
 module.exports = {

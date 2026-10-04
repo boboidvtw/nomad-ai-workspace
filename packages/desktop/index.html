@@ -610,6 +610,8 @@
     .dot-chatgpt { background: #10a37f; }
     .dot-gemini { background: #2563eb; }
     .dot-grok { background: #1d9bf0; }
+    .dot-deepseek { background: #4d6bfe; }
+    .dot-perplexity { background: #22b8cd; }
 
     .input-wrapper {
       flex: 1;
@@ -723,6 +725,7 @@
         <button class="btn-mode" id="btn-dual" onclick="handleLayoutClick('dual')">雙欄並排</button>
         <button class="btn-mode" id="btn-triple" onclick="handleLayoutClick('triple')">三欄對比</button>
         <button class="btn-mode" id="btn-quad" onclick="handleLayoutClick('quad')">四宮格競技</button>
+        <button class="btn-mode" id="btn-hexa" onclick="handleLayoutClick('hexa')">六宮格矩陣</button>
       </div>
 
       <!-- Platform Active Chips -->
@@ -731,6 +734,8 @@
         <div class="chip chip-claude" id="chip-claude" onclick="togglePlatform('claude')"><span class="dot dot-claude"></span>Claude</div>
         <div class="chip chip-gemini" id="chip-gemini" onclick="togglePlatform('gemini')"><span class="dot dot-gemini"></span>Gemini</div>
         <div class="chip chip-grok" id="chip-grok" onclick="togglePlatform('grok')"><span class="dot dot-grok"></span>Grok</div>
+        <div class="chip chip-deepseek" id="chip-deepseek" onclick="togglePlatform('deepseek')"><span class="dot dot-deepseek"></span>DeepSeek</div>
+        <div class="chip chip-perplexity" id="chip-perplexity" onclick="togglePlatform('perplexity')"><span class="dot dot-perplexity"></span>Perplexity</div>
       </div>
 
       <!-- Split Ratio selector for Dual Mode -->
@@ -1008,12 +1013,12 @@
   </div>
 
   <script>
-    const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok'];
+    const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok', 'deepseek', 'perplexity'];
     let state = {
       layout: 'focus',
       activePlatforms: ['chatgpt'],
       splitRatio: 0.5,
-      zoomFactors: { chatgpt: 1.0, claude: 1.0, gemini: 1.0, grok: 1.0 },
+      zoomFactors: { chatgpt: 1.0, claude: 1.0, gemini: 1.0, grok: 1.0, deepseek: 1.0, perplexity: 1.0 },
       bridgePort: 8765,
       isSidebarOpen: false,
       activeSidebarTab: 'orch',
@@ -1117,6 +1122,8 @@
       } else if (mode === 'triple') {
         state.activePlatforms = ['chatgpt', 'claude', 'gemini'];
       } else if (mode === 'quad') {
+        state.activePlatforms = ['chatgpt', 'claude', 'gemini', 'grok'];
+      } else if (mode === 'hexa') {
         state.activePlatforms = [...ALL_PLATFORMS];
       }
 

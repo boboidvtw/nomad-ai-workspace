@@ -14,7 +14,7 @@ const {
   writePid,
   removePid
 } = require('../index');
-const { DEFAULT_DAEMON_PORT } = require('../../core');
+const { DEFAULT_DAEMON_PORT } = require('@nomad/core');
 
 const args = process.argv.slice(2);
 const command = args[0] || 'status';

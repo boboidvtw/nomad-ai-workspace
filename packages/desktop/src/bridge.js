@@ -37,6 +37,76 @@ class LocalSyncBridge {
 
     this.server = null;
     this.sseClients = new Set();
+    this.heartbeatTimer = null;
+    this.daemonPort = options.daemonPort || 8765;
+  }
+
+  registerWithDaemon(daemonPort = this.daemonPort) {
+    if (this.port === daemonPort) return;
+    try {
+      const payload = JSON.stringify({
+        bridgePort: this.port,
+        pid: process.pid,
+        version: '1.4.0'
+      });
+      const req = http.request({
+        hostname: '127.0.0.1',
+        port: daemonPort,
+        path: '/api/studio/register',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        },
+        timeout: 1000
+      }, (res) => {
+        if (res.statusCode === 200) {
+          console.log('[Nomad Bridge] Studio registered with Daemon at port ' + daemonPort);
+          this.startHeartbeat(daemonPort);
+        }
+      });
+      req.on('error', () => {});
+      req.write(payload);
+      req.end();
+    } catch {}
+  }
+
+  startHeartbeat(daemonPort = this.daemonPort) {
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = setInterval(() => {
+      try {
+        const req = http.request({
+          hostname: '127.0.0.1',
+          port: daemonPort,
+          path: '/api/studio/heartbeat',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 1000
+        }, () => {});
+        req.on('error', () => {});
+        req.end('{}');
+      } catch {}
+    }, 10000);
+  }
+
+  unregisterFromDaemon(daemonPort = this.daemonPort) {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+    if (this.port === daemonPort) return;
+    try {
+      const req = http.request({
+        hostname: '127.0.0.1',
+        port: daemonPort,
+        path: '/api/studio/unregister',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 1000
+      }, () => {});
+      req.on('error', () => {});
+      req.end('{}');
+    } catch {}
   }
 
   setOrchestrator(orchestrator) {
@@ -60,12 +130,16 @@ class LocalSyncBridge {
       this.server.listen(this.port, this.host, () => {
         const url = `http://${this.host}:${this.port}`;
         console.log(`[Nomad Bridge] Local Sync Bridge listening at ${url}`);
+        if (this.port !== this.daemonPort) {
+          this.registerWithDaemon(this.daemonPort);
+        }
         resolve({ port: this.port, host: this.host, url });
       });
     });
   }
 
   stop() {
+    this.unregisterFromDaemon(this.daemonPort);
     return new Promise((resolve) => {
       for (const client of this.sseClients) {
         try {

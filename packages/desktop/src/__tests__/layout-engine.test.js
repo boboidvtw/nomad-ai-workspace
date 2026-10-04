@@ -21,6 +21,8 @@ test('Layout Engine: Focus mode gives 100% width and height to selected platform
   assert.strictEqual(bounds.chatgpt.visible, false);
   assert.strictEqual(bounds.gemini.visible, false);
   assert.strictEqual(bounds.grok.visible, false);
+  assert.strictEqual(bounds.deepseek.visible, false);
+  assert.strictEqual(bounds.perplexity.visible, false);
 });
 
 test('Layout Engine: Dual mode splits width according to splitRatio', () => {
@@ -45,6 +47,8 @@ test('Layout Engine: Dual mode splits width according to splitRatio', () => {
 
   assert.strictEqual(bounds.gemini.visible, false);
   assert.strictEqual(bounds.grok.visible, false);
+  assert.strictEqual(bounds.deepseek.visible, false);
+  assert.strictEqual(bounds.perplexity.visible, false);
 });
 
 test('Layout Engine: Triple mode divides width across 3 columns', () => {
@@ -69,6 +73,8 @@ test('Layout Engine: Triple mode divides width across 3 columns', () => {
   assert.strictEqual(bounds.gemini.width, 400);
 
   assert.strictEqual(bounds.grok.visible, false);
+  assert.strictEqual(bounds.deepseek.visible, false);
+  assert.strictEqual(bounds.perplexity.visible, false);
 });
 
 test('Layout Engine: Quad mode tiles 4 views in 2x2 grid', () => {
@@ -78,7 +84,7 @@ test('Layout Engine: Quad mode tiles 4 views in 2x2 grid', () => {
     topBarHeight: 50,
     bottomBarHeight: 50,
     layout: 'quad',
-    activePlatforms: ALL_PLATFORMS,
+    activePlatforms: ALL_PLATFORMS.slice(0, 4),
   });
 
   // Top-left (ChatGPT is primary index 0)
@@ -127,4 +133,49 @@ test('Layout Engine: Subtracts drawerWidth when drawer is open', () => {
 
   assert.strictEqual(boundsWithDrawer.claude.visible, true);
   assert.strictEqual(boundsWithDrawer.claude.width, 1020); // 1440 - 420
+});
+
+
+test('Layout Engine: Hexa mode tiles 6 views in 3x2 grid', () => {
+  const bounds = calculateLayoutBounds({
+    winWidth: 1200,
+    winHeight: 800,
+    topBarHeight: 50,
+    bottomBarHeight: 50,
+    layout: 'hexa',
+    activePlatforms: ALL_PLATFORMS,
+  });
+
+  // 3 columns: 400px each. 2 rows: 350px each.
+  // chatgpt (col 0, row 0)
+  assert.strictEqual(bounds.chatgpt.visible, true);
+  assert.strictEqual(bounds.chatgpt.x, 0);
+  assert.strictEqual(bounds.chatgpt.y, 50);
+  assert.strictEqual(bounds.chatgpt.width, 400);
+  assert.strictEqual(bounds.chatgpt.height, 350);
+
+  // claude (col 1, row 0)
+  assert.strictEqual(bounds.claude.visible, true);
+  assert.strictEqual(bounds.claude.x, 400);
+  assert.strictEqual(bounds.claude.y, 50);
+
+  // gemini (col 2, row 0)
+  assert.strictEqual(bounds.gemini.visible, true);
+  assert.strictEqual(bounds.gemini.x, 800);
+  assert.strictEqual(bounds.gemini.y, 50);
+
+  // grok (col 0, row 1)
+  assert.strictEqual(bounds.grok.visible, true);
+  assert.strictEqual(bounds.grok.x, 0);
+  assert.strictEqual(bounds.grok.y, 400);
+
+  // deepseek (col 1, row 1)
+  assert.strictEqual(bounds.deepseek.visible, true);
+  assert.strictEqual(bounds.deepseek.x, 400);
+  assert.strictEqual(bounds.deepseek.y, 400);
+
+  // perplexity (col 2, row 1)
+  assert.strictEqual(bounds.perplexity.visible, true);
+  assert.strictEqual(bounds.perplexity.x, 800);
+  assert.strictEqual(bounds.perplexity.y, 400);
 });

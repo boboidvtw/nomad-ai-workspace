@@ -371,6 +371,68 @@ const PLATFORM_INJECTORS = {
     } catch (err) {
       return { ok: false, error: err.message, stack: err.stack };
     }
+  })()`,
+
+  deepseek: (text) => `(function() {
+    try {
+      const text = ${JSON.stringify(text)};
+      const input = document.querySelector('textarea[placeholder*="DeepSeek"], textarea#chat-input, textarea');
+      if (!input) return { ok: false, error: 'DeepSeek input not found' };
+
+      input.focus();
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+      if (nativeSetter) {
+        nativeSetter.call(input, text);
+      } else {
+        input.value = text;
+      }
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+
+      setTimeout(() => {
+        const btn = document.querySelector('div[class*="send-button"], button[type="submit"], button:has(svg)');
+        if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') {
+          btn.click();
+        } else {
+          input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+        }
+      }, 200);
+
+      return { ok: true, input: input.tagName };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  })()`,
+
+  perplexity: (text) => `(function() {
+    try {
+      const text = ${JSON.stringify(text)};
+      const input = document.querySelector('textarea[placeholder*="Ask"], textarea[placeholder*="搜尋"], textarea');
+      if (!input) return { ok: false, error: 'Perplexity input not found' };
+
+      input.focus();
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+      if (nativeSetter) {
+        nativeSetter.call(input, text);
+      } else {
+        input.value = text;
+      }
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+
+      setTimeout(() => {
+        const btn = document.querySelector('button[aria-label*="Submit"], button[aria-label*="Send"], button:has(svg.lucide-arrow-right), button[type="submit"]');
+        if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') {
+          btn.click();
+        } else {
+          input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+        }
+      }, 200);
+
+      return { ok: true, input: input.tagName };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
   })()`
 };
 

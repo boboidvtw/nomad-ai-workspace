@@ -13,6 +13,9 @@ const {
   SEMANTIC_TYPES
 } = require('./src/constants');
 
+const { extractVariables, interpolate } = require('./src/extensions/template-parser');
+const { formatChatToMarkdown } = require('./src/extensions/markdown-exporter');
+
 module.exports = {
   ok,
   err,
@@ -25,5 +28,8 @@ module.exports = {
   MONITORED_SERVICES,
   PLATFORMS,
   LAYOUTS,
-  SEMANTIC_TYPES
+  SEMANTIC_TYPES,
+  extractVariables,
+  interpolate,
+  formatChatToMarkdown
 };

@@ -12,7 +12,9 @@
     "daemon:stop": "node bin/nomad-daemon.js stop",
     "daemon:status": "node bin/nomad-daemon.js status",
     "probe": "node bin/nomad-daemon.js probe",
-    "test": "node --test src/__tests__/*.test.js"
+    "test": "node --test src/__tests__/*.test.js",
+    "daemon:install": "node scripts/install-launchagent.js",
+    "daemon:uninstall": "node scripts/uninstall-launchagent.js"
   },
   "keywords": [
     "nomad",
@@ -22,5 +24,8 @@
     "rpc"
   ],
   "author": "bobo li",
-  "license": "GPL-3.0"
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@nomad/core": "*"
+  }
 }

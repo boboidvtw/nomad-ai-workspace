@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const { PLATFORM_EXTRACTORS } = require('../extractors.js');
 
 test('Extractors: Generates syntactically valid extractor and status scripts', () => {
-  const platforms = ['claude', 'chatgpt', 'gemini', 'grok'];
+  const platforms = ['claude', 'chatgpt', 'gemini', 'grok', 'deepseek', 'perplexity'];
 
   for (const p of platforms) {
     const ext = PLATFORM_EXTRACTORS[p];

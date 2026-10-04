@@ -3,7 +3,7 @@
  * Pure function calculation of WebContentsView bounds.
  */
 
-const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok'];
+const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok', 'deepseek', 'perplexity'];
 
 /**
  * Calculates bounds and visibility for all platforms.
@@ -50,7 +50,8 @@ function calculateLayoutBounds({
     if (active.length === 1) effectiveMode = 'focus';
     else if (active.length === 2) effectiveMode = 'dual';
     else if (active.length === 3) effectiveMode = 'triple';
-    else effectiveMode = 'quad';
+    else if (active.length === 4) effectiveMode = 'quad';
+    else effectiveMode = 'hexa';
   }
 
   if (effectiveMode === 'focus' || active.length === 1) {
@@ -94,10 +95,10 @@ function calculateLayoutBounds({
     bounds[p1] = { x: 0, y: topBarHeight, width: w1, height: contentHeight, visible: true };
     bounds[p2] = { x: w1, y: topBarHeight, width: w2, height: contentHeight, visible: true };
     bounds[p3] = { x: w1 + w2, y: topBarHeight, width: w3, height: contentHeight, visible: true };
-  } else if (effectiveMode === 'quad' || active.length >= 4) {
+  } else if (effectiveMode === 'quad' || (effectiveMode !== 'hexa' && active.length === 4)) {
     const halfWidth = Math.floor(width / 2);
     const halfHeight = Math.floor(contentHeight / 2);
-    const targetKeys = active.length >= 4 ? active.slice(0, 4) : ALL_PLATFORMS;
+    const targetKeys = active.length >= 4 ? active.slice(0, 4) : ALL_PLATFORMS.slice(0, 4);
 
     targetKeys.forEach((key, index) => {
       const col = index % 2;
@@ -106,6 +107,27 @@ function calculateLayoutBounds({
       const y = topBarHeight + (row === 0 ? 0 : halfHeight);
       const w = col === 0 ? halfWidth : width - halfWidth;
       const h = row === 0 ? halfHeight : contentHeight - halfHeight;
+
+      bounds[key] = {
+        x,
+        y,
+        width: w,
+        height: h,
+        visible: true,
+      };
+    });
+  } else if (effectiveMode === 'hexa' || active.length >= 5) {
+    const colWidth = Math.floor(width / 3);
+    const rowHeight = Math.floor(contentHeight / 2);
+    const targetKeys = active.length >= 6 ? active.slice(0, 6) : active;
+
+    targetKeys.forEach((key, index) => {
+      const col = index % 3;
+      const row = Math.floor(index / 3);
+      const x = col === 0 ? 0 : col === 1 ? colWidth : colWidth * 2;
+      const y = topBarHeight + (row === 0 ? 0 : rowHeight);
+      const w = col === 2 ? width - colWidth * 2 : colWidth;
+      const h = row === 1 ? contentHeight - rowHeight : rowHeight;
 
       bounds[key] = {
         x,

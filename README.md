@@ -152,7 +152,8 @@ graph TD
 | **Anthropic Claude** | 🟢 深度支援 | `claude.ai` | ✅ | ✅ | ✅ `Claude/` |
 | **OpenAI ChatGPT** | 🟢 深度支援 | `chatgpt.com`, `chat.openai.com` | ✅ | ✅ | ✅ `ChatGPT/` |
 | **xAI Grok** | 🟢 深度支援 | `grok.com`, `x.com/i/grok` | ✅ | ✅ | ✅ `Grok/` |
-| **DeepSeek** | 🔵 規劃中 | `chat.deepseek.com` | 規劃中 | ✅ | ✅ `DeepSeek/` |
+| **DeepSeek** | 🟢 深度支援 | `chat.deepseek.com` | ✅ Hexa 6 分割 | ✅ | ✅ `DeepSeek/` |
+| **Perplexity** | 🟢 深度支援 | `perplexity.ai` | ✅ Hexa 6 分割 | ✅ | ✅ `Perplexity/` |
 
 ---
 
@@ -171,17 +172,26 @@ graph TD
 
 ## ⚡ 快速開始 (Quick Start)
 
-### 從原始碼構建
+### 從原始碼構建與常用命令
 ```bash
-# 1. 複製儲存庫
+# 1. 複製儲存庫並安裝依賴
 git clone https://github.com/boboidvtw/nomad-ai-workspace.git
 cd nomad-ai-workspace
-
-# 2. 安裝依賴 (推薦使用 bun 或 npm)
 npm install
 
-# 3. 編譯 Chrome 擴充套件
-npm run build:chrome
+# 2. 執行全生態系單元與整合測試 (47/47 綠燈通過)
+npm run test:monorepo
+
+# 3. 啟動或常駐 Nomad Daemon 閘道 (Port 8765)
+npm run daemon:start       # 背景啟動
+npm run daemon:install     # 註冊 macOS 系統級開機常駐 (LaunchAgent)
+npm run probe              # 探針本機微服務在線狀態
+
+# 4. 啟動桌面端工作站 (支援 Focus / Dual / Triple / Quad / Hexa 6-AI)
+npm run desktop:dev
+
+# 5. 一鍵編譯 Chrome 擴充套件與桌面端
+npm run build:all-packages
 ```
 
 ### 載入至瀏覽器

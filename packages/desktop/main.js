@@ -21,6 +21,8 @@ const PLATFORMS = {
   claude: { name: 'Claude', url: 'https://claude.ai', color: '#D97706' },
   gemini: { name: 'Gemini', url: 'https://gemini.google.com', color: '#2563EB' },
   grok: { name: 'Grok', url: 'https://grok.com', color: '#1D9BF0' },
+  deepseek: { name: 'DeepSeek', url: 'https://chat.deepseek.com', color: '#4D6BFE' },
+  perplexity: { name: 'Perplexity', url: 'https://www.perplexity.ai', color: '#22B8CD' },
 };
 
 let mainWindow = null;
@@ -364,7 +366,8 @@ async function createMainWindow() {
       if (layout === 'focus') store.set('activePlatforms', ['chatgpt']);
       else if (layout === 'dual') store.set('activePlatforms', ['chatgpt', 'claude']);
       else if (layout === 'triple') store.set('activePlatforms', ['chatgpt', 'claude', 'gemini']);
-      else if (layout === 'quad') store.set('activePlatforms', ALL_PLATFORMS);
+      else if (layout === 'quad') store.set('activePlatforms', ALL_PLATFORMS.slice(0, 4));
+      else if (layout === 'hexa') store.set('activePlatforms', ALL_PLATFORMS.slice(0, 6));
       updateViewBounds();
       trayManager.updateContextMenu();
       if (mainWindow && !mainWindow.isDestroyed()) {

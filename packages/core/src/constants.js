@@ -18,10 +18,12 @@ const PLATFORMS = Object.freeze({
   chatgpt: { id: 'chatgpt', name: 'ChatGPT', defaultUrl: 'https://chatgpt.com', color: '#10A37F' },
   claude: { id: 'claude', name: 'Claude', defaultUrl: 'https://claude.ai', color: '#D97706' },
   gemini: { id: 'gemini', name: 'Gemini', defaultUrl: 'https://gemini.google.com', color: '#2563EB' },
-  grok: { id: 'grok', name: 'Grok', defaultUrl: 'https://grok.com', color: '#1D9BF0' }
+  grok: { id: 'grok', name: 'Grok', defaultUrl: 'https://grok.com', color: '#1D9BF0' },
+  deepseek: { id: 'deepseek', name: 'DeepSeek', defaultUrl: 'https://chat.deepseek.com', color: '#4D6BFE' },
+  perplexity: { id: 'perplexity', name: 'Perplexity', defaultUrl: 'https://www.perplexity.ai', color: '#22B8CD' }
 });
 
-const LAYOUTS = Object.freeze(['focus', 'dual', 'triple', 'quad', 'custom']);
+const LAYOUTS = Object.freeze(['focus', 'dual', 'triple', 'quad', 'hexa', 'custom']);
 
 const SEMANTIC_TYPES = Object.freeze([
   '功能',

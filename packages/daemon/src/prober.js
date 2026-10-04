@@ -4,7 +4,7 @@
  */
 
 const net = require('net');
-const { ok, err, ErrorCodes, MONITORED_SERVICES } = require('../../core');
+const { ok, err, ErrorCodes, MONITORED_SERVICES } = require('@nomad/core');
 
 /**
  * Probes a single TCP host:port endpoint

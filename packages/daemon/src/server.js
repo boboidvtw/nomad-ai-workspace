@@ -1,61 +1,46 @@
 /**
- * Nomad Core Daemon - Unified Gateway Server
- * Governed by AGENTS.md Atomic Contract & Result Pattern.
+ * Nomad Core Daemon - HTTP Server, Handshake Protocol & Static Gateway
  */
 
-const http = require('http');
+const http = require('node:http');
+const { URL } = require('node:url');
 const {
   ok,
   err,
   ErrorCodes,
   DEFAULT_DAEMON_PORT,
   DEFAULT_DAEMON_HOST
-} = require('../../core');
+} = require('@nomad/core');
 const { probeAllServices } = require('./prober');
 const { serveDashboard } = require('./static-handler');
 
 class NomadDaemonServer {
   constructor(options = {}) {
     this.port = Number(options.port || process.env.NOMAD_PORT || DEFAULT_DAEMON_PORT);
-    this.host = options.host || DEFAULT_DAEMON_HOST;
+    this.host = options.host || process.env.NOMAD_HOST || DEFAULT_DAEMON_HOST;
 
-    this.getStatus = options.getStatus || (() => ({
-      app: 'Nomad Daemon Gateway',
-      mode: 'headless',
-      status: 'ready'
-    }));
-
-    this.onDispatchPrompt = options.onDispatchPrompt || (async () => ({ dispatched: false, reason: 'studio_not_attached' }));
-    this.onSetLayout = options.onSetLayout || (() => ({ applied: false }));
-    this.onSetZoom = options.onSetZoom || (() => ({ applied: false }));
-    this.onToggleWindow = options.onToggleWindow || (() => ({ applied: false }));
+    this.getStatus = options.getStatus || (() => ({ status: 'ready' }));
+    this.onDispatchPrompt = options.onDispatchPrompt || null;
+    this.onSetLayout = options.onSetLayout || null;
+    this.onSetZoom = options.onSetZoom || null;
+    this.onToggleWindow = options.onToggleWindow || null;
     this.orchestrator = options.orchestrator || null;
     this.sessionManager = options.sessionManager || null;
 
     this.server = null;
     this.sseClients = new Set();
-  }
-
-  setStudioHandlers(handlers = {}) {
-    if (handlers.getStatus) this.getStatus = handlers.getStatus;
-    if (handlers.onDispatchPrompt) this.onDispatchPrompt = handlers.onDispatchPrompt;
-    if (handlers.onSetLayout) this.onSetLayout = handlers.onSetLayout;
-    if (handlers.onSetZoom) this.onSetZoom = handlers.onSetZoom;
-    if (handlers.onToggleWindow) this.onToggleWindow = handlers.onToggleWindow;
-    if (handlers.orchestrator) this.orchestrator = handlers.orchestrator;
-    if (handlers.sessionManager) this.sessionManager = handlers.sessionManager;
+    this.activeStudio = null; // { bridgePort: number, pid: number, version: string, registeredAt: string, lastHeartbeat: number }
   }
 
   start() {
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => this.handleRequest(req, res));
 
-      this.server.on('error', (error) => {
-        if (error.code === 'EADDRINUSE') {
-          console.warn('[Nomad Daemon] Port ' + this.port + ' is already occupied.');
+      this.server.on('error', (e) => {
+        if (e.code === 'EADDRINUSE') {
           reject(err(ErrorCodes.DAEMON_SERVER_PORT_IN_USE_001, 'Port ' + this.port + ' is already in use', { port: this.port }));
         } else {
-          reject(err(ErrorCodes.DAEMON_SERVER_START_FAILED_002, error.message, { error }));
+          reject(err(ErrorCodes.DAEMON_SERVER_START_FAILED_002, e.message, e));
         }
       });
 
@@ -79,9 +64,11 @@ class NomadDaemonServer {
       if (this.server) {
         this.server.close(() => {
           this.server = null;
+          this.activeStudio = null;
           resolve(ok({ stopped: true }));
         });
       } else {
+        this.activeStudio = null;
         resolve(ok({ stopped: true }));
       }
     });
@@ -133,6 +120,43 @@ class NomadDaemonServer {
     });
   }
 
+  proxyToStudio(req, res, targetPort) {
+    const options = {
+      hostname: '127.0.0.1',
+      port: targetPort,
+      path: req.url,
+      method: req.method,
+      headers: {
+        ...req.headers,
+        host: '127.0.0.1:' + targetPort,
+        'x-forwarded-by': 'nomad-daemon'
+      }
+    };
+
+    const proxyReq = http.request(options, (proxyRes) => {
+      this.setCORSHeaders(res);
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.pipe(res);
+    });
+
+    proxyReq.on('error', (e) => {
+      this.activeStudio = null;
+      return this.sendJson(res, 502, err(
+        ErrorCodes.DAEMON_STUDIO_OFFLINE_001,
+        'Failed to forward request to Nomad AI Studio on port ' + targetPort + ': ' + e.message
+      ));
+    });
+
+    req.pipe(proxyReq);
+  }
+
+  isStudioAlive() {
+    if (!this.activeStudio) return false;
+    // Considered alive if heartbeat received within 30 seconds
+    const diff = Date.now() - (this.activeStudio.lastHeartbeat || 0);
+    return diff < 30000;
+  }
+
   async handleRequest(req, res) {
     this.setCORSHeaders(res);
 
@@ -142,7 +166,7 @@ class NomadDaemonServer {
       return;
     }
 
-    const url = new URL(req.url, 'http://' + req.headers.host);
+    const url = new URL(req.url, 'http://' + (req.headers.host || '127.0.0.1:' + this.port));
     const pathname = url.pathname;
 
     try {
@@ -175,10 +199,62 @@ class NomadDaemonServer {
         return;
       }
 
-      // 3. Status API
+      // 3. Studio Handshake & Registration endpoints
+      if (pathname === '/api/studio/register' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        if (!body.bridgePort || typeof body.bridgePort !== 'number') {
+          return this.sendJson(res, 400, err(ErrorCodes.STUDIO_REGISTRATION_FAILED_001, 'Missing or invalid bridgePort number'));
+        }
+        this.activeStudio = {
+          bridgePort: body.bridgePort,
+          pid: body.pid || null,
+          version: body.version || '1.4.0',
+          registeredAt: new Date().toISOString(),
+          lastHeartbeat: Date.now()
+        };
+        console.log('[Nomad Daemon] Studio registered on bridge port:', body.bridgePort, '(PID:', body.pid + ')');
+        return this.sendJson(res, 200, ok({ status: 'registered', activeStudio: this.activeStudio }));
+      }
+
+      if (pathname === '/api/studio/heartbeat' && req.method === 'POST') {
+        if (this.activeStudio) {
+          this.activeStudio.lastHeartbeat = Date.now();
+        }
+        return this.sendJson(res, 200, ok({ status: 'alive' }));
+      }
+
+      if (pathname === '/api/studio/unregister' && req.method === 'POST') {
+        this.activeStudio = null;
+        console.log('[Nomad Daemon] Studio unregistered cleanly.');
+        return this.sendJson(res, 200, ok({ status: 'unregistered' }));
+      }
+
+      if (pathname === '/api/studio/status' && req.method === 'GET') {
+        return this.sendJson(res, 200, ok({
+          online: this.isStudioAlive(),
+          activeStudio: this.activeStudio
+        }));
+      }
+
+      // 4. Status API
       if (pathname === '/api/status' && req.method === 'GET') {
-        const appStatus = await this.getStatus();
         const probeResult = await probeAllServices();
+        let studioInfo = { status: 'offline' };
+
+        if (this.isStudioAlive()) {
+          studioInfo = {
+            status: 'online',
+            pid: this.activeStudio.pid,
+            bridgePort: this.activeStudio.bridgePort,
+            version: this.activeStudio.version
+          };
+        } else if (typeof this.getStatus === 'function') {
+          const directStatus = await this.getStatus();
+          if (directStatus && directStatus.status) {
+            studioInfo = directStatus;
+          }
+        }
+
         const orchestratorStatus = this.orchestrator ? this.orchestrator.getStatus() : null;
 
         return this.sendJson(res, 200, ok({
@@ -190,92 +266,71 @@ class NomadDaemonServer {
             sseClients: this.sseClients.size,
             uptimeSeconds: Math.floor(process.uptime())
           },
-          studio: appStatus,
+          studio: studioInfo,
           orchestrator: orchestratorStatus,
           microservices: probeResult.data
         }));
       }
 
-      // 4. Microservices Probe API
+      // 5. Microservices Probe API
       if (pathname === '/api/probe' && req.method === 'GET') {
         const timeoutMs = parseInt(url.searchParams.get('timeout') || '350', 10);
         const probeResult = await probeAllServices(undefined, timeoutMs);
         return this.sendJson(res, 200, probeResult);
       }
 
-      // 5. Prompt dispatch API
-      if (pathname === '/api/prompt' && req.method === 'POST') {
-        const body = await this.readJsonBody(req);
-        if (!body.prompt || typeof body.prompt !== 'string') {
-          return this.sendJson(res, 400, err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Missing or invalid prompt string'));
-        }
-        const result = await this.onDispatchPrompt(body.prompt, body.targetPlatforms || null);
-        return this.sendJson(res, 200, ok(result));
-      }
+      // 6. Action Endpoints (Proxy to Active Studio if present)
+      const isStudioAction = (
+        pathname === '/api/prompt' ||
+        pathname === '/api/dispatch' ||
+        pathname === '/api/layout' ||
+        pathname === '/api/zoom' ||
+        pathname === '/api/window' ||
+        pathname === '/api/orchestrate' ||
+        pathname.startsWith('/api/orchestrator') ||
+        pathname.startsWith('/api/sessions') ||
+        pathname.startsWith('/api/workspaces') ||
+        pathname.startsWith('/api/export') ||
+        pathname.startsWith('/api/import')
+      );
 
-      // 6. Layout API
-      if (pathname === '/api/layout' && req.method === 'POST') {
-        const body = await this.readJsonBody(req);
-        const result = await this.onSetLayout(body.mode, body.options || {});
-        return this.sendJson(res, 200, ok(result));
-      }
-
-      // 7. Zoom API
-      if (pathname === '/api/zoom' && req.method === 'POST') {
-        const body = await this.readJsonBody(req);
-        const result = await this.onSetZoom(body.platform, body.factor);
-        return this.sendJson(res, 200, ok(result));
-      }
-
-      // 8. Window summon API
-      if (pathname === '/api/window' && req.method === 'POST') {
-        const body = await this.readJsonBody(req);
-        const result = await this.onToggleWindow(body.action || 'toggle');
-        return this.sendJson(res, 200, ok(result));
-      }
-
-      // 9. Orchestrate API
-      if (pathname === '/api/orchestrate' && req.method === 'POST') {
-        const body = await this.readJsonBody(req);
-        if (!this.orchestrator) {
-          return this.sendJson(res, 400, err(ErrorCodes.ORCHESTRATOR_RUN_FAILED_002, 'Orchestrator not available'));
+      if (isStudioAction) {
+        if (this.isStudioAlive()) {
+          return this.proxyToStudio(req, res, this.activeStudio.bridgePort);
         }
 
-        const action = body.action || 'status';
-        if (action === 'start') {
-          const runRes = await this.orchestrator.start(body.taskTopic, {
-            mode: body.mode || 'relay',
-            sequence: body.sequence,
-            maxRounds: body.maxRounds
-          });
-          return this.sendJson(res, runRes.success ? 200 : 400, runRes);
-        } else if (action === 'pause') {
-          return this.sendJson(res, 200, this.orchestrator.pause());
-        } else if (action === 'resume') {
-          return this.sendJson(res, 200, this.orchestrator.resume());
-        } else if (action === 'stop') {
-          return this.sendJson(res, 200, this.orchestrator.stop());
-        } else {
-          return this.sendJson(res, 200, ok(this.orchestrator.getStatus()));
-        }
-      }
-
-      // 10. Sessions API
-      if (pathname === '/api/sessions') {
-        if (!this.sessionManager) {
-          return this.sendJson(res, 200, ok({ workspaces: [], activeWorkspaceId: null }));
-        }
-        if (req.method === 'GET') {
-          return this.sendJson(res, 200, ok({
-            workspaces: this.sessionManager.workspaces || [],
-            activeWorkspaceId: this.sessionManager.activeWorkspaceId
-          }));
-        } else if (req.method === 'POST') {
+        // Fallback for standalone/mock handlers
+        if (pathname === '/api/prompt' && typeof this.onDispatchPrompt === 'function') {
           const body = await this.readJsonBody(req);
-          const title = body.title || '新工作區';
-          const ws = this.sessionManager.createWorkspace(title, body.platforms, body.type);
-          return this.sendJson(res, 200, ok(ws));
+          if (!body.prompt || typeof body.prompt !== 'string') {
+            return this.sendJson(res, 400, err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Missing or invalid prompt string'));
+          }
+          const result = await this.onDispatchPrompt(body.prompt, body.targetPlatforms || null);
+          return this.sendJson(res, 200, ok(result));
         }
+
+        if (pathname === '/api/layout' && typeof this.onSetLayout === 'function') {
+          const body = await this.readJsonBody(req);
+          const result = await this.onSetLayout(body.mode, body.options || {});
+          return this.sendJson(res, 200, ok(result));
+        }
+
+        if (pathname === '/api/zoom' && typeof this.onSetZoom === 'function') {
+          const body = await this.readJsonBody(req);
+          const result = await this.onSetZoom(body.platform, body.factor);
+          return this.sendJson(res, 200, ok(result));
+        }
+
+        if (pathname === '/api/window' && typeof this.onToggleWindow === 'function') {
+          const body = await this.readJsonBody(req);
+          const result = await this.onToggleWindow(body.action || 'toggle');
+          return this.sendJson(res, 200, ok(result));
+        }
+
+        return this.sendJson(res, 503, err(
+          ErrorCodes.DAEMON_STUDIO_OFFLINE_001,
+          'Nomad AI Studio is not currently running. Launch Studio to execute desktop actions.'
+        ));
       }
 
       return this.sendJson(res, 404, err(

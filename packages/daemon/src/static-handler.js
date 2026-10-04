@@ -4,7 +4,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { err, ErrorCodes } = require('../../core');
+const { err, ErrorCodes } = require('@nomad/core');
 
 const DASHBOARD_PATHS = [
   path.resolve(__dirname, '../../dashboard/index.html'),
