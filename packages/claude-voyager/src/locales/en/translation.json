@@ -1,0 +1,151 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "delete": "Delete",
+    "rename": "Rename",
+    "reset": "Reset"
+  },
+  "folders": {
+    "title": "Folders",
+    "newFolderAria": "Create folder",
+    "newButton": "New",
+    "folderName": "Folder name",
+    "createFolderAria": "Create folder",
+    "cancelCreateAria": "Cancel creating folder",
+    "deleteConfirm": "Delete this folder? Conversations inside will become unfiled.",
+    "deleteTitle": "Delete folder",
+    "unfiledDropAria": "Drop here to remove from folder",
+    "unfiledLabel": "Unfiled (drop here to remove)"
+  },
+  "menu": {
+    "closeAria": "Close conversation actions menu",
+    "labelAria": "Conversation actions menu",
+    "escToCloseAria": "Press Esc to close menu",
+    "moveInto": "Move to folder",
+    "emptyFolders": "No folders yet",
+    "moveOut": "Remove from folder"
+  },
+  "folderItem": {
+    "folderAria": "Folder: {{name}}",
+    "collapse": "Collapse folder",
+    "expand": "Expand folder",
+    "renameAria": "Rename folder",
+    "deleteAria": "Delete folder",
+    "dropHint": "Drop conversations into this folder"
+  },
+  "conversation": {
+    "fallbackTitle": "Conversation {{id}}",
+    "openAria": "Open conversation: {{title}}",
+    "untitled": "Untitled conversation"
+  },
+  "storage": {
+    "unnamedFolder": "Untitled folder",
+    "unavailable": "chrome.storage.local is unavailable",
+    "unknownError": "Unknown error",
+    "contextInvalidated": "Extension context invalidated: the extension was reloaded/updated; refresh the page to recover"
+  },
+  "popup": {
+    "title": "Settings",
+    "language": "Language",
+    "languageZh": "简体中文",
+    "languageZhTW": "繁體中文",
+    "languageEn": "English",
+    "hint": "Language changes apply to the current claude.ai tab."
+  },
+  "floatBall": {
+    "ballSize": "Ball size",
+    "width": "Chat width"
+  },
+  "ballSizeControl": {
+    "title": "Ball size",
+    "valueLabel": "Size",
+    "closeAria": "Close floating ball size control",
+    "sliderAria": "Adjust floating ball size"
+  },
+  "usageRings": {
+    "fiveHourWindow": "Current 5 hours",
+    "sevenDayWindow": "Current 7 days",
+    "usedPercent": "Used {{value}}%",
+    "remainingPercent": "Remaining {{value}}%",
+    "resetToday": "Resets today at {{time}}",
+    "resetTomorrow": "Resets tomorrow at {{time}}",
+    "resetInDays": "Resets in {{days}} days",
+    "resetUnknown": "Reset time unavailable"
+  },
+  "export": {
+    "title": "Export conversation",
+    "buttonLabel": "Export",
+    "buttonAria": "Open export menu",
+    "closeAria": "Close export menu",
+    "formatLabel": "Format",
+    "formatMarkdown": "Markdown",
+    "formatJson": "JSON",
+    "exportButton": "Export",
+    "statusExporting": "Exporting...",
+    "statusSuccess": "Exported {{count}} messages",
+    "statusFailed": "Export failed",
+    "statusFailedCount": "{{count}} failed"
+  },
+  "promptLibrary": {
+    "title": "Prompt library",
+    "buttonLabel": "Prompts",
+    "buttonAria": "Open prompt library",
+    "closeAria": "Close prompt library",
+    "searchPlaceholder": "Search prompts...",
+    "filterAll": "All",
+    "new": "New",
+    "newAria": "Create new prompt",
+    "loading": "Loading...",
+    "empty": "No prompts yet. Create one to get started.",
+    "insert": "Insert",
+    "edit": "Edit",
+    "delete": "Delete",
+    "insertAria": "Insert prompt",
+    "editAria": "Edit prompt",
+    "deleteAria": "Delete prompt",
+    "deleteConfirm": "Delete \"{{title}}\"?",
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g. Summarize this conversation",
+    "contentLabel": "Content",
+    "contentPlaceholder": "Write your prompt here...",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "tag1, tag2",
+    "import": "Import",
+    "export": "Export",
+    "importSuccess": "Imported {{imported}}, skipped {{skipped}}",
+    "importFailed": "Import failed: {{error}}",
+    "exportFailed": "Export failed: {{error}}"
+  },
+  "widthControl": {
+    "title": "Chat width",
+    "valueLabel": "Width",
+    "openAria": "Open chat width control",
+    "closeAria": "Close chat width control",
+    "sliderAria": "Adjust chat width"
+  },
+  "sync": {
+    "title": "Cloud Sync",
+    "description": "Sync folders and prompts to Google Drive",
+    "connect": "Connect Google Drive",
+    "disconnect": "Disconnect",
+    "mode": "Sync Mode",
+    "modeDisabled": "Disabled",
+    "modeManual": "Manual",
+    "modeAuto": "Auto",
+    "syncNow": "Upload to Cloud",
+    "syncMerge": "Download & Merge",
+    "syncOverwrite": "Download & Overwrite",
+    "lastSynced": "Last downloaded: {{time}}",
+    "neverSynced": "Never downloaded",
+    "lastUploaded": "Last uploaded: {{time}}",
+    "neverUploaded": "Never uploaded",
+    "success": "✓ Sync successful",
+    "uploadSuccess": "✓ Upload successful",
+    "downloadSuccess": "✓ Download successful",
+    "syncing": "Syncing...",
+    "error": "✗ Sync failed: {{error}}",
+    "overwriteConfirm": "Are you sure you want to overwrite local data with cloud data? Any unuploaded local changes will be lost."
+  }
+}
