@@ -8,6 +8,52 @@
 
 ---
 
+---
+
+## 🌌 0. 三位一體融合戰略與 Monorepo 套件架構 (Trinity Convergence & Monorepo Topology)
+
+Nomad AI Workspace 專案已全面進化為單一儲存庫 (Monorepo)，採用「三位一體」系統架構：
+
+```mermaid
+graph TB
+    subgraph Monorepo["🏛️ 骨子裡是方案 D：Monorepo 工作區架構"]
+        Core["@nomad/core<br/>(零依賴合約 / Result / ErrorCodes)"]
+        DaemonPkg["@nomad/daemon<br/>(守護程序 / 探針 / 靜態託管)"]
+        DashboardPkg["@nomad/dashboard<br/>(神經路由 / 工作流儀表板)"]
+        DesktopPkg["nomad-ai-studio<br/>(Electron 桌面客戶端)"]
+        Extensions["packages/*-voyager & nexus<br/>(瀏覽器擴充套件矩陣)"]
+    end
+
+    subgraph Runtime["⚡ 運作時是方案 B：Daemon 守護程序網關"]
+        DaemonSvc["Nomad Daemon (Port 8765 / 8555)"]
+        Prober["/api/probe<br/>(微服務狀態即時偵測)"]
+        StaticServer["/dashboard<br/>(靜態儀表板 Web 伺服器)"]
+        DaemonSvc --> Prober
+        DaemonSvc --> StaticServer
+    end
+
+    subgraph DesktopUI["🖥️ 終端呈現為方案 A：Nomad AI Studio 超級工作站"]
+        HUD["System Cockpit (HUD 駕駛艙)<br/>微服務卡片矩陣 + 嵌入式 Dashboard"]
+        Tray["選單列常駐托盤 & 全域快捷鍵"]
+        AIPanels["Quad / Dual / Focus 多 AI 同屏畫布"]
+        DesktopUI --> HUD
+        DesktopUI --> Tray
+        DesktopUI --> AIPanels
+    end
+
+    Core --> DaemonPkg
+    Core --> DesktopPkg
+    DaemonSvc <== "HTTP /api/probe" ==> HUD
+    StaticServer <== "iframe 嵌入" ==> HUD
+```
+
+### 套件目錄職責清單
+1. **`packages/core` (`@nomad/core`)**：定義全域通用的 `Result<T, E>` 零異常合約、標準化 `ErrorCodes` 命名空間與端口定義。
+2. **`packages/daemon` (`@nomad/daemon`)**：跨平台常駐背景行程，提供 PID 管理、多服務健康探針 (`/api/probe`) 與靜態 Web 伺服器。
+3. **`packages/dashboard` (`@nomad/dashboard`)**：個人 AI 控制面板前端，支援 LangGraph 流程圖可視化與開源資源導覽。
+4. **`packages/desktop` (`nomad-ai-studio`)**：原生桌面客戶端，整合 HUD 駕駛艙、選單列常駐托盤與多 AI 佈局。
+5. **瀏覽器外掛矩陣 (`packages/claude-voyager`, `packages/gemini-nexus`, `packages/gemini-voyager`)**：涵蓋 Claude、Gemini、ChatGPT 等官方頁面的階層資料夾、提示詞與操作增強。
+
 ## 📐 1. 系統整體拓撲 (System Architecture)
 
 Nomad AI Workspace 採用 **純客戶端 (Client-Side Only)** 與 **本地優先 (Local-First)** 設計，絕不設立任何中繼伺服器或轉發代理。所有狀態僅存於使用者的本機瀏覽器沙盒快取（`chrome.storage.local`）與個人 Google Drive 專屬目錄中。

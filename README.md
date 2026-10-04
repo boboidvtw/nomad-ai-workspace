@@ -37,6 +37,26 @@
 
 ---
 
+## 📦 Nomad AI 生態系 Monorepo 套件矩陣 (Ecosystem Packages)
+
+本儲存庫為 **Nomad AI 全生態系單一儲存庫 (SSOT Monorepo)**，採用 **「三位一體融合戰略」**：
+> 🏛️ **骨子裡是方案 D (Monorepo)**：統一依賴版本、共享核心合約與跨專案測試管線。  
+> ⚡ **運作時是方案 B (Daemon)**：背景微服務守護行程（Port 8765 / 8555），統一微服務探針與靜態資源託管。  
+> 🖥️ **終端呈現為方案 A (Studio 超級工作站)**：原生 Electron HUD 儀表板、全域快速鍵與多 AI 同屏視窗。
+
+| 套件名稱 (Package) | 工作區路徑 (Path) | 類型 | 職責與能力說明 |
+| :--- | :--- | :---: | :--- |
+| **`@nomad/core`** | [`packages/core`](packages/core) | TypeScript Core | 零依賴核心合約、`Result Pattern`、`ErrorCodes` 命名空間與全域常數 |
+| **`@nomad/daemon`** | [`packages/daemon`](packages/daemon) | Node.js Daemon | 獨立常駐守護行程、微服務健康探針 (`/api/probe`) 與靜態儀表板託管 |
+| **`@nomad/dashboard`** | [`packages/dashboard`](packages/dashboard) | Web Application | Nomad Dashboard 2.0 智慧神經路由、自動化工作流與即時監控介面 |
+| **`nomad-ai-studio`** | [`packages/desktop`](packages/desktop) | Electron Native | 獨立桌面端超級工作站 (HUD 駕駛艙、選單列常駐托盤、全域快速鍵) |
+| **`nomad-ai-workspace`** | `.` (Root) | Chrome Extension | 跨 AI 官方頁面階層側邊欄、通用提示詞庫與 Google Drive 實體子目錄備份 |
+| **`claude-voyager`** | [`packages/claude-voyager`](packages/claude-voyager) | Chrome Extension | Claude.ai 官方頁面專用對話資料夾與隱私安全加固擴充功能 |
+| **`gemini-nexus`** | [`packages/gemini-nexus`](packages/gemini-nexus) | Chrome Extension | Google Gemini 輕量級原生 AI 層擴充套件 |
+| **`gemini-voyager`** | [`packages/gemini-voyager`](packages/gemini-voyager) | Chrome Extension | 全功能跨平台 (Gemini/Claude/ChatGPT) 瀏覽器 AI 助手 |
+
+---
+
 ## 🏛️ 架構總覽 (Architecture Overview)
 
 ```mermaid
