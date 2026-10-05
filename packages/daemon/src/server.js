@@ -13,7 +13,13 @@ const {
   PipelineManager,
   getSyncStatus,
   exportToDrive,
-  importFromDrive
+  importFromDrive,
+  ArtifactExtractor,
+  DiffEngine,
+  LocalModelClient,
+  McpGateway,
+  KnowledgeBase,
+  PluginRuntime
 } = require('@nomad/core');
 const { probeAllServices } = require('./prober');
 const { serveDashboard } = require('./static-handler');
@@ -40,6 +46,10 @@ class NomadDaemonServer {
       autoEnhance: true,
       compressionLevel: 'balanced'
     });
+    this.mcpGateway = new McpGateway();
+    this.knowledgeBase = new KnowledgeBase();
+    this.localModelClient = new LocalModelClient();
+    this.pluginRuntime = new PluginRuntime();
   }
 
   start() {
@@ -279,6 +289,79 @@ class NomadDaemonServer {
         const body = await this.readJsonBody(req);
         const pullRes = importFromDrive(body);
         return this.sendJson(res, pullRes.success ? 200 : 400, pullRes);
+      }
+
+      // 3.8. Roadmap P1/P2/P3 Endpoints (Artifacts, Diff, Local Model, MCP, RAG)
+      if (pathname === '/api/artifacts/extract' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const extractRes = ArtifactExtractor.extract(body.text || '');
+        return this.sendJson(res, 200, extractRes);
+      }
+
+      if (pathname === '/api/artifacts/sandbox' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const html = ArtifactExtractor.generateSandboxHtml(body.code || '', body.type || 'html', body.title || 'Sandbox');
+        return this.sendJson(res, 200, ok({ html }));
+      }
+
+      if (pathname === '/api/diff' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const diffRes = DiffEngine.diffLines(body.textA || '', body.textB || '');
+        return this.sendJson(res, diffRes.success ? 200 : 400, diffRes);
+      }
+
+      if (pathname === '/api/local-model/probe' && req.method === 'GET') {
+        const port = Number(url.searchParams.get('port') || 1234);
+        const host = url.searchParams.get('host') || '127.0.0.1';
+        const client = new LocalModelClient({ endpoint: 'http://' + host + ':' + port + '/v1' });
+        const probeRes = await client.probe();
+        if (probeRes.success) {
+          return this.sendJson(res, 200, probeRes);
+        } else {
+          return this.sendJson(res, 200, ok({ online: false, port, host, error: probeRes.message }));
+        }
+      }
+
+      if (pathname === '/api/local-model/chat' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const client = new LocalModelClient({ port: body.port || 1234, host: body.host || '127.0.0.1' });
+        const chatRes = await client.chat(body);
+        return this.sendJson(res, chatRes.success ? 200 : 502, chatRes);
+      }
+
+      if (pathname === '/api/mcp/tools' && req.method === 'GET') {
+        const toolsRes = this.mcpGateway.listTools();
+        return this.sendJson(res, 200, toolsRes);
+      }
+
+      if (pathname === '/api/mcp/call' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        if (!body.name) {
+          return this.sendJson(res, 400, err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, 'Missing tool name'));
+        }
+        const callRes = await this.mcpGateway.callTool(body.name, body.args || {});
+        return this.sendJson(res, callRes.success ? 200 : 400, callRes);
+      }
+
+      if (pathname === '/api/rag/ingest' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const ingestRes = this.knowledgeBase.addDocument(body);
+        return this.sendJson(res, ingestRes.success ? 200 : 400, ingestRes);
+      }
+
+      if (pathname === '/api/rag/retrieve' && (req.method === 'GET' || req.method === 'POST')) {
+        let prompt = '';
+        let topK = 3;
+        if (req.method === 'GET') {
+          prompt = url.searchParams.get('prompt') || url.searchParams.get('q') || '';
+          topK = Number(url.searchParams.get('topK') || 3);
+        } else {
+          const body = await this.readJsonBody(req);
+          prompt = body.prompt || body.q || '';
+          topK = Number(body.topK || 3);
+        }
+        const retRes = this.knowledgeBase.retrieveContext(prompt, topK);
+        return this.sendJson(res, 200, retRes);
       }
 
       // 4. Status API

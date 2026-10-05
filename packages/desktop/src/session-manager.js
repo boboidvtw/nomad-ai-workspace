@@ -6,6 +6,7 @@
  */
 
 const { store } = require("./store");
+const { VectorMemoryLite } = require("@nomad/core");
 
 const SEMANTIC_TYPES = [
   "功能",
@@ -273,6 +274,27 @@ class SessionManager {
     const workspaces = this.getWorkspaces();
     const results = [];
 
+    // Initialize VectorMemoryLite for CJK & BM25 hybrid semantic scoring
+    const vectorIndex = new VectorMemoryLite();
+    if (rawQuery) {
+      for (const ws of workspaces) {
+        const turnTexts = (ws.history || []).map(h => (h.speaker || '') + ': ' + (h.content || h.response || '')).join(' ');
+        const fullDoc = [(ws.title || ''), (ws.promptSnippet || ''), turnTexts].join(' ');
+        vectorIndex.addDocument({
+          id: ws.id,
+          title: ws.title || ws.id,
+          content: fullDoc
+        });
+      }
+    }
+    const vectorSearchResults = rawQuery ? vectorIndex.search(rawQuery, { limit: 100 }) : null;
+    const vectorScoreMap = new Map();
+    if (vectorSearchResults && vectorSearchResults.success) {
+      for (const hit of vectorSearchResults.data) {
+        vectorScoreMap.set(hit.id, hit.score);
+      }
+    }
+
     for (const ws of workspaces) {
       const wsType = getWorkspaceType(ws);
       const wsMode = ws.mode || "relay";
@@ -384,6 +406,12 @@ class SessionManager {
       if (updatedAtMs > 0) {
         const hoursAgo = Math.max(0, (Date.now() - updatedAtMs) / (1000 * 3600));
         score += Math.max(0, 10 - Math.min(10, hoursAgo / 24));
+      }
+
+      // BM25 + CJK N-gram hybrid semantic boost
+      const bm25Score = vectorScoreMap.get(ws.id) || 0;
+      if (bm25Score > 0) {
+        score += Math.round(bm25Score * 10);
       }
 
       results.push({

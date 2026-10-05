@@ -54,4 +54,29 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
   // Headroom & Laya Pipeline
   pipelineProcess: (input) => ipcRenderer.invoke('nomad:pipeline-process', input),
   pipelineStats: () => ipcRenderer.invoke('nomad:pipeline-stats'),
+
+  // Roadmap P1: Canvas & Artifacts
+  extractArtifacts: (text) => ipcRenderer.invoke('nomad:extract-artifacts', text),
+  generateSandboxHtml: (artifact, type, title) => ipcRenderer.invoke('nomad:generate-sandbox-html', { artifact, type, title }),
+
+  // Roadmap P2: Side-by-Side Diff & Local Model Client
+  computeDiff: (options) => ipcRenderer.invoke('nomad:compute-diff', options),
+  probeLocalModel: (options) => ipcRenderer.invoke('nomad:probe-local-model', options),
+  chatLocalModel: (options) => ipcRenderer.invoke('nomad:chat-local-model', options),
+
+  // Roadmap P3: MCP Gateway & Local RAG Knowledge Base
+  getMcpTools: () => ipcRenderer.invoke('nomad:get-mcp-tools'),
+  callMcpTool: (options) => ipcRenderer.invoke('nomad:call-mcp-tool', options),
+  ingestRagDoc: (doc) => ipcRenderer.invoke('nomad:ingest-rag-doc', doc),
+  retrieveRagContext: (options) => ipcRenderer.invoke('nomad:retrieve-rag-context', options),
+
+  // Spotlight HUD
+  toggleSpotlight: () => ipcRenderer.invoke('nomad:toggle-spotlight'),
+  onToggleSpotlightHud: (callback) => {
+    ipcRenderer.on('nomad:toggle-spotlight-hud', (event) => callback());
+  },
+  onLocalModelResponse: (callback) => {
+    ipcRenderer.on('nomad:local-model-response', (event, data) => callback(data));
+  },
+
 });

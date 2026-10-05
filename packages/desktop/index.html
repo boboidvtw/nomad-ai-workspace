@@ -783,6 +783,215 @@
       color: white !important;
     }
 
+
+    /* Roadmap P1: Canvas & Sandbox Styles */
+    .canvas-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 8px 0;
+    }
+    .canvas-filter-btn {
+      padding: 3px 8px;
+      font-size: 11px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      cursor: pointer;
+    }
+    .canvas-filter-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: #38bdf8;
+      color: #38bdf8;
+      font-weight: 600;
+    }
+    .artifact-list {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+    .artifact-chip {
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: 6px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .artifact-chip.active {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+      color: #f0f9ff;
+      font-weight: 600;
+    }
+    .sandbox-preview-box {
+      width: 100%;
+      height: 380px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #0f172a;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .sandbox-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #ffffff;
+    }
+    .sandbox-raw-code {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 12px;
+      background: #0b0f19;
+      color: #38bdf8;
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    /* Roadmap P2: Side-by-Side Diff Engine */
+    .diff-selectors {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0;
+    }
+    .diff-meter {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin: 8px 0;
+    }
+    .diff-line {
+      display: flex;
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      padding: 2px 6px;
+      border-radius: 2px;
+    }
+    .diff-add {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border-left: 3px solid #10b981;
+    }
+    .diff-del {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      border-left: 3px solid #ef4444;
+    }
+    .diff-equal {
+      color: #94a3b8;
+    }
+
+    /* Attachment & Drag-Drop Bar */
+    .attachment-preview-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      background: rgba(15, 23, 42, 0.7);
+      border-radius: 6px 6px 0 0;
+      overflow-x: auto;
+    }
+    .attachment-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 11px;
+      color: #38bdf8;
+    }
+    .attachment-pill .btn-remove-att {
+      cursor: pointer;
+      color: #94a3b8;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+    .attachment-pill .btn-remove-att:hover { color: #f87171; }
+
+    /* Spotlight Floating HUD Modal */
+    .spotlight-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 100px;
+    }
+    .spotlight-card {
+      width: 620px;
+      max-width: 90vw;
+      background: #0f172a;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .spotlight-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .spotlight-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      font-size: 15px;
+      color: #f8fafc;
+      outline: none;
+    }
+    .spotlight-results {
+      max-height: 340px;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .spotlight-item {
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.15s;
+    }
+    .spotlight-item:hover, .spotlight-item.selected {
+      background: rgba(56, 189, 248, 0.15);
+    }
+
 </style>
 </head>
 <body>
@@ -862,11 +1071,13 @@
   <div class="right-sidebar" id="right-sidebar">
     <div class="sidebar-header">
       <div class="sidebar-tabs">
-        <button class="btn-tab active" id="tab-btn-orch" onclick="switchSidebarTab('orch')">🤝 圓桌接力</button>
-        <button class="btn-tab" id="tab-btn-ws" onclick="switchSidebarTab('ws')">📁 會話工作區</button>
-        <button class="btn-tab" id="tab-btn-zoom" onclick="switchSidebarTab('zoom')">🔍 縮放調控</button>
-        <button class="btn-tab" id="tab-btn-hud" onclick="switchSidebarTab('hud')">🖥️ 系統 HUD</button>
-        <button class="btn-tab" id="tab-btn-settings" onclick="switchSidebarTab('settings')">⚙️ 設定與外觀</button>
+        <button class="btn-tab active" id="tab-btn-orch" onclick="switchSidebarTab('orch')">🤝 圓桌</button>
+        <button class="btn-tab" id="tab-btn-ws" onclick="switchSidebarTab('ws')">📁 工作區</button>
+        <button class="btn-tab" id="tab-btn-canvas" onclick="switchSidebarTab('canvas')">🎨 畫布</button>
+        <button class="btn-tab" id="tab-btn-diff" onclick="switchSidebarTab('diff')">⚖️ 比對</button>
+        <button class="btn-tab" id="tab-btn-zoom" onclick="switchSidebarTab('zoom')">🔍 縮放</button>
+        <button class="btn-tab" id="tab-btn-hud" onclick="switchSidebarTab('hud')">🖥️ 監控</button>
+        <button class="btn-tab" id="tab-btn-settings" onclick="switchSidebarTab('settings')">⚙️ 設定</button>
       </div>
       <span style="cursor: pointer; color: #94a3b8; font-size: 15px; padding: 2px 6px;" onclick="closeSidebar()">✕</span>
     </div>
@@ -1006,6 +1217,87 @@
       </div>
       <div id="ws-list-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto;">
         <!-- Workspaces rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- TAB: ARTIFACTS & CANVAS SANDBOX (P1) -->
+    <div class="sidebar-content" id="tab-content-canvas" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="section-title" style="margin: 0;">🎨 獨立畫布沙盒 (Artifacts)</div>
+        <button class="btn-ws-op" onclick="refreshArtifactsFromWorkspace()" style="padding: 4px 8px; font-size: 11px;">⚡ 萃取對話</button>
+      </div>
+      
+      <!-- Filter Bar -->
+      <div class="canvas-toolbar">
+        <button class="canvas-filter-btn active" onclick="filterArtifacts('all', this)">全部 (<span id="canvas-count-all">0</span>)</button>
+        <button class="canvas-filter-btn" onclick="filterArtifacts('html', this)">HTML</button>
+        <button class="canvas-filter-btn" onclick="filterArtifacts('svg', this)">SVG</button>
+        <button class="canvas-filter-btn" onclick="filterArtifacts('mermaid', this)">Mermaid</button>
+        <button class="canvas-filter-btn" onclick="filterArtifacts('react', this)">React</button>
+        <button class="canvas-filter-btn" onclick="filterArtifacts('code', this)">代碼</button>
+      </div>
+
+      <!-- Artifact Chips List -->
+      <div class="artifact-list" id="canvas-chips-container">
+        <span style="font-size: 11px; color: #64748b; font-style: italic;">尚未萃取到畫布 Artifact。發送代碼或圖表任務後自動渲染！</span>
+      </div>
+
+      <!-- Preview Window -->
+      <div class="sandbox-preview-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <span id="canvas-active-title" style="font-size: 11px; font-weight: 600; color: #38bdf8;">未選取 Artifact</span>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn-ws-op" id="btn-canvas-toggle-view" onclick="toggleCanvasCodeView()" style="padding: 2px 6px; font-size: 10px;">檢視代碼</button>
+            <button class="btn-ws-op" onclick="copyCurrentArtifactCode()" style="padding: 2px 6px; font-size: 10px;">📋 複製</button>
+            <button class="btn-ws-op" onclick="renderCurrentArtifact()" style="padding: 2px 6px; font-size: 10px;">🔄 重新渲染</button>
+          </div>
+        </div>
+        <iframe id="canvas-iframe" class="sandbox-iframe" sandbox="allow-scripts allow-modals"></iframe>
+        <pre id="canvas-raw-code" class="sandbox-raw-code" style="display: none;"></pre>
+      </div>
+    </div>
+
+    <!-- TAB: SIDE-BY-SIDE DIFF COMPARATOR (P2) -->
+    <div class="sidebar-content" id="tab-content-diff" style="display: none;">
+      <div class="section-title">⚖️ 跨視角 AI 差異即時比對器</div>
+      
+      <!-- Selectors -->
+      <div class="diff-selectors">
+        <div style="flex: 1;">
+          <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">觀點 A</div>
+          <select id="diff-select-a" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; border-radius: 6px; padding: 4px 6px; font-size: 12px; outline: none;">
+            <option value="claude">Claude</option>
+            <option value="chatgpt">ChatGPT</option>
+            <option value="gemini">Gemini</option>
+            <option value="grok">Grok</option>
+            <option value="local">本機 AI</option>
+          </select>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">觀點 B</div>
+          <select id="diff-select-b" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; border-radius: 6px; padding: 4px 6px; font-size: 12px; outline: none;">
+            <option value="chatgpt" selected>ChatGPT</option>
+            <option value="claude">Claude</option>
+            <option value="gemini">Gemini</option>
+            <option value="grok">Grok</option>
+            <option value="local">本機 AI</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-ws-op" onclick="handleComputeDiff()" style="padding: 8px; font-weight: 600; background: linear-gradient(135deg, #0284c7, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer;">
+        ⚖️ 比對兩方觀點文字差異
+      </button>
+
+      <!-- Diff Stats Meter -->
+      <div class="diff-meter" id="diff-meter-box">
+        <span style="font-size: 12px; font-weight: 600; color: #cbd5e1;">相似度指標</span>
+        <span id="diff-similarity-badge" style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700;">100.0%</span>
+      </div>
+
+      <!-- Diff Output Lines Container -->
+      <div id="diff-lines-container" style="display: flex; flex-direction: column; gap: 2px; max-height: 380px; overflow-y: auto; background: #080c14; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 8px;">
+        <span style="font-size: 11px; color: #64748b; font-style: italic; text-align: center; padding: 20px 0;">點擊上方按鈕開始計算 AI 觀點差異！</span>
       </div>
     </div>
 
@@ -1201,6 +1493,45 @@
         </div>
       </div>
 
+      <!-- Section 3.5: Local AI Model Engine (LM Studio & Ollama) -->
+      <div class="section-title">🤖 本機大模型雙軌引擎 (Local AI Model)</div>
+      <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 12px; font-weight: 600; color: #cbd5e1;">本機推論端點</span>
+          <span id="local-model-badge" style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(148, 163, 184, 0.15); color: #94a3b8; font-weight: 600;">未探測</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="local-model-host" value="127.0.0.1" style="flex: 2; font-size: 11px; padding: 6px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc;">
+          <input type="number" id="local-model-port" value="1234" placeholder="1234" style="flex: 1; font-size: 11px; padding: 6px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc;">
+          <button class="btn-ws-op" onclick="handleProbeLocalModel()" style="padding: 6px 10px; font-weight: 600; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399;">探測</button>
+        </div>
+        <div id="local-model-list-text" style="font-size: 11px; color: #94a3b8;">
+          支援 LM Studio (1234) 與 Ollama (11434)。探測成功後可直接一鍵併行推論。
+        </div>
+      </div>
+
+      <!-- Section 3.6: Model Context Protocol (MCP) Host -->
+      <div class="section-title">🔌 Nomad MCP 宿主網關 (Tools Protocol)</div>
+      <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 11px; color: #cbd5e1; font-weight: 600;">啟用工具清單</div>
+        <div style="display: flex; flex-direction: column; gap: 6px;" id="mcp-tools-list">
+          <label style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 6px;"><input type="checkbox" checked disabled> <span>read_file (讀取本機工作區指定文字檔案)</span></label>
+          <label style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 6px;"><input type="checkbox" checked disabled> <span>list_directory (列出本機指定目錄之檔案清單)</span></label>
+        </div>
+        <button class="btn-ws-op" onclick="handleTestMcpTool()" style="padding: 6px 8px; font-size: 11px; margin-top: 4px;">🧪 執行 MCP 工具自檢</button>
+      </div>
+
+      <!-- Section 3.7: Local Knowledge Base & RAG -->
+      <div class="section-title">📚 本機知識庫與 RAG 注入管線</div>
+      <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 11px; color: #94a3b8;">將專案架構或規範文件注入本機向量記憶體，自動為 Prompt 補充上下文：</div>
+        <textarea id="rag-doc-input" class="orch-textarea" style="height: 60px;" placeholder="貼入欲索引之規範文件或程式庫說明..."></textarea>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-ws-op" onclick="handleIngestRagDoc()" style="flex: 1; padding: 6px;">📥 建立知識索引</button>
+          <button class="btn-ws-op" onclick="handleTestRagRetrieve()" style="flex: 1; padding: 6px;">🔍 檢索關聯片段</button>
+        </div>
+        <div id="rag-status-text" style="font-size: 10px; color: #64748b;">已建立本地索引</div>
+      </div>
       <!-- Section 4: Headroom & Laya Pipeline Live Box -->
       <div class="section-title">⚡ 底層管線遙測與意圖測試 (Headroom & Laya)</div>
       <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
@@ -1238,10 +1569,16 @@
       <label class="target-label"><input type="checkbox" id="check-claude"><span class="dot dot-claude"></span>Claude</label>
       <label class="target-label"><input type="checkbox" id="check-gemini"><span class="dot dot-gemini"></span>Gemini</label>
       <label class="target-label"><input type="checkbox" id="check-grok"><span class="dot dot-grok"></span>Grok</label>
+      <label class="target-label"><input type="checkbox" id="check-local"><span class="dot" style="background: #10b981;"></span>本機 AI</label>
     </div>
 
     <div class="input-wrapper">
-      <textarea id="prompt-input" class="input-prompt" placeholder="輸入問題，同步派發至選取的 AI 平臺... (Enter 送出, Shift + Enter 換行)"></textarea>
+      <div id="attachment-preview-bar" class="attachment-preview-bar" style="display: none;"></div>
+      <div style="display: flex; align-items: center; position: relative;">
+        <textarea id="prompt-input" class="input-prompt" placeholder="輸入問題，同步派發至選取的 AI 平臺... (支援拖曳或貼上圖片文件，Enter 送出)"></textarea>
+        <button id="btn-attach" onclick="triggerFileInput()" title="附加圖片或文件" style="position: absolute; right: 8px; bottom: 8px; background: transparent; border: none; font-size: 16px; cursor: pointer; color: #94a3b8;">📎</button>
+        <input type="file" id="file-input-hidden" multiple style="display: none;" onchange="handleFileSelected(event)">
+      </div>
     </div>
 
     <button class="btn-send" onclick="handleSend()">
@@ -1500,12 +1837,13 @@
       const tabBtn = document.getElementById('tab-btn-' + tab);
       if (tabBtn) tabBtn.classList.add('active');
 
-      document.getElementById('tab-content-orch').style.display = tab === 'orch' ? 'flex' : 'none';
-      const wsTab = document.getElementById('tab-content-ws');
-      if (wsTab) wsTab.style.display = tab === 'ws' ? 'flex' : 'none';
-      document.getElementById('tab-content-zoom').style.display = tab === 'zoom' ? 'flex' : 'none';
-      const hudTab = document.getElementById('tab-content-hud');
-      if (hudTab) hudTab.style.display = tab === 'hud' ? 'flex' : 'none';
+      ['orch', 'ws', 'canvas', 'diff', 'zoom', 'hud', 'settings'].forEach(t => {
+        const el = document.getElementById('tab-content-' + t);
+        if (el) el.style.display = (t === tab) ? 'flex' : 'none';
+      });
+      if (tab === 'canvas') {
+        refreshArtifactsFromWorkspace();
+      }
 
       const hudPill = document.getElementById('btn-hud-pill');
       if (hudPill) hudPill.classList.toggle('active', tab === 'hud');
@@ -2026,20 +2364,31 @@
     function handleSend() {
       const input = document.getElementById('prompt-input');
       const text = input.value.trim();
-      if (!text) return;
+      if (!text && (!state.attachments || state.attachments.length === 0)) return;
 
       const targets = [];
       ALL_PLATFORMS.forEach(p => {
-        if (document.getElementById('check-' + p).checked) targets.push(p);
+        const cb = document.getElementById('check-' + p);
+        if (cb && cb.checked) targets.push(p);
       });
+      const cbLocal = document.getElementById('check-local');
+      if (cbLocal && cbLocal.checked) targets.push('local');
 
       if (targets.length === 0) {
         alert('請至少勾選一個發送目標 AI！');
         return;
       }
 
-      window.nomadDesktop.dispatchPrompt({ prompt: text, targets });
+      const attachments = state.attachments ? [...state.attachments] : [];
+      window.nomadDesktop.dispatchPrompt({ prompt: text, targets, attachments });
       input.value = '';
+      state.attachments = [];
+      renderAttachmentsBar();
+
+      // Trigger automatic artifact extraction after dispatch
+      setTimeout(() => {
+        refreshArtifactsFromWorkspace();
+      }, 2500);
     }
 
     document.getElementById('prompt-input').addEventListener('keydown', (e) => {
@@ -2370,6 +2719,440 @@
       }
     }
 
-  </script>
+  
+    // ==========================================
+    // P1, P2, P3 Roadmap Controllers & Handlers
+    // ==========================================
+    state.artifacts = [];
+    state.activeArtifact = null;
+    state.attachments = [];
+
+    // --- P1: Canvas & Sandbox Handlers ---
+    async function refreshArtifactsFromWorkspace() {
+      if (!window.nomadDesktop || !window.nomadDesktop.extractArtifacts) return;
+      const wsData = await window.nomadDesktop.getWorkspaces();
+      const activeWs = wsData?.activeWorkspace;
+      let textPool = '';
+      if (activeWs && Array.isArray(activeWs.history)) {
+        textPool = activeWs.history.map(h => (h.speaker || '') + ':\n' + (h.content || h.response || '')).join('\n\n');
+      }
+      if (!textPool) {
+        const inputPrompt = document.getElementById('prompt-input')?.value || '';
+        textPool = inputPrompt;
+      }
+      const res = await window.nomadDesktop.extractArtifacts(textPool);
+      if (res && res.success) {
+        state.artifacts = res.data || [];
+        renderArtifactChips('all');
+        if (state.artifacts.length > 0 && !state.activeArtifact) {
+          selectArtifact(state.artifacts[0].id);
+        }
+      }
+    }
+
+    function renderArtifactChips(filterType = 'all') {
+      const container = document.getElementById('canvas-chips-container');
+      const countEl = document.getElementById('canvas-count-all');
+      if (countEl) countEl.innerText = state.artifacts.length;
+      if (!container) return;
+
+      const filtered = filterType === 'all'
+        ? state.artifacts
+        : state.artifacts.filter(a => a.type === filterType);
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<span style="font-size: 11px; color: #64748b; font-style: italic;">無此類別的 Artifact</span>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(a => `
+        <div class="artifact-chip ${state.activeArtifact?.id === a.id ? 'active' : ''}" onclick="selectArtifact('${a.id}')">
+          <span>${a.type === 'html' ? '🌐' : a.type === 'svg' ? '🎨' : a.type === 'mermaid' ? '📊' : a.type === 'react' ? '⚛️' : '💻'}</span>
+          <span>${a.title}</span>
+        </div>
+      `).join('');
+    }
+
+    function filterArtifacts(type, btn) {
+      document.querySelectorAll('.canvas-filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderArtifactChips(type);
+    }
+
+    async function selectArtifact(id) {
+      const art = state.artifacts.find(a => a.id === id);
+      if (!art) return;
+      state.activeArtifact = art;
+      renderArtifactChips();
+
+      const titleEl = document.getElementById('canvas-active-title');
+      if (titleEl) titleEl.innerText = `${art.title} (${art.speaker})`;
+
+      const rawPre = document.getElementById('canvas-raw-code');
+      if (rawPre) rawPre.innerText = art.content;
+
+      await renderCurrentArtifact();
+    }
+
+    async function renderCurrentArtifact() {
+      if (!state.activeArtifact) return;
+      const iframe = document.getElementById('canvas-iframe');
+      if (!iframe) return;
+
+      if (window.nomadDesktop && window.nomadDesktop.generateSandboxHtml) {
+        const res = await window.nomadDesktop.generateSandboxHtml(state.activeArtifact, state.activeArtifact.type, state.activeArtifact.title);
+        const html = res?.data?.html || state.activeArtifact.content;
+        iframe.srcdoc = html;
+      } else {
+        iframe.srcdoc = state.activeArtifact.content;
+      }
+    }
+
+    function toggleCanvasCodeView() {
+      const iframe = document.getElementById('canvas-iframe');
+      const rawCode = document.getElementById('canvas-raw-code');
+      const btn = document.getElementById('btn-canvas-toggle-view');
+      if (!iframe || !rawCode) return;
+
+      const isShowingCode = rawCode.style.display !== 'none';
+      if (isShowingCode) {
+        rawCode.style.display = 'none';
+        iframe.style.display = 'block';
+        if (btn) btn.innerText = '檢視代碼';
+      } else {
+        rawCode.style.display = 'block';
+        iframe.style.display = 'none';
+        if (btn) btn.innerText = '顯示預覽';
+      }
+    }
+
+    function copyCurrentArtifactCode() {
+      if (!state.activeArtifact) return;
+      navigator.clipboard.writeText(state.activeArtifact.content);
+      alert('已複製 Artifact 代碼至剪貼簿！');
+    }
+
+    // --- P2: Side-by-Side Diff Handlers ---
+    async function handleComputeDiff() {
+      const selectA = document.getElementById('diff-select-a')?.value || 'claude';
+      const selectB = document.getElementById('diff-select-b')?.value || 'chatgpt';
+
+      const wsData = await window.nomadDesktop.getWorkspaces();
+      const activeWs = wsData?.activeWorkspace;
+      let textA = '';
+      let textB = '';
+
+      if (activeWs && Array.isArray(activeWs.history)) {
+        const turnA = activeWs.history.filter(h => h.speaker === selectA).pop();
+        const turnB = activeWs.history.filter(h => h.speaker === selectB).pop();
+        textA = turnA ? (turnA.content || turnA.response || '') : '';
+        textB = turnB ? (turnB.content || turnB.response || '') : '';
+      }
+
+      if (!textA) textA = `${selectA.toUpperCase()} 觀點：\n系統建議採用微服務架構，利用 Docker 容器化隔離。\n高併發時搭配 Redis 集中式快取，保障資料一致性。`;
+      if (!textB) textB = `${selectB.toUpperCase()} 觀點：\n系統建議採用微服務架構，利用 Docker 容器化隔離。\n高併發時建議改採記憶體內存快取搭配布隆過濾器，降低網路延遲。`;
+
+      const diffRes = await window.nomadDesktop.computeDiff({
+        textA,
+        textB,
+        labelA: selectA.toUpperCase(),
+        labelB: selectB.toUpperCase()
+      });
+
+      if (diffRes && diffRes.success) {
+        const data = diffRes.data;
+        const meterBadge = document.getElementById('diff-similarity-badge');
+        if (meterBadge) {
+          const ratio = (data.stats.similarityRatio * 100).toFixed(1);
+          meterBadge.innerText = `${ratio}% 相似度 (+${data.stats.added} / -${data.stats.deleted})`;
+        }
+
+        const linesContainer = document.getElementById('diff-lines-container');
+        if (linesContainer) {
+          linesContainer.innerHTML = data.lines.map(line => {
+            const cls = line.type === 'add' ? 'diff-add' : line.type === 'del' ? 'diff-del' : 'diff-equal';
+            const prefix = line.type === 'add' ? '+ ' : line.type === 'del' ? '- ' : '  ';
+            const safeVal = (line.value || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<div class="diff-line ${cls}">${prefix}${safeVal}</div>`;
+          }).join('');
+        }
+      }
+    }
+
+    // --- P2: Local Model Handlers ---
+    async function handleProbeLocalModel() {
+      const host = document.getElementById('local-model-host')?.value || '127.0.0.1';
+      const port = Number(document.getElementById('local-model-port')?.value || 1234);
+      const badge = document.getElementById('local-model-badge');
+      const text = document.getElementById('local-model-list-text');
+
+      if (badge) {
+        badge.innerText = '探測中...';
+        badge.style.color = '#38bdf8';
+      }
+
+      const res = await window.nomadDesktop.probeLocalModel({ host, port });
+      if (res && res.success && res.data.online) {
+        if (badge) {
+          badge.innerText = '🟢 線上';
+          badge.style.color = '#34d399';
+          badge.style.background = 'rgba(16, 185, 129, 0.2)';
+        }
+        const models = res.data.models || [];
+        if (text) {
+          text.innerHTML = `已連線至 ${host}:${port}，檢測到模型: <strong>${models.join(', ') || '默認模型'}</strong>`;
+        }
+      } else {
+        if (badge) {
+          badge.innerText = '🔴 離線';
+          badge.style.color = '#f87171';
+          badge.style.background = 'rgba(239, 68, 68, 0.2)';
+        }
+        if (text) {
+          text.innerText = `無法連線至 ${host}:${port}。請確認 LM Studio 或 Ollama 服務已在本地啟動。`;
+        }
+      }
+    }
+
+    // --- P3: MCP & RAG Handlers ---
+    async function handleTestMcpTool() {
+      const res = await window.nomadDesktop.callMcpTool({ name: 'list_directory', args: { path: '.' } });
+      if (res && res.success) {
+        alert('MCP 自檢成功！讀取目錄子項目數: ' + (res.data?.items?.length || 0));
+      } else {
+        alert('MCP 自檢回應: ' + (res?.message || '未知錯誤'));
+      }
+    }
+
+    async function handleIngestRagDoc() {
+      const input = document.getElementById('rag-doc-input');
+      const text = input ? input.value.trim() : '';
+      if (!text) {
+        alert('請先輸入欲建立知識索引之文字！');
+        return;
+      }
+      const res = await window.nomadDesktop.ingestRagDoc({
+        id: 'manual-doc-' + Date.now(),
+        title: '手動注入規範',
+        content: text
+      });
+      if (res && res.success) {
+        const statusText = document.getElementById('rag-status-text');
+        if (statusText) statusText.innerText = `已完成分塊索引 (共 ${res.data.chunksIndexed} 個語義片段)`;
+        alert('知識庫索引建立完成！');
+      }
+    }
+
+    async function handleTestRagRetrieve() {
+      const input = document.getElementById('rag-doc-input');
+      const query = input ? input.value.trim() : 'Nomad';
+      const res = await window.nomadDesktop.retrieveRagContext({ prompt: query, topK: 2 });
+      if (res && res.success && res.data.chunks.length > 0) {
+        alert(`檢索到 ${res.data.chunks.length} 個高關聯片段！最相關: ${res.data.chunks[0].title}`);
+      } else {
+        alert('檢索完成，未命中足夠關聯內容。');
+      }
+    }
+
+    // --- Attachments & Drag-and-Drop & Paste ---
+    function triggerFileInput() {
+      const fi = document.getElementById('file-input-hidden');
+      if (fi) fi.click();
+    }
+
+    function handleFileSelected(e) {
+      const files = Array.from(e.target.files || []);
+      addAttachmentsFromFiles(files);
+      e.target.value = '';
+    }
+
+    function addAttachmentsFromFiles(files) {
+      if (!files || files.length === 0) return;
+      if (!state.attachments) state.attachments = [];
+
+      for (const file of files) {
+        const isImage = file.type.startsWith('image/');
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          state.attachments.push({
+            name: file.name,
+            size: file.size,
+            type: isImage ? 'image' : 'text',
+            isImage,
+            mimeType: file.type || 'text/plain',
+            content: evt.target.result,
+          });
+          renderAttachmentsBar();
+        };
+        if (isImage) {
+          reader.readAsDataURL(file);
+        } else {
+          reader.readAsText(file);
+        }
+      }
+    }
+
+    function removeAttachment(index) {
+      if (state.attachments) {
+        state.attachments.splice(index, 1);
+        renderAttachmentsBar();
+      }
+    }
+
+    function renderAttachmentsBar() {
+      const bar = document.getElementById('attachment-preview-bar');
+      if (!bar) return;
+      if (!state.attachments || state.attachments.length === 0) {
+        bar.style.display = 'none';
+        bar.innerHTML = '';
+        return;
+      }
+      bar.style.display = 'flex';
+      bar.innerHTML = state.attachments.map((att, idx) => `
+        <div class="attachment-pill">
+          <span>${att.isImage ? '🖼️' : '📄'}</span>
+          <span>${att.name}</span>
+          <span class="btn-remove-att" onclick="removeAttachment(${idx})">✕</span>
+        </div>
+      `).join('');
+    }
+
+    // Drag and Drop onto Prompt bar
+    const promptInputEl = document.getElementById('prompt-input');
+    if (promptInputEl) {
+      promptInputEl.addEventListener('paste', (e) => {
+        if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
+          e.preventDefault();
+          addAttachmentsFromFiles(Array.from(e.clipboardData.files));
+        }
+      });
+      promptInputEl.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        promptInputEl.style.borderColor = '#38bdf8';
+      });
+      promptInputEl.addEventListener('dragleave', (e) => {
+        promptInputEl.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+      });
+      promptInputEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        promptInputEl.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+        if (e.dataTransfer && e.dataTransfer.files) {
+          addAttachmentsFromFiles(Array.from(e.dataTransfer.files));
+        }
+      });
+    }
+
+    // --- Spotlight Floating HUD Controller ---
+    function toggleSpotlightHUD() {
+      const overlay = document.getElementById('spotlight-hud-overlay');
+      const input = document.getElementById('spotlight-input');
+      if (!overlay) return;
+
+      const isHidden = overlay.style.display === 'none';
+      overlay.style.display = isHidden ? 'flex' : 'none';
+      if (isHidden && input) {
+        input.value = '';
+        input.focus();
+        loadSpotlightWorkspaces('');
+      }
+    }
+
+    function handleBackdropClick(e) {
+      const overlay = document.getElementById('spotlight-hud-overlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    async function loadSpotlightWorkspaces(query) {
+      const container = document.getElementById('spotlight-results-container');
+      if (!container || !window.nomadDesktop || !window.nomadDesktop.searchWorkspaces) return;
+
+      const res = await window.nomadDesktop.searchWorkspaces({ query, limit: 5 });
+      if (res && res.success && res.results.length > 0) {
+        container.innerHTML = res.results.map(r => `
+          <div class="spotlight-item" onclick="switchToWorkspaceFromSpotlight('${r.workspaceId}')">
+            <div>
+              <div style="font-size: 13px; font-weight: 600; color: #f8fafc;">${r.title}</div>
+              <div style="font-size: 11px; color: #64748b;">${r.type} · ${r.mode}</div>
+            </div>
+            <span style="font-size: 11px; color: #38bdf8;">切換 ➔</span>
+          </div>
+        `).join('');
+      } else {
+        container.innerHTML = '<div style="padding: 12px; font-size: 12px; color: #64748b; text-align: center;">查無工作區或按 Enter 即可直接同步廣播</div>';
+      }
+    }
+
+    function switchToWorkspaceFromSpotlight(wsId) {
+      const overlay = document.getElementById('spotlight-hud-overlay');
+      if (overlay) overlay.style.display = 'none';
+      if (typeof handleSwitchWorkspace === 'function') {
+        handleSwitchWorkspace(wsId);
+      }
+    }
+
+    const spotInput = document.getElementById('spotlight-input');
+    if (spotInput) {
+      spotInput.addEventListener('input', (e) => {
+        loadSpotlightWorkspaces(e.target.value.trim());
+      });
+      spotInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          toggleSpotlightHUD();
+        } else if (e.key === 'Enter') {
+          const text = spotInput.value.trim();
+          if (text) {
+            const targets = [];
+            if (document.getElementById('spot-check-chatgpt')?.checked) targets.push('chatgpt');
+            if (document.getElementById('spot-check-claude')?.checked) targets.push('claude');
+            if (document.getElementById('spot-check-gemini')?.checked) targets.push('gemini');
+            if (document.getElementById('spot-check-local')?.checked) targets.push('local');
+
+            if (targets.length === 0) targets.push('chatgpt');
+            window.nomadDesktop.dispatchPrompt({ prompt: text, targets });
+            toggleSpotlightHUD();
+          }
+        }
+      });
+    }
+
+    // Remote Spotlight IPC listener from Main process
+    if (window.nomadDesktop && window.nomadDesktop.onToggleSpotlightHud) {
+      window.nomadDesktop.onToggleSpotlightHud(() => {
+        toggleSpotlightHUD();
+      });
+    }
+
+    if (window.nomadDesktop && window.nomadDesktop.onLocalModelResponse) {
+      window.nomadDesktop.onLocalModelResponse((data) => {
+        console.log('[Nomad UI] Local model response received:', data);
+        refreshArtifactsFromWorkspace();
+      });
+    }
+
+</script>
+
+  <!-- Spotlight Floating HUD Modal Overlay -->
+  <div id="spotlight-hud-overlay" class="spotlight-backdrop" style="display: none;" onclick="handleBackdropClick(event)">
+    <div class="spotlight-card" onclick="event.stopPropagation()">
+      <div class="spotlight-header">
+        <span style="font-size: 18px;">⚡</span>
+        <input type="text" id="spotlight-input" class="spotlight-input" placeholder="輸入問題同步廣播，或搜尋工作區... (Enter 廣播, Esc 關閉)" autofocus>
+        <span style="font-size: 11px; padding: 2px 6px; background: rgba(255,255,255,0.08); border-radius: 4px; color: #94a3b8;">Esc</span>
+      </div>
+      <div style="padding: 8px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between;">
+        <div style="font-size: 11px; color: #94a3b8;">快速目標:</div>
+        <div style="display: flex; gap: 8px;">
+          <label style="font-size: 11px; color: #cbd5e1; display: flex; align-items: center; gap: 4px;"><input type="checkbox" id="spot-check-chatgpt" checked> ChatGPT</label>
+          <label style="font-size: 11px; color: #cbd5e1; display: flex; align-items: center; gap: 4px;"><input type="checkbox" id="spot-check-claude" checked> Claude</label>
+          <label style="font-size: 11px; color: #cbd5e1; display: flex; align-items: center; gap: 4px;"><input type="checkbox" id="spot-check-gemini" checked> Gemini</label>
+          <label style="font-size: 11px; color: #cbd5e1; display: flex; align-items: center; gap: 4px;"><input type="checkbox" id="spot-check-local"> 本機 AI</label>
+        </div>
+      </div>
+      <div class="spotlight-results" id="spotlight-results-container">
+        <div style="padding: 12px; font-size: 12px; color: #64748b; text-align: center;">輸入關鍵字即時檢索跨平臺歷史會話</div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

@@ -1,9 +1,31 @@
+
+function formatPromptWithAttachments(text, attachments = []) {
+  if (!Array.isArray(attachments) || attachments.length === 0) {
+    return text || '';
+  }
+  const parts = [];
+  for (const att of attachments) {
+    if (att.content && (att.type === 'text' || att.isText || (att.name && att.name.match(/\.(txt|md|js|ts|py|json|html|css|yaml|yml)$/i)))) {
+      parts.push(`[附檔: ${att.name || 'document'}]\n\`\`\`${att.language || ''}\n${att.content}\n\`\`\``);
+    } else if (att.type === 'image' || att.isImage || (att.name && att.name.match(/\.(png|jpe?g|webp|gif|svg)$/i))) {
+      parts.push(`[圖片附件: ${att.name || 'image'} (${att.mimeType || 'image/png'})]`);
+    } else {
+      parts.push(`[附件: ${att.name || 'file'}]`);
+    }
+  }
+  if (text) {
+    parts.push(text);
+  }
+  return parts.join('\n\n');
+}
+
 /**
  * Nomad AI Studio - DOM Prompt Injectors
  * Cross-platform DOM injection scripts for AI chat interfaces.
  */
 
-const PLATFORM_INJECTORS = {
+
+const RAW_PLATFORM_INJECTORS = {
   claude: (text) => `(function() {
     try {
       const text = ${JSON.stringify(text)};
@@ -436,6 +458,21 @@ const PLATFORM_INJECTORS = {
   })()`
 };
 
+
+const PLATFORM_INJECTORS = new Proxy(RAW_PLATFORM_INJECTORS, {
+  get(target, prop) {
+    const rawFn = target[prop];
+    if (typeof rawFn !== 'function') return rawFn;
+    return (input) => {
+      const text = (typeof input === 'object' && input !== null)
+        ? formatPromptWithAttachments(input.text, input.attachments)
+        : input;
+      return rawFn(text);
+    };
+  }
+});
+
 module.exports = {
   PLATFORM_INJECTORS,
+  formatPromptWithAttachments,
 };

@@ -1,5 +1,5 @@
 const { probeAllServices } = require('./src/prober');
-const { app, BrowserWindow, WebContentsView, session, ipcMain, screen, Menu, shell, dialog } = require('electron');
+const { app, BrowserWindow, WebContentsView, session, ipcMain, screen, Menu, shell, dialog, globalShortcut } = require('electron');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -10,7 +10,21 @@ const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
 const { TrayAndShortcutManager } = require('./src/tray');
-const { PipelineManager, getSyncStatus, exportToDrive, importFromDrive } = require('@nomad/core');
+const {
+  PipelineManager,
+  getSyncStatus,
+  exportToDrive,
+  importFromDrive,
+  ArtifactExtractor,
+  DiffEngine,
+  LocalModelClient,
+  McpGateway,
+  KnowledgeBase
+} = require('@nomad/core');
+
+const localModelClient = new LocalModelClient();
+const mcpGateway = new McpGateway();
+const knowledgeBase = new KnowledgeBase();
 const { SessionManager } = require('./src/session-manager');
 
 const EXTENSION_PATH = app.isPackaged
@@ -353,6 +367,19 @@ async function createMainWindow() {
 
   try {
     await bridge.start();
+
+  try {
+    globalShortcut.register('CommandOrControl+Shift+P', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.show();
+        mainWindow.focus();
+        mainWindow.webContents.send('nomad:toggle-spotlight-hud');
+      }
+    });
+  } catch (err) {
+    console.warn('[Nomad Desktop] Spotlight shortcut registration skipped:', err.message);
+  }
+
   } catch (err) {
     console.error('[Nomad Desktop] Failed to start local sync bridge:', err);
   }
@@ -409,11 +436,41 @@ async function createMainWindow() {
   trayManager.init();
 }
 
-async function dispatchPromptToTargets(prompt, targets) {
-  console.log(`[Nomad Desktop] Dispatching prompt to [${targets.join(', ')}]: "${prompt.slice(0, 30)}..."`);
+async function dispatchPromptToTargets(prompt, targets, attachments = []) {
+  console.log(`[Nomad Desktop] Dispatching prompt to [${targets.join(', ')}]: "${(typeof prompt === 'string' ? prompt : '').slice(0, 30)}..."`);
   const results = {};
 
+  if (targets.includes('local')) {
+    try {
+      console.log('[Nomad Desktop] Dispatching to Local Model (LM Studio/Ollama)...');
+      const chatRes = await localModelClient.chatCompletion({
+        prompt: typeof prompt === 'string' ? prompt : (prompt.text || ''),
+        messages: [{ role: 'user', content: typeof prompt === 'string' ? prompt : (prompt.text || '') }]
+      });
+      results['local'] = chatRes;
+      if (chatRes.success) {
+        const activeWs = sessionManager?.getActiveWorkspace();
+        if (activeWs) {
+          sessionManager.addTurn(activeWs.id, {
+            speaker: 'local',
+            round: 1,
+            content: chatRes.data.content
+          });
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
+          }
+        }
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('nomad:local-model-response', chatRes.data);
+        }
+      }
+    } catch (e) {
+      results['local'] = { success: false, error: e.message };
+    }
+  }
+
   for (const target of targets) {
+    if (target === 'local') continue;
     ensurePlatformLoaded(target);
     const item = views[target];
     if (!item) continue;
@@ -422,7 +479,7 @@ async function dispatchPromptToTargets(prompt, targets) {
     if (!injector) continue;
 
     try {
-      const res = await wc.executeJavaScript(injector(prompt));
+      const res = await wc.executeJavaScript(injector({ text: prompt, attachments }));
       results[target] = { ok: true, data: res };
       console.log(`[Nomad Desktop] Inject result for ${target}:`, res);
     } catch (e) {
@@ -470,8 +527,8 @@ ipcMain.on('nomad:set-drawer', (event, { open }) => {
   updateViewBounds();
 });
 
-ipcMain.on('nomad:dispatch-prompt', async (event, { prompt, targets }) => {
-  await dispatchPromptToTargets(prompt, targets);
+ipcMain.on('nomad:dispatch-prompt', async (event, { prompt, targets, attachments }) => {
+  await dispatchPromptToTargets(prompt, targets, attachments || []);
 });
 
 // Multi-AI Orchestration IPC Handlers
@@ -717,6 +774,64 @@ ipcMain.handle('nomad:drive-sync-pull', async (event, customOpts = {}) => {
 ipcMain.handle('nomad:pipeline-process', async (event, input) => {
   const pm = new PipelineManager(store.get('pipeline') || {});
   return pm.process(input);
+});
+
+
+// P1: Canvas & Artifacts IPC
+ipcMain.handle('nomad:extract-artifacts', (event, text) => {
+  return ArtifactExtractor.extract(text || '');
+});
+
+ipcMain.handle('nomad:generate-sandbox-html', (event, { artifact, type, title }) => {
+  const html = ArtifactExtractor.generateSandboxHtml(artifact, type, title);
+  return { success: true, data: { html } };
+});
+
+// P2: Side-by-side Diff & Local Model IPC
+ipcMain.handle('nomad:compute-diff', (event, options) => {
+  return DiffEngine.diffLines(options?.textA || '', options?.textB || '', options || {});
+});
+
+ipcMain.handle('nomad:probe-local-model', async (event, options) => {
+  const port = options?.port || 1234;
+  const host = options?.host || '127.0.0.1';
+  const client = new LocalModelClient({ endpoint: `http://${host}:${port}/v1` });
+  const probeRes = await client.probe();
+  if (probeRes.success) {
+    return probeRes;
+  }
+  return { success: true, data: { online: false, port, host, error: probeRes.message } };
+});
+
+ipcMain.handle('nomad:chat-local-model', async (event, options) => {
+  const port = options?.port || 1234;
+  const host = options?.host || '127.0.0.1';
+  const client = new LocalModelClient({ endpoint: `http://${host}:${port}/v1` });
+  return await client.chatCompletion(options);
+});
+
+// P3: MCP Gateway & Local RAG IPC
+ipcMain.handle('nomad:get-mcp-tools', () => {
+  return mcpGateway.listTools();
+});
+
+ipcMain.handle('nomad:call-mcp-tool', async (event, { name, args }) => {
+  return await mcpGateway.callTool(name, args || {});
+});
+
+ipcMain.handle('nomad:ingest-rag-doc', (event, doc) => {
+  return knowledgeBase.addDocument(doc);
+});
+
+ipcMain.handle('nomad:retrieve-rag-context', (event, { prompt, topK }) => {
+  return knowledgeBase.retrieveContext(prompt || '', topK || 3);
+});
+
+ipcMain.handle('nomad:toggle-spotlight', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('nomad:toggle-spotlight-hud');
+  }
+  return { success: true, toggled: true };
 });
 
 ipcMain.handle('nomad:pipeline-stats', async () => {

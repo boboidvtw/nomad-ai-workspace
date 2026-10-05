@@ -21,3 +21,25 @@ test('Injectors: Generates syntactically valid scripts for all platforms', () =>
     }, `Script for ${p} should have valid syntax`);
   }
 });
+
+test('Injectors: Formats attachments into prompt payload properly', () => {
+  const { formatPromptWithAttachments } = require('../injectors.js');
+  const payload = {
+    text: '請分析這段代碼',
+    attachments: [
+      { name: 'server.py', type: 'text', language: 'python', content: 'print("hello")' },
+      { name: 'architecture.png', type: 'image', mimeType: 'image/png' }
+    ]
+  };
+
+  const formatted = formatPromptWithAttachments(payload.text, payload.attachments);
+  assert.ok(formatted.includes('[附檔: server.py]'));
+  assert.ok(formatted.includes('print("hello")'));
+  assert.ok(formatted.includes('[圖片附件: architecture.png (image/png)]'));
+  assert.ok(formatted.includes('請分析這段代碼'));
+
+  // Test via injector function
+  const script = PLATFORM_INJECTORS.claude(payload);
+  assert.ok(script.includes('server.py'));
+  assert.ok(script.includes('architecture.png'));
+});

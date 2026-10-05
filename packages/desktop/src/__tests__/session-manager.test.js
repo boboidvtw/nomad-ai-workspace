@@ -287,3 +287,22 @@ test("SessionManager: searchWorkspaces performs keyword full-text search and tag
   assert.strictEqual(resMode.matchCount, 1);
   assert.strictEqual(resMode.results[0].workspaceId, ws2.id);
 });
+
+test("SessionManager: searchWorkspaces uses VectorMemoryLite BM25 to score semantic matches", () => {
+  const mockStoreData = { workspaces: [] };
+  const mockStore = {
+    get: (k) => mockStoreData[k],
+    set: (k, v) => { mockStoreData[k] = v; return v; },
+  };
+
+  const mgr = new SessionManager({ store: mockStore });
+  const ws = mgr.createWorkspace({
+    title: "1003 | 探索 | 向量檢索演算法評估",
+    prompt: "評估 BM25 與 CJK N-gram 分詞在本地端記憶體的查詢表現",
+  });
+
+  const res = mgr.searchWorkspaces({ query: "向量檢索演算法" });
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.matchCount, 1);
+  assert.ok(res.results[0].score > 30);
+});

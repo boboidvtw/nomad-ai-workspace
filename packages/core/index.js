@@ -1,5 +1,6 @@
 /**
  * @nomad/core entry point
+ * Complete Ecosystem: Result, Constants, Extensions, Pipeline, Sync, Canvas, Local Client, Diff, Memory, MCP, RAG, Plugins
  */
 
 const { ok, err, isOk, isErr, wrapAsync } = require('./src/result');
@@ -16,10 +17,12 @@ const {
 const { extractVariables, interpolate } = require('./src/extensions/template-parser');
 const { formatChatToMarkdown } = require('./src/extensions/markdown-exporter');
 
+// Pipeline (Headroom & Laya)
 const { estimateTokens, compress } = require('./src/pipeline/headroom');
 const { decide } = require('./src/pipeline/laya');
 const { PipelineManager } = require('./src/pipeline/index');
 
+// Universal Google Drive Sync
 const {
   DRIVE_FOLDER_NAME,
   WORKSPACES_FILE_NAME,
@@ -31,6 +34,39 @@ const {
   importFromDrive,
   getSyncStatus
 } = require('./src/sync/universal-drive-sync');
+
+// P1: Canvas & Artifacts
+const { ARTIFACT_TYPES, extractArtifacts, generateSandboxHtml } = require('./src/canvas/artifact-extractor');
+
+// P2: Local Model Client (Dual-Track)
+const { LocalModelClient } = require('./src/client/local-model-client');
+
+// P2: Side-by-Side Diff Engine
+const { computeDiff } = require('./src/diff/diff-engine');
+
+// P2: Vector Memory Lite & Hybrid Search
+const { tokenize, VectorMemoryLite } = require('./src/memory/vector-memory-lite');
+
+// P3: Model Context Protocol (MCP) Host & Gateway
+const { McpGateway } = require('./src/mcp/mcp-gateway');
+
+// P3: Local Knowledge Base & RAG Pipeline
+const { KnowledgeBase } = require('./src/rag/knowledge-base');
+
+// P3: Nomad Plugin Runtime
+const { PluginRuntime } = require('./src/plugins/plugin-runtime');
+
+
+const ArtifactExtractor = {
+  extract: extractArtifacts,
+  extractArtifacts,
+  generateSandboxHtml
+};
+
+const DiffEngine = {
+  diffLines: computeDiff,
+  computeDiff
+};
 
 module.exports = {
   ok,
@@ -48,12 +84,12 @@ module.exports = {
   extractVariables,
   interpolate,
   formatChatToMarkdown,
-  // Pipeline (Headroom & Laya)
+  // Pipeline
   estimateTokens,
   compress,
   decide,
   PipelineManager,
-  // Universal Google Drive Sync
+  // Universal Sync
   DRIVE_FOLDER_NAME,
   WORKSPACES_FILE_NAME,
   SETTINGS_FILE_NAME,
@@ -62,5 +98,20 @@ module.exports = {
   computeChecksum,
   exportToDrive,
   importFromDrive,
-  getSyncStatus
+  getSyncStatus,
+  // P1: Canvas
+  ARTIFACT_TYPES,
+  extractArtifacts,
+  generateSandboxHtml,
+  ArtifactExtractor,
+  DiffEngine,
+  // P2: Local Client, Diff & Memory
+  LocalModelClient,
+  computeDiff,
+  tokenize,
+  VectorMemoryLite,
+  // P3: MCP, RAG & Plugins
+  McpGateway,
+  KnowledgeBase,
+  PluginRuntime
 };
