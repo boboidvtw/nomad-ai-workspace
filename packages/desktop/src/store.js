@@ -8,7 +8,31 @@ const path = require('path');
 
 const DEFAULT_SETTINGS = {
   shortcut: 'CommandOrControl+Shift+Space',
-  layout: 'focus', // 'focus', 'dual', 'triple', 'quad', 'custom'
+  shortcuts: {
+    toggleWindow: 'CommandOrControl+Shift+Space',
+    toggleFocus: 'CommandOrControl+Shift+F',
+    toggleDrawer: 'CommandOrControl+Shift+D',
+    newSession: 'CommandOrControl+Shift+N',
+    toggleHUD: 'CommandOrControl+Shift+H'
+  },
+  appearance: {
+    theme: 'charcoal', // 'charcoal' | 'oled' | 'cyberpunk' | 'aurora' | 'nordic'
+    accentColor: '#38bdf8',
+    glassmorphism: true,
+    fontSize: 'normal'
+  },
+  pipeline: {
+    headroomEnabled: true,
+    layaEnabled: true,
+    autoEnhance: true,
+    compressionLevel: 'balanced'
+  },
+  driveSync: {
+    autoSync: false,
+    customPath: '',
+    lastSyncedAt: null
+  },
+  layout: 'focus', // 'focus', 'dual', 'triple', 'quad', 'hexa', 'custom'
   activePlatforms: ['chatgpt'],
   splitRatio: 0.5,
   zoomFactors: {
@@ -16,6 +40,8 @@ const DEFAULT_SETTINGS = {
     claude: 1.0,
     gemini: 1.0,
     grok: 1.0,
+    deepseek: 1.0,
+    perplexity: 1.0
   },
   bridgePort: 8765,
   bridgeEnabled: true,
@@ -28,7 +54,7 @@ class SettingsStore {
    */
   constructor(customFilePath) {
     this.filePath = customFilePath || null;
-    this.data = { ...DEFAULT_SETTINGS };
+    this.data = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
     this.isLoaded = false;
   }
 
@@ -42,7 +68,7 @@ class SettingsStore {
 
   load() {
     if (!this.filePath) {
-      this.data = { ...DEFAULT_SETTINGS };
+      this.data = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
       this.isLoaded = true;
       return this.data;
     }
@@ -54,6 +80,22 @@ class SettingsStore {
         this.data = {
           ...DEFAULT_SETTINGS,
           ...parsed,
+          shortcuts: {
+            ...DEFAULT_SETTINGS.shortcuts,
+            ...(parsed.shortcuts || {})
+          },
+          appearance: {
+            ...DEFAULT_SETTINGS.appearance,
+            ...(parsed.appearance || {})
+          },
+          pipeline: {
+            ...DEFAULT_SETTINGS.pipeline,
+            ...(parsed.pipeline || {})
+          },
+          driveSync: {
+            ...DEFAULT_SETTINGS.driveSync,
+            ...(parsed.driveSync || {})
+          },
           zoomFactors: {
             ...DEFAULT_SETTINGS.zoomFactors,
             ...(parsed.zoomFactors || {}),
@@ -64,7 +106,7 @@ class SettingsStore {
       }
     } catch (err) {
       console.warn('[Nomad Store] Failed to load settings, using defaults:', err.message);
-      this.data = { ...DEFAULT_SETTINGS };
+      this.data = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
     }
     this.isLoaded = true;
     return this.data;
@@ -88,7 +130,7 @@ class SettingsStore {
   }
 
   getAll() {
-    return { ...this.data };
+    return JSON.parse(JSON.stringify(this.data));
   }
 
   set(key, value) {
@@ -99,13 +141,45 @@ class SettingsStore {
 
   update(partial) {
     if (!partial || typeof partial !== 'object') return this.data;
-    
+
     if (partial.zoomFactors) {
       this.data.zoomFactors = {
         ...this.data.zoomFactors,
         ...partial.zoomFactors,
       };
       delete partial.zoomFactors;
+    }
+
+    if (partial.shortcuts) {
+      this.data.shortcuts = {
+        ...this.data.shortcuts,
+        ...partial.shortcuts
+      };
+      delete partial.shortcuts;
+    }
+
+    if (partial.appearance) {
+      this.data.appearance = {
+        ...this.data.appearance,
+        ...partial.appearance
+      };
+      delete partial.appearance;
+    }
+
+    if (partial.pipeline) {
+      this.data.pipeline = {
+        ...this.data.pipeline,
+        ...partial.pipeline
+      };
+      delete partial.pipeline;
+    }
+
+    if (partial.driveSync) {
+      this.data.driveSync = {
+        ...this.data.driveSync,
+        ...partial.driveSync
+      };
+      delete partial.driveSync;
     }
 
     Object.assign(this.data, partial);

@@ -9,6 +9,15 @@ const fs = require('fs');
 const path = require('path');
 const { probeAllServices } = require('./prober');
 const { serveDashboard } = require('./static-handler');
+const {
+  ok,
+  err,
+  ErrorCodes,
+  PipelineManager,
+  getSyncStatus,
+  exportToDrive,
+  importFromDrive
+} = require('@nomad/core');
 
 class LocalSyncBridge {
   /**
@@ -39,6 +48,7 @@ class LocalSyncBridge {
     this.sseClients = new Set();
     this.heartbeatTimer = null;
     this.daemonPort = options.daemonPort || 8765;
+    this.pipelineManager = new PipelineManager({ headroomEnabled: true, layaEnabled: true, autoEnhance: true });
   }
 
   registerWithDaemon(daemonPort = this.daemonPort) {
@@ -538,7 +548,45 @@ class LocalSyncBridge {
         return this.sendJson(res, 200, { success: true, filePath, exportDir });
       }
 
-            // 404 Route Not Found
+                  // Pipeline & Drive Sync Endpoints
+      if (pathname === '/api/pipeline/process' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const resPipeline = this.pipelineManager.process(body);
+        return this.sendJson(res, resPipeline.success ? 200 : 400, resPipeline);
+      }
+
+      if (pathname === '/api/pipeline/status' && req.method === 'GET') {
+        return this.sendJson(res, 200, ok(this.pipelineManager.getStats()));
+      }
+
+      if (pathname === '/api/sync/drive/status' && req.method === 'GET') {
+        const dir = parsedUrl.searchParams.get('dir');
+        const resStatus = getSyncStatus(dir ? { targetDir: dir } : {});
+        return this.sendJson(res, resStatus.success ? 200 : 400, resStatus);
+      }
+
+      if (pathname === '/api/sync/drive/push' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const workspaces = this.sessionManager ? this.sessionManager.getWorkspaces() : (body.workspaces || []);
+        const pushRes = exportToDrive({ workspaces, settings: body.settings, targetDir: body.targetDir });
+        return this.sendJson(res, pushRes.success ? 200 : 400, pushRes);
+      }
+
+      if (pathname === '/api/sync/drive/pull' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const currentWorkspaces = this.sessionManager ? this.sessionManager.getWorkspaces() : [];
+        const pullRes = importFromDrive({
+          sourceDir: body.sourceDir,
+          currentWorkspaces,
+          strategy: body.strategy || 'merge'
+        });
+        if (pullRes.success && this.sessionManager) {
+          this.sessionManager.store.set('workspaces', pullRes.data.reconciledWorkspaces);
+        }
+        return this.sendJson(res, pullRes.success ? 200 : 400, pullRes);
+      }
+
+      // 404 Route Not Found
       return this.sendJson(res, 404, {
         success: false,
         errorCode: 'BRIDGE_ROUTER_NOT_FOUND_404',

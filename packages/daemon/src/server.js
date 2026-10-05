@@ -9,7 +9,11 @@ const {
   err,
   ErrorCodes,
   DEFAULT_DAEMON_PORT,
-  DEFAULT_DAEMON_HOST
+  DEFAULT_DAEMON_HOST,
+  PipelineManager,
+  getSyncStatus,
+  exportToDrive,
+  importFromDrive
 } = require('@nomad/core');
 const { probeAllServices } = require('./prober');
 const { serveDashboard } = require('./static-handler');
@@ -30,6 +34,12 @@ class NomadDaemonServer {
     this.server = null;
     this.sseClients = new Set();
     this.activeStudio = null; // { bridgePort: number, pid: number, version: string, registeredAt: string, lastHeartbeat: number }
+    this.pipelineManager = new PipelineManager({
+      headroomEnabled: true,
+      layaEnabled: true,
+      autoEnhance: true,
+      compressionLevel: 'balanced'
+    });
   }
 
   start() {
@@ -234,6 +244,41 @@ class NomadDaemonServer {
           online: this.isStudioAlive(),
           activeStudio: this.activeStudio
         }));
+      }
+
+      // 3.5. Pipeline (Headroom & Laya) & Drive Sync Endpoints
+      if (pathname === '/api/pipeline/process' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const resPipeline = this.pipelineManager.process(body);
+        return this.sendJson(res, resPipeline.success ? 200 : 400, resPipeline);
+      }
+
+      if (pathname === '/api/pipeline/status' && req.method === 'GET') {
+        return this.sendJson(res, 200, ok(this.pipelineManager.getStats()));
+      }
+
+      if (pathname === '/api/sync/drive/status' && req.method === 'GET') {
+        const dir = url.searchParams.get('dir');
+        const resStatus = getSyncStatus(dir ? { targetDir: dir } : {});
+        return this.sendJson(res, resStatus.success ? 200 : 400, resStatus);
+      }
+
+      if (pathname === '/api/sync/drive/push' && req.method === 'POST') {
+        if (this.isStudioAlive()) {
+          return this.proxyToStudio(req, res, this.activeStudio.bridgePort);
+        }
+        const body = await this.readJsonBody(req);
+        const pushRes = exportToDrive(body);
+        return this.sendJson(res, pushRes.success ? 200 : 400, pushRes);
+      }
+
+      if (pathname === '/api/sync/drive/pull' && req.method === 'POST') {
+        if (this.isStudioAlive()) {
+          return this.proxyToStudio(req, res, this.activeStudio.bridgePort);
+        }
+        const body = await this.readJsonBody(req);
+        const pullRes = importFromDrive(body);
+        return this.sendJson(res, pullRes.success ? 200 : 400, pullRes);
       }
 
       // 4. Status API

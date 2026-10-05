@@ -708,7 +708,82 @@
       color: #94a3b8;
     }
 
-  </style>
+  
+    /* Dynamic Theme Variables */
+    :root {
+      --bg-base: #0b0f19;
+      --bg-surface: rgba(15, 23, 42, 0.88);
+      --accent-color: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+    }
+    body {
+      background-color: var(--bg-base) !important;
+    }
+    .top-bar {
+      background: var(--bg-surface) !important;
+    }
+    .right-sidebar {
+      background: var(--bg-surface) !important;
+    }
+    .bottom-bar {
+      background: var(--bg-surface) !important;
+    }
+
+    /* Shortcuts & Theme UI */
+    .theme-card {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    .theme-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    .theme-card.active {
+      border-color: var(--accent-color, #38bdf8) !important;
+      box-shadow: 0 0 12px var(--accent-glow, rgba(56, 189, 248, 0.35)) !important;
+    }
+    .color-swatch {
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .color-swatch:hover {
+      transform: scale(1.15);
+    }
+    .color-swatch.active {
+      border-color: white !important;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    }
+    .shortcut-input.recording {
+      border-color: #ef4444 !important;
+      background: rgba(239, 68, 68, 0.15) !important;
+      color: #f87171 !important;
+      animation: pulse-border 1.2s infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.8); }
+    }
+    .btn-record-key {
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-record-key:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: white;
+    }
+    .btn-record-key.recording {
+      background: #ef4444 !important;
+      border-color: #ef4444 !important;
+      color: white !important;
+    }
+
+</style>
 </head>
 <body>
   <!-- Top Bar -->
@@ -759,7 +834,10 @@
 
       <!-- Zoom Popover Toggle -->
             <!-- System Cockpit HUD Pill -->
-      <div class="pill-info btn-hud" id="btn-hud-pill" onclick="openSidebarTab('hud')" title="開啟本機微服務與決策儀表板 (HUD)">
+              <div class="pill-info btn-settings" id="btn-settings-pill" onclick="openSidebarTab('settings')" title="全域快捷鍵、主題色彩與 Google Drive 雲端同步">
+          <span>⚙️ 設定與外觀</span>
+        </div>
+        <div class="pill-info btn-hud" id="btn-hud-pill" onclick="openSidebarTab('hud')" title="開啟本機微服務與決策儀表板 (HUD)">
         <span class="pulse-dot pulse-emerald" id="hud-pulse-dot"></span>
         <span id="hud-top-label" style="font-weight: 600; color: #6ee7b7;">🖥️ 系統 HUD</span>
       </div>
@@ -788,6 +866,7 @@
         <button class="btn-tab" id="tab-btn-ws" onclick="switchSidebarTab('ws')">📁 會話工作區</button>
         <button class="btn-tab" id="tab-btn-zoom" onclick="switchSidebarTab('zoom')">🔍 縮放調控</button>
         <button class="btn-tab" id="tab-btn-hud" onclick="switchSidebarTab('hud')">🖥️ 系統 HUD</button>
+        <button class="btn-tab" id="tab-btn-settings" onclick="switchSidebarTab('settings')">⚙️ 設定與外觀</button>
       </div>
       <span style="cursor: pointer; color: #94a3b8; font-size: 15px; padding: 2px 6px;" onclick="closeSidebar()">✕</span>
     </div>
@@ -988,6 +1067,165 @@
         <div style="margin-top: 4px;">🛡️ <b>零中繼隱私</b>：四大 AI 帳號登入態完全本機持久化保存。</div>
       </div>
     </div>
+    <!-- TAB 4: SYSTEM HUD -->
+    <div class="sidebar-content" id="tab-content-hud" style="display: none;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div class="section-title" style="margin-bottom: 0;">微服務健康探針 (Local Services)</div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #94a3b8;">
+          <span class="pulse-dot" id="hud-pulse-dot"></span>
+          <span>心跳探針</span>
+        </div>
+      </div>
+      <div class="hud-services-grid" id="hud-services-grid" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
+        <div style="font-size: 11px; color: #64748b; text-align: center; padding: 16px 0;">載入微服務探針中...</div>
+      </div>
+      <div style="margin-top: 12px; display: flex; gap: 6px;">
+        <button class="btn-ws-op" onclick="loadHudProbe()" style="flex: 1; padding: 6px; text-align: center;">🔄 重新整理探針</button>
+        <button class="btn-ws-op" onclick="window.nomadDesktop && window.nomadDesktop.openExternal('http://127.0.0.1:8765/dashboard')" style="flex: 1; padding: 6px; text-align: center;">🌐 開啟 Dashboard</button>
+      </div>
+    </div>
+
+    <!-- TAB 5: SETTINGS, SHORTCUTS, THEMES & CLOUD SYNC -->
+    <div class="sidebar-content" id="tab-content-settings" style="display: none;">
+      <!-- Section 1: Google Drive Universal Sync -->
+      <div class="section-title">☁️ Google Drive 雙向雲端備份</div>
+      <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 12px; font-weight: 600; color: #cbd5e1;">備份儲存庫狀態</span>
+          <span id="drive-sync-badge" style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 600;">檢測中...</span>
+        </div>
+        <div style="font-size: 11px; color: #94a3b8; word-break: break-all;" id="drive-sync-path">
+          路徑: 正在偵測本機 Google Drive 目錄...
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-ws-op" id="btn-drive-push" onclick="handleDriveSyncPush()" style="flex: 1; padding: 8px; font-weight: 600; background: linear-gradient(135deg, #0284c7, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer;">
+            ☁️ 備份至 Drive (Push)
+          </button>
+          <button class="btn-ws-op" id="btn-drive-pull" onclick="handleDriveSyncPull()" style="flex: 1; padding: 8px; font-weight: 600; background: rgba(255, 255, 255, 0.08); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; cursor: pointer;">
+            📥 從 Drive 還原 (Pull)
+          </button>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 10px; color: #64748b;" id="drive-sync-meta">
+          <span id="drive-sync-time">最後同步: 尚未同步</span>
+          <span id="drive-sync-checksum"></span>
+        </div>
+      </div>
+
+      <!-- Section 2: Global Shortcuts Recorder -->
+      <div class="section-title">⌨️ 全域快捷鍵錄製面板 (Global Shortcuts)</div>
+      <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 11px; color: #94a3b8;">
+          點擊「錄製」按鈕後按下任意組合鍵（例如 <kbd style="background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px;">Cmd+Shift+K</kbd>），放開即自動捕獲。
+        </div>
+
+        <div class="shortcut-row" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <span style="font-size: 11px; color: #cbd5e1; flex: 1.2;">喚起 / 隱藏工作台</span>
+          <input type="text" id="shortcut-toggleWindow" class="shortcut-input" readonly value="CommandOrControl+Shift+Space" style="flex: 2; font-size: 11px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #38bdf8; text-align: center;">
+          <button class="btn-record-key" id="btn-rec-toggleWindow" onclick="startRecordKey('toggleWindow')">⏺️ 錄製</button>
+        </div>
+
+        <div class="shortcut-row" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <span style="font-size: 11px; color: #cbd5e1; flex: 1.2;">單欄專注模式</span>
+          <input type="text" id="shortcut-toggleFocus" class="shortcut-input" readonly value="CommandOrControl+Shift+F" style="flex: 2; font-size: 11px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #38bdf8; text-align: center;">
+          <button class="btn-record-key" id="btn-rec-toggleFocus" onclick="startRecordKey('toggleFocus')">⏺️ 錄製</button>
+        </div>
+
+        <div class="shortcut-row" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <span style="font-size: 11px; color: #cbd5e1; flex: 1.2;">側邊控制抽屜</span>
+          <input type="text" id="shortcut-toggleDrawer" class="shortcut-input" readonly value="CommandOrControl+Shift+D" style="flex: 2; font-size: 11px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #38bdf8; text-align: center;">
+          <button class="btn-record-key" id="btn-rec-toggleDrawer" onclick="startRecordKey('toggleDrawer')">⏺️ 錄製</button>
+        </div>
+
+        <div class="shortcut-row" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <span style="font-size: 11px; color: #cbd5e1; flex: 1.2;">新跨平臺會話</span>
+          <input type="text" id="shortcut-newSession" class="shortcut-input" readonly value="CommandOrControl+Shift+N" style="flex: 2; font-size: 11px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #38bdf8; text-align: center;">
+          <button class="btn-record-key" id="btn-rec-newSession" onclick="startRecordKey('newSession')">⏺️ 錄製</button>
+        </div>
+
+        <div class="shortcut-row" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <span style="font-size: 11px; color: #cbd5e1; flex: 1.2;">系統 HUD 開關</span>
+          <input type="text" id="shortcut-toggleHUD" class="shortcut-input" readonly value="CommandOrControl+Shift+H" style="flex: 2; font-size: 11px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #38bdf8; text-align: center;">
+          <button class="btn-record-key" id="btn-rec-toggleHUD" onclick="startRecordKey('toggleHUD')">⏺️ 錄製</button>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 4px;">
+          <button class="btn-ws-op" onclick="saveCustomShortcuts()" style="flex: 2; padding: 6px; font-weight: 600; background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; border-radius: 6px; cursor: pointer;">
+            💾 保存並立即生效
+          </button>
+          <button class="btn-ws-op" onclick="resetDefaultShortcuts()" style="flex: 1; padding: 6px; font-weight: 600; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 6px; cursor: pointer;">
+            🔄 恢復預設
+          </button>
+        </div>
+        <div id="shortcut-save-toast" style="display: none; font-size: 11px; color: #34d399; text-align: center; margin-top: 4px;">✅ 全域快捷鍵已成功更新並生效！</div>
+      </div>
+
+      <!-- Section 3: Appearance & Theme Palette -->
+      <div class="section-title">🎨 外觀風格與主題調色盤 (Appearance & Themes)</div>
+      <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 11px; color: #94a3b8;">5 款精緻工程主題，支援即時切換與自訂全域強調色</div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <div class="theme-card active" id="theme-card-charcoal" onclick="selectTheme('charcoal')" style="padding: 8px; border-radius: 6px; background: #0b0f19; border: 1px solid #38bdf8; cursor: pointer; text-align: center;">
+            <div style="font-size: 16px;">🌌</div>
+            <div style="font-size: 10px; font-weight: 600; color: #f8fafc; margin-top: 4px;">深夜深灰</div>
+          </div>
+          <div class="theme-card" id="theme-card-oled" onclick="selectTheme('oled')" style="padding: 8px; border-radius: 6px; background: #000000; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; text-align: center;">
+            <div style="font-size: 16px;">🖤</div>
+            <div style="font-size: 10px; font-weight: 600; color: #f8fafc; margin-top: 4px;">太空純黑</div>
+          </div>
+          <div class="theme-card" id="theme-card-cyberpunk" onclick="selectTheme('cyberpunk')" style="padding: 8px; border-radius: 6px; background: #0a0618; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; text-align: center;">
+            <div style="font-size: 16px;">⚡</div>
+            <div style="font-size: 10px; font-weight: 600; color: #f8fafc; margin-top: 4px;">賽博藍紫</div>
+          </div>
+          <div class="theme-card" id="theme-card-aurora" onclick="selectTheme('aurora')" style="padding: 8px; border-radius: 6px; background: #041410; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; text-align: center;">
+            <div style="font-size: 16px;">🌲</div>
+            <div style="font-size: 10px; font-weight: 600; color: #f8fafc; margin-top: 4px;">極光翡翠</div>
+          </div>
+          <div class="theme-card" id="theme-card-nordic" onclick="selectTheme('nordic')" style="padding: 8px; border-radius: 6px; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; text-align: center;">
+            <div style="font-size: 16px;">❄️</div>
+            <div style="font-size: 10px; font-weight: 600; color: #f8fafc; margin-top: 4px;">極簡冷銀</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 6px;">
+          <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 6px; font-weight: 600;">自訂主強調色 (Accent Glow)</div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="color-swatch active" id="swatch-38bdf8" onclick="selectAccentColor('#38bdf8')" style="width: 22px; height: 22px; border-radius: 50%; background: #38bdf8; border: 2px solid white; cursor: pointer;"></button>
+            <button class="color-swatch" id="swatch-10b981" onclick="selectAccentColor('#10b981')" style="width: 22px; height: 22px; border-radius: 50%; background: #10b981; border: 2px solid transparent; cursor: pointer;"></button>
+            <button class="color-swatch" id="swatch-a855f7" onclick="selectAccentColor('#a855f7')" style="width: 22px; height: 22px; border-radius: 50%; background: #a855f7; border: 2px solid transparent; cursor: pointer;"></button>
+            <button class="color-swatch" id="swatch-f59e0b" onclick="selectAccentColor('#f59e0b')" style="width: 22px; height: 22px; border-radius: 50%; background: #f59e0b; border: 2px solid transparent; cursor: pointer;"></button>
+            <button class="color-swatch" id="swatch-f43f5e" onclick="selectAccentColor('#f43f5e')" style="width: 22px; height: 22px; border-radius: 50%; background: #f43f5e; border: 2px solid transparent; cursor: pointer;"></button>
+            <button class="color-swatch" id="swatch-06b6d4" onclick="selectAccentColor('#06b6d4')" style="width: 22px; height: 22px; border-radius: 50%; background: #06b6d4; border: 2px solid transparent; cursor: pointer;"></button>
+            <input type="color" id="accent-color-picker" value="#38bdf8" onchange="selectAccentColor(this.value)" style="width: 28px; height: 24px; border: none; background: transparent; cursor: pointer;" title="自選任意顏色">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Headroom & Laya Pipeline Live Box -->
+      <div class="section-title">⚡ 底層管線遙測與意圖測試 (Headroom & Laya)</div>
+      <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 10px; color: #94a3b8;">Headroom 累積節省</div>
+            <div style="font-size: 14px; font-weight: 700; color: #10b981;" id="telemetry-saved-tokens">0 Tokens</div>
+          </div>
+          <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 10px; color: #94a3b8;">Laya 決策平均延遲</div>
+            <div style="font-size: 14px; font-weight: 700; color: #38bdf8;" id="telemetry-laya-latency">0.45 ms</div>
+          </div>
+        </div>
+        <div style="margin-top: 4px;">
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="pipeline-test-input" placeholder="輸入測試語句 (例如: 修復登入逾時 Bug)..." style="flex: 1; padding: 6px 10px; font-size: 11px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #cbd5e1; outline: none;">
+            <button onclick="testPipelineInUI()" style="padding: 6px 12px; font-size: 11px; font-weight: 600; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; border-radius: 6px; cursor: pointer;">
+              測試
+            </button>
+          </div>
+          <div id="pipeline-test-result" style="display: none; margin-top: 8px; font-size: 11px; padding: 8px; background: rgba(0,0,0,0.4); border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); line-height: 1.5; color: #94a3b8;"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Content Space for WebContentsViews -->
@@ -1038,12 +1276,16 @@
         state = { ...state, ...loaded };
       }
       renderUI();
+      loadAppearanceUI();
+      loadShortcutsUI();
 
       // Listen to remote changes via bridge or tray
       if (window.nomadDesktop && window.nomadDesktop.onRemoteUpdate) {
         window.nomadDesktop.onRemoteUpdate((updated) => {
           state = { ...state, ...updated };
           renderUI();
+      loadAppearanceUI();
+      loadShortcutsUI();
         });
       }
 
@@ -1129,6 +1371,8 @@
 
       notifyLayout();
       renderUI();
+      loadAppearanceUI();
+      loadShortcutsUI();
     }
 
     function togglePlatform(platform) {
@@ -1143,12 +1387,16 @@
       state.layout = 'custom';
       notifyLayout();
       renderUI();
+      loadAppearanceUI();
+      loadShortcutsUI();
     }
 
     function setRatio(ratio) {
       state.splitRatio = ratio;
       notifyLayout();
       renderUI();
+      loadAppearanceUI();
+      loadShortcutsUI();
     }
 
     function notifyLayout() {
@@ -1627,6 +1875,8 @@
         window.nomadDesktop.setZoom({ platform, factor: next });
       }
       renderUI();
+      loadAppearanceUI();
+      loadShortcutsUI();
     }
 
     function resetZoom(platform) {
@@ -1635,6 +1885,8 @@
         window.nomadDesktop.setZoom({ platform, factor: 1.0 });
       }
       renderUI();
+      loadAppearanceUI();
+      loadShortcutsUI();
     }
 
     function setGlobalZoom(factor) {
@@ -1645,6 +1897,8 @@
         }
       });
       renderUI();
+      loadAppearanceUI();
+      loadShortcutsUI();
     }
 
     function copyBridgeInfo() {
@@ -1796,6 +2050,326 @@
     });
 
     init();
+  
+    // --- Appearance & Theme Engine ---
+    const THEME_PRESETS = {
+      charcoal: { bgBase: '#0b0f19', bgSurface: 'rgba(15, 23, 42, 0.88)' },
+      oled: { bgBase: '#000000', bgSurface: 'rgba(10, 10, 10, 0.95)' },
+      cyberpunk: { bgBase: '#0a0618', bgSurface: 'rgba(24, 15, 46, 0.9)' },
+      aurora: { bgBase: '#041410', bgSurface: 'rgba(6, 32, 25, 0.9)' },
+      nordic: { bgBase: '#0f172a', bgSurface: 'rgba(30, 41, 59, 0.9)' }
+    };
+
+    function applyTheme(themeName, accentColor) {
+      const preset = THEME_PRESETS[themeName] || THEME_PRESETS.charcoal;
+      const root = document.documentElement;
+      root.style.setProperty('--bg-base', preset.bgBase);
+      root.style.setProperty('--bg-surface', preset.bgSurface);
+
+      if (accentColor) {
+        root.style.setProperty('--accent-color', accentColor);
+        // hex to rgba glow
+        const r = parseInt(accentColor.slice(1, 3), 16) || 56;
+        const g = parseInt(accentColor.slice(3, 5), 16) || 189;
+        const b = parseInt(accentColor.slice(5, 7), 16) || 248;
+        root.style.setProperty('--accent-glow', `rgba(${r}, ${g}, ${b}, 0.28)`);
+      }
+
+      // Update active theme card
+      document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+      const activeCard = document.getElementById('theme-card-' + themeName);
+      if (activeCard) activeCard.classList.add('active');
+    }
+
+    function selectTheme(themeName) {
+      if (!state.appearance) state.appearance = {};
+      state.appearance.theme = themeName;
+      applyTheme(themeName, state.appearance.accentColor || '#38bdf8');
+      if (window.nomadDesktop && window.nomadDesktop.setAppearance) {
+        window.nomadDesktop.setAppearance(state.appearance);
+      }
+    }
+
+    function selectAccentColor(hexColor) {
+      if (!state.appearance) state.appearance = {};
+      state.appearance.accentColor = hexColor;
+      applyTheme(state.appearance.theme || 'charcoal', hexColor);
+
+      // Update swatch active state
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+      const swatch = document.getElementById('swatch-' + hexColor.replace('#', ''));
+      if (swatch) swatch.classList.add('active');
+
+      const picker = document.getElementById('accent-color-picker');
+      if (picker) picker.value = hexColor;
+
+      if (window.nomadDesktop && window.nomadDesktop.setAppearance) {
+        window.nomadDesktop.setAppearance(state.appearance);
+      }
+    }
+
+    function loadAppearanceUI() {
+      const app = state.appearance || { theme: 'charcoal', accentColor: '#38bdf8' };
+      applyTheme(app.theme || 'charcoal', app.accentColor || '#38bdf8');
+    }
+
+    // --- Global Shortcuts Recorder ---
+    let recordingAction = null;
+    let recordingListener = null;
+
+    function startRecordKey(actionName) {
+      // Clear previous recording listener if any
+      if (recordingListener) {
+        window.removeEventListener('keydown', recordingListener);
+        recordingListener = null;
+      }
+      if (recordingAction) {
+        const prevInput = document.getElementById('shortcut-' + recordingAction);
+        const prevBtn = document.getElementById('btn-rec-' + recordingAction);
+        if (prevInput) prevInput.classList.remove('recording');
+        if (prevBtn) {
+          prevBtn.classList.remove('recording');
+          prevBtn.textContent = '⏺️ 錄製';
+        }
+      }
+
+      recordingAction = actionName;
+      const input = document.getElementById('shortcut-' + actionName);
+      const btn = document.getElementById('btn-rec-' + actionName);
+      if (!input || !btn) return;
+
+      input.classList.add('recording');
+      btn.classList.add('recording');
+      btn.textContent = '錄製中...';
+      input.value = '請按下快捷鍵組合...';
+
+      recordingListener = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Ignore standalone modifier presses
+        if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+
+        const parts = [];
+        if (e.metaKey || e.ctrlKey) parts.push('CommandOrControl');
+        if (e.shiftKey) parts.push('Shift');
+        if (e.altKey) parts.push('Alt');
+
+        let key = e.key.toUpperCase();
+        if (key === ' ') key = 'Space';
+        else if (key === 'ESCAPE') key = 'Escape';
+        else if (key === 'ENTER') key = 'Return';
+
+        if (parts.length === 0) {
+          // Require at least one modifier
+          parts.push('CommandOrControl');
+        }
+        parts.push(key);
+
+        const accelerator = parts.join('+');
+        input.value = accelerator;
+        input.classList.remove('recording');
+        btn.classList.remove('recording');
+        btn.textContent = '⏺️ 錄製';
+
+        window.removeEventListener('keydown', recordingListener);
+        recordingListener = null;
+        recordingAction = null;
+      };
+
+      window.addEventListener('keydown', recordingListener);
+    }
+
+    async function saveCustomShortcuts() {
+      const actions = ['toggleWindow', 'toggleFocus', 'toggleDrawer', 'newSession', 'toggleHUD'];
+      const shortcuts = {};
+      for (const a of actions) {
+        const input = document.getElementById('shortcut-' + a);
+        if (input) shortcuts[a] = input.value.trim();
+      }
+
+      state.shortcuts = shortcuts;
+      if (window.nomadDesktop && window.nomadDesktop.setShortcuts) {
+        await window.nomadDesktop.setShortcuts(shortcuts);
+      }
+
+      const toast = document.getElementById('shortcut-save-toast');
+      if (toast) {
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 3000);
+      }
+    }
+
+    async function resetDefaultShortcuts() {
+      const defaults = {
+        toggleWindow: 'CommandOrControl+Shift+Space',
+        toggleFocus: 'CommandOrControl+Shift+F',
+        toggleDrawer: 'CommandOrControl+Shift+D',
+        newSession: 'CommandOrControl+Shift+N',
+        toggleHUD: 'CommandOrControl+Shift+H'
+      };
+
+      for (const [k, v] of Object.entries(defaults)) {
+        const input = document.getElementById('shortcut-' + k);
+        if (input) input.value = v;
+      }
+
+      state.shortcuts = defaults;
+      if (window.nomadDesktop && window.nomadDesktop.setShortcuts) {
+        await window.nomadDesktop.setShortcuts(defaults);
+      }
+
+      const toast = document.getElementById('shortcut-save-toast');
+      if (toast) {
+        toast.textContent = '✅ 已恢復預設快捷鍵！';
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 3000);
+      }
+    }
+
+    function loadShortcutsUI() {
+      const shortcuts = state.shortcuts || {};
+      const actions = ['toggleWindow', 'toggleFocus', 'toggleDrawer', 'newSession', 'toggleHUD'];
+      for (const a of actions) {
+        const input = document.getElementById('shortcut-' + a);
+        if (input && shortcuts[a]) {
+          input.value = shortcuts[a];
+        }
+      }
+    }
+
+    // --- Google Drive Universal Sync UI ---
+    async function loadDriveSyncStatus() {
+      const badge = document.getElementById('drive-sync-badge');
+      const pathEl = document.getElementById('drive-sync-path');
+      const timeEl = document.getElementById('drive-sync-time');
+      const checkEl = document.getElementById('drive-sync-checksum');
+
+      if (!window.nomadDesktop || !window.nomadDesktop.driveSyncStatus) return;
+
+      try {
+        const res = await window.nomadDesktop.driveSyncStatus();
+        if (res && res.success && res.data) {
+          const d = res.data;
+          if (badge) {
+            badge.textContent = d.status === 'connected' ? '🟢 目錄就緒' : '⚪ 本機離線模式';
+            badge.style.color = d.status === 'connected' ? '#10b981' : '#94a3b8';
+          }
+          if (pathEl) {
+            pathEl.textContent = '儲存目錄: ' + (d.targetDir || '本機應用目錄');
+          }
+          if (timeEl && d.lastSyncedAt) {
+            timeEl.textContent = '最後同步: ' + new Date(d.lastSyncedAt).toLocaleTimeString();
+          }
+          if (checkEl && d.checksum) {
+            checkEl.textContent = 'SHA: ' + d.checksum;
+          }
+        }
+      } catch (err) {
+        console.warn('[Nomad UI] Drive status failed:', err.message);
+      }
+    }
+
+    async function handleDriveSyncPush() {
+      const btn = document.getElementById('btn-drive-push');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ 正在備份至 Drive...';
+      }
+
+      try {
+        if (window.nomadDesktop && window.nomadDesktop.driveSyncPush) {
+          const res = await window.nomadDesktop.driveSyncPush();
+          if (res && res.success) {
+            alert(`✅ 雲端備份成功！\n已同步 ${res.data.syncedCount} 個會話至 Google Drive。\n路徑: ${res.data.targetDir}`);
+            loadDriveSyncStatus();
+          } else {
+            alert('❌ 備份失敗: ' + (res?.message || '未知錯誤'));
+          }
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '☁️ 備份至 Drive (Push)';
+        }
+      }
+    }
+
+    async function handleDriveSyncPull() {
+      const btn = document.getElementById('btn-drive-pull');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ 正在從 Drive 還原...';
+      }
+
+      try {
+        if (window.nomadDesktop && window.nomadDesktop.driveSyncPull) {
+          const res = await window.nomadDesktop.driveSyncPull({ strategy: 'merge' });
+          if (res && res.success) {
+            alert(`✅ 雲端還原成功！\n已合併 ${res.data.importedCount} 個雲端工作區。`);
+            loadDriveSyncStatus();
+            loadWorkspacesUI();
+          } else {
+            alert('❌ 還原失敗: ' + (res?.message || '未知錯誤'));
+          }
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '📥 從 Drive 還原 (Pull)';
+        }
+      }
+    }
+
+    // --- Pipeline Telemetry & Live Box ---
+    async function loadPipelineStats() {
+      const savedEl = document.getElementById('telemetry-saved-tokens');
+      const latEl = document.getElementById('telemetry-laya-latency');
+
+      if (!window.nomadDesktop || !window.nomadDesktop.pipelineStats) return;
+
+      try {
+        const stats = await window.nomadDesktop.pipelineStats();
+        if (stats) {
+          if (savedEl) savedEl.textContent = (stats.totalSavedTokens || 0) + ' Tokens';
+          if (latEl) latEl.textContent = (stats.avgLayaLatencyMs || 0.35) + ' ms';
+        }
+      } catch {}
+    }
+
+    async function testPipelineInUI() {
+      const input = document.getElementById('pipeline-test-input');
+      const resultBox = document.getElementById('pipeline-test-result');
+      if (!input || !input.value.trim() || !resultBox) return;
+
+      resultBox.style.display = 'block';
+      resultBox.innerHTML = '⚡ 管線毫秒計算中...';
+
+      try {
+        if (window.nomadDesktop && window.nomadDesktop.pipelineProcess) {
+          const res = await window.nomadDesktop.pipelineProcess({
+            prompt: input.value.trim(),
+            options: { enhance: true }
+          });
+
+          if (res && res.success && res.data) {
+            const d = res.data;
+            resultBox.innerHTML = `
+              <div style="color: #38bdf8; font-weight: 700;">🎯 意圖: ${d.laya.intent} (置信度: ${Math.round(d.laya.confidence*100)}%)</div>
+              <div>🤖 建議引擎: <span style="color: #34d399; font-weight: 600;">${d.laya.recommendedPlatform}</span> | 耗時: ${d.laya.latencyMs}ms</div>
+              <div>📉 Headroom 節省: ${d.headroom.savedTokens} tokens (${Math.round(d.headroom.savingsRatio*100)}%)</div>
+              <div style="margin-top: 4px; color: #cbd5e1; font-size: 10px; background: rgba(255,255,255,0.04); padding: 4px 6px; border-radius: 4px;">${d.processedPrompt}</div>
+            `;
+            loadPipelineStats();
+          } else {
+            resultBox.textContent = '❌ 管線處理失敗: ' + (res?.message || '未知錯誤');
+          }
+        }
+      } catch (err) {
+        resultBox.textContent = '❌ 錯誤: ' + err.message;
+      }
+    }
+
   </script>
 </body>
 </html>

@@ -10,6 +10,7 @@ const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
 const { TrayAndShortcutManager } = require('./src/tray');
+const { PipelineManager, getSyncStatus, exportToDrive, importFromDrive } = require('@nomad/core');
 const { SessionManager } = require('./src/session-manager');
 
 const EXTENSION_PATH = app.isPackaged
@@ -383,6 +384,26 @@ async function createMainWindow() {
         mainWindow.webContents.send('nomad:remote-update', store.getAll());
       }
     },
+    onToggleDrawer: () => {
+      drawerOpen = !drawerOpen;
+      updateViewBounds();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:remote-update', { drawerOpen });
+      }
+    },
+    onNewSession: () => {
+      if (sessionManager) {
+        sessionManager.createWorkspace({ prompt: '新跨平臺協作' });
+      }
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getWorkspaces());
+      }
+    },
+    onToggleHud: () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:remote-update', { openHud: true });
+      }
+    }
   });
 
   trayManager.init();
@@ -629,6 +650,78 @@ ipcMain.handle('nomad:orchestration-stop', async () => {
 ipcMain.handle('nomad:orchestration-status', async () => {
   if (!orchestrator) return { status: 'offline' };
   return orchestrator.getStatus();
+});
+
+
+// --- Global Shortcuts, Appearance, Drive Sync & Pipeline IPC ---
+
+ipcMain.handle('nomad:get-shortcuts', () => {
+  return store.get('shortcuts') || {};
+});
+
+ipcMain.handle('nomad:set-shortcuts', (event, shortcuts) => {
+  store.set('shortcuts', shortcuts);
+  if (trayManager) {
+    trayManager.registerAllShortcuts(shortcuts);
+  }
+  return { success: true, shortcuts: store.get('shortcuts') };
+});
+
+ipcMain.handle('nomad:get-appearance', () => {
+  return store.get('appearance') || {};
+});
+
+ipcMain.handle('nomad:set-appearance', (event, appearance) => {
+  store.set('appearance', appearance);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('nomad:remote-update', { appearance });
+  }
+  return { success: true, appearance: store.get('appearance') };
+});
+
+ipcMain.handle('nomad:drive-sync-status', async (event, customOpts = {}) => {
+  const customPath = customOpts.targetDir || store.get('driveSync')?.customPath || undefined;
+  return getSyncStatus(customPath ? { targetDir: customPath } : {});
+});
+
+ipcMain.handle('nomad:drive-sync-push', async (event, customOpts = {}) => {
+  const workspaces = sessionManager.getWorkspaces();
+  const settings = store.getAll();
+  const targetDir = customOpts.targetDir || store.get('driveSync')?.customPath || undefined;
+  const result = exportToDrive({ workspaces, settings, targetDir });
+  if (result.success) {
+    const driveSync = store.get('driveSync') || {};
+    driveSync.lastSyncedAt = result.data.timestamp;
+    store.set('driveSync', driveSync);
+  }
+  return result;
+});
+
+ipcMain.handle('nomad:drive-sync-pull', async (event, customOpts = {}) => {
+  const sourceDir = customOpts.sourceDir || store.get('driveSync')?.customPath || undefined;
+  const strategy = customOpts.strategy || 'merge';
+  const result = importFromDrive({
+    sourceDir,
+    currentWorkspaces: sessionManager.getWorkspaces(),
+    strategy
+  });
+  if (result.success) {
+    sessionManager.store.set('workspaces', result.data.reconciledWorkspaces);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('nomad:workspaces-updated', result.data.reconciledWorkspaces);
+    }
+  }
+  return result;
+});
+
+ipcMain.handle('nomad:pipeline-process', async (event, input) => {
+  const pm = new PipelineManager(store.get('pipeline') || {});
+  return pm.process(input);
+});
+
+ipcMain.handle('nomad:pipeline-stats', async () => {
+  const pm = new PipelineManager(store.get('pipeline') || {});
+  return pm.getStats();
 });
 
 // App Lifecycle

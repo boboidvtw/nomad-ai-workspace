@@ -1,6 +1,6 @@
 /**
  * Nomad AI Studio - Tray & Global Shortcut Manager
- * Manages macOS / Windows system tray resident icon, menu, and global shortcut.
+ * Manages macOS / Windows system tray resident icon, menu, and global shortcuts.
  */
 
 const { app, Tray, Menu, globalShortcut, nativeImage } = require('electron');
@@ -14,20 +14,35 @@ class TrayAndShortcutManager {
    * @param {Object} [options.bridge] - Local Sync Bridge instance
    * @param {Function} [options.onLayoutChange] - Callback for layout changes from tray
    * @param {Function} [options.onZoomChange] - Callback for zoom changes from tray
+   * @param {Function} [options.onToggleDrawer] - Callback for toggling drawer
+   * @param {Function} [options.onNewSession] - Callback for new session
+   * @param {Function} [options.onToggleHud] - Callback for toggling HUD
    */
-  constructor({ mainWindow, store, bridge, onLayoutChange, onZoomChange }) {
+  constructor({
+    mainWindow,
+    store,
+    bridge,
+    onLayoutChange,
+    onZoomChange,
+    onToggleDrawer,
+    onNewSession,
+    onToggleHud
+  }) {
     this.mainWindow = mainWindow;
     this.store = store;
     this.bridge = bridge;
     this.onLayoutChange = onLayoutChange || (() => {});
     this.onZoomChange = onZoomChange || (() => {});
+    this.onToggleDrawer = onToggleDrawer || (() => {});
+    this.onNewSession = onNewSession || (() => {});
+    this.onToggleHud = onToggleHud || (() => {});
     this.tray = null;
-    this.registeredShortcut = null;
+    this.registeredShortcuts = new Map(); // accelerator -> actionName
   }
 
   init() {
     this.createTray();
-    this.registerGlobalShortcut();
+    this.registerAllShortcuts();
     this.setupWindowEvents();
   }
 
@@ -64,7 +79,8 @@ class TrayAndShortcutManager {
 
     const currentLayout = this.store.get('layout') || 'dual';
     const bridgePort = this.store.get('bridgePort') || 8765;
-    const shortcut = this.store.get('shortcut') || 'CommandOrControl+Shift+Space';
+    const shortcuts = this.store.get('shortcuts') || {};
+    const shortcut = shortcuts.toggleWindow || this.store.get('shortcut') || 'CommandOrControl+Shift+Space';
     const isMac = process.platform === 'darwin';
     const shortcutLabel = shortcut.replace('CommandOrControl', isMac ? 'Cmd' : 'Ctrl');
 
@@ -145,28 +161,59 @@ class TrayAndShortcutManager {
     this.tray.setContextMenu(contextMenu);
   }
 
-  registerGlobalShortcut(customShortcut) {
-    if (this.registeredShortcut) {
-      globalShortcut.unregister(this.registeredShortcut);
-      this.registeredShortcut = null;
+  /**
+   * Register all configured global shortcuts
+   * @param {Object} [customMap]
+   */
+  registerAllShortcuts(customMap) {
+    // Unregister all existing
+    for (const [accelerator] of this.registeredShortcuts.entries()) {
+      try {
+        globalShortcut.unregister(accelerator);
+      } catch {}
     }
+    this.registeredShortcuts.clear();
 
-    const shortcut = customShortcut || this.store.get('shortcut') || 'CommandOrControl+Shift+Space';
+    const shortcuts = customMap || this.store.get('shortcuts') || {};
+    const defaultToggle = this.store.get('shortcut') || 'CommandOrControl+Shift+Space';
 
-    try {
-      const ok = globalShortcut.register(shortcut, () => {
-        this.toggleWindow();
-      });
+    const actions = {
+      toggleWindow: shortcuts.toggleWindow || defaultToggle,
+      toggleFocus: shortcuts.toggleFocus,
+      toggleDrawer: shortcuts.toggleDrawer,
+      newSession: shortcuts.newSession,
+      toggleHUD: shortcuts.toggleHUD
+    };
 
-      if (ok) {
-        this.registeredShortcut = shortcut;
-        console.log(`[Nomad Shortcut] Registered global shortcut: ${shortcut}`);
-      } else {
-        console.warn(`[Nomad Shortcut] Registration failed for ${shortcut}`);
+    const handlers = {
+      toggleWindow: () => this.toggleWindow(),
+      toggleFocus: () => this.onLayoutChange('focus'),
+      toggleDrawer: () => this.onToggleDrawer(),
+      newSession: () => this.onNewSession(),
+      toggleHUD: () => this.onToggleHud()
+    };
+
+    for (const [name, accelerator] of Object.entries(actions)) {
+      if (!accelerator || typeof accelerator !== 'string') continue;
+      try {
+        const ok = globalShortcut.register(accelerator, handlers[name]);
+        if (ok) {
+          this.registeredShortcuts.set(accelerator, name);
+          console.log(`[Nomad Shortcut] Registered global shortcut: ${accelerator} (${name})`);
+        } else {
+          console.warn(`[Nomad Shortcut] Registration failed for: ${accelerator} (${name})`);
+        }
+      } catch (err) {
+        console.warn(`[Nomad Shortcut] Error registering ${accelerator}:`, err.message);
       }
-    } catch (err) {
-      console.warn('[Nomad Shortcut] Failed to register shortcut:', err.message);
     }
+
+    this.updateContextMenu();
+  }
+
+  // Compatibility method
+  registerGlobalShortcut(customShortcut) {
+    this.registerAllShortcuts(customShortcut ? { toggleWindow: customShortcut } : undefined);
   }
 
   toggleWindow() {
@@ -192,8 +239,8 @@ class TrayAndShortcutManager {
     if (!this.mainWindow) return;
 
     this.mainWindow.on('close', (event) => {
-      const minimizeToTray = this.store.get('minimizeToTray');
-      if (minimizeToTray && !app.isQuitting) {
+      const minimizeToTray = this.store.get('minimizeToTray') !== false;
+      if (!app.isQuitting && minimizeToTray) {
         event.preventDefault();
         this.mainWindow.hide();
       }
@@ -201,14 +248,14 @@ class TrayAndShortcutManager {
   }
 
   destroy() {
-    if (this.registeredShortcut) {
-      globalShortcut.unregister(this.registeredShortcut);
-      this.registeredShortcut = null;
-    }
-    if (this.tray) {
-      this.tray.destroy();
-      this.tray = null;
-    }
+    try {
+      globalShortcut.unregisterAll();
+      this.registeredShortcuts.clear();
+      if (this.tray) {
+        this.tray.destroy();
+        this.tray = null;
+      }
+    } catch {}
   }
 }
 

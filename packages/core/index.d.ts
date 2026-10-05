@@ -54,6 +54,21 @@ export const ErrorCodes: {
 
   readonly SESSION_NOT_FOUND_001: 'SESSION_NOT_FOUND_001';
   readonly SESSION_STORAGE_ERROR_002: 'SESSION_STORAGE_ERROR_002';
+
+  readonly PIPELINE_HEADROOM_COMPRESSION_FAILED_001: 'PIPELINE_HEADROOM_COMPRESSION_FAILED_001';
+  readonly PIPELINE_LAYA_DECISION_FAILED_002: 'PIPELINE_LAYA_DECISION_FAILED_002';
+  readonly PIPELINE_INVALID_INPUT_003: 'PIPELINE_INVALID_INPUT_003';
+
+  readonly SYNC_DRIVE_FOLDER_NOT_FOUND_001: 'SYNC_DRIVE_FOLDER_NOT_FOUND_001';
+  readonly SYNC_DRIVE_AUTH_FAILED_002: 'SYNC_DRIVE_AUTH_FAILED_002';
+  readonly SYNC_DRIVE_UPLOAD_FAILED_003: 'SYNC_DRIVE_UPLOAD_FAILED_003';
+  readonly SYNC_DRIVE_DOWNLOAD_FAILED_004: 'SYNC_DRIVE_DOWNLOAD_FAILED_004';
+  readonly SYNC_DRIVE_CONFLICT_005: 'SYNC_DRIVE_CONFLICT_005';
+  readonly SYNC_INVALID_PAYLOAD_006: 'SYNC_INVALID_PAYLOAD_006';
+
+  readonly SHORTCUT_REGISTRATION_FAILED_001: 'SHORTCUT_REGISTRATION_FAILED_001';
+  readonly SHORTCUT_INVALID_ACCELERATOR_002: 'SHORTCUT_INVALID_ACCELERATOR_002';
+  readonly APPEARANCE_INVALID_THEME_001: 'APPEARANCE_INVALID_THEME_001';
 };
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
@@ -106,3 +121,26 @@ export interface ChatExportOptions {
 }
 
 export function formatChatToMarkdown(options: ChatExportOptions): UnitResult<{ markdown: string; wordCount: number; messageCount: number }>;
+
+// Pipeline declarations
+export function estimateTokens(text: string): number;
+export function compress(text: string, options?: { level?: 'light' | 'balanced' | 'aggressive'; maxTokens?: number }): UnitResult<{ originalTokens: number; compressedTokens: number; savedTokens: number; savingsRatio: number; text: string }>;
+export function decide(prompt: string, options?: { enhance?: boolean; preferredPlatform?: string }): UnitResult<{ intent: string; confidence: number; recommendedPlatform: string; tags: string[]; originalPrompt: string; enhancedPrompt: string; enhanced: boolean; latencyMs: number }>;
+
+export class PipelineManager {
+  constructor(options?: { headroomEnabled?: boolean; layaEnabled?: boolean; compressionLevel?: string; autoEnhance?: boolean; maxTokens?: number });
+  process(input: { prompt: string; context?: string; options?: Record<string, unknown> }): UnitResult<any>;
+  getStats(): Record<string, unknown>;
+}
+
+// Drive Sync declarations
+export const DRIVE_FOLDER_NAME: string;
+export const WORKSPACES_FILE_NAME: string;
+export const SETTINGS_FILE_NAME: string;
+export const MANIFEST_FILE_NAME: string;
+
+export function detectLocalDriveFolder(): string | null;
+export function computeChecksum(content: string): string;
+export function exportToDrive(options: { workspaces: any[]; settings?: Record<string, unknown>; targetDir?: string }): UnitResult<{ targetDir: string; syncedCount: number; checksum: string; timestamp: string }>;
+export function importFromDrive(options?: { sourceDir?: string; currentWorkspaces?: any[]; strategy?: 'merge' | 'overwrite' | 'keep_local' }): UnitResult<{ reconciledWorkspaces: any[]; importedCount: number; strategy: string; timestamp: string }>;
+export function getSyncStatus(options?: { targetDir?: string }): UnitResult<{ status: 'connected' | 'not_found'; targetDir: string; lastSyncedAt: string | null; workspaceCount: number; checksum: string | null }>;

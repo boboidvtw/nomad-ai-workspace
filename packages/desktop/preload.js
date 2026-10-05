@@ -40,4 +40,18 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
     onWorkspacesUpdated: (callback) => {
     ipcRenderer.on("nomad:workspaces-updated", (event, data) => callback(data));
   },
+  // Global Shortcuts & Appearance Customization
+  getShortcuts: () => ipcRenderer.invoke('nomad:get-shortcuts'),
+  setShortcuts: (shortcuts) => ipcRenderer.invoke('nomad:set-shortcuts', shortcuts),
+  getAppearance: () => ipcRenderer.invoke('nomad:get-appearance'),
+  setAppearance: (appearance) => ipcRenderer.invoke('nomad:set-appearance', appearance),
+
+  // Universal Google Drive Sync
+  driveSyncStatus: (options) => ipcRenderer.invoke('nomad:drive-sync-status', options),
+  driveSyncPush: (options) => ipcRenderer.invoke('nomad:drive-sync-push', options),
+  driveSyncPull: (options) => ipcRenderer.invoke('nomad:drive-sync-pull', options),
+
+  // Headroom & Laya Pipeline
+  pipelineProcess: (input) => ipcRenderer.invoke('nomad:pipeline-process', input),
+  pipelineStats: () => ipcRenderer.invoke('nomad:pipeline-stats'),
 });
