@@ -53,6 +53,21 @@ const { McpGateway } = require('./src/mcp/mcp-gateway');
 // P3: Local Knowledge Base & RAG Pipeline
 const { KnowledgeBase } = require('./src/rag/knowledge-base');
 
+
+// Task Control Plane (Paperclip Native Integration)
+const {
+  TASK_STATUS,
+  TASK_PRIORITY,
+  validateTransition,
+  createTaskEntity,
+  AGENT_STATUS,
+  DEFAULT_ROSTER,
+  AgentRoster,
+  TaskDispatcher,
+  ApprovalGate,
+  TaskRunner,
+} = require("./src/tasks/index");
+
 // P3: Nomad Plugin Runtime
 const { PluginRuntime } = require('./src/plugins/plugin-runtime');
 
@@ -113,5 +128,16 @@ module.exports = {
   // P3: MCP, RAG & Plugins
   McpGateway,
   KnowledgeBase,
-  PluginRuntime
+  PluginRuntime,
+  // Task Control Plane
+  TASK_STATUS,
+  TASK_PRIORITY,
+  validateTransition,
+  createTaskEntity,
+  AGENT_STATUS,
+  DEFAULT_ROSTER,
+  AgentRoster,
+  TaskDispatcher,
+  ApprovalGate,
+  TaskRunner,
 };

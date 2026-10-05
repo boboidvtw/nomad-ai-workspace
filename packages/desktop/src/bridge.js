@@ -22,7 +22,11 @@ const {
   LocalModelClient,
   McpGateway,
   KnowledgeBase,
-  PluginRuntime
+  PluginRuntime,
+  AgentRoster,
+  TaskDispatcher,
+  ApprovalGate,
+  TaskRunner
 } = require('@nomad/core');
 
 class LocalSyncBridge {
@@ -59,6 +63,15 @@ class LocalSyncBridge {
     this.knowledgeBase = new KnowledgeBase();
     this.localModelClient = new LocalModelClient();
     this.pluginRuntime = new PluginRuntime();
+    this.roster = options.roster || new AgentRoster();
+    this.dispatcher = options.dispatcher || new TaskDispatcher({ roster: this.roster });
+    this.approvalGate = ApprovalGate;
+    this.taskRunner = new TaskRunner(this.dispatcher, {
+      localModelClient: this.localModelClient,
+      orchestratorDelegate: options.onDispatchPrompt ? async (platform, prompt) => {
+        return this.onDispatchPrompt(platform, prompt);
+      } : null,
+    });
   }
 
   registerWithDaemon(daemonPort = this.daemonPort) {
@@ -556,6 +569,78 @@ class LocalSyncBridge {
         const filePath = pathMod.join(exportDir, safeName + ext);
         fs.writeFileSync(filePath, typeof content === "string" ? content : JSON.stringify(content, null, 2), "utf8");
         return this.sendJson(res, 200, { success: true, filePath, exportDir });
+      }
+
+      // Task Control Plane & Agent Dispatcher Endpoints (Paperclip Native Integration)
+      if (pathname === "/api/roster" && req.method === "GET") {
+        return this.sendJson(res, 200, ok(this.roster.listAgents()));
+      }
+
+      if (pathname === "/api/roster" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        const regRes = this.roster.registerAgent(body);
+        return this.sendJson(res, regRes.success ? 200 : 400, regRes);
+      }
+
+      if (pathname === "/api/tasks" && req.method === "GET") {
+        const filter = {
+          status: url.searchParams.get("status") || undefined,
+          assignee: url.searchParams.get("assignee") || undefined,
+          priority: url.searchParams.get("priority") || undefined,
+          parentGoal: url.searchParams.get("parentGoal") || undefined,
+        };
+        return this.sendJson(res, 200, ok(this.dispatcher.listTasks(filter)));
+      }
+
+      if (pathname === "/api/tasks" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        const taskRes = this.dispatcher.createTask(body);
+        return this.sendJson(res, taskRes.success ? 200 : 400, taskRes);
+      }
+
+      if ((pathname === "/api/tasks/detail" || pathname.startsWith("/api/tasks/detail")) && req.method === "GET") {
+        const id = url.searchParams.get("id");
+        if (!id) {
+          return this.sendJson(res, 400, err(ErrorCodes.TASK_INVALID_PAYLOAD_002, "Missing task id"));
+        }
+        const taskRes = this.dispatcher.getTask(id);
+        return this.sendJson(res, taskRes.success ? 200 : 404, taskRes);
+      }
+
+      if (pathname === "/api/tasks/claim" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        const claimRes = this.dispatcher.claimTask(body.taskId, body.agentId, body.leaseDurationMs);
+        return this.sendJson(res, claimRes.success ? 200 : 400, claimRes);
+      }
+
+      if (pathname === "/api/tasks/heartbeat" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        const hbRes = this.dispatcher.renewHeartbeat(body.taskId, body.agentId, body.extendMs);
+        return this.sendJson(res, hbRes.success ? 200 : 400, hbRes);
+      }
+
+      if (pathname === "/api/tasks/review" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        const revRes = this.approvalGate.submitForReview(this.dispatcher, body.taskId, body.agentId, body);
+        return this.sendJson(res, revRes.success ? 200 : 400, revRes);
+      }
+
+      if (pathname === "/api/tasks/approval" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        const appRes = this.approvalGate.decideApproval(this.dispatcher, body.taskId, body);
+        return this.sendJson(res, appRes.success ? 200 : 400, appRes);
+      }
+
+      if (pathname === "/api/tasks/complete" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        const compRes = this.dispatcher.completeTask(body.taskId, body.agentId, body.summary);
+        return this.sendJson(res, compRes.success ? 200 : 400, compRes);
+      }
+
+      if (pathname === "/api/tasks/run" && req.method === "POST") {
+        const body = await this.readJsonBody(req);
+        const runRes = await this.taskRunner.dispatchAndRun(body.taskId, body.agentId, body.options || {});
+        return this.sendJson(res, runRes.success ? 200 : 400, runRes);
       }
 
                   // Roadmap P1/P2/P3 Endpoints (Artifacts, Diff, LocalModel, MCP, RAG)

@@ -328,6 +328,357 @@
       font-size: 0.8rem;
     }
 
+    
+    /* ========================================================
+       TASK CONTROL PLANE & KANBAN STYLES (Paperclip Native)
+       ======================================================== */
+    .task-plane-section {
+      display: none;
+      margin-bottom: 3rem;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .task-header h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .task-header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .btn-create-task {
+      padding: 0.55rem 1.1rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    }
+    .btn-create-task:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+    }
+
+    .btn-refresh-task {
+      padding: 0.55rem 0.9rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 1px solid var(--card-border);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s;
+    }
+    .btn-refresh-task:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Org Roster Grid */
+    .roster-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .roster-card {
+      background: rgba(14, 20, 34, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .roster-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .roster-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+    }
+    .roster-name {
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: var(--text);
+    }
+    .roster-role {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+    .roster-skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+    .roster-skill-tag {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Kanban Board */
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      align-items: start;
+    }
+
+    @media (max-width: 1200px) {
+      .kanban-board {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 768px) {
+      .kanban-board {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .kanban-col {
+      background: rgba(14, 20, 34, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .kanban-col-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .kanban-col-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .kanban-col-count {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .kanban-cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      flex: 1;
+    }
+
+    .task-card {
+      background: rgba(20, 28, 48, 0.75);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 0.9rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s;
+    }
+    .task-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .task-card.priority-urgent {
+      border-left: 3px solid #ef4444;
+    }
+    .task-card.priority-high {
+      border-left: 3px solid #f59e0b;
+    }
+    .task-card.priority-medium {
+      border-left: 3px solid #6366f1;
+    }
+    .task-card.priority-low {
+      border-left: 3px solid #10b981;
+    }
+    .task-card.review-glow {
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+    }
+
+    .task-card-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+    .task-card-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .task-card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .task-assignee-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(99, 102, 241, 0.12);
+      color: #a5b4fc;
+      font-weight: 600;
+    }
+    .task-card-actions {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.6rem;
+    }
+    .btn-task-action {
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .btn-task-action:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .btn-task-action.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .btn-task-action.approve {
+      background: #10b981;
+      border-color: #10b981;
+      color: #fff;
+    }
+    .btn-task-action.reject {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: #fff;
+    }
+
+    /* Modal */
+    .task-modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    .task-modal-dialog {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 540px;
+      padding: 1.75rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      animation: modalSlideIn 0.2s ease-out;
+    }
+    @keyframes modalSlideIn {
+      from { transform: translateY(20px) scale(0.97); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .task-modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--primary);
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+  
     /* ========================================================
        CARDS GRID LAYOUT
        ======================================================== */
@@ -1189,6 +1540,9 @@
         <button class="tab-btn active" onclick="filterCategory('all')" data-category="all">
           全部 <span class="tab-count" id="count-all">11</span>
         </button>
+        <button class="tab-btn" onclick="filterCategory('tasks')" data-category="tasks">
+          📋 任務派遣中心 <span class="tab-count" id="count-tasks">0</span>
+        </button>
         <button class="tab-btn" onclick="filterCategory('ai')" data-category="ai">
           🧠 AI 決策與推論 <span class="tab-count">3</span>
         </button>
@@ -1211,6 +1565,135 @@
     <!-- ========================================================
          SERVICES GRID
          ======================================================== -->
+    <!-- ========================================================
+         TASK CONTROL PLANE & KANBAN SECTION (Paperclip Native)
+         ======================================================== -->
+    <section class="task-plane-section" id="task-control-plane-section">
+      <div class="task-header">
+        <div>
+          <h2>📋 Agent 任務派遣中心 <span class="tag purple" style="font-size: 0.7rem;">Paperclip 原生架構</span></h2>
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+            多 Agent 票據狀態機 · 心跳獨佔鎖 · 組織花名冊 · 人機協同審批閘門
+          </div>
+        </div>
+        <div class="task-header-actions">
+          <button class="btn-refresh-task" onclick="loadTaskPlaneData()">
+            🔄 刷新狀態
+          </button>
+          <button class="btn-create-task" onclick="openCreateTaskModal()">
+            ➕ 建立新任務
+          </button>
+        </div>
+      </div>
+
+      <!-- 1. Org Roster -->
+      <h3 style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
+        🏢 智慧代理花名冊 (Agent Org Roster)
+      </h3>
+      <div class="roster-grid" id="roster-container">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- 2. Kanban Board -->
+      <h3 style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
+        📊 任務看板 (Task Lifecycle Board)
+      </h3>
+      <div class="kanban-board">
+        <!-- Todo -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">📌 待指派 / 待處理</span>
+            <span class="kanban-col-count" id="count-col-todo">0</span>
+          </div>
+          <div class="kanban-cards-list" id="col-todo">
+            <!-- Cards -->
+          </div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">⚡ 執行中 (心跳租約)</span>
+            <span class="kanban-col-count" id="count-col-in_progress">0</span>
+          </div>
+          <div class="kanban-cards-list" id="col-in_progress">
+            <!-- Cards -->
+          </div>
+        </div>
+
+        <!-- Review (Approval Gate) -->
+        <div class="kanban-col" style="border-color: rgba(245, 158, 11, 0.35);">
+          <div class="kanban-col-header" style="border-bottom-color: rgba(245, 158, 11, 0.35);">
+            <span class="kanban-col-title" style="color: #fcd34d;">🛡️ 人機審批閘門 (Review)</span>
+            <span class="kanban-col-count" id="count-col-review" style="background: rgba(245, 158, 11, 0.2); color: #fcd34d;">0</span>
+          </div>
+          <div class="kanban-cards-list" id="col-review">
+            <!-- Cards -->
+          </div>
+        </div>
+
+        <!-- Completed -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">🎉 已完成 / 產出歸檔</span>
+            <span class="kanban-col-count" id="count-col-completed">0</span>
+          </div>
+          <div class="kanban-cards-list" id="col-completed">
+            <!-- Cards -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Create Task Modal -->
+    <div class="task-modal-backdrop" id="create-task-modal">
+      <div class="task-modal-dialog">
+        <div class="task-modal-title">
+          <span>➕</span> 建立 Agent 任務
+        </div>
+        <div class="form-group">
+          <label>任務標題 *</label>
+          <input type="text" id="modal-task-title" class="form-input" placeholder="例如：重構認證模組並補齊單元測試" />
+        </div>
+        <div class="form-group">
+          <label>任務目標 / 說明</label>
+          <textarea id="modal-task-desc" class="form-textarea" rows="3" placeholder="請詳細說明任務需求與驗收條件..."></textarea>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label>指派 Agent</label>
+            <select id="modal-task-assignee" class="form-select">
+              <option value="">自動媒合最佳技能</option>
+              <option value="agent-claude">Claude Lead Architect (架構)</option>
+              <option value="agent-chatgpt">ChatGPT Core Engineer (實作)</option>
+              <option value="agent-gemini">Gemini Research & Docs (文檔)</option>
+              <option value="agent-grok">Grok QA & Security (審計)</option>
+              <option value="agent-local">LM Studio Local Runner (本機)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>優先級</label>
+            <select id="modal-task-priority" class="form-select">
+              <option value="medium">中 Medium</option>
+              <option value="high">高 High</option>
+              <option value="urgent">緊急 Urgent</option>
+              <option value="low">低 Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+          <input type="checkbox" id="modal-task-approval" style="cursor: pointer;" checked />
+          <label for="modal-task-approval" style="margin-bottom: 0; cursor: pointer; color: var(--text);">
+            啟用人工審批閘門 (Approval Gate)
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-refresh-task" onclick="closeCreateTaskModal()">取消</button>
+          <button class="btn-create-task" onclick="submitCreateTask()">建立任務</button>
+        </div>
+      </div>
+    </div>
+
     <div class="services-grid" id="services-container">
 
       <!-- CARD 1: LAYA (AI) -->
@@ -2578,6 +3061,19 @@
         btn.classList.toggle("active", btn.dataset.category === cat);
       });
 
+      const taskPlane = document.getElementById("task-control-plane-section");
+      const servicesContainer = document.getElementById("services-container");
+
+      if (cat === "tasks") {
+        if (taskPlane) taskPlane.style.display = "block";
+        if (servicesContainer) servicesContainer.style.display = "none";
+        loadTaskPlaneData();
+        return;
+      } else {
+        if (taskPlane) taskPlane.style.display = "none";
+        if (servicesContainer) servicesContainer.style.display = "grid";
+      }
+
       const cards = document.querySelectorAll(".services-grid .card");
       cards.forEach(card => {
         if (cat === "all" || card.dataset.category === cat) {
@@ -3086,7 +3582,222 @@
       document.getElementById("hud-total-count").innerText = totalServices;
     }
 
-    // 初始化與定期探測
+
+    // ========================================================
+    // TASK CONTROL PLANE CLIENT LOGIC (Paperclip Native)
+    // ========================================================
+    let cachedTasks = [];
+    let cachedRoster = [];
+
+    async function getApiBase() {
+      return window.location.origin;
+    }
+
+    async function loadTaskPlaneData() {
+      try {
+        const base = await getApiBase();
+        
+        // 1. Fetch Roster
+        const rRes = await fetch(base + '/api/roster').catch(() => null);
+        if (rRes && rRes.ok) {
+          const rJson = await rRes.json();
+          if (rJson.success && Array.isArray(rJson.data)) {
+            cachedRoster = rJson.data;
+            renderRoster(cachedRoster);
+          }
+        }
+
+        // 2. Fetch Tasks
+        const tRes = await fetch(base + '/api/tasks').catch(() => null);
+        if (tRes && tRes.ok) {
+          const tJson = await tRes.json();
+          if (tJson.success && Array.isArray(tJson.data)) {
+            cachedTasks = tJson.data;
+            renderKanban(cachedTasks);
+            const countBadge = document.getElementById("count-tasks");
+            if (countBadge) countBadge.innerText = cachedTasks.length;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to load task plane data:", err);
+      }
+    }
+
+    function renderRoster(roster) {
+      const container = document.getElementById("roster-container");
+      if (!container) return;
+      if (!roster || roster.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.8rem;">暫無 Agent 資料</div>';
+        return;
+      }
+
+      const html = roster.map(agent => {
+        const isBusy = agent.status === "busy";
+        const statusBadge = isBusy 
+          ? '<span class="status-badge" style="background: rgba(245, 158, 11, 0.15); color: #fcd34d; border-color: rgba(245, 158, 11, 0.3);">忙碌 (' + agent.currentTaskIds.length + ')</span>'
+          : '<span class="status-badge online">閒置 就緒</span>';
+
+        return '<div class="roster-card">' +
+          '<div class="roster-card-header">' +
+            '<span class="roster-name">' + agent.name + '</span>' +
+            statusBadge +
+          '</div>' +
+          '<div class="roster-role">' + agent.role + '</div>' +
+          '<div class="roster-skills">' +
+            (agent.skills || []).slice(0, 3).map(s => '<span class="roster-skill-tag">' + s + '</span>').join('') +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      container.innerHTML = html;
+    }
+
+    function renderKanban(tasks) {
+      const colTodo = document.getElementById("col-todo");
+      const colProg = document.getElementById("col-in_progress");
+      const colRev = document.getElementById("col-review");
+      const colDone = document.getElementById("col-completed");
+
+      const todoList = tasks.filter(t => t.status === "todo" || t.status === "blocked");
+      const progList = tasks.filter(t => t.status === "in_progress");
+      const revList = tasks.filter(t => t.status === "review");
+      const doneList = tasks.filter(t => t.status === "completed");
+
+      document.getElementById("count-col-todo").innerText = todoList.length;
+      document.getElementById("count-col-in_progress").innerText = progList.length;
+      document.getElementById("count-col-review").innerText = revList.length;
+      document.getElementById("count-col-completed").innerText = doneList.length;
+
+      colTodo.innerHTML = todoList.map(t => renderTaskCard(t, "todo")).join("") || emptyColMsg("無待辦任務");
+      colProg.innerHTML = progList.map(t => renderTaskCard(t, "in_progress")).join("") || emptyColMsg("無執行中任務");
+      colRev.innerHTML = revList.map(t => renderTaskCard(t, "review")).join("") || emptyColMsg("無待審批項目");
+      colDone.innerHTML = doneList.map(t => renderTaskCard(t, "completed")).join("") || emptyColMsg("無完成紀錄");
+    }
+
+    function emptyColMsg(msg) {
+      return '<div style="text-align: center; color: var(--text-muted); font-size: 0.75rem; padding: 2rem 0;">' + msg + '</div>';
+    }
+
+    function renderTaskCard(t, col) {
+      const priorityClass = "priority-" + (t.priority || "medium");
+      const reviewGlow = col === "review" ? "review-glow" : "";
+
+      let actionButtons = "";
+      if (col === "todo") {
+        actionButtons = '<button class="btn-task-action primary" onclick="dispatchTask('' + t.id + '', '' + (t.assignee || 'agent-claude') + '')">⚡ 立即派發</button>';
+      } else if (col === "in_progress") {
+        actionButtons = '<button class="btn-task-action" onclick="submitTaskReview('' + t.id + '', '' + (t.assignee || 'agent-claude') + '')">👀 提送審批</button>' +
+          '<button class="btn-task-action approve" onclick="completeTaskDirect('' + t.id + '', '' + (t.assignee || 'agent-claude') + '')">✅ 標記完成</button>';
+      } else if (col === "review") {
+        actionButtons = '<button class="btn-task-action approve" onclick="decideApprovalPrompt('' + t.id + '', 'approve')">✅ 核准 (Approve)</button>' +
+          '<button class="btn-task-action reject" onclick="decideApprovalPrompt('' + t.id + '', 'reject')">❌ 駁回 (Reject)</button>';
+      }
+
+      const proposalHtml = t.reviewGate && t.reviewGate.proposal
+        ? '<div style="margin-top: 0.4rem; padding: 0.35rem 0.5rem; background: rgba(245, 158, 11, 0.1); border-radius: 4px; font-size: 0.7rem; color: #fcd34d;">📋 提案：' + t.reviewGate.proposal + '</div>'
+        : '';
+
+      return '<div class="task-card ' + priorityClass + ' ' + reviewGlow + '">' +
+        '<div class="task-card-title">' + t.title + '</div>' +
+        (t.description ? '<div class="task-card-desc">' + t.description + '</div>' : '') +
+        '<div class="task-card-meta">' +
+          '<span class="task-assignee-badge">🤖 ' + (t.assignee || '未指定') + '</span>' +
+          '<span>' + (t.priority || 'medium').toUpperCase() + '</span>' +
+        '</div>' +
+        proposalHtml +
+        (actionButtons ? '<div class="task-card-actions">' + actionButtons + '</div>' : '') +
+      '</div>';
+    }
+
+    function openCreateTaskModal() {
+      const modal = document.getElementById("create-task-modal");
+      if (modal) modal.style.display = "flex";
+    }
+
+    function closeCreateTaskModal() {
+      const modal = document.getElementById("create-task-modal");
+      if (modal) modal.style.display = "none";
+    }
+
+    async function submitCreateTask() {
+      const title = document.getElementById("modal-task-title").value.trim();
+      const desc = document.getElementById("modal-task-desc").value.trim();
+      const assignee = document.getElementById("modal-task-assignee").value;
+      const priority = document.getElementById("modal-task-priority").value;
+      const requireApproval = document.getElementById("modal-task-approval").checked;
+
+      if (!title) {
+        alert("請輸入任務標題！");
+        return;
+      }
+
+      const base = await getApiBase();
+      const res = await fetch(base + '/api/tasks', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description: desc,
+          assignee: assignee || undefined,
+          priority,
+          requireApproval,
+        })
+      });
+
+      if (res.ok) {
+        closeCreateTaskModal();
+        document.getElementById("modal-task-title").value = "";
+        document.getElementById("modal-task-desc").value = "";
+        loadTaskPlaneData();
+      } else {
+        alert("建立任務失敗！");
+      }
+    }
+
+    async function dispatchTask(taskId, agentId) {
+      const base = await getApiBase();
+      await fetch(base + '/api/tasks/run', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, agentId })
+      });
+      loadTaskPlaneData();
+    }
+
+    async function submitTaskReview(taskId, agentId) {
+      const proposal = prompt("請輸入提送審批之說明或成果物提案：", "已完成實作，提請審批確認");
+      if (!proposal) return;
+      const base = await getApiBase();
+      await fetch(base + '/api/tasks/review', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, agentId, proposal })
+      });
+      loadTaskPlaneData();
+    }
+
+    async function completeTaskDirect(taskId, agentId) {
+      const base = await getApiBase();
+      await fetch(base + '/api/tasks/complete', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, agentId, summary: "手動於看板標記完成" })
+      });
+      loadTaskPlaneData();
+    }
+
+    async function decideApprovalPrompt(taskId, decision) {
+      const feedback = prompt("請輸入" + (decision === "approve" ? "核准" : "駁回") + "意見反饋（選填）：", "");
+      const base = await getApiBase();
+      await fetch(base + '/api/tasks/approval', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, decision, feedback, reviewer: "operator" })
+      });
+      loadTaskPlaneData();
+    }
+  
+        // 初始化與定期探測
     checkAllServicesHealth();
     setInterval(checkAllServicesHealth, 6000);
   </script>
