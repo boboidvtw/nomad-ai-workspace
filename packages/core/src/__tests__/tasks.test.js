@@ -293,3 +293,110 @@ describe('Task Control Plane - Task Runner Execution Engine', () => {
     assert.strictEqual(runRes.data.reviewGate.status, 'pending');
   });
 });
+
+describe('Task Control Plane - P0 Disk Persistence & P1 Real-time Events', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const os = require('os');
+  const testStorageFile = path.join(os.tmpdir(), `nomad-tasks-test-${Date.now()}.json`);
+
+  it('persists tasks to disk and restores state cleanly on restart', async () => {
+    const dispatcher1 = new TaskDispatcher({
+      storagePath: testStorageFile,
+      autoPersist: true,
+    });
+
+    const t1 = dispatcher1.createTask({
+      title: 'Persistent Task Alpha',
+      priority: TASK_PRIORITY.URGENT,
+      acceptanceCriteria: ['Must survive daemon crash'],
+    }).data;
+
+    const t2 = dispatcher1.createTask({
+      title: 'Persistent Task Beta',
+      dependencies: [t1.id],
+    }).data;
+
+    dispatcher1.claimTask(t1.id, 'agent-claude', 60000);
+    dispatcher1.addArtifact(t1.id, {
+      name: 'architecture.md',
+      type: 'text/markdown',
+      content: '# Architecture Spec',
+    });
+
+    // Explicitly verify saveToDisk
+    const saveRes = await dispatcher1.saveToDisk();
+    assert.strictEqual(saveRes.success, true);
+    assert.strictEqual(fs.existsSync(testStorageFile), true);
+
+    // 2. Create brand-new dispatcher instance (simulating daemon restart)
+    const dispatcher2 = new TaskDispatcher({
+      storagePath: testStorageFile,
+    });
+    assert.strictEqual(dispatcher2.tasks.size, 0);
+
+    const loadRes = dispatcher2.loadFromDisk();
+    assert.strictEqual(loadRes.success, true);
+    assert.strictEqual(dispatcher2.tasks.size, 2);
+
+    const restoredT1 = dispatcher2.getTask(t1.id).data;
+    assert.strictEqual(restoredT1.title, 'Persistent Task Alpha');
+    assert.strictEqual(restoredT1.status, TASK_STATUS.IN_PROGRESS);
+    assert.strictEqual(restoredT1.assignee, 'agent-claude');
+    assert.strictEqual(restoredT1.artifacts.length, 1);
+    assert.strictEqual(restoredT1.artifacts[0].name, 'architecture.md');
+
+    const restoredT2 = dispatcher2.getTask(t2.id).data;
+    assert.strictEqual(restoredT2.status, TASK_STATUS.BLOCKED);
+
+    // Clean up temporary test file
+    try { fs.unlinkSync(testStorageFile); } catch {}
+  });
+
+  it('reconciles expired leases upon loading from disk', async () => {
+    const expiredStorageFile = path.join(os.tmpdir(), `nomad-tasks-expired-${Date.now()}.json`);
+    const dispatcher1 = new TaskDispatcher({ storagePath: expiredStorageFile });
+
+    const task = dispatcher1.createTask({ title: 'Task with short lease' }).data;
+    dispatcher1.claimTask(task.id, 'agent-local', 5); // 5ms lease
+    await dispatcher1.saveToDisk();
+
+    // Sleep 15ms so lease expires
+    await new Promise(r => setTimeout(r, 15));
+
+    // Reload from disk
+    const dispatcher2 = new TaskDispatcher({ storagePath: expiredStorageFile });
+    const loadRes = dispatcher2.loadFromDisk();
+    assert.strictEqual(loadRes.success, true);
+    assert.strictEqual(loadRes.data.reclaimedCount, 1);
+
+    const reloaded = dispatcher2.getTask(task.id).data;
+    assert.strictEqual(reloaded.status, TASK_STATUS.TODO);
+    assert.strictEqual(reloaded.lease, null);
+
+    try { fs.unlinkSync(expiredStorageFile); } catch {}
+  });
+
+  it('emits real-time task events for SSE broadcasting on every state change', () => {
+    const events = [];
+    const dispatcher = new TaskDispatcher({
+      onTaskEvent: (eventType, task) => {
+        events.push({ eventType, taskId: task.id, status: task.status });
+      }
+    });
+
+    const task = dispatcher.createTask({ title: 'Event Test Task' }).data;
+    assert.ok(events.some(e => e.eventType === 'task:created'));
+
+    dispatcher.claimTask(task.id, 'agent-claude');
+    assert.ok(events.some(e => e.eventType === 'task:claimed'));
+
+    ApprovalGate.submitForReview(dispatcher, task.id, 'agent-claude', { proposal: 'Ready' });
+    assert.ok(events.some(e => e.eventType === 'task:review'));
+
+    ApprovalGate.decideApproval(dispatcher, task.id, { decision: 'approve', reviewer: 'tester' });
+    assert.ok(events.some(e => e.eventType === 'task:approved'));
+
+    assert.ok(events.length >= 4);
+  });
+});

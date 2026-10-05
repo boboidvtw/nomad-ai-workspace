@@ -64,7 +64,14 @@ class LocalSyncBridge {
     this.localModelClient = new LocalModelClient();
     this.pluginRuntime = new PluginRuntime();
     this.roster = options.roster || new AgentRoster();
-    this.dispatcher = options.dispatcher || new TaskDispatcher({ roster: this.roster });
+    this.dispatcher = options.dispatcher || new TaskDispatcher({
+      roster: this.roster,
+      onTaskEvent: (eventType, task) => {
+        this.broadcast(eventType, task);
+      }
+    });
+    // Restore persisted tasks from disk
+    this.dispatcher.loadFromDisk();
     this.approvalGate = ApprovalGate;
     this.taskRunner = new TaskRunner(this.dispatcher, {
       localModelClient: this.localModelClient,
@@ -290,7 +297,7 @@ class LocalSyncBridge {
           'Connection': 'keep-alive',
           'Access-Control-Allow-Origin': '*',
         });
-        res.write(`data: ${JSON.stringify({ type: 'connected', time: Date.now() })}\n\n`);
+        res.write(`event: connected\ndata: ${JSON.stringify({ type: 'connected', time: Date.now() })}\n\n`);
         this.sseClients.add(res);
 
         req.on('close', () => {

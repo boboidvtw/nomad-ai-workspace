@@ -1,9 +1,12 @@
 /**
  * Nomad Shared Core - Task Dispatcher & Heartbeat Lease Lock
- * Manages atomic task claims, heartbeats, dependency resolution, and state transitions.
+ * Manages atomic task claims, heartbeats, dependency resolution, disk persistence, and event notifications.
  * Governed by AGENTS.md Section 6 Result Pattern & Error Codes.
  */
 
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const { ok, err } = require('../result');
 const { ErrorCodes } = require('../error-codes');
 const { TASK_STATUS, TASK_PRIORITY, validateTransition, createTaskEntity } = require('./task-model');
@@ -14,12 +17,95 @@ class TaskDispatcher {
    * @param {Object} [options]
    * @param {AgentRoster} [options.roster]
    * @param {number} [options.defaultLeaseDurationMs=30000]
+   * @param {string} [options.storagePath]
+   * @param {boolean} [options.autoPersist=false]
+   * @param {Function} [options.onTaskEvent] - (eventType, task) => void
    */
   constructor(options = {}) {
     this.roster = options.roster || new AgentRoster();
     this.defaultLeaseDurationMs = options.defaultLeaseDurationMs || 30000;
+    this.storagePath = options.storagePath || path.join(os.homedir(), '.nomad', 'tasks.json');
+    this.autoPersist = options.autoPersist !== undefined ? Boolean(options.autoPersist) : Boolean(options.storagePath);
+    this.onTaskEvent = typeof options.onTaskEvent === 'function' ? options.onTaskEvent : null;
     /** @type {Map<string, Object>} */
     this.tasks = new Map();
+  }
+
+  /**
+   * Emits a task event and persists state if autoPersist is true
+   * @param {string} eventType 
+   * @param {Object} task 
+   */
+  _notify(eventType, task) {
+    if (this.onTaskEvent) {
+      try {
+        this.onTaskEvent(eventType, { ...task });
+      } catch (e) {
+        console.warn(`[TaskDispatcher] onTaskEvent error on ${eventType}:`, e);
+      }
+    }
+    if (this.autoPersist && this.storagePath) {
+      this.saveToDisk().catch(() => {});
+    }
+  }
+
+  /**
+   * Persists all tasks to disk atomically
+   * @param {string} [customPath] 
+   * @returns {Promise<import('../result').UnitResult<Object, string>>}
+   */
+  async saveToDisk(customPath = this.storagePath) {
+    if (!customPath) {
+      return ok({ persisted: false, count: 0 });
+    }
+    try {
+      const dir = path.dirname(customPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      const data = JSON.stringify(Array.from(this.tasks.values()), null, 2);
+      const tmpPath = `${customPath}.${Date.now()}.${Math.random().toString(36).substring(2, 6)}.tmp`;
+      fs.writeFileSync(tmpPath, data, 'utf8');
+      fs.renameSync(tmpPath, customPath);
+      return ok({ persisted: true, path: customPath, count: this.tasks.size });
+    } catch (e) {
+      return err(ErrorCodes.TASK_STORAGE_SAVE_FAILED_008, `Failed to save tasks to disk: ${e.message}`, { error: e });
+    }
+  }
+
+  /**
+   * Loads tasks from disk and restores state, automatically resolving offline lease expiries
+   * @param {string} [customPath] 
+   * @returns {import('../result').UnitResult<Object, string>}
+   */
+  loadFromDisk(customPath = this.storagePath) {
+    if (!customPath || !fs.existsSync(customPath)) {
+      return ok({ loaded: false, count: 0, reason: 'File does not exist' });
+    }
+    try {
+      const raw = fs.readFileSync(customPath, 'utf8');
+      if (!raw.trim()) {
+        return ok({ loaded: true, count: 0 });
+      }
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return err(ErrorCodes.TASK_STORAGE_LOAD_FAILED_009, 'Stored tasks format invalid: expected an array');
+      }
+
+      this.tasks.clear();
+      for (const t of parsed) {
+        if (t && t.id) {
+          this.tasks.set(t.id, t);
+        }
+      }
+
+      // Reconcile any leases that expired while offline
+      const reclaimed = this.checkExpiredLeases();
+
+      return ok({ loaded: true, path: customPath, count: this.tasks.size, reclaimedCount: reclaimed.length });
+    } catch (e) {
+      return err(ErrorCodes.TASK_STORAGE_LOAD_FAILED_009, `Failed to load tasks from disk: ${e.message}`, { error: e });
+    }
   }
 
   /**
@@ -48,6 +134,7 @@ class TaskDispatcher {
     }
 
     this.tasks.set(task.id, task);
+    this._notify('task:created', task);
     return ok(task);
   }
 
@@ -166,6 +253,7 @@ class TaskDispatcher {
       }
     }
 
+    this._notify('task:claimed', task);
     return ok({ ...task });
   }
 
@@ -207,6 +295,7 @@ class TaskDispatcher {
       message: `Heartbeat renewed by ${agentId}. New expiry: ${newExpiry}`,
     });
 
+    this._notify('task:heartbeat', task);
     return ok({ ...task.lease });
   }
 
@@ -242,6 +331,7 @@ class TaskDispatcher {
           }
 
           reclaimed.push(task.id);
+          this._notify('task:reclaimed', task);
         }
       }
     }
@@ -289,6 +379,7 @@ class TaskDispatcher {
     // Wake up dependent tasks
     this._resolveDependencies(taskId);
 
+    this._notify('task:completed', task);
     return ok({ ...task });
   }
 
@@ -328,6 +419,7 @@ class TaskDispatcher {
       }
     }
 
+    this._notify('task:failed', task);
     return ok({ ...task });
   }
 
@@ -369,6 +461,7 @@ class TaskDispatcher {
       }
     }
 
+    this._notify('task:cancelled', task);
     return ok({ ...task });
   }
 
@@ -394,6 +487,7 @@ class TaskDispatcher {
     };
     task.artifacts.push(art);
     task.updatedAt = new Date().toISOString();
+    this._notify('task:artifact_added', task);
     return ok(art);
   }
 
@@ -438,6 +532,7 @@ class TaskDispatcher {
             level: 'info',
             message: `All dependencies resolved. Unblocked and moved to 'todo'.`,
           });
+          this._notify('task:unblocked', otherTask);
         }
       }
     }

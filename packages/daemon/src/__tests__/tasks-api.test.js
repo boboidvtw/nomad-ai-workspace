@@ -123,3 +123,62 @@ describe('Daemon Server: Task Control Plane REST Endpoints', () => {
     }
   });
 });
+
+  it('broadcasts real-time SSE events over /api/events on task lifecycle changes', async () => {
+    const TEST_PORT = 19915;
+    const server = new NomadDaemonServer({ port: TEST_PORT });
+    await server.start();
+
+    const receivedEvents = [];
+    let sseReq = null;
+
+    try {
+      // 1. Establish SSE Connection
+      await new Promise((resolve) => {
+        sseReq = http.request({
+          hostname: '127.0.0.1',
+          port: TEST_PORT,
+          path: '/api/events',
+          method: 'GET'
+        }, (res) => {
+          res.on('data', chunk => {
+            const text = chunk.toString();
+            receivedEvents.push(text);
+            if (text.includes('event: connected')) {
+              resolve();
+            }
+          });
+        });
+        sseReq.end();
+      });
+
+      // 2. Trigger task creation
+      const createRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks', {
+        title: 'SSE Broadcast Test Task'
+      });
+      assert.strictEqual(createRes.status, 200);
+      const taskId = createRes.data.data.id;
+
+      // Small tick for event delivery
+      await new Promise(r => setTimeout(r, 20));
+
+      const hasCreatedEvent = receivedEvents.some(raw => raw.includes('event: task:created') && raw.includes(taskId));
+      assert.strictEqual(hasCreatedEvent, true, 'SSE stream should receive task:created event');
+
+      // 3. Trigger claim
+      await makeRequest(TEST_PORT, 'POST', '/api/tasks/claim', {
+        taskId,
+        agentId: 'agent-claude'
+      });
+
+      await new Promise(r => setTimeout(r, 20));
+
+      const hasClaimedEvent = receivedEvents.some(raw => raw.includes('event: task:claimed') && raw.includes(taskId));
+      assert.strictEqual(hasClaimedEvent, true, 'SSE stream should receive task:claimed event');
+    } finally {
+      if (sseReq) {
+        try { sseReq.destroy(); } catch {}
+      }
+      await server.stop();
+    }
+  });

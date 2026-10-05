@@ -1577,6 +1577,7 @@
           </div>
         </div>
         <div class="task-header-actions">
+          <span id="sse-live-badge" class="status-badge" style="background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.3); font-size: 0.72rem; padding: 4px 10px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 4px;">⚡ SSE 實時連線中</span>
           <button class="btn-refresh-task" onclick="loadTaskPlaneData()">
             🔄 刷新狀態
           </button>
@@ -3588,9 +3589,94 @@
     // ========================================================
     let cachedTasks = [];
     let cachedRoster = [];
+    let taskEventSource = null;
 
     async function getApiBase() {
-      return window.location.origin;
+      if (window.location && window.location.origin && window.location.origin.startsWith("http")) {
+        return window.location.origin;
+      }
+      return "http://127.0.0.1:8765";
+    }
+
+    async function setupTaskSseEvents() {
+      if (typeof EventSource === "undefined") return;
+      if (taskEventSource) {
+        try { taskEventSource.close(); } catch {}
+        taskEventSource = null;
+      }
+
+      const base = await getApiBase();
+      try {
+        taskEventSource = new EventSource(base + "/api/events");
+        const badge = document.getElementById("sse-live-badge");
+
+        taskEventSource.addEventListener("open", () => {
+          if (badge) {
+            badge.innerHTML = "⚡ SSE 實時推播中";
+            badge.style.color = "#6ee7b7";
+            badge.style.background = "rgba(16, 185, 129, 0.15)";
+          }
+        });
+
+        taskEventSource.addEventListener("connected", () => {
+          if (badge) {
+            badge.innerHTML = "⚡ SSE 實時推播中";
+            badge.style.color = "#6ee7b7";
+            badge.style.background = "rgba(16, 185, 129, 0.15)";
+          }
+        });
+
+        const taskEvents = [
+          "task:created", "task:claimed", "task:heartbeat", "task:review",
+          "task:approved", "task:rejected", "task:completed", "task:failed",
+          "task:cancelled", "task:reclaimed"
+        ];
+
+        taskEvents.forEach(evtName => {
+          taskEventSource.addEventListener(evtName, (e) => {
+            try {
+              const task = JSON.parse(e.data);
+              if (task && task.id) {
+                handleTaskEventUpdate(task);
+              }
+            } catch (err) {
+              console.warn("[SSE] Failed to parse task event data:", err);
+            }
+          });
+        });
+
+        taskEventSource.onerror = () => {
+          if (badge) {
+            badge.innerHTML = "⚡ SSE 重連中...";
+            badge.style.color = "#fcd34d";
+            badge.style.background = "rgba(245, 158, 11, 0.15)";
+          }
+        };
+      } catch (err) {
+        console.warn("[SSE] EventSource init failed:", err);
+      }
+    }
+
+    function handleTaskEventUpdate(updatedTask) {
+      const index = cachedTasks.findIndex(t => t.id === updatedTask.id);
+      if (index >= 0) {
+        cachedTasks[index] = updatedTask;
+      } else {
+        cachedTasks.unshift(updatedTask);
+      }
+      renderKanban(cachedTasks);
+      const countBadge = document.getElementById("count-tasks");
+      if (countBadge) countBadge.innerText = cachedTasks.length;
+
+      // Sync roster status asynchronously
+      getApiBase().then(base => {
+        fetch(base + "/api/roster").then(r => r.json()).then(rJson => {
+          if (rJson && rJson.success && Array.isArray(rJson.data)) {
+            cachedRoster = rJson.data;
+            renderRoster(cachedRoster);
+          }
+        }).catch(() => {});
+      });
     }
 
     async function loadTaskPlaneData() {
@@ -3800,6 +3886,8 @@
         // 初始化與定期探測
     checkAllServicesHealth();
     setInterval(checkAllServicesHealth, 6000);
+    loadTaskPlaneData();
+    setupTaskSseEvents();
   </script>
 </body>
 </html>

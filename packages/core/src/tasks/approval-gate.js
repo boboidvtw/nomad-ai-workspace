@@ -58,6 +58,10 @@ class ApprovalGate {
       message: `Task submitted for human review by ${agentId}. Proposal: ${task.reviewGate.proposal}`,
     });
 
+    if (typeof dispatcher._notify === 'function') {
+      dispatcher._notify('task:review', task);
+    }
+
     return ok({ ...task });
   }
 
@@ -136,6 +140,10 @@ class ApprovalGate {
         level: 'warn',
         message: `Approval REJECTED by ${reviewer}. Feedback: ${feedback}. Returned to '${TASK_STATUS.IN_PROGRESS}' for revisions.`,
       });
+    }
+
+    if (typeof dispatcher._notify === 'function') {
+      dispatcher._notify(decision === 'approve' ? 'task:approved' : 'task:rejected', task);
     }
 
     return ok({ ...task });
