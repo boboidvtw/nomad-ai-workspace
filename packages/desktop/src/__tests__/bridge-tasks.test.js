@@ -94,6 +94,32 @@ describe("Bridge: Task Control Plane & Multi-Agent Dispatcher", () => {
     }
   });
 
+
+  it("serves task graph and recurring schedule endpoints through Local Sync Bridge", async () => {
+    const bridge = new LocalSyncBridge({ port: 19970 });
+    await bridge.start();
+    const actualPort = bridge.port;
+
+    try {
+      // 1. GET /api/tasks/graph
+      const graphRes = await makeRequest(actualPort, "GET", "/api/tasks/graph");
+      assert.strictEqual(graphRes.status, 200);
+      assert.ok(Array.isArray(graphRes.data.data.nodes));
+
+      // 2. GET /api/tasks/schedule
+      const schedRes = await makeRequest(actualPort, "GET", "/api/tasks/schedule");
+      assert.strictEqual(schedRes.status, 200);
+      assert.ok(schedRes.data.data.length >= 2);
+
+      // 3. POST /api/tasks/schedule/trigger
+      const trigRes = await makeRequest(actualPort, "POST", "/api/tasks/schedule/trigger", { id: "schedule-sys-health" });
+      assert.strictEqual(trigRes.status, 200);
+      assert.strictEqual(trigRes.data.success, true);
+    } finally {
+      await bridge.stop();
+    }
+  });
+
   it("broadcasts real-time SSE events over /api/events on desktop bridge", async () => {
     const bridge = new LocalSyncBridge({ port: 19960 });
     await bridge.start();

@@ -124,6 +124,45 @@ describe('Daemon Server: Task Control Plane REST Endpoints', () => {
   });
 });
 
+
+  it("supports DAG graph, search query and recurring schedules via REST APIs", async () => {
+    const TEST_PORT = 19920;
+    const server = new NomadDaemonServer({ port: TEST_PORT });
+    await server.start();
+
+    try {
+      // 1. Create linked tasks
+      const t1 = (await makeRequest(TEST_PORT, "POST", "/api/tasks", { title: "Database Migration" })).data.data;
+      const t2 = (await makeRequest(TEST_PORT, "POST", "/api/tasks", { title: "API Gateway Endpoint", dependencies: [t1.id] })).data.data;
+
+      // 2. GET /api/tasks/graph
+      const graphRes = await makeRequest(TEST_PORT, "GET", "/api/tasks/graph");
+      assert.strictEqual(graphRes.status, 200);
+      assert.ok(graphRes.data.data.nodes.length >= 2);
+      const node2 = graphRes.data.data.nodes.find(n => n.id === t2.id);
+      assert.strictEqual(node2.isBlocked, true);
+
+      // 3. GET /api/tasks?query=Gateway
+      const searchRes = await makeRequest(TEST_PORT, "GET", "/api/tasks?query=Gateway");
+      assert.strictEqual(searchRes.status, 200);
+      assert.ok(searchRes.data.data.some(t => t.id === t2.id));
+
+      // 4. GET /api/tasks/schedule
+      const schedList = await makeRequest(TEST_PORT, "GET", "/api/tasks/schedule");
+      assert.strictEqual(schedList.status, 200);
+      assert.ok(Array.isArray(schedList.data.data));
+      assert.ok(schedList.data.data.length >= 2);
+
+      // 5. POST /api/tasks/schedule/trigger
+      const trigRes = await makeRequest(TEST_PORT, "POST", "/api/tasks/schedule/trigger", { id: "schedule-sys-health" });
+      assert.strictEqual(trigRes.status, 200);
+      assert.strictEqual(trigRes.data.success, true);
+      assert.ok(trigRes.data.data.task.id);
+    } finally {
+      await server.stop();
+    }
+  });
+
   it('broadcasts real-time SSE events over /api/events on task lifecycle changes', async () => {
     const TEST_PORT = 19915;
     const server = new NomadDaemonServer({ port: TEST_PORT });

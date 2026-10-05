@@ -23,6 +23,7 @@ const {
   AgentRoster,
   TaskDispatcher,
   ApprovalGate,
+  RecurringScheduler,
   TaskRunner
 } = require('@nomad/core');
 const { probeAllServices } = require('./prober');
@@ -67,6 +68,14 @@ class NomadDaemonServer {
     this.taskRunner = new TaskRunner(this.dispatcher, {
       localModelClient: this.localModelClient
     });
+    this.scheduler = options.scheduler || new RecurringScheduler({
+      dispatcher: this.dispatcher,
+      taskRunner: this.taskRunner,
+      onScheduleEvent: (eventType, data) => {
+        this.broadcast(eventType, data);
+      }
+    });
+    this.scheduler.loadFromDisk();
   }
 
   start() {
@@ -81,6 +90,7 @@ class NomadDaemonServer {
         }
       });
 
+      this.scheduler.start();
       this.server.listen(this.port, this.host, () => {
         console.log('[Nomad Daemon] Gateway listening at http://' + this.host + ':' + this.port);
         console.log('[Nomad Daemon] Dashboard available at http://' + this.host + ':' + this.port + '/dashboard');
@@ -90,6 +100,7 @@ class NomadDaemonServer {
   }
 
   stop() {
+    if (this.scheduler) this.scheduler.stop();
     return new Promise((resolve) => {
       for (const client of this.sseClients) {
         try {
@@ -394,12 +405,47 @@ class NomadDaemonServer {
 
       if (pathname === '/api/tasks' && req.method === 'GET') {
         const filter = {
+          query: url.searchParams.get('query') || undefined,
           status: url.searchParams.get('status') || undefined,
           assignee: url.searchParams.get('assignee') || undefined,
           priority: url.searchParams.get('priority') || undefined,
           parentGoal: url.searchParams.get('parentGoal') || undefined,
         };
         return this.sendJson(res, 200, ok(this.dispatcher.listTasks(filter)));
+      }
+
+      if (pathname === '/api/tasks/graph' && req.method === 'GET') {
+        return this.sendJson(res, 200, ok(this.dispatcher.getTaskGraph()));
+      }
+
+      if (pathname === '/api/tasks/schedule' && req.method === 'GET') {
+        return this.sendJson(res, 200, ok(this.scheduler.listSchedules()));
+      }
+
+      if (pathname === '/api/tasks/schedule' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const addRes = this.scheduler.addSchedule(body);
+        return this.sendJson(res, addRes.success ? 200 : 400, addRes);
+      }
+
+      if (pathname === '/api/tasks/schedule/toggle' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const toggleRes = this.scheduler.toggleSchedule(body.id, body.enabled);
+        return this.sendJson(res, toggleRes.success ? 200 : 400, toggleRes);
+      }
+
+      if (pathname === '/api/tasks/schedule/trigger' && req.method === 'POST') {
+        const body = await this.readJsonBody(req);
+        const trigRes = await this.scheduler.triggerSchedule(body.id);
+        return this.sendJson(res, trigRes.success ? 200 : 400, trigRes);
+      }
+
+      if ((pathname === '/api/tasks/schedule' && req.method === 'DELETE') ||
+          (pathname === '/api/tasks/schedule/delete' && req.method === 'POST')) {
+        const body = req.method === 'POST' ? await this.readJsonBody(req) : {};
+        const id = url.searchParams.get('id') || body.id;
+        const remRes = this.scheduler.removeSchedule(id);
+        return this.sendJson(res, remRes.success ? 200 : 400, remRes);
       }
 
       if (pathname === '/api/tasks' && req.method === 'POST') {

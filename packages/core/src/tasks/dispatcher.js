@@ -175,8 +175,74 @@ class TaskDispatcher {
     if (filter.parentGoal) {
       list = list.filter(t => t.parentGoal === filter.parentGoal);
     }
+    if (filter.query && typeof filter.query === "string") {
+      const q = filter.query.toLowerCase().trim();
+      if (q) {
+        list = list.filter(t => {
+          const matchTitle = t.title && t.title.toLowerCase().includes(q);
+          const matchDesc = t.description && t.description.toLowerCase().includes(q);
+          const matchId = t.id && t.id.toLowerCase().includes(q);
+          const matchAssignee = t.assignee && t.assignee.toLowerCase().includes(q);
+          const matchLogs = Array.isArray(t.logs) && t.logs.some(l => l.message && l.message.toLowerCase().includes(q));
+          return matchTitle || matchDesc || matchId || matchAssignee || matchLogs;
+        });
+      }
+    }
 
     return list.map(t => ({ ...t }));
+  }
+
+  /**
+   * Returns a complete DAG dependency graph of all tasks
+   * Includes upstream dependencies, downstream blocked tasks, and topological health
+   */
+  getTaskGraph() {
+    const allTasks = Array.from(this.tasks.values());
+    const nodes = [];
+    const edges = [];
+    const taskMap = new Map();
+    for (const t of allTasks) {
+      taskMap.set(t.id, t);
+    }
+
+    for (const t of allTasks) {
+      const upstream = Array.isArray(t.dependencies) ? t.dependencies : [];
+      const unsatisfiedDependencies = upstream.filter(depId => {
+        const dep = taskMap.get(depId);
+        return !dep || dep.status !== "completed";
+      });
+
+      const downstream = allTasks
+        .filter(other => Array.isArray(other.dependencies) && other.dependencies.includes(t.id))
+        .map(other => other.id);
+
+      nodes.push({
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        priority: t.priority,
+        assignee: t.assignee,
+        dependencies: upstream,
+        unsatisfiedDependencies,
+        isBlocked: unsatisfiedDependencies.length > 0,
+        downstreamDependentIds: downstream,
+      });
+
+      for (const depId of upstream) {
+        edges.push({
+          from: depId,
+          to: t.id,
+          satisfied: taskMap.has(depId) && taskMap.get(depId).status === "completed"
+        });
+      }
+    }
+
+    return {
+      nodes,
+      edges,
+      totalCount: nodes.length,
+      blockedCount: nodes.filter(n => n.isBlocked).length
+    };
   }
 
   /**

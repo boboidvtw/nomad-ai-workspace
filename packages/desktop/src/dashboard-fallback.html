@@ -648,6 +648,123 @@
       align-items: center;
       gap: 0.5rem;
     }
+
+    .task-modal-dialog.wide {
+      max-width: 760px;
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+    .task-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .task-filter-input {
+      flex: 1;
+      min-width: 220px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .task-filter-input:focus {
+      border-color: #6366f1;
+    }
+    .task-filter-select {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 7px 10px;
+      font-size: 0.82rem;
+      outline: none;
+    }
+    .task-dep-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.68rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+    .task-dep-badge.blocked {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .task-dep-badge.satisfied {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .task-dep-badge.downstream {
+      background: rgba(139, 92, 246, 0.15);
+      color: #c4b5fd;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    .schedules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .schedule-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+    .schedule-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
+    }
+    .schedule-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .schedule-title {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+    .schedule-meta {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+    .timeline-log-item {
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 2px solid #6366f1;
+      border-radius: 0 4px 4px 0;
+      font-size: 0.75rem;
+      margin-bottom: 6px;
+    }
+    .timeline-log-time {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      margin-right: 6px;
+    }
+
+
     .form-group {
       margin-bottom: 1rem;
     }
@@ -1644,9 +1761,105 @@
           </div>
         </div>
       </div>
+
+      <!-- 3. Recurring Schedules (P3) -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 0.75rem;">
+        <div>
+          <h3 style="font-size: 0.92rem; color: var(--text-muted); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">
+            ⏱️ 週期定時巡檢排程 (Recurring Task Schedules)
+          </h3>
+          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">
+            定時自動派發 Agent 常態任務、服務健康度監控與工作區備份
+          </div>
+        </div>
+        <button class="btn-create-task" style="padding: 4px 12px; font-size: 0.78rem;" onclick="openCreateScheduleModal()">
+          ➕ 新增定時排程
+        </button>
+      </div>
+      <div class="schedules-grid" id="schedules-container">
+        <!-- Rendered by JS -->
+      </div>
+
     </section>
 
-    <!-- Create Task Modal -->
+<!-- Task Detail & Review Modal (P2) -->
+    <div class="task-modal-backdrop" id="task-detail-modal">
+      <div class="task-modal-dialog wide">
+        <div class="task-modal-title" style="justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span>📋</span> <span id="detail-modal-title">任務詳情</span>
+          </div>
+          <button style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;" onclick="closeTaskDetailModal()">×</button>
+        </div>
+        <div id="detail-modal-content">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Schedule Modal (P3) -->
+    <div class="task-modal-backdrop" id="create-schedule-modal">
+      <div class="task-modal-dialog">
+        <div class="task-modal-title">
+          <span>⏱️</span> 建立週期定時排程
+        </div>
+        <div class="form-group">
+          <label>排程名稱 *</label>
+          <input type="text" id="modal-sched-name" class="form-input" placeholder="例如：LM Studio 服務定時健康巡檢" />
+        </div>
+        <div class="form-group">
+          <label>執行週期 (Interval) *</label>
+          <select id="modal-sched-interval" class="form-select">
+            <option value="60000">每 1 分鐘 (測試頻繁)</option>
+            <option value="300000" selected>每 5 分鐘 (推薦常態)</option>
+            <option value="900000">每 15 分鐘</option>
+            <option value="1800000">每 30 分鐘</option>
+            <option value="3600000">每 1 小時</option>
+            <option value="86400000">每天 (24 小時)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>任務標題 *</label>
+          <input type="text" id="modal-sched-task-title" class="form-input" placeholder="例如：Nomad 本機服務健康狀態巡檢" />
+        </div>
+        <div class="form-group">
+          <label>任務說明</label>
+          <textarea id="modal-sched-task-desc" class="form-textarea" rows="2" placeholder="詳細說明排程任務執行目標..."></textarea>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label>指定指派代理人</label>
+            <select id="modal-sched-assignee" class="form-select">
+              <option value="agent-local">Local AI (守護巡檢)</option>
+              <option value="agent-claude">Claude (架構師)</option>
+              <option value="agent-chatgpt">ChatGPT (工程師)</option>
+              <option value="agent-gemini">Gemini (研究員)</option>
+              <option value="agent-grok">Grok (審計師)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>任務優先級</label>
+            <select id="modal-sched-priority" class="form-select">
+              <option value="low" selected>低 (Low)</option>
+              <option value="medium">中 (Medium)</option>
+              <option value="high">高 (High)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+          <input type="checkbox" id="modal-sched-autorun" style="cursor: pointer;" checked />
+          <label for="modal-sched-autorun" style="margin-bottom: 0; cursor: pointer; color: var(--text);">
+            觸發時自動指派並執行任務 (Auto-Run)
+          </label>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button class="btn-refresh-task" onclick="closeCreateScheduleModal()">取消</button>
+          <button class="btn-create-task" onclick="submitCreateSchedule()">儲存並啟動排程</button>
+        </div>
+      </div>
+    </div>
+
+        <!-- Create Task Modal -->
     <div class="task-modal-backdrop" id="create-task-modal">
       <div class="task-modal-dialog">
         <div class="task-modal-title">
@@ -3632,6 +3845,13 @@
           "task:cancelled", "task:reclaimed"
         ];
 
+        const schedEvents = ["schedule:added", "schedule:updated", "schedule:removed", "schedule:triggered"];
+        schedEvents.forEach(evtName => {
+          taskEventSource.addEventListener(evtName, () => {
+            loadSchedulesData();
+          });
+        });
+
         taskEvents.forEach(evtName => {
           taskEventSource.addEventListener(evtName, (e) => {
             try {
@@ -3664,7 +3884,7 @@
       } else {
         cachedTasks.unshift(updatedTask);
       }
-      renderKanban(cachedTasks);
+      if (typeof renderFilteredKanban === "function") { renderFilteredKanban(); } else { renderKanban(cachedTasks); }
       const countBadge = document.getElementById("count-tasks");
       if (countBadge) countBadge.innerText = cachedTasks.length;
 
@@ -3793,6 +4013,318 @@
         proposalHtml +
         (actionButtons ? '<div class="task-card-actions">' + actionButtons + '</div>' : '') +
       '</div>';
+    }
+
+// Extended State for P2/P3
+    let cachedSchedules = [];
+    let cachedTaskGraph = null;
+    let activeTaskFilter = { query: "", assignee: "", priority: "" };
+
+    function handleTaskFilterChange() {
+      const q = document.getElementById("task-filter-query");
+      const a = document.getElementById("task-filter-assignee");
+      const p = document.getElementById("task-filter-priority");
+
+      activeTaskFilter.query = q ? q.value.trim().toLowerCase() : "";
+      activeTaskFilter.assignee = a ? a.value : "";
+      activeTaskFilter.priority = p ? p.value : "";
+
+      renderFilteredKanban();
+    }
+
+    function resetTaskFilters() {
+      const q = document.getElementById("task-filter-query");
+      const a = document.getElementById("task-filter-assignee");
+      const p = document.getElementById("task-filter-priority");
+      if (q) q.value = "";
+      if (a) a.value = "";
+      if (p) p.value = "";
+      activeTaskFilter = { query: "", assignee: "", priority: "" };
+      renderFilteredKanban();
+    }
+
+    function renderFilteredKanban() {
+      let filtered = cachedTasks.slice();
+      if (activeTaskFilter.assignee) {
+        filtered = filtered.filter(t => t.assignee === activeTaskFilter.assignee);
+      }
+      if (activeTaskFilter.priority) {
+        filtered = filtered.filter(t => t.priority === activeTaskFilter.priority);
+      }
+      if (activeTaskFilter.query) {
+        const q = activeTaskFilter.query;
+        filtered = filtered.filter(t => {
+          const mTitle = t.title && t.title.toLowerCase().includes(q);
+          const mDesc = t.description && t.description.toLowerCase().includes(q);
+          const mId = t.id && t.id.toLowerCase().includes(q);
+          const mAssignee = t.assignee && t.assignee.toLowerCase().includes(q);
+          const mLogs = Array.isArray(t.logs) && t.logs.some(l => l.message && l.message.toLowerCase().includes(q));
+          return mTitle || mDesc || mId || mAssignee || mLogs;
+        });
+      }
+      renderKanban(filtered);
+    }
+
+    // Detail Modal (P2)
+    function openTaskDetailModal(taskId) {
+      const task = cachedTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const modal = document.getElementById("task-detail-modal");
+      const titleEl = document.getElementById("detail-modal-title");
+      const contentEl = document.getElementById("detail-modal-content");
+      if (!modal || !contentEl) return;
+
+      if (titleEl) titleEl.innerText = task.title;
+
+      // Dependencies inspection
+      const upstream = Array.isArray(task.dependencies) ? task.dependencies : [];
+      const downstream = cachedTasks.filter(other => Array.isArray(other.dependencies) && other.dependencies.includes(task.id));
+
+      const upstreamHtml = upstream.length > 0
+        ? upstream.map(depId => {
+            const depTask = cachedTasks.find(t => t.id === depId);
+            const depStatus = depTask ? depTask.status : "unknown";
+            const depTitle = depTask ? depTask.title : depId;
+            const badgeClass = depStatus === "completed" ? "satisfied" : "blocked";
+            return "<span class="task-dep-badge " + badgeClass + "">" + (depStatus === "completed" ? "✔" : "⏳") + " " + depTitle + "</span>";
+          }).join(" ")
+        : "<span style="color: var(--text-muted); font-size: 0.78rem;">無前置依賴</span>";
+
+      const downstreamHtml = downstream.length > 0
+        ? downstream.map(down => "<span class="task-dep-badge downstream">⚡ " + down.title + "</span>").join(" ")
+        : "<span style="color: var(--text-muted); font-size: 0.78rem;">無後續依賴</span>";
+
+      // Acceptance Criteria
+      const criteriaHtml = Array.isArray(task.acceptanceCriteria) && task.acceptanceCriteria.length > 0
+        ? "<div style="margin-top: 0.75rem;"><strong>驗收標準 (Acceptance Criteria):</strong><ul style="margin: 0.35rem 0 0 1.25rem; font-size: 0.8rem; color: var(--text-muted);">" +
+            task.acceptanceCriteria.map(c => "<li>" + c + "</li>").join("") +
+          "</ul></div>"
+        : "";
+
+      // Artifacts
+      const artifactsHtml = Array.isArray(task.artifacts) && task.artifacts.length > 0
+        ? "<div style="margin-top: 0.75rem;"><strong>📦 產出物 (Artifacts):</strong><div style="margin-top: 0.35rem;">" +
+            task.artifacts.map(a => "<div style="padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; font-size: 0.78rem; margin-bottom: 4px;"><div style="font-weight:600; color: #a5b4fc;">" + (a.name || "Artifact") + "</div><div style="color: var(--text-muted); margin-top: 2px;">" + (a.summary || a.content || "") + "</div></div>").join("") +
+          "</div></div>"
+        : "";
+
+      // Logs
+      const logsHtml = Array.isArray(task.logs) && task.logs.length > 0
+        ? "<div style="margin-top: 1rem;"><strong>📜 執行歷程日誌 (Execution Logs):</strong><div style="margin-top: 0.5rem; max-height: 180px; overflow-y: auto;">" +
+            task.logs.slice().reverse().map(l => {
+              const timeStr = l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : "";
+              return "<div class="timeline-log-item"><span class="timeline-log-time">[" + timeStr + "]</span><strong>" + (l.actor || "system") + "</strong>: " + (l.message || "") + "</div>";
+            }).join("") +
+          "</div></div>"
+        : "";
+
+      // Action Footer
+      let actionFooterHtml = "<div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem;">";
+      if (task.status === "review") {
+        actionFooterHtml += 
+          "<input type="text" id="modal-review-feedback" class="form-input" style="flex: 1; margin-bottom: 0;" placeholder="輸入核准/駁回意見反饋..." />" +
+          "<button class="btn-task-action reject" onclick="decideModalApproval('" + task.id + "', 'reject')">❌ 駁回修訂</button>" +
+          "<button class="btn-task-action approve" onclick="decideModalApproval('" + task.id + "', 'approve')">✅ 核准完成</button>";
+      } else if (task.status === "in_progress") {
+        actionFooterHtml += 
+          "<input type="text" id="modal-proposal-text" class="form-input" style="flex: 1; margin-bottom: 0;" placeholder="請輸入提送審批說明提案..." />" +
+          "<button class="btn-task-action" onclick="submitModalReview('" + task.id + "')">👀 提送審批</button>" +
+          "<button class="btn-task-action approve" onclick="completeTaskDirect('" + task.id + "', '" + (task.assignee || "agent-claude") + "'); closeTaskDetailModal();">✅ 標記完成</button>";
+      } else if (task.status === "todo" || task.status === "blocked") {
+        actionFooterHtml += 
+          "<button class="btn-task-action primary" onclick="dispatchTask('" + task.id + "', '" + (task.assignee || "agent-claude") + "'); closeTaskDetailModal();">⚡ 立即派發</button>";
+      }
+      actionFooterHtml += "<button class="btn-refresh-task" onclick="closeTaskDetailModal()">關閉</button></div>";
+
+      contentEl.innerHTML = 
+        "<div style="display: flex; gap: 8px; align-items: center; margin-bottom: 0.75rem;">" +
+          "<span class="task-assignee-badge">🤖 " + (task.assignee || "未指定") + "</span>" +
+          "<span class="status-badge" style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc;">優先級: " + (task.priority || "medium").toUpperCase() + "</span>" +
+          "<span class="status-badge online">狀態: " + task.status.toUpperCase() + "</span>" +
+        "</div>" +
+        "<div style="color: var(--text); font-size: 0.88rem; line-height: 1.5; margin-bottom: 0.75rem;">" + (task.description || "無詳細說明") + "</div>" +
+        criteriaHtml +
+        "<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 6px;">" +
+          "<div><div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 4px;">前置依賴 (Dependencies):</div>" + upstreamHtml + "</div>" +
+          "<div><div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 4px;">後續阻塞 (Downstream):</div>" + downstreamHtml + "</div>" +
+        "</div>" +
+        artifactsHtml +
+        logsHtml +
+        actionFooterHtml;
+
+      modal.style.display = "flex";
+    }
+
+    function closeTaskDetailModal() {
+      const modal = document.getElementById("task-detail-modal");
+      if (modal) modal.style.display = "none";
+    }
+
+    async function submitModalReview(taskId) {
+      const input = document.getElementById("modal-proposal-text");
+      const proposal = input ? input.value.trim() : "提送審批確認";
+      const base = await getApiBase();
+      const task = cachedTasks.find(t => t.id === taskId);
+      await fetch(base + "/api/tasks/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, agentId: task ? task.assignee : "agent-claude", proposal })
+      });
+      closeTaskDetailModal();
+      loadTaskPlaneData();
+    }
+
+    async function decideModalApproval(taskId, decision) {
+      const input = document.getElementById("modal-review-feedback");
+      const feedback = input ? input.value.trim() : "";
+      const base = await getApiBase();
+      await fetch(base + "/api/tasks/approval", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, decision, feedback, reviewer: "operator" })
+      });
+      closeTaskDetailModal();
+      loadTaskPlaneData();
+    }
+
+    // Schedules Management (P3)
+    async function loadSchedulesData() {
+      try {
+        const base = await getApiBase();
+        const res = await fetch(base + "/api/tasks/schedule").catch(() => null);
+        if (res && res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            cachedSchedules = json.data;
+            renderSchedules(cachedSchedules);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to load schedules data:", err);
+      }
+    }
+
+    function renderSchedules(schedules) {
+      const container = document.getElementById("schedules-container");
+      if (!container) return;
+      if (!schedules || schedules.length === 0) {
+        container.innerHTML = "<div style="color: var(--text-muted); font-size: 0.8rem; padding: 1rem 0;">暫無定時巡檢排程</div>";
+        return;
+      }
+
+      const html = schedules.map(s => {
+        const isEnabled = s.enabled !== false;
+        const statusBadge = isEnabled
+          ? "<span class="status-badge online">運作中</span>"
+          : "<span class="status-badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8;">已暫停</span>";
+
+        const intervalMinutes = Math.round((s.intervalMs || 300000) / 60000);
+        const intervalText = intervalMinutes >= 60 ? (intervalMinutes / 60) + " 小時" : intervalMinutes + " 分鐘";
+
+        return "<div class="schedule-card">" +
+          "<div class="schedule-card-header">" +
+            "<span class="schedule-title">" + s.name + "</span>" +
+            statusBadge +
+          "</div>" +
+          "<div style="font-size: 0.78rem; color: var(--text-muted);">" + (s.taskTemplate.title || "") + "</div>" +
+          "<div class="schedule-meta">" +
+            "<span>⏱️ 每 " + intervalText + "</span> · " +
+            "<span>🤖 " + (s.taskTemplate.assignee || "未指定") + "</span> · " +
+            "<span>已執行 " + (s.runCount || 0) + " 次</span>" +
+          "</div>" +
+          "<div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.25rem;">" +
+            "<button class="btn-task-action" style="font-size: 0.72rem; padding: 3px 8px;" onclick="toggleScheduleAction('" + s.id + "', " + !isEnabled + ")">" + (isEnabled ? "⏸️ 暫停" : "▶️ 啟用") + "</button>" +
+            "<button class="btn-task-action primary" style="font-size: 0.72rem; padding: 3px 8px;" onclick="triggerScheduleAction('" + s.id + "')">⚡ 立即執行</button>" +
+            "<button class="btn-task-action reject" style="font-size: 0.72rem; padding: 3px 8px;" onclick="deleteScheduleAction('" + s.id + "')">🗑️</button>" +
+          "</div>" +
+        "</div>";
+      }).join("");
+
+      container.innerHTML = html;
+    }
+
+    async function toggleScheduleAction(id, enabled) {
+      const base = await getApiBase();
+      await fetch(base + "/api/tasks/schedule/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, enabled })
+      });
+      loadSchedulesData();
+    }
+
+    async function triggerScheduleAction(id) {
+      const base = await getApiBase();
+      await fetch(base + "/api/tasks/schedule/trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      });
+      loadSchedulesData();
+      loadTaskPlaneData();
+    }
+
+    async function deleteScheduleAction(id) {
+      if (!confirm("確定要刪除此定時巡檢排程嗎？")) return;
+      const base = await getApiBase();
+      await fetch(base + "/api/tasks/schedule?id=" + encodeURIComponent(id), {
+        method: "DELETE"
+      });
+      loadSchedulesData();
+    }
+
+    function openCreateScheduleModal() {
+      const modal = document.getElementById("create-schedule-modal");
+      if (modal) modal.style.display = "flex";
+    }
+
+    function closeCreateScheduleModal() {
+      const modal = document.getElementById("create-schedule-modal");
+      if (modal) modal.style.display = "none";
+    }
+
+    async function submitCreateSchedule() {
+      const name = document.getElementById("modal-sched-name").value.trim();
+      const intervalMs = Number(document.getElementById("modal-sched-interval").value) || 300000;
+      const title = document.getElementById("modal-sched-task-title").value.trim();
+      const desc = document.getElementById("modal-sched-task-desc").value.trim();
+      const assignee = document.getElementById("modal-sched-assignee").value;
+      const priority = document.getElementById("modal-sched-priority").value;
+      const autoRun = document.getElementById("modal-sched-autorun").checked;
+
+      if (!name || !title) {
+        alert("請輸入排程名稱與任務標題！");
+        return;
+      }
+
+      const base = await getApiBase();
+      const res = await fetch(base + "/api/tasks/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          intervalMs,
+          autoRun,
+          taskTemplate: {
+            title,
+            description: desc,
+            priority,
+            assignee,
+            requireApproval: false
+          }
+        })
+      });
+
+      if (res.ok) {
+        closeCreateScheduleModal();
+        document.getElementById("modal-sched-name").value = "";
+        document.getElementById("modal-sched-task-title").value = "";
+        document.getElementById("modal-sched-task-desc").value = "";
+        loadSchedulesData();
+      } else {
+        alert("建立定時排程失敗！");
+      }
     }
 
     function openCreateTaskModal() {

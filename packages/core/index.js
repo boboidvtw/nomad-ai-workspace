@@ -66,6 +66,8 @@ const {
   TaskDispatcher,
   ApprovalGate,
   TaskRunner,
+  RecurringScheduler,
+  DEFAULT_PRESET_SCHEDULES,
 } = require("./src/tasks/index");
 
 // P3: Nomad Plugin Runtime
@@ -140,4 +142,6 @@ module.exports = {
   TaskDispatcher,
   ApprovalGate,
   TaskRunner,
+  RecurringScheduler,
+  DEFAULT_PRESET_SCHEDULES,
 };
