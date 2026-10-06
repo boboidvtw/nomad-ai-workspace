@@ -51,6 +51,7 @@ function interpolate(template, values = {}) {
     return err('CORE_TEMPLATE_INVALID_INPUT_001', 'Template must be a string');
   }
 
+  /** @type {string[]} */
   const unreplaced = [];
   const rendered = template.replace(new RegExp(VARIABLE_REGEX.source, 'g'), (fullMatch, varName, defaultVal) => {
     const key = varName.trim();

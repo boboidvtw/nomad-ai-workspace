@@ -14,6 +14,21 @@ const AGENT_STATUS = Object.freeze({
   OFFLINE: 'offline',
 });
 
+/** @typedef {(typeof AGENT_STATUS)[keyof typeof AGENT_STATUS]} AgentStatus */
+
+/**
+ * @typedef {Object} Agent
+ * @property {string} id
+ * @property {string} name
+ * @property {string} role
+ * @property {string} platform - Webview platform id or 'local-model'
+ * @property {string[]} skills
+ * @property {AgentStatus} status
+ * @property {number} maxConcurrency
+ * @property {number} budgetTokenLimit
+ * @property {string[]} currentTaskIds
+ */
+
 const DEFAULT_ROSTER = [
   {
     id: 'agent-claude',
@@ -74,7 +89,7 @@ const DEFAULT_ROSTER = [
 
 class AgentRoster {
   constructor(initialAgents = DEFAULT_ROSTER) {
-    /** @type {Map<string, Object>} */
+    /** @type {Map<string, import('./roster').Agent>} */
     this.agents = new Map();
     for (const a of initialAgents) {
       this.agents.set(a.id, { ...a, currentTaskIds: [...(a.currentTaskIds || [])] });
@@ -83,8 +98,8 @@ class AgentRoster {
 
   /**
    * Registers or updates an agent profile
-   * @param {Object} profile 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @param {Partial<Agent>} profile
+   * @returns {import('../result').UnitResult<import('./roster').Agent>}
    */
   registerAgent(profile) {
     if (!profile || typeof profile !== 'object') {
@@ -96,13 +111,14 @@ class AgentRoster {
       return err(ErrorCodes.ROSTER_INVALID_PROFILE_002, 'Agent id and name are required');
     }
 
+    /** @type {Agent} */
     const agent = {
       id,
       name,
       role: (profile.role || 'General Assistant').trim(),
       platform: profile.platform || 'claude',
       skills: Array.isArray(profile.skills) ? profile.skills : [],
-      status: Object.values(AGENT_STATUS).includes(profile.status) ? profile.status : AGENT_STATUS.IDLE,
+      status: profile.status && (/** @type {string[]} */ (Object.values(AGENT_STATUS))).includes(profile.status) ? profile.status : AGENT_STATUS.IDLE,
       maxConcurrency: typeof profile.maxConcurrency === 'number' ? profile.maxConcurrency : 1,
       budgetTokenLimit: typeof profile.budgetTokenLimit === 'number' ? profile.budgetTokenLimit : 100000,
       currentTaskIds: Array.isArray(profile.currentTaskIds) ? [...profile.currentTaskIds] : [],
@@ -115,7 +131,7 @@ class AgentRoster {
   /**
    * Retrieves an agent by ID
    * @param {string} id 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./roster').Agent>}
    */
   getAgent(id) {
     const agent = this.agents.get(id);
@@ -127,7 +143,7 @@ class AgentRoster {
 
   /**
    * Lists all registered agents
-   * @returns {Object[]}
+   * @returns {import('./roster').Agent[]}
    */
   listAgents() {
     return Array.from(this.agents.values()).map(a => ({ ...a }));
@@ -137,7 +153,7 @@ class AgentRoster {
    * Updates an agent's status
    * @param {string} id 
    * @param {string} status 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./roster').Agent>}
    */
   updateAgentStatus(id, status) {
     const agent = this.agents.get(id);
@@ -147,21 +163,23 @@ class AgentRoster {
     if (!(/** @type {string[]} */ (Object.values(AGENT_STATUS))).includes(status)) {
       return err(ErrorCodes.ROSTER_INVALID_PROFILE_002, `Invalid status: '${status}'`);
     }
-    agent.status = status;
+    agent.status = /** @type {AgentStatus} */ (status);
     return ok({ ...agent });
   }
 
   /**
    * Finds the best agent matching a set of required skills
    * @param {string[]} requiredSkills 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./roster').Agent>}
    */
   findBestAgentForSkills(requiredSkills = []) {
     if (!Array.isArray(requiredSkills) || requiredSkills.length === 0) {
       // Pick first idle agent
       const idle = Array.from(this.agents.values()).find(a => a.status === AGENT_STATUS.IDLE);
       if (idle) return ok({ ...idle });
-      return ok({ ...this.agents.values().next().value });
+      const first = this.agents.values().next().value;
+      if (!first) return err(ErrorCodes.ROSTER_AGENT_NOT_FOUND_001, 'No agents registered in roster');
+      return ok({ ...first });
     }
 
     let bestScore = -1;

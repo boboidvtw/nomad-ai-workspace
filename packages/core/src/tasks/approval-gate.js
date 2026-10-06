@@ -17,14 +17,13 @@ class ApprovalGate {
    * @param {Object} [reviewRequest]
    * @param {string} [reviewRequest.proposal]
    * @param {string} [reviewRequest.diff]
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   static submitForReview(dispatcher, taskId, agentId, reviewRequest = {}) {
-    const taskRes = dispatcher.getTask(taskId);
-    if (!taskRes.success) {
-      return taskRes;
-    }
     const task = dispatcher.tasks.get(taskId);
+    if (!task) {
+      return err(ErrorCodes.TASK_NOT_FOUND_001, `Task '${taskId}' not found`);
+    }
 
     if (task.status !== TASK_STATUS.IN_PROGRESS) {
       return err(
@@ -74,7 +73,7 @@ class ApprovalGate {
    * @param {string} [decisionInput.feedback]
    * @param {string} [decisionInput.reviewer='operator']
    * @param {boolean} [decisionInput.completeOnApproval=true]
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   static decideApproval(dispatcher, taskId, decisionInput = {}) {
     const task = dispatcher.tasks.get(taskId);
@@ -152,7 +151,7 @@ class ApprovalGate {
   /**
    * Lists all tasks pending approval
    * @param {import('./dispatcher').TaskDispatcher} dispatcher 
-   * @returns {Object[]}
+   * @returns {import('./task-model').Task[]}
    */
   static listPendingReviews(dispatcher) {
     return dispatcher.listTasks({ status: TASK_STATUS.REVIEW });

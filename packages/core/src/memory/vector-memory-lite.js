@@ -34,9 +34,11 @@ function tokenize(text) {
 
 class VectorMemoryLite {
   constructor() {
-    this.documents = new Map(); // id -> { id, title, content, metadata, tokens: Map<term, freq> }
+    /** @type {Map<string, { id: string, title: string, content: string, metadata: Record<string, unknown>, termFreq: Map<string, number>, length: number }>} */
+    this.documents = new Map();
     this.docCount = 0;
-    this.termDocFreq = new Map(); // term -> number of docs containing term
+    /** @type {Map<string, number>} term -> number of docs containing term */
+    this.termDocFreq = new Map();
   }
 
   /**
@@ -45,7 +47,7 @@ class VectorMemoryLite {
    * @param {string} [doc.id]
    * @param {string} [doc.title]
    * @param {string} [doc.content]
-   * @param {Object} [doc.metadata]
+   * @param {Record<string, unknown>} [doc.metadata]
    * @returns {import('../result').UnitResult<{ indexedId: string, termsCount: number }>}
    */
   addDocument(doc = {}) {
@@ -83,13 +85,17 @@ class VectorMemoryLite {
       this.docCount++;
       return ok({ indexedId: doc.id, termsCount: termFreq.size });
     } catch (e) {
-      return err(ErrorCodes.MEMORY_INDEX_FAILED_001, 'Index error: ' + e.message);
+      return err(ErrorCodes.MEMORY_INDEX_FAILED_001, 'Index error: ' + (e instanceof Error ? e.message : String(e)));
     }
   }
 
+  /**
+   * @param {string} id
+   * @returns {boolean}
+   */
   removeDocument(id) {
-    if (!this.documents.has(id)) return false;
     const doc = this.documents.get(id);
+    if (!doc) return false;
     for (const term of doc.termFreq.keys()) {
       const current = this.termDocFreq.get(term) || 1;
       if (current <= 1) {
@@ -108,7 +114,7 @@ class VectorMemoryLite {
    * @param {string} queryText
    * @param {Object} [options]
    * @param {number} [options.limit=10]
-   * @returns {import('../result').UnitResult<Array<{ id: string, title: string, score: number, snippet: string, metadata: Object }>>}
+   * @returns {import('../result').UnitResult<Array<{ id: string, title: string, score: number, snippet: string, metadata: Record<string, unknown> }>>}
    */
   search(queryText, options = {}) {
     try {
@@ -150,6 +156,7 @@ class VectorMemoryLite {
       const results = [];
       for (const [docId, score] of scores.entries()) {
         const doc = this.documents.get(docId);
+        if (!doc) continue;
         // Extract simple snippet around best match
         const snippet = doc.content.slice(0, 160) + (doc.content.length > 160 ? '...' : '');
         results.push({
@@ -165,7 +172,7 @@ class VectorMemoryLite {
       const limit = options.limit || 10;
       return ok(results.slice(0, limit));
     } catch (e) {
-      return err(ErrorCodes.MEMORY_QUERY_FAILED_002, 'Search query error: ' + e.message);
+      return err(ErrorCodes.MEMORY_QUERY_FAILED_002, 'Search query error: ' + (e instanceof Error ? e.message : String(e)));
     }
   }
 

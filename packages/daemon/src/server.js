@@ -44,7 +44,26 @@ const { serveDashboard } = require('./static-handler');
  * @property {number} lastHeartbeat
  */
 
+/** @typedef {import('http').IncomingMessage} IncomingMessage */
+/** @typedef {import('http').ServerResponse} ServerResponse */
+
 class NomadDaemonServer {
+  /**
+   * @param {Object} [options]
+   * @param {number} [options.port] - Defaults to $NOMAD_PORT or 8765
+   * @param {string} [options.host] - Defaults to $NOMAD_HOST or 127.0.0.1
+   * @param {string} [options.authToken] - Shared gateway token (defaults to ~/.nomad/daemon-token)
+   * @param {() => any} [options.getStatus] - Studio status fallback when no Studio is registered
+   * @param {Function} [options.onDispatchPrompt]
+   * @param {Function} [options.onSetLayout]
+   * @param {Function} [options.onSetZoom]
+   * @param {Function} [options.onToggleWindow]
+   * @param {{ getStatus(): unknown } | null} [options.orchestrator]
+   * @param {Object | null} [options.sessionManager]
+   * @param {import('@nomad/core').AgentRoster} [options.roster]
+   * @param {import('@nomad/core').TaskDispatcher} [options.dispatcher]
+   * @param {import('@nomad/core').RecurringScheduler} [options.scheduler]
+   */
   constructor(options = {}) {
     this.port = Number(options.port || process.env.NOMAD_PORT || DEFAULT_DAEMON_PORT);
     this.host = options.host || process.env.NOMAD_HOST || DEFAULT_DAEMON_HOST;
@@ -75,7 +94,7 @@ class NomadDaemonServer {
     this.roster = options.roster || new AgentRoster();
     this.dispatcher = options.dispatcher || new TaskDispatcher({
       roster: this.roster,
-      onTaskEvent: (eventType, task) => {
+      onTaskEvent: (/** @type {string} */ eventType, /** @type {unknown} */ task) => {
         this.broadcast(eventType, task);
       }
     });
@@ -88,7 +107,7 @@ class NomadDaemonServer {
     this.scheduler = options.scheduler || new RecurringScheduler({
       dispatcher: this.dispatcher,
       taskRunner: this.taskRunner,
-      onScheduleEvent: (eventType, data) => {
+      onScheduleEvent: (/** @type {string} */ eventType, /** @type {unknown} */ data) => {
         this.broadcast(eventType, data);
       }
     });
@@ -139,6 +158,11 @@ class NomadDaemonServer {
     });
   }
 
+  /**
+   * Sends a Server-Sent Event to every connected client.
+   * @param {string} event
+   * @param {unknown} data
+   */
   broadcast(event, data) {
     if (this.sseClients.size === 0) return;
     const payload = ['event: ' + event, 'data: ' + JSON.stringify(data), '', ''].join(String.fromCharCode(10));
@@ -151,21 +175,35 @@ class NomadDaemonServer {
     }
   }
 
+  /**
+   * @param {string | undefined} method
+   * @param {string} pathname
+   * @returns {boolean}
+   */
   isPublicRoute(method, pathname) {
     if (method !== 'GET' && method !== 'HEAD') return false;
     return pathname === '/' || pathname === '/api/probe' ||
       pathname === '/dashboard' || pathname === '/dashboard/' || pathname === '/dashboard/index.html';
   }
 
+  /**
+   * @param {ServerResponse} res
+   * @param {number} statusCode
+   * @param {unknown} payload
+   */
   sendJson(res, statusCode, payload) {
     res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(payload));
   }
 
+  /**
+   * @param {IncomingMessage} req
+   * @returns {Promise<any>} Parsed JSON body ({} when empty)
+   */
   async readJsonBody(req) {
     return new Promise((resolve, reject) => {
       let body = '';
-      req.on('data', chunk => {
+      req.on('data', (/** @type {Buffer} */ chunk) => {
         body += chunk;
         if (body.length > 5 * 1024 * 1024) {
           req.destroy();
@@ -177,13 +215,18 @@ class NomadDaemonServer {
         try {
           resolve(JSON.parse(body));
         } catch (e) {
-          reject(err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Invalid JSON body: ' + e.message));
+          reject(err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Invalid JSON body: ' + (e instanceof Error ? e.message : String(e))));
         }
       });
       req.on('error', (e) => reject(err(ErrorCodes.BRIDGE_INVALID_BODY_002, e.message)));
     });
   }
 
+  /**
+   * @param {IncomingMessage} req
+   * @param {ServerResponse} res
+   * @param {number} targetPort
+   */
   proxyToStudio(req, res, targetPort) {
     const options = {
       hostname: '127.0.0.1',
@@ -198,7 +241,7 @@ class NomadDaemonServer {
     };
 
     const proxyReq = http.request(options, (proxyRes) => {
-      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      res.writeHead(proxyRes.statusCode || 502, proxyRes.headers);
       proxyRes.pipe(res);
     });
 
@@ -223,8 +266,12 @@ class NomadDaemonServer {
     return diff < 30000;
   }
 
+  /**
+   * @param {IncomingMessage} req
+   * @param {ServerResponse} res
+   */
   async handleRequest(req, res) {
-    const url = new URL(req.url, 'http://127.0.0.1:' + this.port);
+    const url = new URL(req.url || '/', 'http://127.0.0.1:' + this.port);
     const pathname = url.pathname;
     const publicRoute = this.isPublicRoute(req.method, pathname);
     applyCorsHeaders(req, res, publicRoute);
@@ -536,6 +583,7 @@ class NomadDaemonServer {
       // 4. Status API
       if (pathname === '/api/status' && req.method === 'GET') {
         const probeResult = await probeAllServices();
+        /** @type {Record<string, unknown>} */
         let studioInfo = { status: 'offline' };
 
         if (this.isStudioAlive()) {

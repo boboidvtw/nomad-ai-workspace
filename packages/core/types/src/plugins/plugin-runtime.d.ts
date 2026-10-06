@@ -1,10 +1,20 @@
 export class PluginRuntime {
-    plugins: Map<any, any>;
+    /** @type {Map<string, { manifest: { id: string, name: string, version: string, description?: string }, hooks: Record<string, Function>, enabled: boolean }>} */
+    plugins: Map<string, {
+        manifest: {
+            id: string;
+            name: string;
+            version: string;
+            description?: string;
+        };
+        hooks: Record<string, Function>;
+        enabled: boolean;
+    }>;
     /**
      * Register a plugin with manifest validation
      * @param {Object} [plugin] - `manifest` is required; validated at runtime
      * @param {{ id: string, name: string, version: string, description?: string }} [plugin.manifest]
-     * @param {Object} [plugin.hooks] - onPromptBeforeDispatch, onResponseSettled
+     * @param {Record<string, Function>} [plugin.hooks] - onPromptBeforeDispatch, onResponseSettled
      * @returns {import('../result').UnitResult<{ registeredId: string, version: string }>}
      */
     register(plugin?: {
@@ -14,7 +24,7 @@ export class PluginRuntime {
             version: string;
             description?: string;
         } | undefined;
-        hooks?: any;
+        hooks?: Record<string, Function> | undefined;
     }): import("../result").UnitResult<{
         registeredId: string;
         version: string;
@@ -22,9 +32,15 @@ export class PluginRuntime {
     /**
      * Execute lifecycle hook across all active plugins
      * @param {'onPromptBeforeDispatch'|'onResponseSettled'} hookName
-     * @param {Object} context
-     * @returns {Promise<import('../result').UnitResult<Object>>}
+     * @param {Record<string, unknown>} context
+     * @returns {Promise<import('../result').UnitResult<Record<string, unknown>>>}
      */
-    executeHook(hookName: "onPromptBeforeDispatch" | "onResponseSettled", context?: any): Promise<import("../result").UnitResult<any>>;
-    listPlugins(): import("../result").UnitSuccess<any[]>;
+    executeHook(hookName: "onPromptBeforeDispatch" | "onResponseSettled", context?: Record<string, unknown>): Promise<import("../result").UnitResult<Record<string, unknown>>>;
+    listPlugins(): import("../result").UnitSuccess<{
+        enabled: boolean;
+        id: string;
+        name: string;
+        version: string;
+        description?: string;
+    }[]>;
 }

@@ -39,7 +39,7 @@ async function main() {
       try {
         await server.start();
       } catch (err) {
-        console.error('❌ Failed to start daemon:', err.message || err);
+        console.error('❌ Failed to start daemon:', (err instanceof Error ? err.message : String(err)) || err);
         removePid();
         process.exit(1);
       }

@@ -14,6 +14,32 @@ const DEFAULT_SCHEDULES_PATH = path.join(os.homedir(), ".nomad", "recurring-task
 /**
  * Default preset recurring jobs
  */
+/**
+ * @typedef {Object} ScheduleTaskTemplate
+ * @property {string} title
+ * @property {string} [description]
+ * @property {string} [priority]
+ * @property {string} [assignee]
+ * @property {boolean} [requireApproval]
+ * @property {Record<string, unknown>} [metadata]
+ */
+
+/**
+ * @typedef {Object} Schedule
+ * @property {string} id
+ * @property {string} name
+ * @property {number} intervalMs
+ * @property {string | null} [cronExpr]
+ * @property {ScheduleTaskTemplate} taskTemplate
+ * @property {boolean} enabled
+ * @property {boolean} autoRun
+ * @property {number} runCount
+ * @property {string} createdAt
+ * @property {string | null} [lastRunAt]
+ * @property {string} nextRunAt
+ */
+
+/** @type {Schedule[]} */
 const DEFAULT_PRESET_SCHEDULES = [
   {
     id: "schedule-sys-health",
@@ -69,20 +95,22 @@ class RecurringScheduler {
     this.onScheduleEvent = typeof options.onScheduleEvent === "function" ? options.onScheduleEvent : null;
     this.pollIntervalMs = options.pollIntervalMs || 5000;
     
-    /** @type {Map<string, Object>} */
+    /** @type {Map<string, Schedule>} */
     this.schedules = new Map();
     this.timer = null;
   }
 
   /**
    * Emits internal lifecycle events
+   * @param {string} eventType
+   * @param {unknown} data
    */
   _notify(eventType, data) {
     if (this.onScheduleEvent) {
       try {
         this.onScheduleEvent(eventType, data);
       } catch (e) {
-        console.warn("[RecurringScheduler] onScheduleEvent callback failed:", e.message);
+        console.warn("[RecurringScheduler] onScheduleEvent callback failed:", (e instanceof Error ? e.message : String(e)));
       }
     }
   }
@@ -105,7 +133,7 @@ class RecurringScheduler {
       fs.renameSync(tmpPath, customPath);
       return ok({ persisted: true, path: customPath, count: this.schedules.size });
     } catch (e) {
-      return err(ErrorCodes.TASK_STORAGE_SAVE_FAILED_008, `Failed to save recurring schedules: ${e.message}`, { error: e });
+      return err(ErrorCodes.TASK_STORAGE_SAVE_FAILED_008, `Failed to save recurring schedules: ${(e instanceof Error ? e.message : String(e))}`, { error: e });
     }
   }
 
@@ -140,12 +168,14 @@ class RecurringScheduler {
 
       return ok({ loaded: true, path: customPath, count: this.schedules.size });
     } catch (e) {
-      return err(ErrorCodes.TASK_STORAGE_LOAD_FAILED_009, `Failed to load recurring schedules: ${e.message}`, { error: e });
+      return err(ErrorCodes.TASK_STORAGE_LOAD_FAILED_009, `Failed to load recurring schedules: ${(e instanceof Error ? e.message : String(e))}`, { error: e });
     }
   }
 
   /**
    * Registers a new recurring schedule
+   * @param {{ id?: string, name: string, intervalMs?: number, cronExpr?: string | null, taskTemplate: ScheduleTaskTemplate, enabled?: boolean, autoRun?: boolean }} config
+   * @returns {import('../result').UnitResult<Schedule>}
    */
   addSchedule(config) {
     if (!config || !config.name || !config.taskTemplate || !config.taskTemplate.title) {
@@ -160,6 +190,7 @@ class RecurringScheduler {
     const id = config.id || `schedule-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const now = Date.now();
 
+    /** @type {Schedule} */
     const schedule = {
       id,
       name: config.name.trim(),
@@ -198,6 +229,7 @@ class RecurringScheduler {
 
   /**
    * Gets a specific schedule
+   * @param {string} id
    */
   getSchedule(id) {
     return this.schedules.get(id) || null;
@@ -205,6 +237,7 @@ class RecurringScheduler {
 
   /**
    * Removes a schedule
+   * @param {string} id
    */
   removeSchedule(id) {
     if (!this.schedules.has(id)) {
@@ -221,6 +254,8 @@ class RecurringScheduler {
 
   /**
    * Toggles a schedule enabled state
+   * @param {string} id
+   * @param {boolean} [enabled] - Omit to flip the current state
    */
   toggleSchedule(id, enabled) {
     const schedule = this.schedules.get(id);
@@ -241,6 +276,7 @@ class RecurringScheduler {
 
   /**
    * Triggers a schedule immediately
+   * @param {string} id
    */
   async triggerSchedule(id) {
     const schedule = this.schedules.get(id);
@@ -277,12 +313,12 @@ class RecurringScheduler {
     let runExecution = null;
     if (schedule.autoRun && this.taskRunner) {
       try {
-        const runRes = await this.taskRunner.dispatchAndRun(createdTask.id, schedule.taskTemplate.assignee);
+        const runRes = await this.taskRunner.dispatchAndRun(createdTask.id, schedule.taskTemplate.assignee || 'agent-claude');
         if (runRes.success) {
           runExecution = runRes.data;
         }
       } catch (e) {
-        console.warn(`[RecurringScheduler] Auto-run failed for task "${createdTask.id}":`, e.message);
+        console.warn(`[RecurringScheduler] Auto-run failed for task "${createdTask.id}":`, (e instanceof Error ? e.message : String(e)));
       }
     }
 
@@ -313,7 +349,7 @@ class RecurringScheduler {
           try {
             await this.triggerSchedule(schedule.id);
           } catch (e) {
-            console.warn(`[RecurringScheduler] Trigger error for schedule "${schedule.id}":`, e.message);
+            console.warn(`[RecurringScheduler] Trigger error for schedule "${schedule.id}":`, (e instanceof Error ? e.message : String(e)));
           }
         }
       }
