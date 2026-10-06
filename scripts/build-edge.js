@@ -21,7 +21,7 @@ async function buildForEdge() {
   console.log('🔨 Building Edge extension...');
 
   try {
-    execSync('bun run build:chrome', {
+    execSync('npm run build:chrome', {
       cwd: rootDir,
       env: {
         ...process.env,
