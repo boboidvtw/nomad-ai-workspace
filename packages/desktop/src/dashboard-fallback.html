@@ -3990,13 +3990,13 @@
 
       let actionButtons = "";
       if (col === "todo") {
-        actionButtons = '<button class="btn-task-action primary" onclick="dispatchTask('' + t.id + '', '' + (t.assignee || 'agent-claude') + '')">⚡ 立即派發</button>';
+        actionButtons = '<button class="btn-task-action primary" onclick="dispatchTask(\'' + t.id + '\', \'' + (t.assignee || 'agent-claude') + '\')">⚡ 立即派發</button>';
       } else if (col === "in_progress") {
-        actionButtons = '<button class="btn-task-action" onclick="submitTaskReview('' + t.id + '', '' + (t.assignee || 'agent-claude') + '')">👀 提送審批</button>' +
-          '<button class="btn-task-action approve" onclick="completeTaskDirect('' + t.id + '', '' + (t.assignee || 'agent-claude') + '')">✅ 標記完成</button>';
+        actionButtons = '<button class="btn-task-action" onclick="submitTaskReview(\'' + t.id + '\', \'' + (t.assignee || 'agent-claude') + '\')">👀 提送審批</button>' +
+          '<button class="btn-task-action approve" onclick="completeTaskDirect(\'' + t.id + '\', \'' + (t.assignee || 'agent-claude') + '\')">✅ 標記完成</button>';
       } else if (col === "review") {
-        actionButtons = '<button class="btn-task-action approve" onclick="decideApprovalPrompt('' + t.id + '', 'approve')">✅ 核准 (Approve)</button>' +
-          '<button class="btn-task-action reject" onclick="decideApprovalPrompt('' + t.id + '', 'reject')">❌ 駁回 (Reject)</button>';
+        actionButtons = '<button class="btn-task-action approve" onclick="decideApprovalPrompt(\'' + t.id + '\', \'approve\')">✅ 核准 (Approve)</button>' +
+          '<button class="btn-task-action reject" onclick="decideApprovalPrompt(\'' + t.id + '\', \'reject\')">❌ 駁回 (Reject)</button>';
       }
 
       const proposalHtml = t.reviewGate && t.reviewGate.proposal
@@ -4087,67 +4087,67 @@
             const depStatus = depTask ? depTask.status : "unknown";
             const depTitle = depTask ? depTask.title : depId;
             const badgeClass = depStatus === "completed" ? "satisfied" : "blocked";
-            return "<span class="task-dep-badge " + badgeClass + "">" + (depStatus === "completed" ? "✔" : "⏳") + " " + depTitle + "</span>";
+            return "<span class=\"task-dep-badge " + badgeClass + "\">" + (depStatus === "completed" ? "✔" : "⏳") + " " + depTitle + "</span>";
           }).join(" ")
-        : "<span style="color: var(--text-muted); font-size: 0.78rem;">無前置依賴</span>";
+        : "<span style=\"color: var(--text-muted); font-size: 0.78rem;\">無前置依賴</span>";
 
       const downstreamHtml = downstream.length > 0
-        ? downstream.map(down => "<span class="task-dep-badge downstream">⚡ " + down.title + "</span>").join(" ")
-        : "<span style="color: var(--text-muted); font-size: 0.78rem;">無後續依賴</span>";
+        ? downstream.map(down => "<span class=\"task-dep-badge downstream\">⚡ " + down.title + "</span>").join(" ")
+        : "<span style=\"color: var(--text-muted); font-size: 0.78rem;\">無後續依賴</span>";
 
       // Acceptance Criteria
       const criteriaHtml = Array.isArray(task.acceptanceCriteria) && task.acceptanceCriteria.length > 0
-        ? "<div style="margin-top: 0.75rem;"><strong>驗收標準 (Acceptance Criteria):</strong><ul style="margin: 0.35rem 0 0 1.25rem; font-size: 0.8rem; color: var(--text-muted);">" +
+        ? "<div style=\"margin-top: 0.75rem;\"><strong>驗收標準 (Acceptance Criteria):</strong><ul style=\"margin: 0.35rem 0 0 1.25rem; font-size: 0.8rem; color: var(--text-muted);\">" +
             task.acceptanceCriteria.map(c => "<li>" + c + "</li>").join("") +
           "</ul></div>"
         : "";
 
       // Artifacts
       const artifactsHtml = Array.isArray(task.artifacts) && task.artifacts.length > 0
-        ? "<div style="margin-top: 0.75rem;"><strong>📦 產出物 (Artifacts):</strong><div style="margin-top: 0.35rem;">" +
-            task.artifacts.map(a => "<div style="padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; font-size: 0.78rem; margin-bottom: 4px;"><div style="font-weight:600; color: #a5b4fc;">" + (a.name || "Artifact") + "</div><div style="color: var(--text-muted); margin-top: 2px;">" + (a.summary || a.content || "") + "</div></div>").join("") +
+        ? "<div style=\"margin-top: 0.75rem;\"><strong>📦 產出物 (Artifacts):</strong><div style=\"margin-top: 0.35rem;\">" +
+            task.artifacts.map(a => "<div style=\"padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; font-size: 0.78rem; margin-bottom: 4px;\"><div style=\"font-weight:600; color: #a5b4fc;\">" + (a.name || "Artifact") + "</div><div style=\"color: var(--text-muted); margin-top: 2px;\">" + (a.summary || a.content || "") + "</div></div>").join("") +
           "</div></div>"
         : "";
 
       // Logs
       const logsHtml = Array.isArray(task.logs) && task.logs.length > 0
-        ? "<div style="margin-top: 1rem;"><strong>📜 執行歷程日誌 (Execution Logs):</strong><div style="margin-top: 0.5rem; max-height: 180px; overflow-y: auto;">" +
+        ? "<div style=\"margin-top: 1rem;\"><strong>📜 執行歷程日誌 (Execution Logs):</strong><div style=\"margin-top: 0.5rem; max-height: 180px; overflow-y: auto;\">" +
             task.logs.slice().reverse().map(l => {
               const timeStr = l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : "";
-              return "<div class="timeline-log-item"><span class="timeline-log-time">[" + timeStr + "]</span><strong>" + (l.actor || "system") + "</strong>: " + (l.message || "") + "</div>";
+              return "<div class=\"timeline-log-item\"><span class=\"timeline-log-time\">[" + timeStr + "]</span><strong>" + (l.actor || "system") + "</strong>: " + (l.message || "") + "</div>";
             }).join("") +
           "</div></div>"
         : "";
 
       // Action Footer
-      let actionFooterHtml = "<div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem;">";
+      let actionFooterHtml = "<div style=\"display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem;\">";
       if (task.status === "review") {
         actionFooterHtml += 
-          "<input type="text" id="modal-review-feedback" class="form-input" style="flex: 1; margin-bottom: 0;" placeholder="輸入核准/駁回意見反饋..." />" +
-          "<button class="btn-task-action reject" onclick="decideModalApproval('" + task.id + "', 'reject')">❌ 駁回修訂</button>" +
-          "<button class="btn-task-action approve" onclick="decideModalApproval('" + task.id + "', 'approve')">✅ 核准完成</button>";
+          "<input type=\"text\" id=\"modal-review-feedback\" class=\"form-input\" style=\"flex: 1; margin-bottom: 0;\" placeholder=\"輸入核准/駁回意見反饋...\" />" +
+          "<button class=\"btn-task-action reject\" onclick=\"decideModalApproval('" + task.id + "', 'reject')\">❌ 駁回修訂</button>" +
+          "<button class=\"btn-task-action approve\" onclick=\"decideModalApproval('" + task.id + "', 'approve')\">✅ 核准完成</button>";
       } else if (task.status === "in_progress") {
         actionFooterHtml += 
-          "<input type="text" id="modal-proposal-text" class="form-input" style="flex: 1; margin-bottom: 0;" placeholder="請輸入提送審批說明提案..." />" +
-          "<button class="btn-task-action" onclick="submitModalReview('" + task.id + "')">👀 提送審批</button>" +
-          "<button class="btn-task-action approve" onclick="completeTaskDirect('" + task.id + "', '" + (task.assignee || "agent-claude") + "'); closeTaskDetailModal();">✅ 標記完成</button>";
+          "<input type=\"text\" id=\"modal-proposal-text\" class=\"form-input\" style=\"flex: 1; margin-bottom: 0;\" placeholder=\"請輸入提送審批說明提案...\" />" +
+          "<button class=\"btn-task-action\" onclick=\"submitModalReview('" + task.id + "')\">👀 提送審批</button>" +
+          "<button class=\"btn-task-action approve\" onclick=\"completeTaskDirect('" + task.id + "', '" + (task.assignee || "agent-claude") + "'); closeTaskDetailModal();\">✅ 標記完成</button>";
       } else if (task.status === "todo" || task.status === "blocked") {
         actionFooterHtml += 
-          "<button class="btn-task-action primary" onclick="dispatchTask('" + task.id + "', '" + (task.assignee || "agent-claude") + "'); closeTaskDetailModal();">⚡ 立即派發</button>";
+          "<button class=\"btn-task-action primary\" onclick=\"dispatchTask('" + task.id + "', '" + (task.assignee || "agent-claude") + "'); closeTaskDetailModal();\">⚡ 立即派發</button>";
       }
-      actionFooterHtml += "<button class="btn-refresh-task" onclick="closeTaskDetailModal()">關閉</button></div>";
+      actionFooterHtml += "<button class=\"btn-refresh-task\" onclick=\"closeTaskDetailModal()\">關閉</button></div>";
 
       contentEl.innerHTML = 
-        "<div style="display: flex; gap: 8px; align-items: center; margin-bottom: 0.75rem;">" +
-          "<span class="task-assignee-badge">🤖 " + (task.assignee || "未指定") + "</span>" +
-          "<span class="status-badge" style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc;">優先級: " + (task.priority || "medium").toUpperCase() + "</span>" +
-          "<span class="status-badge online">狀態: " + task.status.toUpperCase() + "</span>" +
+        "<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 0.75rem;\">" +
+          "<span class=\"task-assignee-badge\">🤖 " + (task.assignee || "未指定") + "</span>" +
+          "<span class=\"status-badge\" style=\"background: rgba(99, 102, 241, 0.15); color: #a5b4fc;\">優先級: " + (task.priority || "medium").toUpperCase() + "</span>" +
+          "<span class=\"status-badge online\">狀態: " + task.status.toUpperCase() + "</span>" +
         "</div>" +
-        "<div style="color: var(--text); font-size: 0.88rem; line-height: 1.5; margin-bottom: 0.75rem;">" + (task.description || "無詳細說明") + "</div>" +
+        "<div style=\"color: var(--text); font-size: 0.88rem; line-height: 1.5; margin-bottom: 0.75rem;\">" + (task.description || "無詳細說明") + "</div>" +
         criteriaHtml +
-        "<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 6px;">" +
-          "<div><div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 4px;">前置依賴 (Dependencies):</div>" + upstreamHtml + "</div>" +
-          "<div><div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 4px;">後續阻塞 (Downstream):</div>" + downstreamHtml + "</div>" +
+        "<div style=\"display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 6px;\">" +
+          "<div><div style=\"font-size: 0.74rem; color: var(--text-muted); margin-bottom: 4px;\">前置依賴 (Dependencies):</div>" + upstreamHtml + "</div>" +
+          "<div><div style=\"font-size: 0.74rem; color: var(--text-muted); margin-bottom: 4px;\">後續阻塞 (Downstream):</div>" + downstreamHtml + "</div>" +
         "</div>" +
         artifactsHtml +
         logsHtml +
@@ -4209,34 +4209,34 @@
       const container = document.getElementById("schedules-container");
       if (!container) return;
       if (!schedules || schedules.length === 0) {
-        container.innerHTML = "<div style="color: var(--text-muted); font-size: 0.8rem; padding: 1rem 0;">暫無定時巡檢排程</div>";
+        container.innerHTML = "<div style=\"color: var(--text-muted); font-size: 0.8rem; padding: 1rem 0;\">暫無定時巡檢排程</div>";
         return;
       }
 
       const html = schedules.map(s => {
         const isEnabled = s.enabled !== false;
         const statusBadge = isEnabled
-          ? "<span class="status-badge online">運作中</span>"
-          : "<span class="status-badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8;">已暫停</span>";
+          ? "<span class=\"status-badge online\">運作中</span>"
+          : "<span class=\"status-badge\" style=\"background: rgba(148, 163, 184, 0.15); color: #94a3b8;\">已暫停</span>";
 
         const intervalMinutes = Math.round((s.intervalMs || 300000) / 60000);
         const intervalText = intervalMinutes >= 60 ? (intervalMinutes / 60) + " 小時" : intervalMinutes + " 分鐘";
 
-        return "<div class="schedule-card">" +
-          "<div class="schedule-card-header">" +
-            "<span class="schedule-title">" + s.name + "</span>" +
+        return "<div class=\"schedule-card\">" +
+          "<div class=\"schedule-card-header\">" +
+            "<span class=\"schedule-title\">" + s.name + "</span>" +
             statusBadge +
           "</div>" +
-          "<div style="font-size: 0.78rem; color: var(--text-muted);">" + (s.taskTemplate.title || "") + "</div>" +
-          "<div class="schedule-meta">" +
+          "<div style=\"font-size: 0.78rem; color: var(--text-muted);\">" + (s.taskTemplate.title || "") + "</div>" +
+          "<div class=\"schedule-meta\">" +
             "<span>⏱️ 每 " + intervalText + "</span> · " +
             "<span>🤖 " + (s.taskTemplate.assignee || "未指定") + "</span> · " +
             "<span>已執行 " + (s.runCount || 0) + " 次</span>" +
           "</div>" +
-          "<div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.25rem;">" +
-            "<button class="btn-task-action" style="font-size: 0.72rem; padding: 3px 8px;" onclick="toggleScheduleAction('" + s.id + "', " + !isEnabled + ")">" + (isEnabled ? "⏸️ 暫停" : "▶️ 啟用") + "</button>" +
-            "<button class="btn-task-action primary" style="font-size: 0.72rem; padding: 3px 8px;" onclick="triggerScheduleAction('" + s.id + "')">⚡ 立即執行</button>" +
-            "<button class="btn-task-action reject" style="font-size: 0.72rem; padding: 3px 8px;" onclick="deleteScheduleAction('" + s.id + "')">🗑️</button>" +
+          "<div style=\"display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.25rem;\">" +
+            "<button class=\"btn-task-action\" style=\"font-size: 0.72rem; padding: 3px 8px;\" onclick=\"toggleScheduleAction('" + s.id + "', " + !isEnabled + ")\">" + (isEnabled ? "⏸️ 暫停" : "▶️ 啟用") + "</button>" +
+            "<button class=\"btn-task-action primary\" style=\"font-size: 0.72rem; padding: 3px 8px;\" onclick=\"triggerScheduleAction('" + s.id + "')\">⚡ 立即執行</button>" +
+            "<button class=\"btn-task-action reject\" style=\"font-size: 0.72rem; padding: 3px 8px;\" onclick=\"deleteScheduleAction('" + s.id + "')\">🗑️</button>" +
           "</div>" +
         "</div>";
       }).join("");
