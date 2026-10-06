@@ -41,10 +41,10 @@ class VectorMemoryLite {
 
   /**
    * Add or update a document in the index
-   * @param {Object} doc
-   * @param {string} doc.id
-   * @param {string} doc.title
-   * @param {string} doc.content
+   * @param {Object} [doc] - `id` and `content` are required; validated at runtime
+   * @param {string} [doc.id]
+   * @param {string} [doc.title]
+   * @param {string} [doc.content]
    * @param {Object} [doc.metadata]
    * @returns {import('../result').UnitResult<{ indexedId: string, termsCount: number }>}
    */

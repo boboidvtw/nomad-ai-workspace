@@ -65,8 +65,8 @@ function computeChecksum(content) {
 
 /**
  * Export workspaces & settings to Google Drive folder (Push)
- * @param {Object} options
- * @param {Array<Object>} options.workspaces - List of workspaces
+ * @param {Object} [options]
+ * @param {Array<Object>} [options.workspaces] - List of workspaces (required; validated at runtime)
  * @param {Object} [options.settings] - App settings
  * @param {string} [options.targetDir] - Custom Drive directory override
  * @returns {import('../result').UnitResult<{ targetDir: string, syncedCount: number, checksum: string, timestamp: string }>}

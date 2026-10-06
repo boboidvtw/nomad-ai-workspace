@@ -34,6 +34,16 @@ const {
 const { probeAllServices } = require('./prober');
 const { serveDashboard } = require('./static-handler');
 
+/**
+ * A Nomad AI Studio bridge that registered itself with this daemon.
+ * @typedef {Object} StudioRegistration
+ * @property {number} bridgePort
+ * @property {number|null} pid
+ * @property {string} version
+ * @property {string} registeredAt
+ * @property {number} lastHeartbeat
+ */
+
 class NomadDaemonServer {
   constructor(options = {}) {
     this.port = Number(options.port || process.env.NOMAD_PORT || DEFAULT_DAEMON_PORT);
@@ -50,7 +60,8 @@ class NomadDaemonServer {
 
     this.server = null;
     this.sseClients = new Set();
-    this.activeStudio = null; // { bridgePort: number, pid: number, version: string, registeredAt: string, lastHeartbeat: number }
+    /** @type {StudioRegistration | null} */
+    this.activeStudio = null;
     this.pipelineManager = new PipelineManager({
       headroomEnabled: true,
       layaEnabled: true,
@@ -88,7 +99,7 @@ class NomadDaemonServer {
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => this.handleRequest(req, res));
 
-      this.server.on('error', (e) => {
+      this.server.on('error', (/** @type {NodeJS.ErrnoException} */ e) => {
         if (e.code === 'EADDRINUSE') {
           reject(err(ErrorCodes.DAEMON_SERVER_PORT_IN_USE_001, 'Port ' + this.port + ' is already in use', { port: this.port }));
         } else {
@@ -202,6 +213,9 @@ class NomadDaemonServer {
     req.pipe(proxyReq);
   }
 
+  /**
+   * @returns {this is { activeStudio: StudioRegistration }}
+   */
   isStudioAlive() {
     if (!this.activeStudio) return false;
     // Considered alive if heartbeat received within 30 seconds
@@ -373,7 +387,7 @@ class NomadDaemonServer {
           return this.sendJson(res, 400, err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Local model host must be a loopback address'));
         }
         const client = new LocalModelClient({ port: body.port || 1234, host: body.host || '127.0.0.1' });
-        const chatRes = await client.chat(body);
+        const chatRes = await client.chatCompletion(body);
         return this.sendJson(res, chatRes.success ? 200 : 502, chatRes);
       }
 
@@ -551,7 +565,7 @@ class NomadDaemonServer {
           },
           studio: studioInfo,
           orchestrator: orchestratorStatus,
-          microservices: probeResult.data
+          microservices: probeResult.success ? probeResult.data : null
         }));
       }
 

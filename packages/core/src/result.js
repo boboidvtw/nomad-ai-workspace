@@ -6,24 +6,42 @@
 
 /**
  * @template T
+ * @typedef {{ success: true, data: T }} UnitSuccess
+ */
+
+/**
+ * @template [E=string]
+ * @typedef {{ success: false, errorCode: E, message: string, details?: unknown }} UnitFailure
+ */
+
+/**
+ * @template T
+ * @template [E=string]
+ * @typedef {UnitSuccess<T> | UnitFailure<E>} UnitResult
+ */
+
+/**
+ * @template T
  * @param {T} data
- * @returns {{ success: true, data: T }}
+ * @returns {UnitSuccess<T>}
  */
 function ok(data) {
   return {
     success: true,
-    data: data !== undefined ? data : null
+    // undefined is normalised to null so results always serialise with a `data` key
+    data: /** @type {T} */ (data !== undefined ? data : null)
   };
 }
 
 /**
- * @template E
- * @param {string} errorCode - Formatted as [MODULE]_[ACTION]_[REASON]_[3-DIGIT-INDEX]
+ * @template {string} E
+ * @param {E} errorCode - Formatted as [MODULE]_[ACTION]_[REASON]_[3-DIGIT-INDEX]
  * @param {string} message - Human readable error message
- * @param {any} [details=null] - Optional structured metadata
- * @returns {{ success: false, errorCode: string, message: string, details?: any }}
+ * @param {unknown} [details=null] - Optional structured metadata
+ * @returns {UnitFailure<E>}
  */
 function err(errorCode, message, details = null) {
+  /** @type {UnitFailure<E>} */
   const result = {
     success: false,
     errorCode,
@@ -37,8 +55,9 @@ function err(errorCode, message, details = null) {
 
 /**
  * Type guard for success
- * @param {any} result
- * @returns {boolean}
+ * @template T, E
+ * @param {UnitResult<T, E>} result
+ * @returns {result is UnitSuccess<T>}
  */
 function isOk(result) {
   return Boolean(result && typeof result === 'object' && result.success === true);
@@ -46,8 +65,9 @@ function isOk(result) {
 
 /**
  * Type guard for error
- * @param {any} result
- * @returns {boolean}
+ * @template T, E
+ * @param {UnitResult<T, E>} result
+ * @returns {result is UnitFailure<E>}
  */
 function isErr(result) {
   return Boolean(result && typeof result === 'object' && result.success === false);
@@ -56,15 +76,15 @@ function isErr(result) {
 /**
  * Wraps an async function or promise to guarantee Result pattern return
  * @template T
- * @param {Promise<T>|Function} fnOrPromise
- * @param {string} fallbackErrorCode
- * @returns {Promise<{ success: true, data: T } | { success: false, errorCode: string, message: string }>}
+ * @param {Promise<T> | (() => T | Promise<T>)} fnOrPromise
+ * @param {string} [fallbackErrorCode]
+ * @returns {Promise<UnitResult<T>>}
  */
 async function wrapAsync(fnOrPromise, fallbackErrorCode = 'CORE_ASYNC_OPERATION_FAILED_001') {
   try {
     const data = typeof fnOrPromise === 'function' ? await fnOrPromise() : await fnOrPromise;
     if (data && typeof data === 'object' && 'success' in data) {
-      return data;
+      return /** @type {UnitResult<T>} */ (/** @type {unknown} */ (data));
     }
     return ok(data);
   } catch (error) {

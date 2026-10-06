@@ -107,6 +107,8 @@ const ErrorCodes = Object.freeze({
   TASK_SCHEDULE_NOT_FOUND_011: "TASK_SCHEDULE_NOT_FOUND_011",
 });
 
+/** @typedef {(typeof ErrorCodes)[keyof typeof ErrorCodes]} ErrorCode */
+
 module.exports = {
   ErrorCodes
 };

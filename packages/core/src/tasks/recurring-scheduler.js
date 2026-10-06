@@ -54,7 +54,7 @@ const DEFAULT_PRESET_SCHEDULES = [
 class RecurringScheduler {
   /**
    * @param {Object} [options]
-   * @param {import("./dispatcher").TaskDispatcher} options.dispatcher
+   * @param {import("./dispatcher").TaskDispatcher} [options.dispatcher] - Required for triggering schedules
    * @param {import("./task-runner").TaskRunner} [options.taskRunner]
    * @param {string} [options.storagePath]
    * @param {boolean} [options.autoPersist]
@@ -277,7 +277,7 @@ class RecurringScheduler {
     let runExecution = null;
     if (schedule.autoRun && this.taskRunner) {
       try {
-        const runRes = await (this.taskRunner.dispatchAndRun ? this.taskRunner.dispatchAndRun(createdTask.id, schedule.taskTemplate.assignee) : this.taskRunner.runTask(createdTask.id, schedule.taskTemplate.assignee));
+        const runRes = await this.taskRunner.dispatchAndRun(createdTask.id, schedule.taskTemplate.assignee);
         if (runRes.success) {
           runExecution = runRes.data;
         }

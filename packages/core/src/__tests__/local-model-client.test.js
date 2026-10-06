@@ -38,3 +38,12 @@ test('LocalModelClient: chats with mock OpenAI compatible server', async () => {
     await new Promise(resolve => server.close(resolve));
   }
 });
+
+test('LocalModelClient: builds the endpoint from host/port when no endpoint is given', () => {
+  assert.strictEqual(new LocalModelClient().endpoint, 'http://127.0.0.1:1234/v1');
+  assert.strictEqual(new LocalModelClient({ host: 'localhost', port: 5555 }).endpoint, 'http://localhost:5555/v1');
+  assert.strictEqual(
+    new LocalModelClient({ endpoint: 'http://127.0.0.1:9000/v1', port: 5555 }).endpoint,
+    'http://127.0.0.1:9000/v1'
+  );
+});

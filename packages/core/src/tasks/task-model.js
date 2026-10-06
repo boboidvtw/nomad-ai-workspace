@@ -57,6 +57,7 @@ function validateTransition(currentStatus, nextStatus) {
  * Creates a normalized task entity with unique ID and timestamps
  * @param {Object} input
  * @param {string} input.title
+ * @param {string} [input.id] - Preserved when restoring a persisted task
  * @param {string} [input.description]
  * @param {string} [input.parentGoal]
  * @param {string[]} [input.dependencies]
@@ -77,7 +78,7 @@ function createTaskEntity(input) {
     return err(ErrorCodes.TASK_INVALID_PAYLOAD_002, 'Task title is required');
   }
 
-  const priority = Object.values(TASK_PRIORITY).includes(input.priority) 
+  const priority = (/** @type {Array<string | undefined>} */ (Object.values(TASK_PRIORITY))).includes(input.priority)
     ? input.priority 
     : TASK_PRIORITY.MEDIUM;
 

@@ -50,6 +50,7 @@ function extractArtifacts(text, options = {}) {
 
       if (!content) continue;
 
+      /** @type {string} */
       let type = ARTIFACT_TYPES.CODE;
       let title = `代碼片段 #${counter}`;
 
@@ -115,10 +116,11 @@ function extractArtifacts(text, options = {}) {
 }
 
 /**
- * Generate a complete standalone HTML document for sandboxed rendering
- * @param {Object} artifact
- * @param {string} artifact.content
- * @param {string} artifact.type
+ * Generate a complete standalone HTML document for sandboxed rendering.
+ * Accepts either an artifact object or (content, type, title) positional arguments.
+ * @param {{ content: string, type: string, title?: string } | string} artifact
+ * @param {string} [maybeType] - Artifact type when `artifact` is a content string
+ * @param {string} [maybeTitle] - Artifact title when `artifact` is a content string
  * @returns {string} Fully self-contained HTML document
  */
 function generateSandboxHtml(artifact, maybeType, maybeTitle) {

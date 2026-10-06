@@ -59,7 +59,7 @@ function isProcessRunning(pid) {
 /**
  * Checks daemon running status
  * @param {number} [port=DEFAULT_DAEMON_PORT]
- * @returns {Promise<{ success: true, data: { running: boolean, pid: number|null, port: number, reachable: boolean } }>}
+ * @returns {Promise<import('@nomad/core').UnitSuccess<{ running: boolean, pid: number|null, port: number, reachable: boolean, latencyMs: number, logFile: string, pidFile: string }>>}
  */
 async function getDaemonStatus(port = DEFAULT_DAEMON_PORT) {
   const pid = readPid();
@@ -85,7 +85,7 @@ async function getDaemonStatus(port = DEFAULT_DAEMON_PORT) {
  * Starts the daemon as a detached background process
  * @param {string} daemonScriptPath
  * @param {number} [port=DEFAULT_DAEMON_PORT]
- * @returns {Promise<{ success: true, data: { pid: number } } | { success: false, errorCode: string, message: string }>}
+ * @returns {Promise<import('@nomad/core').UnitResult<{ pid: number|null|undefined, alreadyRunning: boolean, port: number, message: string }>>}
  */
 async function startDaemon(daemonScriptPath, port = DEFAULT_DAEMON_PORT) {
   const currentStatus = await getDaemonStatus(port);
@@ -134,7 +134,7 @@ async function startDaemon(daemonScriptPath, port = DEFAULT_DAEMON_PORT) {
 /**
  * Stops the running daemon process
  * @param {number} [timeoutMs=3000]
- * @returns {Promise<{ success: true, data: { stopped: boolean } } | { success: false, errorCode: string, message: string }>}
+ * @returns {Promise<import('@nomad/core').UnitResult<{ stopped: boolean, message: string }>>}
  */
 async function stopDaemon(timeoutMs = 3000) {
   const pid = readPid();

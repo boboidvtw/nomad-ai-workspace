@@ -52,6 +52,12 @@ jobs:
       - name: Run Typecheck
         run: npm run typecheck
 
+      - name: Typecheck Workspace Packages (checkJs against @nomad/core types)
+        run: npm run typecheck:packages
+
+      - name: Verify @nomad/core Generated Types Are Up To Date
+        run: npm run types:check
+
   desktop-smoke:
     name: Desktop Build Smoke Test
     runs-on: ubuntu-latest

@@ -37,6 +37,8 @@
     "filesize:check": "node scripts/check-file-size.mjs",
     "filesize:update": "node scripts/check-file-size.mjs --update",
     "typecheck": "tsc --noEmit",
+    "typecheck:packages": "tsc -p packages/core --noEmit && tsc -p packages/daemon && tsc -p packages/desktop && tsc -p packages/dashboard",
+    "types:check": "node scripts/check-core-types.mjs",
     "verify:pr": "npm run format:check && npm run lint:check && npm run typecheck && npm run i18n:check && npm run regressions:check && npm run filesize:check && npm run plugin:check && npm run test && npm run build:all && npm run docs:build",
     "verify:katex-export": "bun scripts/verify-katex-export.ts",
     "verify:safari-resources": "node scripts/verify-safari-resources.mjs",

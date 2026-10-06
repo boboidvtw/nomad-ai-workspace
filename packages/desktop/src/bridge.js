@@ -38,7 +38,7 @@ const {
 
 class LocalSyncBridge {
   /**
-   * @param {Object} options
+   * @param {Object} [options]
    * @param {number} [options.port=8765] - Port to listen on (127.0.0.1)
    * @param {string} [options.host='127.0.0.1'] - Bind address
    * @param {Function} [options.getStatus] - Callback returning app status
@@ -48,6 +48,13 @@ class LocalSyncBridge {
    * @param {Function} [options.onToggleWindow] - Callback for window summon/hide
    * @param {Object} [options.orchestrator] - MultiAiOrchestrator instance
    * @param {string} [options.authToken] - Shared gateway token (defaults to ~/.nomad/daemon-token)
+   * @param {Function} [options.onInspectPlatform] - Debug hook: inspect a platform webview
+   * @param {Function} [options.onEvalScript] - Debug hook: run a script in a platform webview
+   * @param {Object} [options.sessionManager] - SessionManager for workspace/session routes
+   * @param {number} [options.daemonPort=8765] - Daemon port to register with when running on another port
+   * @param {import('@nomad/core').AgentRoster} [options.roster]
+   * @param {import('@nomad/core').TaskDispatcher} [options.dispatcher]
+   * @param {import('@nomad/core').RecurringScheduler} [options.scheduler]
    */
   constructor(options = {}) {
     this.port = options.port || 8765;
@@ -86,7 +93,7 @@ class LocalSyncBridge {
       localModelClient: this.localModelClient,
       orchestratorDelegate: options.onDispatchPrompt ? async (platform, prompt) => {
         return this.onDispatchPrompt(platform, prompt);
-      } : null,
+      } : undefined,
     });
     this.scheduler = options.scheduler || new RecurringScheduler({
       dispatcher: this.dispatcher,
@@ -175,11 +182,12 @@ class LocalSyncBridge {
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => this.handleRequest(req, res));
 
-      this.server.on('error', (err) => {
+      const server = this.server;
+      server.on('error', (/** @type {NodeJS.ErrnoException} */ err) => {
         if (err.code === 'EADDRINUSE') {
           console.warn(`[Nomad Bridge] Port ${this.port} in use, retrying on ${this.port + 1}...`);
           this.port += 1;
-          this.server.listen(this.port, this.host);
+          server.listen(this.port, this.host);
         } else {
           reject(err);
         }
@@ -199,7 +207,7 @@ class LocalSyncBridge {
   stop() {
     if (this.scheduler) this.scheduler.stop();
     this.unregisterFromDaemon(this.daemonPort);
-    return new Promise((resolve) => {
+    return /** @type {Promise<void>} */ (new Promise((resolve) => {
       for (const client of this.sseClients) {
         try {
           client.end();
@@ -215,7 +223,7 @@ class LocalSyncBridge {
       } else {
         resolve();
       }
-    });
+    }));
   }
 
   broadcast(event, data) {
@@ -491,7 +499,7 @@ class LocalSyncBridge {
           type = parsedUrl.searchParams.get("type") || "all";
           mode = parsedUrl.searchParams.get("mode") || "all";
           if (parsedUrl.searchParams.get("limit")) {
-            limit = parseInt(parsedUrl.searchParams.get("limit"), 10) || 50;
+            limit = parseInt(parsedUrl.searchParams.get("limit") || "", 10) || 50;
           }
         } else if (req.method === "POST") {
           const body = await this.readJsonBody(req);
@@ -628,11 +636,11 @@ class LocalSyncBridge {
 
       if (pathname === "/api/tasks" && req.method === "GET") {
         const filter = {
-          query: url.searchParams.get("query") || undefined,
-          status: url.searchParams.get("status") || undefined,
-          assignee: url.searchParams.get("assignee") || undefined,
-          priority: url.searchParams.get("priority") || undefined,
-          parentGoal: url.searchParams.get("parentGoal") || undefined,
+          query: parsedUrl.searchParams.get("query") || undefined,
+          status: parsedUrl.searchParams.get("status") || undefined,
+          assignee: parsedUrl.searchParams.get("assignee") || undefined,
+          priority: parsedUrl.searchParams.get("priority") || undefined,
+          parentGoal: parsedUrl.searchParams.get("parentGoal") || undefined,
         };
         return this.sendJson(res, 200, ok(this.dispatcher.listTasks(filter)));
       }
@@ -666,7 +674,7 @@ class LocalSyncBridge {
       if ((pathname === "/api/tasks/schedule" && req.method === "DELETE") ||
           (pathname === "/api/tasks/schedule/delete" && req.method === "POST")) {
         const body = req.method === "POST" ? await this.readJsonBody(req) : {};
-        const id = url.searchParams.get("id") || body.id;
+        const id = parsedUrl.searchParams.get("id") || body.id;
         const remRes = this.scheduler.removeSchedule(id);
         return this.sendJson(res, remRes.success ? 200 : 400, remRes);
       }
@@ -678,7 +686,7 @@ class LocalSyncBridge {
       }
 
       if ((pathname === "/api/tasks/detail" || pathname.startsWith("/api/tasks/detail")) && req.method === "GET") {
-        const id = url.searchParams.get("id");
+        const id = parsedUrl.searchParams.get("id");
         if (!id) {
           return this.sendJson(res, 400, err(ErrorCodes.TASK_INVALID_PAYLOAD_002, "Missing task id"));
         }

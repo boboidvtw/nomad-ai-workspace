@@ -114,6 +114,10 @@ async function main() {
     case 'probe': {
       console.log('=== 🔌 Probing All Microservices ===');
       const probeRes = await probeAllServices();
+      if (!probeRes.success) {
+        console.error('❌ ' + probeRes.message);
+        process.exit(1);
+      }
       const s = probeRes.data;
       for (const svc of s.services) {
         const icon = svc.online ? '🟢' : '⚪';

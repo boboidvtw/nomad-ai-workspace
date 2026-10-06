@@ -158,6 +158,7 @@ class TaskDispatcher {
    * @param {string} [filter.assignee]
    * @param {string} [filter.priority]
    * @param {string} [filter.parentGoal]
+   * @param {string} [filter.query] - Case-insensitive match on title, description, id and assignee
    * @returns {Object[]}
    */
   listTasks(filter = {}) {

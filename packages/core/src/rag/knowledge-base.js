@@ -43,10 +43,11 @@ class KnowledgeBase {
 
   /**
    * Ingest a document into the knowledge base
-   * @param {Object} doc
-   * @param {string} doc.id - Document identifier
-   * @param {string} doc.title - Document name or path
-   * @param {string} doc.content - Full text content
+   * @param {Object} [doc] - `id` and `content` (or `text`) are required; validated at runtime
+   * @param {string} [doc.id] - Document identifier
+   * @param {string} [doc.title] - Document name or path
+   * @param {string} [doc.content] - Full text content
+   * @param {string} [doc.text] - Alias of `content`
    * @returns {import('../result').UnitResult<{ docId: string, chunksIndexed: number }>}
    */
   addDocument(doc = {}) {
@@ -85,9 +86,14 @@ class KnowledgeBase {
     return this.retrieve(query, topK);
   }
 
+  /**
+   * @param {string} query
+   * @param {number} [topK=3]
+   * @returns {import('../result').UnitResult<{ chunks: Array<{ title: string, content: string, score: number }>, injectedContext: string }>}
+   */
   retrieve(query, topK = 3) {
     const searchRes = this.memory.search(query, { limit: topK });
-    if (!searchRes.success) return searchRes;
+    if (searchRes.success === false) return searchRes;
 
     const chunks = searchRes.data.map(r => ({
       title: r.title,

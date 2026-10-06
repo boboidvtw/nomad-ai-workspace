@@ -5,6 +5,25 @@
 const DEFAULT_DAEMON_PORT = 8765;
 const DEFAULT_DAEMON_HOST = '127.0.0.1';
 
+/**
+ * @typedef {Object} MonitoredService
+ * @property {string} id
+ * @property {string} name
+ * @property {number} port
+ * @property {string} host
+ * @property {string} category
+ * @property {boolean} essential
+ */
+
+/**
+ * @typedef {Object} PlatformConfig
+ * @property {string} id
+ * @property {string} name
+ * @property {string} defaultUrl
+ * @property {string} color
+ */
+
+/** @type {readonly MonitoredService[]} */
 const MONITORED_SERVICES = Object.freeze([
   { id: 'nomad_gateway', name: 'Nomad Daemon Gateway', port: 8765, host: '127.0.0.1', category: 'gateway', essential: true },
   { id: 'postgres', name: 'PostgreSQL 16 (OrbStack)', port: 5432, host: '127.0.0.1', category: 'database', essential: false },

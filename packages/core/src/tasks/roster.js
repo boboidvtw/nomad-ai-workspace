@@ -144,7 +144,7 @@ class AgentRoster {
     if (!agent) {
       return err(ErrorCodes.ROSTER_AGENT_NOT_FOUND_001, `Agent with id '${id}' not found`);
     }
-    if (!Object.values(AGENT_STATUS).includes(status)) {
+    if (!(/** @type {string[]} */ (Object.values(AGENT_STATUS))).includes(status)) {
       return err(ErrorCodes.ROSTER_INVALID_PROFILE_002, `Invalid status: '${status}'`);
     }
     agent.status = status;

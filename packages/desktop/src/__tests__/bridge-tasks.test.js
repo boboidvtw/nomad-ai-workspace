@@ -98,6 +98,26 @@ describe("Bridge: Task Control Plane & Multi-Agent Dispatcher", () => {
   });
 
 
+  it("lists and filters tasks via GET /api/tasks query parameters", async () => {
+    const bridge = new LocalSyncBridge({ port: 19975 });
+    const { port: actualPort } = await bridge.start();
+    try {
+      await makeRequest(actualPort, "POST", "/api/tasks", { title: "Filterable alpha task", priority: "high" });
+      await makeRequest(actualPort, "POST", "/api/tasks", { title: "Unrelated beta task", priority: "low" });
+
+      const all = await makeRequest(actualPort, "GET", "/api/tasks");
+      assert.strictEqual(all.status, 200);
+      assert.ok(Array.isArray(all.data.data));
+
+      const filtered = await makeRequest(actualPort, "GET", "/api/tasks?query=alpha&priority=high");
+      assert.strictEqual(filtered.status, 200);
+      assert.ok(filtered.data.data.length >= 1);
+      assert.ok(filtered.data.data.every((t) => t.title.includes("alpha") && t.priority === "high"));
+    } finally {
+      await bridge.stop();
+    }
+  });
+
   it("serves task graph and recurring schedule endpoints through Local Sync Bridge", async () => {
     const bridge = new LocalSyncBridge({ port: 19970 });
     await bridge.start();

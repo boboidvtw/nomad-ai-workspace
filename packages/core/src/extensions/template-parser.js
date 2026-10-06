@@ -3,14 +3,20 @@
  * Governed by Result Pattern & Zero-Exception Protocol.
  */
 
-const { ok, err, ErrorCodes } = require('../result');
+const { ok, err } = require('../result');
+
+/**
+ * @typedef {Object} TemplateVariable
+ * @property {string} name
+ * @property {string} defaultValue
+ */
 
 const VARIABLE_REGEX = /\{\{\s*([a-zA-Z0-9_\u4e00-\u9fa5]+)(?:\s*:\s*([^}]*))?\s*\}\}/g;
 
 /**
  * Extracts all unique variable names and defaults from a prompt template.
  * @param {string} template 
- * @returns {{ success: true, data: Array<{ name: string, defaultValue: string }> }}
+ * @returns {import('../result').UnitResult<TemplateVariable[]>}
  */
 function extractVariables(template) {
   if (typeof template !== 'string') {
@@ -38,7 +44,7 @@ function extractVariables(template) {
  * Interpolates values into the template safely.
  * @param {string} template 
  * @param {Record<string, string>} values 
- * @returns {{ success: true, data: { rendered: string, unreplaced: string[] } }}
+ * @returns {import('../result').UnitResult<{ rendered: string, unreplaced: string[] }>}
  */
 function interpolate(template, values = {}) {
   if (typeof template !== 'string') {
