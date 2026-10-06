@@ -100,7 +100,7 @@ async function main() {
 
     if (shouldFormat) {
       console.log('Running format...');
-      execSync('bun run format', { stdio: 'inherit' });
+      execSync('npm run format', { stdio: 'inherit' });
       console.log('Format complete! ✨');
     }
   } catch (error) {

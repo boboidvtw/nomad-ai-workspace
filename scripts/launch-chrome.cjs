@@ -46,8 +46,14 @@ async function main() {
 
 function startDevBuild() {
   const args = ['run', 'dev:chrome'];
-  log(`Starting dev build: bun ${args.join(' ')}`);
-  const child = spawn('bun', args, { cwd: repoRoot, stdio: 'inherit', env: process.env });
+  log(`Starting dev build: npm ${args.join(' ')}`);
+  // npm is a .cmd shim on Windows, which spawn only runs through a shell.
+  const child = spawn('npm', args, {
+    cwd: repoRoot,
+    stdio: 'inherit',
+    env: process.env,
+    shell: process.platform === 'win32',
+  });
   child.on('exit', (code, signal) => {
     if (shuttingDown) return;
     log(`Dev build process exited (${signal ? `signal ${signal}` : `code ${code}`}).`);

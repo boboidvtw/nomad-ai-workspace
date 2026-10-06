@@ -22,11 +22,12 @@ git clone https://github.com/boboidvtw/nomad-ai-workspace.git
 # 2. 進入專案目錄
 cd nomad-ai-workspace
 
-# 3. 安裝專案依賴 (使用 bun 或 npm)
-bun install
-# 或使用 npm
+# 3. 安裝專案依賴（本專案統一使用 npm，lockfile 為 package-lock.json）
 npm install
 ```
+
+> 本專案為 npm workspaces monorepo，請在**根目錄**執行 `npm install`，子套件（`packages/*`）不需要也不應該各自安裝或保留自己的 lockfile。
+> 唯一例外是維護者工具 `npm run verify:katex-export`，它使用 `Bun.build`，需另外安裝 [Bun](https://bun.sh) 才能執行。
 
 ---
 
