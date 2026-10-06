@@ -50,10 +50,9 @@
 | **`@nomad/daemon`** | [`packages/daemon`](packages/daemon) | Node.js Daemon | 獨立常駐守護行程、微服務健康探針 (`/api/probe`) 與靜態儀表板託管 |
 | **`@nomad/dashboard`** | [`packages/dashboard`](packages/dashboard) | Web Application | Nomad Dashboard 2.0 智慧神經路由、自動化工作流與即時監控介面 |
 | **`nomad-ai-studio`** | [`packages/desktop`](packages/desktop) | Electron Native | 獨立桌面端超級工作站 (HUD 駕駛艙、選單列常駐托盤、全域快速鍵) |
-| **`nomad-ai-workspace`** | `.` (Root) | Chrome Extension | 跨 AI 官方頁面階層側邊欄、通用提示詞庫與 Google Drive 實體子目錄備份 |
+| **`nomad-ai-workspace`** | `.` (Root) | Chrome Extension | 跨 AI 官方頁面階層側邊欄、通用提示詞庫與 Google Drive 實體子目錄備份（基於上游 [Voyager](https://github.com/voyager-crew/voyager) v1.9.0 延伸開發，同步方式見 [ARCHITECTURE](docs/ARCHITECTURE.md#與上游-voyager-的關係與同步)） |
 | **`claude-voyager`** | [`packages/claude-voyager`](packages/claude-voyager) | Chrome Extension | Claude.ai 官方頁面專用對話資料夾與隱私安全加固擴充功能 |
 | **`gemini-nexus`** | [`packages/gemini-nexus`](packages/gemini-nexus) | Chrome Extension | Google Gemini 輕量級原生 AI 層擴充套件 |
-| **`gemini-voyager`** | [`packages/gemini-voyager`](packages/gemini-voyager) | Chrome Extension | 全功能跨平台 (Gemini/Claude/ChatGPT) 瀏覽器 AI 助手 |
 
 ---
 

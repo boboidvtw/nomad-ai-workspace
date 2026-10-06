@@ -59,7 +59,21 @@ graph TB
 2. **`packages/daemon` (`@nomad/daemon`)**：跨平台常駐背景行程，提供 PID 管理、多服務健康探針 (`/api/probe`) 與靜態 Web 伺服器。
 3. **`packages/dashboard` (`@nomad/dashboard`)**：個人 AI 控制面板前端，支援 LangGraph 流程圖可視化與開源資源導覽。
 4. **`packages/desktop` (`nomad-ai-studio`)**：原生桌面客戶端，整合 HUD 駕駛艙、選單列常駐托盤與多 AI 佈局。
-5. **瀏覽器外掛矩陣 (`packages/claude-voyager`, `packages/gemini-nexus`, `packages/gemini-voyager`)**：涵蓋 Claude、Gemini、ChatGPT 等官方頁面的階層資料夾、提示詞與操作增強。
+5. **瀏覽器外掛矩陣 (`packages/claude-voyager`, `packages/gemini-nexus`)**：涵蓋 Claude、Gemini、ChatGPT 等官方頁面的階層資料夾、提示詞與操作增強。
+
+### 與上游 Voyager 的關係與同步
+根目錄的瀏覽器擴充套件（`src/`）是從上游 [voyager-crew/voyager](https://github.com/voyager-crew/voyager) **v1.9.0** 分支延伸開發的 Nomad 版本（品牌、多平台側邊欄、Drive 實體子目錄同步等）。過去曾以 subtree 方式在 `packages/gemini-voyager` 保留一份上游快照，但根目錄早已是它的超集、也沒有任何建置或測試使用它，因此已移除；完整的匯入歷史仍保留在 git log 中（`776c34dd`）。
+
+需要參考或移植上游修正時，改用 git remote：
+
+```bash
+git remote add voyager-upstream https://github.com/voyager-crew/voyager.git   # 只需一次
+# 上游 tag（如 v1.4.0）會與 Nomad 自己的 tag 撞名，因此放進 upstream/ 命名空間，不要用 --tags
+git fetch voyager-upstream main 'refs/tags/*:refs/tags/upstream/*' --no-tags
+git log --oneline upstream/v1.9.0..voyager-upstream/main -- src/   # 看上游 v1.9.0 之後的變更
+git show <commit>                                            # 檢視單一修正
+git cherry-pick -x <commit>                                  # 移植（注意品牌字串與網址需改回 Nomad）
+```
 
 ## 📐 1. 系統整體拓撲 (System Architecture)
 

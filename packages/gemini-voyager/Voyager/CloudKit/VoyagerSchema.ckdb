@@ -1,6 +1,0 @@
-DEFINE SCHEMA
-    RECORD TYPE VoyagerSyncFile (
-        name STRING,
-        payload ASSET,
-        updatedAt TIMESTAMP
-    );

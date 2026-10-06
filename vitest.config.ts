@@ -10,6 +10,8 @@ export default defineConfig({
     exclude: [
       '**/node_modules/**',
       '**/dist*/**',
+      // Workspace packages have their own runners (node:test, their own vitest configs).
+      'packages/**',
       ...(!fs.existsSync('.github/workflows')
         ? [
             'scripts/update-readme-badges.test.js',
