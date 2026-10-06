@@ -1,10 +1,13 @@
 /**
- * Nomad Core Daemon - Microservice Health Prober
+ * @nomad/core - Microservice Health Prober
+ * Shared by @nomad/daemon and the desktop Studio bridge.
  * Governed by AGENTS.md Atomic Contract & Result Pattern.
  */
 
 const net = require('net');
-const { ok, err, ErrorCodes, MONITORED_SERVICES } = require('@nomad/core');
+const { ok, err } = require('../result');
+const { ErrorCodes } = require('../error-codes');
+const { MONITORED_SERVICES } = require('../constants');
 
 /**
  * Probes a single TCP host:port endpoint
@@ -55,9 +58,9 @@ function probePort(host = '127.0.0.1', port, timeoutMs = 350) {
 
 /**
  * Probes all configured microservices concurrently
- * @param {ReadonlyArray<import('@nomad/core').MonitoredService>} [services=MONITORED_SERVICES]
+ * @param {ReadonlyArray<import('../constants').MonitoredService>} [services=MONITORED_SERVICES]
  * @param {number} [timeoutMs=350]
- * @returns {Promise<import('@nomad/core').UnitResult<{ services: Array<Object>, summary: Object, timestamp: string }>>}
+ * @returns {Promise<import('../result').UnitResult<{ services: Array<Object>, summary: Object, timestamp: string }>>}
  */
 async function probeAllServices(services = MONITORED_SERVICES, timeoutMs = 350) {
   try {

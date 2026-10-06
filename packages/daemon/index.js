@@ -3,7 +3,7 @@
  */
 
 const { NomadDaemonServer } = require('./src/server');
-const { probePort, probeAllServices } = require('./src/prober');
+const { probePort, probeAllServices } = require('@nomad/core');
 const {
   readPid,
   writePid,
