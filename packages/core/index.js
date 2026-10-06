@@ -41,6 +41,17 @@ const { ARTIFACT_TYPES, extractArtifacts, generateSandboxHtml } = require('./src
 // P2: Local Model Client (Dual-Track)
 const { LocalModelClient } = require('./src/client/local-model-client');
 
+// Local gateway auth (Daemon & Bridge)
+const {
+  resolveAuthToken,
+  getTokenFilePath,
+  isLoopbackHostname,
+  isLoopbackModelTarget,
+  applyCorsHeaders,
+  authorizeRequest,
+  injectDashboardAuth
+} = require('./src/security/local-auth');
+
 // P2: Side-by-Side Diff Engine
 const { computeDiff } = require('./src/diff/diff-engine');
 
@@ -144,4 +155,12 @@ module.exports = {
   TaskRunner,
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
+  // Local gateway auth
+  resolveAuthToken,
+  getTokenFilePath,
+  isLoopbackHostname,
+  isLoopbackModelTarget,
+  applyCorsHeaders,
+  authorizeRequest,
+  injectDashboardAuth,
 };

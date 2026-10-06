@@ -27,7 +27,13 @@ const {
   TaskDispatcher,
   ApprovalGate,
   RecurringScheduler,
-  TaskRunner
+  TaskRunner,
+  DEFAULT_DAEMON_PORT,
+  resolveAuthToken,
+  isLoopbackModelTarget,
+  applyCorsHeaders,
+  authorizeRequest,
+  injectDashboardAuth
 } = require('@nomad/core');
 
 class LocalSyncBridge {
@@ -41,10 +47,12 @@ class LocalSyncBridge {
    * @param {Function} [options.onSetZoom] - Callback for zoom adjustments
    * @param {Function} [options.onToggleWindow] - Callback for window summon/hide
    * @param {Object} [options.orchestrator] - MultiAiOrchestrator instance
+   * @param {string} [options.authToken] - Shared gateway token (defaults to ~/.nomad/daemon-token)
    */
   constructor(options = {}) {
     this.port = options.port || 8765;
     this.host = options.host || '127.0.0.1';
+    this.authToken = resolveAuthToken(options.authToken);
     this.getStatus = options.getStatus || (() => ({ status: 'ready' }));
     this.onDispatchPrompt = options.onDispatchPrompt || (async () => ({ dispatched: true }));
     this.onSetLayout = options.onSetLayout || (() => ({}));
@@ -105,7 +113,8 @@ class LocalSyncBridge {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(payload)
+          'Content-Length': Buffer.byteLength(payload),
+          'Authorization': 'Bearer ' + this.authToken
         },
         timeout: 1000
       }, (res) => {
@@ -129,7 +138,7 @@ class LocalSyncBridge {
           port: daemonPort,
           path: '/api/studio/heartbeat',
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.authToken },
           timeout: 1000
         }, () => {});
         req.on('error', () => {});
@@ -150,7 +159,7 @@ class LocalSyncBridge {
         port: daemonPort,
         path: '/api/studio/unregister',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.authToken },
         timeout: 1000
       }, () => {});
       req.on('error', () => {});
@@ -220,10 +229,30 @@ class LocalSyncBridge {
     }
   }
 
-  handleCors(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  isPublicRoute(method, pathname) {
+    if (method !== 'GET' && method !== 'HEAD') return false;
+    return pathname === '/api/probe' ||
+      pathname === '/dashboard' || pathname === '/dashboard/' || pathname === '/dashboard/index.html';
+  }
+
+  /**
+   * Applies CORS + auth. Returns true when the request has been fully answered.
+   */
+  handleCors(req, res, parsedUrl) {
+    const publicRoute = this.isPublicRoute(req.method, parsedUrl.pathname);
+    applyCorsHeaders(req, res, publicRoute);
+
+    const auth = authorizeRequest(req, parsedUrl, {
+      token: this.authToken,
+      boundHost: this.host,
+      publicRoute
+    });
+    if (!auth.allowed) {
+      const code = auth.status === 401 ? ErrorCodes.BRIDGE_UNAUTHORIZED_005 : ErrorCodes.BRIDGE_FORBIDDEN_006;
+      this.sendJson(res, auth.status, err(code, auth.reason));
+      return true;
+    }
+
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
       res.end();
@@ -263,15 +292,14 @@ class LocalSyncBridge {
   }
 
   async handleRequest(req, res) {
-    if (this.handleCors(req, res)) return;
-
-    const parsedUrl = new URL(req.url, `http://${this.host}:${this.port}`);
+    const parsedUrl = new URL(req.url, `http://127.0.0.1:${this.port}`);
+    if (this.handleCors(req, res, parsedUrl)) return;
     const pathname = parsedUrl.pathname;
 
     try {
       // 0. Dashboard static hosting
       if (pathname === '/dashboard' || pathname === '/dashboard/' || pathname === '/dashboard/index.html') {
-        serveDashboard(req, res);
+        serveDashboard(req, res, (html) => injectDashboardAuth(html, this.authToken, [this.port, DEFAULT_DAEMON_PORT]));
         return;
       }
 
@@ -305,7 +333,6 @@ class LocalSyncBridge {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
           'Connection': 'keep-alive',
-          'Access-Control-Allow-Origin': '*',
         });
         res.write(`event: connected\ndata: ${JSON.stringify({ type: 'connected', time: Date.now() })}\n\n`);
         this.sseClients.add(res);
@@ -718,6 +745,9 @@ class LocalSyncBridge {
         const parsedUrl = new URL(req.url, 'http://127.0.0.1');
         const port = Number(parsedUrl.searchParams.get('port') || 1234);
         const host = parsedUrl.searchParams.get('host') || '127.0.0.1';
+        if (!isLoopbackModelTarget({ host })) {
+          return this.sendJson(res, 400, err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Local model host must be a loopback address'));
+        }
         const client = new LocalModelClient({ endpoint: 'http://' + host + ':' + port + '/v1' });
         const probeRes = await client.probe();
         if (probeRes.success) {
@@ -729,6 +759,9 @@ class LocalSyncBridge {
 
       if (pathname === '/api/local-model/chat' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
+        if (!isLoopbackModelTarget(body)) {
+          return this.sendJson(res, 400, err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Local model host must be a loopback address'));
+        }
         const client = new LocalModelClient({ port: body.port || 1234, host: body.host || '127.0.0.1' });
         const chatRes = await client.chatCompletion(body);
         return this.sendJson(res, chatRes.success ? 200 : 502, chatRes);

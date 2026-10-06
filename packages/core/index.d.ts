@@ -44,6 +44,8 @@ export const ErrorCodes: {
   readonly BRIDGE_INVALID_BODY_002: 'BRIDGE_INVALID_BODY_002';
   readonly BRIDGE_EXECUTION_FAILED_003: 'BRIDGE_EXECUTION_FAILED_003';
   readonly BRIDGE_INVALID_METHOD_004: 'BRIDGE_INVALID_METHOD_004';
+  readonly BRIDGE_UNAUTHORIZED_005: 'BRIDGE_UNAUTHORIZED_005';
+  readonly BRIDGE_FORBIDDEN_006: 'BRIDGE_FORBIDDEN_006';
 
   readonly DASHBOARD_FILE_NOT_FOUND_001: 'DASHBOARD_FILE_NOT_FOUND_001';
   readonly DASHBOARD_READ_FAILED_002: 'DASHBOARD_READ_FAILED_002';
@@ -144,3 +146,16 @@ export function computeChecksum(content: string): string;
 export function exportToDrive(options: { workspaces: any[]; settings?: Record<string, unknown>; targetDir?: string }): UnitResult<{ targetDir: string; syncedCount: number; checksum: string; timestamp: string }>;
 export function importFromDrive(options?: { sourceDir?: string; currentWorkspaces?: any[]; strategy?: 'merge' | 'overwrite' | 'keep_local' }): UnitResult<{ reconciledWorkspaces: any[]; importedCount: number; strategy: string; timestamp: string }>;
 export function getSyncStatus(options?: { targetDir?: string }): UnitResult<{ status: 'connected' | 'not_found'; targetDir: string; lastSyncedAt: string | null; workspaceCount: number; checksum: string | null }>;
+
+// Local gateway auth (Daemon & Bridge)
+export function resolveAuthToken(explicitToken?: string): string;
+export function getTokenFilePath(): string;
+export function isLoopbackHostname(hostname: string): boolean;
+export function isLoopbackModelTarget(target?: { host?: string; endpoint?: string }): boolean;
+export function applyCorsHeaders(req: import('http').IncomingMessage, res: import('http').ServerResponse, publicRoute?: boolean): void;
+export function authorizeRequest(
+  req: import('http').IncomingMessage,
+  url: URL,
+  options: { token: string; boundHost?: string; publicRoute?: boolean }
+): { allowed: true } | { allowed: false; status: number; reason: string };
+export function injectDashboardAuth(html: string, token: string, gatewayPorts?: number[]): string;

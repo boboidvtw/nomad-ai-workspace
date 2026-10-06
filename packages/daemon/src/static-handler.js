@@ -29,8 +29,9 @@ function findDashboardPath() {
  * Serves the dashboard HTML file
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res
+ * @param {(html: string) => string} [transform] - Optional HTML rewrite (e.g. auth token injection)
  */
-function serveDashboard(req, res) {
+function serveDashboard(req, res, transform) {
   const filePath = findDashboardPath();
   if (!filePath) {
     res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -42,7 +43,8 @@ function serveDashboard(req, res) {
   }
 
   try {
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const content = typeof transform === 'function' ? transform(raw) : raw;
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
       'Content-Length': Buffer.byteLength(content),

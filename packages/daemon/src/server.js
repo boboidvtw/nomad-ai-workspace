@@ -24,7 +24,12 @@ const {
   TaskDispatcher,
   ApprovalGate,
   RecurringScheduler,
-  TaskRunner
+  TaskRunner,
+  resolveAuthToken,
+  isLoopbackModelTarget,
+  applyCorsHeaders,
+  authorizeRequest,
+  injectDashboardAuth
 } = require('@nomad/core');
 const { probeAllServices } = require('./prober');
 const { serveDashboard } = require('./static-handler');
@@ -33,6 +38,7 @@ class NomadDaemonServer {
   constructor(options = {}) {
     this.port = Number(options.port || process.env.NOMAD_PORT || DEFAULT_DAEMON_PORT);
     this.host = options.host || process.env.NOMAD_HOST || DEFAULT_DAEMON_HOST;
+    this.authToken = resolveAuthToken(options.authToken);
 
     this.getStatus = options.getStatus || (() => ({ status: 'ready' }));
     this.onDispatchPrompt = options.onDispatchPrompt || null;
@@ -134,14 +140,13 @@ class NomadDaemonServer {
     }
   }
 
-  setCORSHeaders(res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  isPublicRoute(method, pathname) {
+    if (method !== 'GET' && method !== 'HEAD') return false;
+    return pathname === '/' || pathname === '/api/probe' ||
+      pathname === '/dashboard' || pathname === '/dashboard/' || pathname === '/dashboard/index.html';
   }
 
   sendJson(res, statusCode, payload) {
-    this.setCORSHeaders(res);
     res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(payload));
   }
@@ -182,7 +187,6 @@ class NomadDaemonServer {
     };
 
     const proxyReq = http.request(options, (proxyRes) => {
-      this.setCORSHeaders(res);
       res.writeHead(proxyRes.statusCode, proxyRes.headers);
       proxyRes.pipe(res);
     });
@@ -206,7 +210,20 @@ class NomadDaemonServer {
   }
 
   async handleRequest(req, res) {
-    this.setCORSHeaders(res);
+    const url = new URL(req.url, 'http://127.0.0.1:' + this.port);
+    const pathname = url.pathname;
+    const publicRoute = this.isPublicRoute(req.method, pathname);
+    applyCorsHeaders(req, res, publicRoute);
+
+    const auth = authorizeRequest(req, url, {
+      token: this.authToken,
+      boundHost: this.host,
+      publicRoute
+    });
+    if (!auth.allowed) {
+      const code = auth.status === 401 ? ErrorCodes.BRIDGE_UNAUTHORIZED_005 : ErrorCodes.BRIDGE_FORBIDDEN_006;
+      return this.sendJson(res, auth.status, err(code, auth.reason));
+    }
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
@@ -214,13 +231,10 @@ class NomadDaemonServer {
       return;
     }
 
-    const url = new URL(req.url, 'http://' + (req.headers.host || '127.0.0.1:' + this.port));
-    const pathname = url.pathname;
-
     try {
       // 1. Dashboard static routes
       if (pathname === '/dashboard' || pathname === '/dashboard/' || pathname === '/dashboard/index.html') {
-        serveDashboard(req, res);
+        serveDashboard(req, res, (html) => injectDashboardAuth(html, this.authToken, [this.port, DEFAULT_DAEMON_PORT]));
         return;
       }
 
@@ -341,6 +355,9 @@ class NomadDaemonServer {
       if (pathname === '/api/local-model/probe' && req.method === 'GET') {
         const port = Number(url.searchParams.get('port') || 1234);
         const host = url.searchParams.get('host') || '127.0.0.1';
+        if (!isLoopbackModelTarget({ host })) {
+          return this.sendJson(res, 400, err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Local model host must be a loopback address'));
+        }
         const client = new LocalModelClient({ endpoint: 'http://' + host + ':' + port + '/v1' });
         const probeRes = await client.probe();
         if (probeRes.success) {
@@ -352,6 +369,9 @@ class NomadDaemonServer {
 
       if (pathname === '/api/local-model/chat' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
+        if (!isLoopbackModelTarget(body)) {
+          return this.sendJson(res, 400, err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Local model host must be a loopback address'));
+        }
         const client = new LocalModelClient({ port: body.port || 1234, host: body.host || '127.0.0.1' });
         const chatRes = await client.chat(body);
         return this.sendJson(res, chatRes.success ? 200 : 502, chatRes);
