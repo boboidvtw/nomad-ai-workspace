@@ -29,9 +29,9 @@ const {
   isLoopbackModelTarget,
   applyCorsHeaders,
   authorizeRequest,
-  injectDashboardAuth
+  injectDashboardAuth,
+  probeAllServices
 } = require('@nomad/core');
-const { probeAllServices } = require('./prober');
 const { serveDashboard } = require('./static-handler');
 
 /**

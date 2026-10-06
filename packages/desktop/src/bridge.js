@@ -7,7 +7,6 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { probeAllServices } = require('./prober');
 const { serveDashboard } = require('@nomad/dashboard');
 const {
   ok,
@@ -33,7 +32,8 @@ const {
   isLoopbackModelTarget,
   applyCorsHeaders,
   authorizeRequest,
-  injectDashboardAuth
+  injectDashboardAuth,
+  probeAllServices
 } = require('@nomad/core');
 
 class LocalSyncBridge {

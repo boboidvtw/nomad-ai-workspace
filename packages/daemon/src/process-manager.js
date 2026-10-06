@@ -7,8 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { spawn } = require('child_process');
-const { ok, err, ErrorCodes, DEFAULT_DAEMON_PORT } = require('@nomad/core');
-const { probePort } = require('./prober');
+const { ok, err, ErrorCodes, DEFAULT_DAEMON_PORT, probePort } = require('@nomad/core');
 
 const NOMAD_DIR = path.join(os.homedir(), '.nomad');
 const PID_FILE = path.join(NOMAD_DIR, 'daemon.pid');

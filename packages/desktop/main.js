@@ -1,4 +1,4 @@
-const { probeAllServices } = require('./src/prober');
+const { probeAllServices } = require('@nomad/core');
 const { app, BrowserWindow, WebContentsView, session, ipcMain, screen, Menu, shell, dialog, globalShortcut } = require('electron');
 const fs = require('fs');
 const os = require('os');

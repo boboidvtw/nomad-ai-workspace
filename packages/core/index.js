@@ -64,6 +64,9 @@ const { ARTIFACT_TYPES, extractArtifacts, generateSandboxHtml } = require('./src
 // P2: Local Model Client (Dual-Track)
 const { LocalModelClient } = require('./src/client/local-model-client');
 
+// Microservice health probe (Daemon & Bridge)
+const { probePort, probeAllServices } = require('./src/probe/prober');
+
 // Local gateway auth (Daemon & Bridge)
 const {
   resolveAuthToken,
@@ -178,6 +181,9 @@ module.exports = {
   TaskRunner,
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
+  // Microservice health probe
+  probePort,
+  probeAllServices,
   // Local gateway auth
   resolveAuthToken,
   getTokenFilePath,
