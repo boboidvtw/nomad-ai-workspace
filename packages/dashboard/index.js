@@ -1,44 +1,20 @@
 /**
- * Nomad Core Daemon - Static Handler for Nomad Dashboard
+ * @nomad/dashboard - Single source of the Nomad Dashboard HTML and its static handler.
+ * Served by both @nomad/daemon and the desktop Studio bridge.
  */
 
 const fs = require('fs');
 const path = require('path');
-let err = null;
-let ErrorCodes = null;
-try {
-  const core = require('@nomad/core');
-  err = core.err;
-  ErrorCodes = core.ErrorCodes;
-} catch (e) {
-  try {
-    const core = require('@nomad/core');
-    err = core.err;
-    ErrorCodes = core.ErrorCodes;
-  } catch (e2) {
-    err = (code, msg) => ({ success: false, errorCode: code, message: msg });
-    ErrorCodes = { DASHBOARD_FILE_NOT_FOUND_001: 'DASHBOARD_FILE_NOT_FOUND_001', DASHBOARD_READ_FAILED_002: 'DASHBOARD_READ_FAILED_002' };
-  }
-}
+const { err, ErrorCodes } = require('@nomad/core');
 
-const DASHBOARD_PATHS = [
-  path.resolve(__dirname, 'dashboard-fallback.html'),
-  path.resolve(__dirname, '../../dashboard/index.html'),
-  path.resolve(__dirname, '../../../nomad-dashboard/index.html'),
-  path.resolve('/Users/liyungchih-macstudio/Developer/nomad-dashboard/index.html')
-];
+const DASHBOARD_HTML_PATH = path.join(__dirname, 'index.html');
 
 /**
- * Finds the valid index.html path for Nomad Dashboard
+ * Returns the dashboard index.html path, or null if it is missing from the install.
  * @returns {string|null}
  */
 function findDashboardPath() {
-  for (const p of DASHBOARD_PATHS) {
-    if (fs.existsSync(p)) {
-      return p;
-    }
-  }
-  return null;
+  return fs.existsSync(DASHBOARD_HTML_PATH) ? DASHBOARD_HTML_PATH : null;
 }
 
 /**
@@ -78,6 +54,7 @@ function serveDashboard(req, res, transform) {
 }
 
 module.exports = {
+  DASHBOARD_HTML_PATH,
   findDashboardPath,
   serveDashboard
 };

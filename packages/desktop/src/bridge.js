@@ -8,7 +8,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { probeAllServices } = require('./prober');
-const { serveDashboard } = require('./static-handler');
+const { serveDashboard } = require('@nomad/dashboard');
 const {
   ok,
   err,

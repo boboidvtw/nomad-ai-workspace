@@ -14,6 +14,12 @@
 - Dashboard 由閘道提供時自動注入 Token，`fetch` / `EventSource` 呼叫無需修改；`/api/probe` 與 `/dashboard` 維持免驗證。
 - 命令列呼叫範例：`curl -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/status`
 
+### 🐛 修復 (Fixed)
+- **Dashboard 任務看板整段腳本無法執行**：43 行 HTML 字串遺失跳脫字元（`\'` / `\"`）導致 SyntaxError，任務卡片、詳情 Modal 與排程清單全部失效；新增 inline script 語法回歸測試。
+
+### ♻️ 重構 (Changed)
+- **Dashboard 單一來源**：移除 `packages/desktop/src/dashboard-fallback.html` 重複副本與兩份重複的 static handler，Daemon 與 Desktop Bridge 統一透過 `@nomad/dashboard` 套件（`serveDashboard` / `findDashboardPath`）提供頁面；Electron 打包時隨 `node_modules/@nomad` 一併收錄。
+
 ---
 
 ## [1.4.0] - 2026-10-03

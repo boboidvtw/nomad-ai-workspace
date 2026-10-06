@@ -4,10 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const DASHBOARD_FILES = [
-  path.resolve(__dirname, '../../../dashboard/index.html'),
-  path.resolve(__dirname, '../../../desktop/src/dashboard-fallback.html')
-];
+const { DASHBOARD_HTML_PATH } = require('@nomad/dashboard');
+
+const DASHBOARD_FILES = [DASHBOARD_HTML_PATH];
 
 for (const file of DASHBOARD_FILES) {
   test('Dashboard: inline scripts parse without syntax errors (' + path.basename(file) + ')', () => {
