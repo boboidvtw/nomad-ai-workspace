@@ -12,15 +12,13 @@ export default defineConfig({
       '**/dist*/**',
       // Workspace packages have their own runners (node:test, their own vitest configs).
       'packages/**',
-      ...(!fs.existsSync('.github/workflows')
-        ? [
-            'scripts/update-readme-badges.test.js',
-            'scripts/pr-workflows.test.js',
-            'scripts/generate-sponsors.test.js',
-            'scripts/community-issue-policy.test.js',
-            'src/pages/popup/__tests__/releaseArtifacts.test.ts',
-            'src/utils/__tests__/issueValidator.test.ts',
-          ]
+      // These suites assert upstream Voyager's CI/release setup and read those files at
+      // module load, so they only run where that setup exists. Gate on the files they
+      // read, not on `.github/workflows` itself: this repo has its own, different CI.
+      ...(!fs.existsSync('.github/workflows/pr-gate.yml') ? ['scripts/pr-workflows.test.js'] : []),
+      ...(!fs.existsSync('.github/workflows/release.yml') ||
+      !fs.existsSync('.github/RELEASE_TEMPLATE.md')
+        ? ['src/pages/popup/__tests__/releaseArtifacts.test.ts']
         : []),
       ...(!fs.existsSync('docs/public')
         ? [
@@ -28,9 +26,7 @@ export default defineConfig({
             'src/features/plugins/manifest/schema.test.ts',
           ]
         : []),
-      ...(!fs.existsSync('.githooks')
-        ? ['scripts/oxc-toolchain.test.js']
-        : []),
+      ...(!fs.existsSync('.githooks') ? ['scripts/oxc-toolchain.test.js'] : []),
     ],
     // Vitest stubs CSS imports to '' unless the file is listed here, which
     // also swallows `?raw` imports. The bundled plugin catalog is plain CSS
