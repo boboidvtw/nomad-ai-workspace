@@ -47,6 +47,10 @@ function resolveAuthToken(explicitToken) {
   return token;
 }
 
+/**
+ * @param {unknown} hostname
+ * @returns {boolean}
+ */
 function isLoopbackHostname(hostname) {
   return LOOPBACK_HOSTNAMES.includes(String(hostname || '').toLowerCase());
 }
@@ -72,6 +76,8 @@ function isLoopbackModelTarget({ host, endpoint } = {}) {
 
 /**
  * Strips the port from a Host header value ("127.0.0.1:8765", "[::1]:8765").
+ * @param {string | undefined} hostHeader
+ * @returns {string}
  */
 function hostnameFromHostHeader(hostHeader) {
   const value = String(hostHeader || '').trim().toLowerCase();
@@ -97,6 +103,8 @@ function isAllowedHostHeader(hostHeader, boundHost) {
 /**
  * Browser origins allowed to call the API: pages served from a loopback http(s) origin.
  * Requests without an Origin header (curl, Node clients) pass this check and rely on the token.
+ * @param {string | undefined} origin
+ * @returns {boolean}
  */
 function isAllowedOrigin(origin) {
   if (!origin) return true;
@@ -108,6 +116,11 @@ function isAllowedOrigin(origin) {
   }
 }
 
+/**
+ * @param {import('http').IncomingMessage} req
+ * @param {URL} url
+ * @returns {string}
+ */
 function extractToken(req, url) {
   const authHeader = req.headers['authorization'];
   if (typeof authHeader === 'string' && authHeader.toLowerCase().startsWith('bearer ')) {
@@ -118,6 +131,12 @@ function extractToken(req, url) {
   return url.searchParams.get('token') || '';
 }
 
+/**
+ * Constant-time token comparison.
+ * @param {string} provided
+ * @param {string} expected
+ * @returns {boolean}
+ */
 function tokensMatch(provided, expected) {
   const a = Buffer.from(String(provided || ''));
   const b = Buffer.from(String(expected || ''));
@@ -126,6 +145,8 @@ function tokensMatch(provided, expected) {
 
 /**
  * Sets CORS headers: the request Origin is reflected only when it is an allowed loopback origin.
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res
  * @param {boolean} [publicRoute] - Read-only health routes answer any origin with `*`.
  */
 function applyCorsHeaders(req, res, publicRoute = false) {

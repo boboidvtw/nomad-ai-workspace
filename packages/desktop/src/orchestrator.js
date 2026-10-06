@@ -229,7 +229,7 @@ class MultiAiOrchestrator {
           await this.injectPrompt(speaker, currentInput);
         } catch (err) {
           console.error(`[Nomad Orchestrator] Failed to inject prompt to ${speaker}:`, err);
-          this.emitStep("inject-error", { speaker, error: err.message });
+          this.emitStep("inject-error", { speaker, error: (err instanceof Error ? err.message : String(err)) });
         }
 
         // 2. Wait for speaker response to generate and settle
@@ -352,7 +352,7 @@ class MultiAiOrchestrator {
           lastLength = text.length;
         }
       } catch (e) {
-        console.warn(`[Nomad Orchestrator] [${platform}] Poll error:`, e.message);
+        console.warn(`[Nomad Orchestrator] [${platform}] Poll error:`, (e instanceof Error ? e.message : String(e)));
       }
 
       await this.sleep(pollIntervalMs);

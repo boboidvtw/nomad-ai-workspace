@@ -860,7 +860,7 @@ class LocalSyncBridge {
       return this.sendJson(res, 500, {
         success: false,
         errorCode: 'BRIDGE_INTERNAL_SERVER_ERROR_500',
-        message: err.message || 'Internal bridge error',
+        message: (err instanceof Error ? err.message : String(err)) || 'Internal bridge error',
       });
     }
   }

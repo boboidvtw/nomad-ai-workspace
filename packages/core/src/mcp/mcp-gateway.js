@@ -10,9 +10,23 @@ const os = require('os');
 const { ok, err } = require('../result');
 const { ErrorCodes } = require('../error-codes');
 
+/**
+ * @typedef {Object} McpToolDefinition
+ * @property {string} name
+ * @property {string} [description]
+ * @property {Record<string, unknown>} [parameters] - JSON Schema of the tool arguments
+ * @property {(args: Record<string, any>) => Promise<import('../result').UnitResult<unknown>>} handler
+ */
+
 class McpGateway {
+  /**
+   * @param {Object} [options]
+   * @param {string[]} [options.allowedPaths]
+   */
   constructor(options = {}) {
+    /** @type {Map<string, McpToolDefinition>} */
     this.tools = new Map();
+    /** @type {Map<string, unknown>} */
     this.servers = new Map();
     this.allowedPaths = options.allowedPaths || [process.cwd(), os.homedir()];
     this.registerDefaultTools();
@@ -30,7 +44,7 @@ class McpGateway {
         },
         required: ['path']
       },
-      handler: async (args) => {
+      handler: async (/** @type {Record<string, any>} */ args) => {
         const filePath = args.path;
         if (!fs.existsSync(filePath)) {
           return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `File does not exist: ${filePath}`);
@@ -51,7 +65,7 @@ class McpGateway {
         },
         required: ['path']
       },
-      handler: async (args) => {
+      handler: async (/** @type {Record<string, any>} */ args) => {
         const dirPath = args.path;
         if (!fs.existsSync(dirPath)) {
           return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `Directory does not exist: ${dirPath}`);
@@ -66,6 +80,9 @@ class McpGateway {
     });
   }
 
+  /**
+   * @param {McpToolDefinition} toolDef
+   */
   registerTool(toolDef) {
     if (!toolDef || !toolDef.name || typeof toolDef.handler !== 'function') {
       return err(ErrorCodes.MCP_INVALID_PROTOCOL_003, 'Invalid tool definition');
@@ -83,6 +100,10 @@ class McpGateway {
     return ok(list);
   }
 
+  /**
+   * @param {string} name
+   * @param {Record<string, any>} [args]
+   */
   async callTool(name, args = {}) {
     const tool = this.tools.get(name);
     if (!tool) {
@@ -91,7 +112,7 @@ class McpGateway {
     try {
       return await tool.handler(args);
     } catch (e) {
-      return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `Tool ${name} failed: ${e.message}`);
+      return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `Tool ${name} failed: ${(e instanceof Error ? e.message : String(e))}`);
     }
   }
 }

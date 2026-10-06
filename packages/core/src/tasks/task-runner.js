@@ -12,7 +12,7 @@ class TaskRunner {
   /**
    * @param {import('./dispatcher').TaskDispatcher} dispatcher 
    * @param {Object} [options]
-   * @param {Object} [options.localModelClient]
+   * @param {import('../client/local-model-client').LocalModelClient} [options.localModelClient]
    * @param {Function} [options.orchestratorDelegate]
    */
   constructor(dispatcher, options = {}) {
@@ -28,10 +28,11 @@ class TaskRunner {
    * @param {Object} [options]
    * @param {Function} [options.runnerFn] - Custom async (task, agent) => { summary, artifact }
    * @param {string} [options.customPrompt]
-   * @returns {Promise<import('../result').UnitResult<Object, string>>}
+   * @returns {Promise<import('../result').UnitResult<import('./task-model').Task | undefined>>}
    */
   async dispatchAndRun(taskId, agentId, options = {}) {
-    return wrapAsync(async () => {
+    // The callback may return a Result itself (e.g. a failed claim); wrapAsync passes those through.
+    return /** @type {Promise<import('../result').UnitResult<import('./task-model').Task | undefined>>} */ (wrapAsync(async () => {
       // 1. Claim task
       const claimRes = this.dispatcher.claimTask(taskId, agentId);
       if (!claimRes.success) {
@@ -39,7 +40,7 @@ class TaskRunner {
       }
       const task = claimRes.data;
       const agentRes = this.dispatcher.roster.getAgent(agentId);
-      const agent = agentRes.success ? agentRes.data : { id: agentId, name: agentId, platform: 'claude' };
+      const agent = agentRes.success ? agentRes.data : { id: agentId, name: agentId, platform: 'claude', role: 'General Assistant' };
 
       // 2. Start heartbeat loop
       const heartbeat = this.startHeartbeatLoop(taskId, agentId, 5000);
@@ -56,13 +57,16 @@ class TaskRunner {
         } else if (agent.platform === 'local-model' && this.localModelClient) {
           // Execute via local model (LM Studio)
           const prompt = options.customPrompt || `Task: ${task.title}\nDescription: ${task.description || 'None'}\nCriteria: ${(task.acceptanceCriteria || []).join(', ')}`;
-          const inferenceRes = await this.localModelClient.chat([
-            { role: 'system', content: `You are ${agent.name}, an expert AI agent with role: ${agent.role}. Complete the user task accurately.` },
-            { role: 'user', content: prompt }
-          ]);
+          const inferenceRes = await this.localModelClient.chatCompletion({
+            messages: [
+              { role: 'system', content: `You are ${agent.name}, an expert AI agent with role: ${agent.role}. Complete the user task accurately.` },
+              { role: 'user', content: prompt }
+            ]
+          });
           if (inferenceRes.success) {
             outputContent = inferenceRes.data.content;
-            outputSummary = `Local model execution complete (${inferenceRes.data.tokens || 0} tokens)`;
+            const tokens = inferenceRes.data.usage && inferenceRes.data.usage.total_tokens;
+            outputSummary = `Local model execution complete (${tokens || 0} tokens)`;
           } else {
             throw new Error(`Local model inference failed: ${inferenceRes.message}`);
           }
@@ -99,12 +103,12 @@ class TaskRunner {
           return compRes;
         }
       } catch (errObj) {
-        this.dispatcher.failTask(taskId, agentId, errObj.message);
-        return err(ErrorCodes.TASK_EXECUTION_FAILED_007, errObj.message);
+        this.dispatcher.failTask(taskId, agentId, (errObj instanceof Error ? errObj.message : String(errObj)));
+        return err(ErrorCodes.TASK_EXECUTION_FAILED_007, (errObj instanceof Error ? errObj.message : String(errObj)));
       } finally {
         heartbeat.stop();
       }
-    });
+    }));
   }
 
   /**

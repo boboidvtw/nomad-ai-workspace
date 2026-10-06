@@ -47,3 +47,36 @@ test('LocalModelClient: builds the endpoint from host/port when no endpoint is g
     'http://127.0.0.1:9000/v1'
   );
 });
+
+test('TaskRunner: executes local-model agent tasks through LocalModelClient', async () => {
+  const { AgentRoster, TaskDispatcher, TaskRunner } = require('../../index');
+  const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      model: 'mock-llm-1',
+      choices: [{ message: { role: 'assistant', content: 'Triage done.' } }],
+      usage: { prompt_tokens: 12, completion_tokens: 30, total_tokens: 42 }
+    }));
+  });
+  await new Promise(resolve => server.listen(19898, '127.0.0.1', resolve));
+
+  try {
+    const roster = new AgentRoster();
+    // In-memory only: never touch the real ~/.nomad task store.
+    const dispatcher = new TaskDispatcher({ roster, storagePath: '/dev/null/nomad-test-tasks.json' });
+    const runner = new TaskRunner(dispatcher, {
+      localModelClient: new LocalModelClient({ endpoint: 'http://127.0.0.1:19898/v1' })
+    });
+    const created = dispatcher.createTask({ title: 'Triage the inbox', assignee: 'agent-local' });
+    assert.strictEqual(created.success, true);
+
+    const runRes = await runner.dispatchAndRun(created.data.id, 'agent-local');
+    assert.strictEqual(runRes.success, true, runRes.success ? '' : runRes.message);
+
+    const task = dispatcher.tasks.get(created.data.id);
+    assert.strictEqual(task.status, 'completed');
+    assert.ok(task.logs.some(l => /42 tokens/.test(l.message)), 'summary should report usage.total_tokens');
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});

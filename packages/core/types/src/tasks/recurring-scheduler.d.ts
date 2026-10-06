@@ -1,3 +1,24 @@
+export type ScheduleTaskTemplate = {
+    title: string;
+    description?: string | undefined;
+    priority?: string | undefined;
+    assignee?: string | undefined;
+    requireApproval?: boolean | undefined;
+    metadata?: Record<string, unknown> | undefined;
+};
+export type Schedule = {
+    id: string;
+    name: string;
+    intervalMs: number;
+    cronExpr?: string | null | undefined;
+    taskTemplate: ScheduleTaskTemplate;
+    enabled: boolean;
+    autoRun: boolean;
+    runCount: number;
+    createdAt: string;
+    lastRunAt?: string | null | undefined;
+    nextRunAt: string;
+};
 export class RecurringScheduler {
     /**
      * @param {Object} [options]
@@ -22,13 +43,15 @@ export class RecurringScheduler {
     autoPersist: boolean;
     onScheduleEvent: Function | null;
     pollIntervalMs: number;
-    /** @type {Map<string, Object>} */
-    schedules: Map<string, any>;
+    /** @type {Map<string, Schedule>} */
+    schedules: Map<string, Schedule>;
     timer: NodeJS.Timeout | null;
     /**
      * Emits internal lifecycle events
+     * @param {string} eventType
+     * @param {unknown} data
      */
-    _notify(eventType: any, data: any): void;
+    _notify(eventType: string, data: unknown): void;
     /**
      * Persists all recurring schedules to disk atomically
      */
@@ -45,50 +68,58 @@ export class RecurringScheduler {
     }>;
     /**
      * Registers a new recurring schedule
+     * @param {{ id?: string, name: string, intervalMs?: number, cronExpr?: string | null, taskTemplate: ScheduleTaskTemplate, enabled?: boolean, autoRun?: boolean }} config
+     * @returns {import('../result').UnitResult<Schedule>}
      */
-    addSchedule(config: any): import("../result").UnitFailure<"TASK_SCHEDULE_INVALID_010"> | import("../result").UnitSuccess<{
-        id: any;
-        name: any;
+    addSchedule(config: {
+        id?: string;
+        name: string;
+        intervalMs?: number;
+        cronExpr?: string | null;
+        taskTemplate: ScheduleTaskTemplate;
+        enabled?: boolean;
+        autoRun?: boolean;
+    }): import("../result").UnitResult<Schedule>;
+    /**
+     * Lists all schedules
+     */
+    listSchedules(): {
+        id: string;
+        name: string;
         intervalMs: number;
-        cronExpr: any;
-        taskTemplate: {
-            title: any;
-            description: any;
-            priority: any;
-            assignee: any;
-            requireApproval: boolean;
-            metadata: any;
-        };
+        cronExpr?: string | null | undefined;
+        taskTemplate: ScheduleTaskTemplate;
         enabled: boolean;
         autoRun: boolean;
         runCount: number;
         createdAt: string;
-        lastRunAt: null;
+        lastRunAt?: string | null | undefined;
         nextRunAt: string;
-    }>;
-    /**
-     * Lists all schedules
-     */
-    listSchedules(): any[];
+    }[];
     /**
      * Gets a specific schedule
+     * @param {string} id
      */
-    getSchedule(id: any): any;
+    getSchedule(id: string): Schedule | null;
     /**
      * Removes a schedule
+     * @param {string} id
      */
-    removeSchedule(id: any): import("../result").UnitSuccess<boolean> | import("../result").UnitFailure<"TASK_SCHEDULE_NOT_FOUND_011">;
+    removeSchedule(id: string): import("../result").UnitSuccess<boolean> | import("../result").UnitFailure<"TASK_SCHEDULE_NOT_FOUND_011">;
     /**
      * Toggles a schedule enabled state
+     * @param {string} id
+     * @param {boolean} [enabled] - Omit to flip the current state
      */
-    toggleSchedule(id: any, enabled: any): import("../result").UnitSuccess<any> | import("../result").UnitFailure<"TASK_SCHEDULE_NOT_FOUND_011">;
+    toggleSchedule(id: string, enabled?: boolean): import("../result").UnitSuccess<Schedule> | import("../result").UnitFailure<"TASK_SCHEDULE_NOT_FOUND_011">;
     /**
      * Triggers a schedule immediately
+     * @param {string} id
      */
-    triggerSchedule(id: any): Promise<import("../result").UnitFailure<string> | import("../result").UnitSuccess<{
-        schedule: any;
-        task: any;
-        execution: any;
+    triggerSchedule(id: string): Promise<import("../result").UnitFailure<string> | import("../result").UnitSuccess<{
+        schedule: Schedule;
+        task: import("./task-model").Task;
+        execution: import("./task-model").Task | null | undefined;
     }>>;
     /**
      * Starts scheduler polling loop
@@ -102,21 +133,29 @@ export class RecurringScheduler {
 /**
  * Default preset recurring jobs
  */
-export const DEFAULT_PRESET_SCHEDULES: {
-    id: string;
-    name: string;
-    intervalMs: number;
-    taskTemplate: {
-        title: string;
-        description: string;
-        priority: string;
-        assignee: string;
-        requireApproval: boolean;
-    };
-    enabled: boolean;
-    autoRun: boolean;
-    runCount: number;
-    createdAt: string;
-    nextRunAt: string;
-}[];
+/**
+ * @typedef {Object} ScheduleTaskTemplate
+ * @property {string} title
+ * @property {string} [description]
+ * @property {string} [priority]
+ * @property {string} [assignee]
+ * @property {boolean} [requireApproval]
+ * @property {Record<string, unknown>} [metadata]
+ */
+/**
+ * @typedef {Object} Schedule
+ * @property {string} id
+ * @property {string} name
+ * @property {number} intervalMs
+ * @property {string | null} [cronExpr]
+ * @property {ScheduleTaskTemplate} taskTemplate
+ * @property {boolean} enabled
+ * @property {boolean} autoRun
+ * @property {number} runCount
+ * @property {string} createdAt
+ * @property {string | null} [lastRunAt]
+ * @property {string} nextRunAt
+ */
+/** @type {Schedule[]} */
+export const DEFAULT_PRESET_SCHEDULES: Schedule[];
 export const DEFAULT_SCHEDULES_PATH: string;

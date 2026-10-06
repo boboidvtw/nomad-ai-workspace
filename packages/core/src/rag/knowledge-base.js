@@ -18,6 +18,7 @@ class KnowledgeBase {
     this.chunkSize = options.chunkSize || 350;
     this.chunkOverlap = options.chunkOverlap || 50;
     this.memory = new VectorMemoryLite();
+    /** @type {Set<string>} */
     this.indexedSources = new Set();
   }
 
@@ -72,7 +73,7 @@ class KnowledgeBase {
       this.indexedSources.add(doc.id);
       return ok({ docId: doc.id, chunksIndexed: chunks.length });
     } catch (e) {
-      return err(ErrorCodes.RAG_CHUNKING_FAILED_002, 'Failed to chunk and index doc: ' + e.message);
+      return err(ErrorCodes.RAG_CHUNKING_FAILED_002, 'Failed to chunk and index doc: ' + (e instanceof Error ? e.message : String(e)));
     }
   }
 

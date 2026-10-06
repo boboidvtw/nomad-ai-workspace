@@ -1,3 +1,10 @@
+/**
+ * A workspace record as synced to Drive; only `id` and `updatedAt` are interpreted here.
+ */
+export type SyncWorkspace = {
+    id?: string;
+    updatedAt?: string;
+} & Record<string, unknown>;
 export const DRIVE_FOLDER_NAME: "Nomad Workspace Data";
 export const WORKSPACES_FILE_NAME: "nomad-workspaces.json";
 export const SETTINGS_FILE_NAME: "nomad-settings.json";
@@ -14,16 +21,20 @@ export function detectLocalDriveFolder(): string | null;
  */
 export function computeChecksum(content: string): string;
 /**
+ * A workspace record as synced to Drive; only `id` and `updatedAt` are interpreted here.
+ * @typedef {{ id?: string, updatedAt?: string } & Record<string, unknown>} SyncWorkspace
+ */
+/**
  * Export workspaces & settings to Google Drive folder (Push)
  * @param {Object} [options]
- * @param {Array<Object>} [options.workspaces] - List of workspaces (required; validated at runtime)
- * @param {Object} [options.settings] - App settings
+ * @param {SyncWorkspace[]} [options.workspaces] - List of workspaces (required; validated at runtime)
+ * @param {Record<string, unknown>} [options.settings] - App settings
  * @param {string} [options.targetDir] - Custom Drive directory override
  * @returns {import('../result').UnitResult<{ targetDir: string, syncedCount: number, checksum: string, timestamp: string }>}
  */
 export function exportToDrive(options?: {
-    workspaces?: any[] | undefined;
-    settings?: any;
+    workspaces?: SyncWorkspace[] | undefined;
+    settings?: Record<string, unknown> | undefined;
     targetDir?: string | undefined;
 }): import("../result").UnitResult<{
     targetDir: string;
@@ -33,18 +44,18 @@ export function exportToDrive(options?: {
 }>;
 /**
  * Import workspaces from Google Drive folder (Pull) with reconciliation strategy
- * @param {Object} options
- * @param {Array<Object>} [options.currentWorkspaces=[]] - Existing local workspaces
+ * @param {Object} [options]
+ * @param {SyncWorkspace[]} [options.currentWorkspaces=[]] - Existing local workspaces
  * @param {string} [options.sourceDir] - Custom Drive directory override
  * @param {'merge'|'overwrite'|'keep_local'} [options.strategy='merge']
- * @returns {import('../result').UnitResult<{ reconciledWorkspaces: Array<Object>, importedCount: number, strategy: string, timestamp: string }>}
+ * @returns {import('../result').UnitResult<{ reconciledWorkspaces: SyncWorkspace[], importedCount: number, strategy: string, timestamp: string }>}
  */
 export function importFromDrive(options?: {
-    currentWorkspaces?: any[] | undefined;
+    currentWorkspaces?: SyncWorkspace[] | undefined;
     sourceDir?: string | undefined;
     strategy?: "merge" | "overwrite" | "keep_local" | undefined;
 }): import("../result").UnitResult<{
-    reconciledWorkspaces: Array<any>;
+    reconciledWorkspaces: SyncWorkspace[];
     importedCount: number;
     strategy: string;
     timestamp: string;

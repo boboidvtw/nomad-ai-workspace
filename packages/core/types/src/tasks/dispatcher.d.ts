@@ -19,38 +19,47 @@ export class TaskDispatcher {
     storagePath: string;
     autoPersist: boolean;
     onTaskEvent: Function | null;
-    /** @type {Map<string, Object>} */
-    tasks: Map<string, any>;
+    /** @type {Map<string, import('./task-model').Task>} */
+    tasks: Map<string, import("./task-model").Task>;
     /**
      * Emits a task event and persists state if autoPersist is true
      * @param {string} eventType
-     * @param {Object} task
+     * @param {import('./task-model').Task} task
      */
-    _notify(eventType: string, task: any): void;
+    _notify(eventType: string, task: import("./task-model").Task): void;
     /**
      * Persists all tasks to disk atomically
      * @param {string} [customPath]
-     * @returns {Promise<import('../result').UnitResult<Object, string>>}
+     * @returns {Promise<import('../result').UnitResult<{ persisted: boolean, path?: string, count: number }>>}
      */
-    saveToDisk(customPath?: string): Promise<import("../result").UnitResult<any, string>>;
+    saveToDisk(customPath?: string): Promise<import("../result").UnitResult<{
+        persisted: boolean;
+        path?: string;
+        count: number;
+    }>>;
     /**
      * Loads tasks from disk and restores state, automatically resolving offline lease expiries
      * @param {string} [customPath]
-     * @returns {import('../result').UnitResult<Object, string>}
+     * @returns {import('../result').UnitResult<{ loaded: boolean, path?: string, count: number, reason?: string }>}
      */
-    loadFromDisk(customPath?: string): import("../result").UnitResult<any, string>;
+    loadFromDisk(customPath?: string): import("../result").UnitResult<{
+        loaded: boolean;
+        path?: string;
+        count: number;
+        reason?: string;
+    }>;
     /**
      * Creates and registers a new task
-     * @param {Object} input
-     * @returns {import('../result').UnitResult<Object, string>}
+     * @param {Parameters<typeof createTaskEntity>[0]} input
+     * @returns {import('../result').UnitResult<import('./task-model').Task>}
      */
-    createTask(input: any): import("../result").UnitResult<any, string>;
+    createTask(input: Parameters<typeof createTaskEntity>[0]): import("../result").UnitResult<import("./task-model").Task>;
     /**
      * Retrieves a task by ID
      * @param {string} id
-     * @returns {import('../result').UnitResult<Object, string>}
+     * @returns {import('../result').UnitResult<import('./task-model').Task>}
      */
-    getTask(id: string): import("../result").UnitResult<any, string>;
+    getTask(id: string): import("../result").UnitResult<import("./task-model").Task>;
     /**
      * Lists tasks with optional filters
      * @param {Object} [filter]
@@ -59,7 +68,7 @@ export class TaskDispatcher {
      * @param {string} [filter.priority]
      * @param {string} [filter.parentGoal]
      * @param {string} [filter.query] - Case-insensitive match on title, description, id and assignee
-     * @returns {Object[]}
+     * @returns {import('./task-model').Task[]}
      */
     listTasks(filter?: {
         status?: string | undefined;
@@ -67,26 +76,26 @@ export class TaskDispatcher {
         priority?: string | undefined;
         parentGoal?: string | undefined;
         query?: string | undefined;
-    }): any[];
+    }): import("./task-model").Task[];
     /**
      * Returns a complete DAG dependency graph of all tasks
      * Includes upstream dependencies, downstream blocked tasks, and topological health
      */
     getTaskGraph(): {
         nodes: {
-            id: any;
-            title: any;
-            status: any;
-            priority: any;
-            assignee: any;
-            dependencies: any;
-            unsatisfiedDependencies: any;
+            id: string;
+            title: string;
+            status: import("./task-model").TaskStatus;
+            priority: import("./task-model").TaskPriority;
+            assignee: string | null;
+            dependencies: string[];
+            unsatisfiedDependencies: string[];
             isBlocked: boolean;
-            downstreamDependentIds: any[];
+            downstreamDependentIds: string[];
         }[];
         edges: {
-            from: any;
-            to: any;
+            from: string;
+            to: string;
             satisfied: boolean;
         }[];
         totalCount: number;
@@ -97,17 +106,17 @@ export class TaskDispatcher {
      * @param {string} taskId
      * @param {string} agentId
      * @param {number} [leaseDurationMs]
-     * @returns {import('../result').UnitResult<Object, string>}
+     * @returns {import('../result').UnitResult<import('./task-model').Task>}
      */
-    claimTask(taskId: string, agentId: string, leaseDurationMs?: number): import("../result").UnitResult<any, string>;
+    claimTask(taskId: string, agentId: string, leaseDurationMs?: number): import("../result").UnitResult<import("./task-model").Task>;
     /**
      * Renews the heartbeat lease on an in-progress task
      * @param {string} taskId
      * @param {string} agentId
      * @param {number} [extendMs]
-     * @returns {import('../result').UnitResult<Object, string>}
+     * @returns {import('../result').UnitResult<import('./task-model').TaskLease>}
      */
-    renewHeartbeat(taskId: string, agentId: string, extendMs?: number): import("../result").UnitResult<any, string>;
+    renewHeartbeat(taskId: string, agentId: string, extendMs?: number): import("../result").UnitResult<import("./task-model").TaskLease>;
     /**
      * Sweeps and reclaims tasks with expired heartbeat leases
      * @returns {string[]} List of reclaimed task IDs
@@ -118,37 +127,45 @@ export class TaskDispatcher {
      * @param {string} taskId
      * @param {string} agentId
      * @param {string} [summary]
-     * @returns {import('../result').UnitResult<Object, string>}
+     * @returns {import('../result').UnitResult<import('./task-model').Task>}
      */
-    completeTask(taskId: string, agentId: string, summary?: string): import("../result").UnitResult<any, string>;
+    completeTask(taskId: string, agentId: string, summary?: string): import("../result").UnitResult<import("./task-model").Task>;
     /**
      * Marks a task as failed
      * @param {string} taskId
      * @param {string} agentId
      * @param {string} [reason]
-     * @returns {import('../result').UnitResult<Object, string>}
+     * @returns {import('../result').UnitResult<import('./task-model').Task>}
      */
-    failTask(taskId: string, agentId: string, reason?: string): import("../result").UnitResult<any, string>;
+    failTask(taskId: string, agentId: string, reason?: string): import("../result").UnitResult<import("./task-model").Task>;
     /**
      * Cancels a task
      * @param {string} taskId
      * @param {string} [reason]
-     * @returns {import('../result').UnitResult<Object, string>}
+     * @returns {import('../result').UnitResult<import('./task-model').Task>}
      */
-    cancelTask(taskId: string, reason?: string): import("../result").UnitResult<any, string>;
+    cancelTask(taskId: string, reason?: string): import("../result").UnitResult<import("./task-model").Task>;
     /**
      * Appends an artifact to the task
      * @param {string} taskId
-     * @param {Object} artifact
-     * @returns {import('../result').UnitResult<Object, string>}
+     * @param {{ name?: string, type?: string, content?: string, uri?: string | null }} artifact
+     * @returns {import('../result').UnitResult<import('./task-model').TaskArtifact>}
      */
-    addArtifact(taskId: string, artifact: any): import("../result").UnitResult<any, string>;
+    addArtifact(taskId: string, artifact: {
+        name?: string;
+        type?: string;
+        content?: string;
+        uri?: string | null;
+    }): import("../result").UnitResult<import("./task-model").TaskArtifact>;
     /**
      * Appends a log entry to the task
      * @param {string} taskId
-     * @param {Object} log
+     * @param {{ level?: import('./task-model').TaskLog['level'], message: string }} log
      */
-    appendLog(taskId: string, log: any): import("../result").UnitSuccess<boolean> | import("../result").UnitFailure<"TASK_NOT_FOUND_001">;
+    appendLog(taskId: string, log: {
+        level?: import("./task-model").TaskLog["level"];
+        message: string;
+    }): import("../result").UnitSuccess<boolean> | import("../result").UnitFailure<"TASK_NOT_FOUND_001">;
     /**
      * Private helper to check and unblock dependent tasks
      * @param {string} completedTaskId
@@ -156,3 +173,4 @@ export class TaskDispatcher {
     _resolveDependencies(completedTaskId: string): void;
 }
 import { AgentRoster } from "./roster";
+import { createTaskEntity } from "./task-model";

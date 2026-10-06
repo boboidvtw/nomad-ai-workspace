@@ -8,6 +8,14 @@ const { compress, estimateTokens } = require('./headroom');
 const { decide } = require('./laya');
 
 class PipelineManager {
+  /**
+   * @param {Object} [options]
+   * @param {boolean} [options.headroomEnabled=true]
+   * @param {boolean} [options.layaEnabled=true]
+   * @param {'light'|'balanced'|'aggressive'} [options.compressionLevel='balanced']
+   * @param {boolean} [options.autoEnhance=false]
+   * @param {number} [options.maxTokens=8000]
+   */
   constructor(options = {}) {
     this.headroomEnabled = options.headroomEnabled !== false;
     this.layaEnabled = options.layaEnabled !== false;
@@ -20,7 +28,7 @@ class PipelineManager {
       totalProcessed: 0,
       totalSavedTokens: 0,
       totalLayaLatencyMs: 0,
-      intents: {}
+      intents: /** @type {Record<string, number>} */ ({})
     };
   }
 
@@ -29,8 +37,8 @@ class PipelineManager {
    * @param {Object} [input] - `prompt` is required; validated at runtime
    * @param {string} [input.prompt] - User query or directive
    * @param {string} [input.context] - Background conversational history or system context
-   * @param {Object} [input.options]
-   * @returns {import('../result').UnitResult<Object>}
+   * @param {{ headroom?: boolean, compressionLevel?: 'light'|'balanced'|'aggressive', maxTokens?: number, laya?: boolean, enhance?: boolean, preferredPlatform?: string }} [input.options]
+   * @returns {import('../result').UnitResult<{ pipelineId: string, originalPrompt: string, processedPrompt: string, headroom: unknown, laya: unknown, timestamp: string }>}
    */
   process(input = {}) {
     try {

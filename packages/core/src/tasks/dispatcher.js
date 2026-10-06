@@ -27,14 +27,14 @@ class TaskDispatcher {
     this.storagePath = options.storagePath || path.join(os.homedir(), '.nomad', 'tasks.json');
     this.autoPersist = options.autoPersist !== undefined ? Boolean(options.autoPersist) : Boolean(options.storagePath);
     this.onTaskEvent = typeof options.onTaskEvent === 'function' ? options.onTaskEvent : null;
-    /** @type {Map<string, Object>} */
+    /** @type {Map<string, import('./task-model').Task>} */
     this.tasks = new Map();
   }
 
   /**
    * Emits a task event and persists state if autoPersist is true
    * @param {string} eventType 
-   * @param {Object} task 
+   * @param {import('./task-model').Task} task 
    */
   _notify(eventType, task) {
     if (this.onTaskEvent) {
@@ -52,7 +52,7 @@ class TaskDispatcher {
   /**
    * Persists all tasks to disk atomically
    * @param {string} [customPath] 
-   * @returns {Promise<import('../result').UnitResult<Object, string>>}
+   * @returns {Promise<import('../result').UnitResult<{ persisted: boolean, path?: string, count: number }>>}
    */
   async saveToDisk(customPath = this.storagePath) {
     if (!customPath) {
@@ -69,14 +69,14 @@ class TaskDispatcher {
       fs.renameSync(tmpPath, customPath);
       return ok({ persisted: true, path: customPath, count: this.tasks.size });
     } catch (e) {
-      return err(ErrorCodes.TASK_STORAGE_SAVE_FAILED_008, `Failed to save tasks to disk: ${e.message}`, { error: e });
+      return err(ErrorCodes.TASK_STORAGE_SAVE_FAILED_008, `Failed to save tasks to disk: ${(e instanceof Error ? e.message : String(e))}`, { error: e });
     }
   }
 
   /**
    * Loads tasks from disk and restores state, automatically resolving offline lease expiries
    * @param {string} [customPath] 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<{ loaded: boolean, path?: string, count: number, reason?: string }>}
    */
   loadFromDisk(customPath = this.storagePath) {
     if (!customPath || !fs.existsSync(customPath)) {
@@ -104,14 +104,14 @@ class TaskDispatcher {
 
       return ok({ loaded: true, path: customPath, count: this.tasks.size, reclaimedCount: reclaimed.length });
     } catch (e) {
-      return err(ErrorCodes.TASK_STORAGE_LOAD_FAILED_009, `Failed to load tasks from disk: ${e.message}`, { error: e });
+      return err(ErrorCodes.TASK_STORAGE_LOAD_FAILED_009, `Failed to load tasks from disk: ${(e instanceof Error ? e.message : String(e))}`, { error: e });
     }
   }
 
   /**
    * Creates and registers a new task
-   * @param {Object} input 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @param {Parameters<typeof createTaskEntity>[0]} input
+   * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   createTask(input) {
     const entityResult = createTaskEntity(input);
@@ -141,7 +141,7 @@ class TaskDispatcher {
   /**
    * Retrieves a task by ID
    * @param {string} id 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   getTask(id) {
     const task = this.tasks.get(id);
@@ -159,7 +159,7 @@ class TaskDispatcher {
    * @param {string} [filter.priority]
    * @param {string} [filter.parentGoal]
    * @param {string} [filter.query] - Case-insensitive match on title, description, id and assignee
-   * @returns {Object[]}
+   * @returns {import('./task-model').Task[]}
    */
   listTasks(filter = {}) {
     let list = Array.from(this.tasks.values());
@@ -251,7 +251,7 @@ class TaskDispatcher {
    * @param {string} taskId 
    * @param {string} agentId 
    * @param {number} [leaseDurationMs] 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   claimTask(taskId, agentId, leaseDurationMs = this.defaultLeaseDurationMs) {
     const task = this.tasks.get(taskId);
@@ -329,7 +329,7 @@ class TaskDispatcher {
    * @param {string} taskId 
    * @param {string} agentId 
    * @param {number} [extendMs] 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./task-model').TaskLease>}
    */
   renewHeartbeat(taskId, agentId, extendMs = this.defaultLeaseDurationMs) {
     const task = this.tasks.get(taskId);
@@ -411,7 +411,7 @@ class TaskDispatcher {
    * @param {string} taskId 
    * @param {string} agentId 
    * @param {string} [summary] 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   completeTask(taskId, agentId, summary = '') {
     const task = this.tasks.get(taskId);
@@ -455,7 +455,7 @@ class TaskDispatcher {
    * @param {string} taskId 
    * @param {string} agentId 
    * @param {string} [reason] 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   failTask(taskId, agentId, reason = '') {
     const task = this.tasks.get(taskId);
@@ -494,7 +494,7 @@ class TaskDispatcher {
    * Cancels a task
    * @param {string} taskId 
    * @param {string} [reason] 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   cancelTask(taskId, reason = '') {
     const task = this.tasks.get(taskId);
@@ -535,8 +535,8 @@ class TaskDispatcher {
   /**
    * Appends an artifact to the task
    * @param {string} taskId 
-   * @param {Object} artifact 
-   * @returns {import('../result').UnitResult<Object, string>}
+   * @param {{ name?: string, type?: string, content?: string, uri?: string | null }} artifact 
+   * @returns {import('../result').UnitResult<import('./task-model').TaskArtifact>}
    */
   addArtifact(taskId, artifact) {
     const task = this.tasks.get(taskId);
@@ -561,7 +561,7 @@ class TaskDispatcher {
   /**
    * Appends a log entry to the task
    * @param {string} taskId 
-   * @param {Object} log 
+   * @param {{ level?: import('./task-model').TaskLog['level'], message: string }} log 
    */
   appendLog(taskId, log) {
     const task = this.tasks.get(taskId);

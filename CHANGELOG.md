@@ -20,6 +20,8 @@
 - **Desktop Bridge 任務 API 全部 500**：`GET /api/tasks` 等 3 條路由使用未定義的 `url` 變數，桌面版獨立模式的任務看板無法載入。
 - **Daemon `/api/local-model/chat` 永遠 500**：呼叫了不存在的 `client.chat()`（應為 `chatCompletion()`）；`LocalModelClient` 也忽略呼叫端傳入的 `host` / `port`，現在會依此組出 endpoint。
 - **Desktop 抽屜切換 `ReferenceError`**：`onToggleDrawer` 使用未宣告的 `drawerOpen` 變數。
+- **指派給 local-model（LM Studio）Agent 的任務一律失敗**：`TaskRunner` 呼叫不存在的 `localModelClient.chat()`（應為 `chatCompletion()`），token 數也讀錯欄位。
+- **空的 Agent 名單時 `findBestAgentForSkills` 回傳空物件**：改為回傳 `ROSTER_AGENT_NOT_FOUND_001`。
 - **CLI `nomad-daemon probe` 失敗時崩潰**、`/api/status` 在探測失敗時回傳 `microservices: undefined`。
 - **根目錄 4 個失敗測試**：上游 Voyager 的 CI / release 測試改為依其實際讀取的檔案（`pr-gate.yml`、`release.yml`、`deploy-docs.yml`、`sponsors.yml`）決定是否執行，不再因本專案有自己的 `.github/workflows` 而誤跑；腳本邏輯測試照常執行。
 
@@ -29,6 +31,7 @@
 
 - **統一使用 npm 作為套件管理器**：`packageManager` 由 `bun@1.3.12` 改為 `npm@11.19.1`（與 lockfile、CI、文件一致；electron-builder 打包亦改以 npm 解析 workspace 依賴）。原本以 bun 執行的 npm scripts 改用 `node` / `npm run`，TS 維護腳本（`plugin:check`、`plugin:new`、`catalog:build`）改用新增的 `tsx` devDependency 執行；僅 `verify:katex-export`（使用 `Bun.build`）仍需 Bun。移除子套件中無效的 `desktop/package-lock.json`、`gemini-nexus/package-lock.json`、`claude-voyager/yarn.lock`。
 
+- **型別檢查收緊為 `strict`**：`@nomad/core`、`@nomad/daemon`、`@nomad/dashboard` 開啟完整 `strict`（含 `noImplicitAny`）；desktop 開啟 `strict` 但暫不含 `noImplicitAny`（Electron 主程序約 300 個未標註參數）。新增 `Task`、`Agent`、`Schedule`、`ServiceProbeResult` 等實體型別，產生的型別中 `any` 由 92 處降至 5 處、`Object` 清零。
 - **微服務探針單一來源**：`packages/daemon/src/prober.js` 與 `packages/desktop/src/prober.js` 兩份完全相同的副本合併為 `@nomad/core` 的 `probePort` / `probeAllServices`；`@nomad/daemon` 對外的同名 export 不變（改由 core 轉出）。
 
 ### 🗑️ 移除 (Removed)
