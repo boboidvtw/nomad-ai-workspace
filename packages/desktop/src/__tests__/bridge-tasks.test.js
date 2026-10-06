@@ -1,3 +1,5 @@
+process.env.NOMAD_DAEMON_TOKEN = 'test-token-0123456789abcdef0123456789abcdef';
+const AUTH = { Authorization: 'Bearer ' + process.env.NOMAD_DAEMON_TOKEN };
 const { describe, it } = require("node:test");
 const assert = require("node:assert");
 const http = require("node:http");
@@ -12,6 +14,7 @@ function makeRequest(port, method, path, body = null) {
       path,
       method,
       headers: {
+        ...AUTH,
         "Content-Type": "application/json",
         ...(data ? { "Content-Length": Buffer.byteLength(data) } : {})
       }
@@ -134,7 +137,8 @@ describe("Bridge: Task Control Plane & Multi-Agent Dispatcher", () => {
           hostname: "127.0.0.1",
           port: actualPort,
           path: "/api/events",
-          method: "GET"
+          method: "GET",
+          headers: AUTH
         }, (res) => {
           res.on("data", chunk => {
             const text = chunk.toString();

@@ -1,9 +1,11 @@
+process.env.NOMAD_DAEMON_TOKEN = 'test-token-0123456789abcdef0123456789abcdef';
+const AUTH = { Authorization: 'Bearer ' + process.env.NOMAD_DAEMON_TOKEN };
 const fs = require('fs');
 const test = require('node:test');
 const assert = require('node:assert');
 const { LocalSyncBridge } = require('../bridge.js');
 
-test('Bridge: Starts and serves /api/status with CORS headers', async () => {
+test('Bridge: Starts and serves /api/status without wildcard CORS', async () => {
   const bridge = new LocalSyncBridge({
     port: 19876,
     host: '127.0.0.1',
@@ -13,9 +15,9 @@ test('Bridge: Starts and serves /api/status with CORS headers', async () => {
   const { url } = await bridge.start();
 
   try {
-    const res = await fetch(`${url}/api/status`);
+    const res = await fetch(`${url}/api/status`, { headers: AUTH });
     assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.headers.get('access-control-allow-origin'), '*');
+    assert.strictEqual(res.headers.get('access-control-allow-origin'), null);
 
     const json = await res.json();
     assert.strictEqual(json.success, true);
@@ -47,7 +49,7 @@ test('Bridge: Dispatches prompt and validates inputs', async () => {
     // 1. Invalid empty prompt test
     const errRes = await fetch(`${url}/api/prompt`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...AUTH },
       body: JSON.stringify({ prompt: '   ' }),
     });
     assert.strictEqual(errRes.status, 400);
@@ -58,7 +60,7 @@ test('Bridge: Dispatches prompt and validates inputs', async () => {
     // 2. Valid prompt dispatch test
     const okRes = await fetch(`${url}/api/prompt`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...AUTH },
       body: JSON.stringify({ prompt: 'Hello AI Studio!', targets: ['claude', 'gemini'] }),
     });
     assert.strictEqual(okRes.status, 200);
@@ -90,7 +92,7 @@ test('Bridge: Layout, Zoom and Window control endpoints', async () => {
     // Layout
     const lRes = await fetch(`${url}/api/layout`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...AUTH },
       body: JSON.stringify({ layout: 'quad' }),
     });
     const lJson = await lRes.json();
@@ -100,7 +102,7 @@ test('Bridge: Layout, Zoom and Window control endpoints', async () => {
     // Zoom
     const zRes = await fetch(`${url}/api/zoom`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...AUTH },
       body: JSON.stringify({ platform: 'chatgpt', factor: 1.1 }),
     });
     const zJson = await zRes.json();
@@ -110,7 +112,7 @@ test('Bridge: Layout, Zoom and Window control endpoints', async () => {
     // Window
     const wRes = await fetch(`${url}/api/window`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...AUTH },
       body: JSON.stringify({ action: 'show' }),
     });
     const wJson = await wRes.json();
@@ -141,7 +143,7 @@ test('Bridge: Orchestration endpoints (status, start, pause, resume, stop)', asy
 
   try {
     // 1. Status
-    const stRes = await fetch(`${url}/api/orchestration/status`);
+    const stRes = await fetch(`${url}/api/orchestration/status`, { headers: AUTH });
     const stJson = await stRes.json();
     assert.strictEqual(stJson.success, true);
     assert.strictEqual(stJson.data.status, 'idle');
@@ -149,7 +151,7 @@ test('Bridge: Orchestration endpoints (status, start, pause, resume, stop)', asy
     // 2. Start
     const startRes = await fetch(`${url}/api/orchestration/start`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...AUTH },
       body: JSON.stringify({ prompt: 'Orchestration prompt', sequence: ['claude', 'chatgpt'] }),
     });
     const startJson = await startRes.json();
@@ -157,13 +159,13 @@ test('Bridge: Orchestration endpoints (status, start, pause, resume, stop)', asy
     assert.strictEqual(startedWith.prompt, 'Orchestration prompt');
 
     // 3. Pause, Resume, Stop
-    const pRes = await fetch(`${url}/api/orchestration/pause`, { method: 'POST' });
+    const pRes = await fetch(`${url}/api/orchestration/pause`, { method: 'POST', headers: AUTH });
     assert.strictEqual((await pRes.json()).status, 'paused');
 
-    const rRes = await fetch(`${url}/api/orchestration/resume`, { method: 'POST' });
+    const rRes = await fetch(`${url}/api/orchestration/resume`, { method: 'POST', headers: AUTH });
     assert.strictEqual((await rRes.json()).status, 'running');
 
-    const sRes = await fetch(`${url}/api/orchestration/stop`, { method: 'POST' });
+    const sRes = await fetch(`${url}/api/orchestration/stop`, { method: 'POST', headers: AUTH });
     assert.strictEqual((await sRes.json()).status, 'stopped');
   } finally {
     await bridge.stop();
@@ -205,14 +207,14 @@ test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () =>
 
   try {
     // 1. Export workspaces JSON
-    const expRes = await fetch(`${url}/api/workspaces/export`);
+    const expRes = await fetch(`${url}/api/workspaces/export`, { headers: AUTH });
     assert.strictEqual(expRes.status, 200);
     const expJson = await expRes.json();
     assert.strictEqual(expJson.success, true);
     assert.strictEqual(expJson.data.workspaces.length, 1);
 
     // 2. Export markdown
-    const mdRes = await fetch(`${url}/api/orchestration/export-markdown`);
+    const mdRes = await fetch(`${url}/api/orchestration/export-markdown`, { headers: AUTH });
     assert.strictEqual(mdRes.status, 200);
     const mdJson = await mdRes.json();
     assert.strictEqual(mdJson.success, true);
@@ -221,7 +223,7 @@ test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () =>
     // 3. Export to file
     const fileRes = await fetch(`${url}/api/export-to-file`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...AUTH },
       body: JSON.stringify({ type: "markdown", content: mdJson.data.markdown, filename: "test_report" })
     });
     assert.strictEqual(fileRes.status, 200);
@@ -234,7 +236,7 @@ test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () =>
     // 4. Import workspaces
     const impRes = await fetch(`${url}/api/workspaces/import`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...AUTH },
       body: JSON.stringify({
         data: [{ id: "ws-import-test", title: "1003 | 功能 | 匯入測試", promptSnippet: "匯入測試" }]
       })
@@ -245,7 +247,7 @@ test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () =>
     assert.strictEqual(impJson.importedCount, 1);
 
     // 5. Search workspaces via GET & POST
-    const searchGetRes = await fetch(`${url}/api/workspaces/search?q=匯入測試&type=功能`);
+    const searchGetRes = await fetch(`${url}/api/workspaces/search?q=匯入測試&type=功能`, { headers: AUTH });
     assert.strictEqual(searchGetRes.status, 200);
     const searchGetJson = await searchGetRes.json();
     assert.strictEqual(searchGetJson.success, true);
@@ -254,7 +256,7 @@ test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () =>
 
     const searchPostRes = await fetch(`${url}/api/workspaces/search`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...AUTH },
       body: JSON.stringify({ query: "匯入測試", type: "all" })
     });
     assert.strictEqual(searchPostRes.status, 200);
@@ -287,6 +289,33 @@ test('Bridge: Serves /dashboard and /api/probe endpoints', async () => {
     const probeJson = await probeRes.json();
     assert.strictEqual(probeJson.success, true);
     assert.ok(probeJson.data.services.length > 0);
+  } finally {
+    await bridge.stop();
+  }
+});
+
+test('Bridge: Rejects missing tokens and foreign origins', async () => {
+  const bridge = new LocalSyncBridge({ port: 19879, host: '127.0.0.1' });
+  const { url } = await bridge.start();
+
+  try {
+    const noToken = await fetch(`${url}/api/status`);
+    assert.strictEqual(noToken.status, 401);
+
+    const evil = await fetch(`${url}/api/status`, { headers: { ...AUTH, Origin: 'https://evil.example.com' } });
+    assert.strictEqual(evil.status, 403);
+    assert.strictEqual(evil.headers.get('access-control-allow-origin'), null);
+
+    const evalAttempt = await fetch(`${url}/api/debug/eval`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform: 'claude', script: 'document.cookie' })
+    });
+    assert.strictEqual(evalAttempt.status, 401);
+
+    const probe = await fetch(`${url}/api/probe?timeout=100`);
+    assert.strictEqual(probe.status, 200);
+    assert.strictEqual(probe.headers.get('access-control-allow-origin'), '*');
   } finally {
     await bridge.stop();
   }

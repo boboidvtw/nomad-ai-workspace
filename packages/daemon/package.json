@@ -26,6 +26,7 @@
   "author": "bobo li",
   "license": "GPL-3.0",
   "dependencies": {
-    "@nomad/core": "*"
+    "@nomad/core": "*",
+    "@nomad/dashboard": "*"
   }
 }

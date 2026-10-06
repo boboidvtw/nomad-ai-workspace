@@ -1,3 +1,5 @@
+process.env.NOMAD_DAEMON_TOKEN = 'test-token-0123456789abcdef0123456789abcdef';
+const AUTH = { Authorization: 'Bearer ' + process.env.NOMAD_DAEMON_TOKEN };
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
@@ -44,20 +46,20 @@ test('Daemon Server: Starts on test port, serves /dashboard and /api/probe, then
   assert.equal(startRes.success, true);
 
   // Test /dashboard
-  const dashRes = await fetch('http://127.0.0.1:' + testPort + '/dashboard');
+  const dashRes = await fetch('http://127.0.0.1:' + testPort + '/dashboard', { headers: AUTH });
   assert.equal(dashRes.status, 200);
   const html = await dashRes.text();
   assert.ok(html.includes('Nomad Dashboard'));
 
   // Test /api/probe
-  const probeRes = await fetch('http://127.0.0.1:' + testPort + '/api/probe');
+  const probeRes = await fetch('http://127.0.0.1:' + testPort + '/api/probe', { headers: AUTH });
   assert.equal(probeRes.status, 200);
   const probeJson = await probeRes.json();
   assert.equal(probeJson.success, true);
   assert.ok(probeJson.data.services.length > 0);
 
   // Test /api/status
-  const statusRes = await fetch('http://127.0.0.1:' + testPort + '/api/status');
+  const statusRes = await fetch('http://127.0.0.1:' + testPort + '/api/status', { headers: AUTH });
   assert.equal(statusRes.status, 200);
   const statusJson = await statusRes.json();
   assert.equal(statusJson.success, true);

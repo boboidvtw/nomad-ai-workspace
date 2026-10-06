@@ -4,6 +4,24 @@
 
 ---
 
+## [Unreleased]
+
+### 🔒 安全性 (Security)
+- **Daemon (:8765) 與 Studio Bridge 本地閘道驗證**：所有 `/api/*` 端點改為需要 Bearer Token（`Authorization: Bearer`、`X-Nomad-Token` 或 SSE 用的 `?token=`）。Token 首次啟動時產生於 `~/.nomad/daemon-token`（權限 0600），可用 `NOMAD_DAEMON_TOKEN` / `NOMAD_DAEMON_TOKEN_FILE` 覆寫。
+- **移除 `Access-Control-Allow-Origin: *`**：僅反射 loopback 來源（`127.0.0.1` / `localhost` / `[::1]`），外部網站來源一律 403，杜絕任意網頁跨站呼叫本地 API。
+- **DNS Rebinding 防護**：檢查 `Host` 標頭，非 loopback 主機名稱一律拒絕。
+- **Local Model SSRF 防護**：`/api/local-model/probe|chat` 的 `host` / `endpoint` 參數限制為 loopback 位址。
+- Dashboard 由閘道提供時自動注入 Token，`fetch` / `EventSource` 呼叫無需修改；`/api/probe` 與 `/dashboard` 維持免驗證。
+- 命令列呼叫範例：`curl -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/status`
+
+### 🐛 修復 (Fixed)
+- **Dashboard 任務看板整段腳本無法執行**：43 行 HTML 字串遺失跳脫字元（`\'` / `\"`）導致 SyntaxError，任務卡片、詳情 Modal 與排程清單全部失效；新增 inline script 語法回歸測試。
+
+### ♻️ 重構 (Changed)
+- **Dashboard 單一來源**：移除 `packages/desktop/src/dashboard-fallback.html` 重複副本與兩份重複的 static handler，Daemon 與 Desktop Bridge 統一透過 `@nomad/dashboard` 套件（`serveDashboard` / `findDashboardPath`）提供頁面；Electron 打包時隨 `node_modules/@nomad` 一併收錄。
+
+---
+
 ## [1.4.0] - 2026-10-03
 
 ### 🤖 專案里程碑：對話紀錄全文檢索與語義標籤過濾、ChatGPT 專注模式預設與 macOS 原生透明選單列圖標 (Full-Text Search, Focus Startup & macOS Transparent Tray)

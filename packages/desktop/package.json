@@ -98,6 +98,7 @@
     }
   },
   "dependencies": {
-    "@nomad/core": "*"
+    "@nomad/core": "*",
+    "@nomad/dashboard": "*"
   }
 }

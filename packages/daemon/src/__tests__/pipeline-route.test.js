@@ -1,3 +1,5 @@
+process.env.NOMAD_DAEMON_TOKEN = 'test-token-0123456789abcdef0123456789abcdef';
+const AUTH = { Authorization: 'Bearer ' + process.env.NOMAD_DAEMON_TOKEN };
 const { test } = require('node:test');
 const assert = require('node:assert');
 const http = require('node:http');
@@ -12,9 +14,10 @@ function makeRequest(port, path, method = 'GET', body = null) {
       path,
       method,
       headers: payload ? {
+        ...AUTH,
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(payload)
-      } : {}
+      } : { ...AUTH }
     }, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);

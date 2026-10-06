@@ -1,3 +1,5 @@
+process.env.NOMAD_DAEMON_TOKEN = 'test-token-0123456789abcdef0123456789abcdef';
+const AUTH = { Authorization: 'Bearer ' + process.env.NOMAD_DAEMON_TOKEN };
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
@@ -15,7 +17,7 @@ test('Daemon & Studio Handshake Protocol: Registration, Proxy & Offline Handling
   // Initially Studio is offline
   const offlineCheck = await fetch(`http://127.0.0.1:${daemonPort}/api/prompt`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...AUTH },
     body: JSON.stringify({ prompt: 'test before studio' })
   });
   assert.equal(offlineCheck.status, 503);
@@ -45,7 +47,7 @@ test('Daemon & Studio Handshake Protocol: Registration, Proxy & Offline Handling
   // 3. Register Mock Studio with Daemon
   const regRes = await fetch(`http://127.0.0.1:${daemonPort}/api/studio/register`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...AUTH },
     body: JSON.stringify({ bridgePort: mockStudioPort, pid: 77777, version: '1.4.0' })
   });
   assert.equal(regRes.status, 200);
@@ -54,7 +56,7 @@ test('Daemon & Studio Handshake Protocol: Registration, Proxy & Offline Handling
   assert.equal(regJson.data.status, 'registered');
 
   // Check /api/studio/status
-  const statusRes = await fetch(`http://127.0.0.1:${daemonPort}/api/studio/status`);
+  const statusRes = await fetch(`http://127.0.0.1:${daemonPort}/api/studio/status`, { headers: AUTH });
   const statusJson = await statusRes.json();
   assert.equal(statusJson.data.online, true);
   assert.equal(statusJson.data.activeStudio.bridgePort, mockStudioPort);
@@ -62,7 +64,7 @@ test('Daemon & Studio Handshake Protocol: Registration, Proxy & Offline Handling
   // 4. Test Reverse Proxy: Call Daemon /api/prompt -> Forwarded to Mock Studio
   const promptRes = await fetch(`http://127.0.0.1:${daemonPort}/api/prompt`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...AUTH },
     body: JSON.stringify({ prompt: 'Hello via Daemon Gateway' })
   });
   assert.equal(promptRes.status, 200);
@@ -78,7 +80,7 @@ test('Daemon & Studio Handshake Protocol: Registration, Proxy & Offline Handling
   // 5. Heartbeat
   const hbRes = await fetch(`http://127.0.0.1:${daemonPort}/api/studio/heartbeat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json', ...AUTH }
   });
   const hbJson = await hbRes.json();
   assert.equal(hbJson.success, true);
@@ -87,13 +89,13 @@ test('Daemon & Studio Handshake Protocol: Registration, Proxy & Offline Handling
   // 6. Unregister
   const unregRes = await fetch(`http://127.0.0.1:${daemonPort}/api/studio/unregister`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json', ...AUTH }
   });
   const unregJson = await unregRes.json();
   assert.equal(unregJson.data.status, 'unregistered');
 
   // After unregister, Studio is offline again
-  const postUnreg = await fetch(`http://127.0.0.1:${daemonPort}/api/studio/status`);
+  const postUnreg = await fetch(`http://127.0.0.1:${daemonPort}/api/studio/status`, { headers: AUTH });
   const postUnregJson = await postUnreg.json();
   assert.equal(postUnregJson.data.online, false);
 
