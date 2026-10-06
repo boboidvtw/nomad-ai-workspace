@@ -2037,23 +2037,23 @@
             <div class="pipeline-row">
               <div class="pipeline-info">
                 <span class="pipeline-name">⚡ 檢查中繼狀態</span>
-                <span class="pipeline-cmd">curl -s http://127.0.0.1:8765/api/status</span>
+                <span class="pipeline-cmd">curl -s -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/status</span>
               </div>
-              <button class="btn-copy" onclick="copyText('curl -s http://127.0.0.1:8765/api/status')">📋 複製</button>
+              <button class="btn-copy" data-cmd="curl -s -H &quot;Authorization: Bearer $(cat ~/.nomad/daemon-token)&quot; http://127.0.0.1:8765/api/status" onclick="copyText(this.dataset.cmd)">📋 複製</button>
             </div>
             <div class="pipeline-row">
               <div class="pipeline-info">
                 <span class="pipeline-name">🚀 喚出桌面工作台</span>
-                <span class="pipeline-cmd">curl -s -X POST http://127.0.0.1:8765/api/window -H "Content-Type: application/json" -d '{"action":"show"}'</span>
+                <span class="pipeline-cmd">curl -s -X POST http://127.0.0.1:8765/api/window -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" -H "Content-Type: application/json" -d '{"action":"show"}'</span>
               </div>
-              <button class="btn-copy" onclick="copyText('curl -s -X POST http://127.0.0.1:8765/api/window -H "Content-Type: application/json" -d '{"action":"show"}'')">📋 複製</button>
+              <button class="btn-copy" data-cmd="curl -s -X POST http://127.0.0.1:8765/api/window -H &quot;Authorization: Bearer $(cat ~/.nomad/daemon-token)&quot; -H &quot;Content-Type: application/json&quot; -d &#x27;{&quot;action&quot;:&quot;show&quot;}&#x27;" onclick="copyText(this.dataset.cmd)">📋 複製</button>
             </div>
             <div class="pipeline-row">
               <div class="pipeline-info">
                 <span class="pipeline-name">💬 跨平臺同步提問</span>
-                <span class="pipeline-cmd">curl -s -X POST http://127.0.0.1:8765/api/prompt -H "Content-Type: application/json" -d '{"prompt":"你好！"}'</span>
+                <span class="pipeline-cmd">curl -s -X POST http://127.0.0.1:8765/api/prompt -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" -H "Content-Type: application/json" -d '{"prompt":"你好！"}'</span>
               </div>
-              <button class="btn-copy" onclick="copyText('curl -s -X POST http://127.0.0.1:8765/api/prompt -H "Content-Type: application/json" -d '{"prompt":"你好！"}'')">📋 複製</button>
+              <button class="btn-copy" data-cmd="curl -s -X POST http://127.0.0.1:8765/api/prompt -H &quot;Authorization: Bearer $(cat ~/.nomad/daemon-token)&quot; -H &quot;Content-Type: application/json&quot; -d &#x27;{&quot;prompt&quot;:&quot;你好！&quot;}&#x27;" onclick="copyText(this.dataset.cmd)">📋 複製</button>
             </div>
           </div>
 
@@ -2121,9 +2121,9 @@
             <div class="pipeline-row">
               <div class="pipeline-info">
                 <span class="pipeline-name">💬 快速推論對話測試</span>
-                <span class="pipeline-cmd">curl http://127.0.0.1:1234/v1/chat/completions -H "Content-Type: application/json" -d '{"messages":[{"role":"user","content":"Hi"}]}'</span>
+                <span class="pipeline-cmd">curl http://127.0.0.1:1234/v1/chat/completions -H "Content-Type: application/json" -d '{"messages":[{"role":"user","content":"Hi"}],"temperature":0.7}'</span>
               </div>
-              <button class="btn-copy" onclick="copyText('curl http://127.0.0.1:1234/v1/chat/completions -H \'Content-Type: application/json\' -d \'{"messages":[{"role":"user","content":"Hi"}],"temperature":0.7}\'')">📋 複製</button>
+              <button class="btn-copy" data-cmd="curl http://127.0.0.1:1234/v1/chat/completions -H &quot;Content-Type: application/json&quot; -d &#x27;{&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;Hi&quot;}],&quot;temperature&quot;:0.7}&#x27;" onclick="copyText(this.dataset.cmd)">📋 複製</button>
             </div>
           </div>
 
@@ -2753,7 +2753,7 @@
                 <span class="pipeline-name">🔄 重啟 Nomad Dashboard 服務</span>
                 <span class="pipeline-cmd">pkill -f "http.server 8556" ; python3 -m http.server 8556 --bind 127.0.0.1 --directory ~/Developer/nomad-dashboard &</span>
               </div>
-              <button class="btn-copy" onclick="copyText('pkill -f "http.server 8556" ; python3 -m http.server 8556 --bind 127.0.0.1 --directory /Users/liyungchih-macstudio/Developer/nomad-dashboard &')">📋 複製</button>
+              <button class="btn-copy" data-cmd="pkill -f &quot;http.server 8556&quot; ; python3 -m http.server 8556 --bind 127.0.0.1 --directory /Users/liyungchih-macstudio/Developer/nomad-dashboard &amp;" onclick="copyText(this.dataset.cmd)">📋 複製</button>
             </div>
           </div>
 
