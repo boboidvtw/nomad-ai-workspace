@@ -9,14 +9,15 @@ const { ErrorCodes } = require('../error-codes');
 
 class PluginRuntime {
   constructor() {
-    this.plugins = new Map(); // id -> { manifest, hooks }
+    /** @type {Map<string, { manifest: { id: string, name: string, version: string, description?: string }, hooks: Record<string, Function>, enabled: boolean }>} */
+    this.plugins = new Map();
   }
 
   /**
    * Register a plugin with manifest validation
    * @param {Object} [plugin] - `manifest` is required; validated at runtime
    * @param {{ id: string, name: string, version: string, description?: string }} [plugin.manifest]
-   * @param {Object} [plugin.hooks] - onPromptBeforeDispatch, onResponseSettled
+   * @param {Record<string, Function>} [plugin.hooks] - onPromptBeforeDispatch, onResponseSettled
    * @returns {import('../result').UnitResult<{ registeredId: string, version: string }>}
    */
   register(plugin = {}) {
@@ -37,8 +38,8 @@ class PluginRuntime {
   /**
    * Execute lifecycle hook across all active plugins
    * @param {'onPromptBeforeDispatch'|'onResponseSettled'} hookName
-   * @param {Object} context
-   * @returns {Promise<import('../result').UnitResult<Object>>}
+   * @param {Record<string, unknown>} context
+   * @returns {Promise<import('../result').UnitResult<Record<string, unknown>>>}
    */
   async executeHook(hookName, context = {}) {
     try {
@@ -57,7 +58,7 @@ class PluginRuntime {
 
       return ok(currentCtx);
     } catch (e) {
-      return err(ErrorCodes.PLUGIN_EXECUTION_FAILED_002, `Hook ${hookName} failed: ${e.message}`);
+      return err(ErrorCodes.PLUGIN_EXECUTION_FAILED_002, `Hook ${hookName} failed: ${(e instanceof Error ? e.message : String(e))}`);
     }
   }
 

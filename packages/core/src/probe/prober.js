@@ -10,6 +10,19 @@ const { ErrorCodes } = require('../error-codes');
 const { MONITORED_SERVICES } = require('../constants');
 
 /**
+ * @typedef {import('../constants').MonitoredService & { online: boolean, latencyMs: number, error: string | null, statusText: string }} ServiceProbeResult
+ */
+
+/**
+ * @typedef {Object} ProbeSummary
+ * @property {number} total
+ * @property {number} onlineCount
+ * @property {number} offlineCount
+ * @property {boolean} allEssentialOnline
+ * @property {'healthy' | 'degraded'} overallStatus
+ */
+
+/**
  * Probes a single TCP host:port endpoint
  * @param {string} host
  * @param {number} port
@@ -60,7 +73,7 @@ function probePort(host = '127.0.0.1', port, timeoutMs = 350) {
  * Probes all configured microservices concurrently
  * @param {ReadonlyArray<import('../constants').MonitoredService>} [services=MONITORED_SERVICES]
  * @param {number} [timeoutMs=350]
- * @returns {Promise<import('../result').UnitResult<{ services: Array<Object>, summary: Object, timestamp: string }>>}
+ * @returns {Promise<import('../result').UnitResult<{ services: ServiceProbeResult[], summary: ProbeSummary, timestamp: string }>>}
  */
 async function probeAllServices(services = MONITORED_SERVICES, timeoutMs = 350) {
   try {

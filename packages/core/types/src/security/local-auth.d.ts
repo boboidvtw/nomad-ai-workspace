@@ -7,7 +7,11 @@ export function getTokenFilePath(): string;
  * @returns {string}
  */
 export function resolveAuthToken(explicitToken?: string): string;
-export function isLoopbackHostname(hostname: any): boolean;
+/**
+ * @param {unknown} hostname
+ * @returns {boolean}
+ */
+export function isLoopbackHostname(hostname: unknown): boolean;
 /**
  * True when every caller-supplied target in a local-model request (`host`, `endpoint`) is loopback.
  * Prevents the gateway from being used as an SSRF relay to LAN / internet hosts.
@@ -27,15 +31,30 @@ export function isAllowedHostHeader(hostHeader: string | undefined, boundHost?: 
 /**
  * Browser origins allowed to call the API: pages served from a loopback http(s) origin.
  * Requests without an Origin header (curl, Node clients) pass this check and rely on the token.
+ * @param {string | undefined} origin
+ * @returns {boolean}
  */
-export function isAllowedOrigin(origin: any): boolean;
-export function extractToken(req: any, url: any): any;
-export function tokensMatch(provided: any, expected: any): boolean;
+export function isAllowedOrigin(origin: string | undefined): boolean;
+/**
+ * @param {import('http').IncomingMessage} req
+ * @param {URL} url
+ * @returns {string}
+ */
+export function extractToken(req: import("http").IncomingMessage, url: URL): string;
+/**
+ * Constant-time token comparison.
+ * @param {string} provided
+ * @param {string} expected
+ * @returns {boolean}
+ */
+export function tokensMatch(provided: string, expected: string): boolean;
 /**
  * Sets CORS headers: the request Origin is reflected only when it is an allowed loopback origin.
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res
  * @param {boolean} [publicRoute] - Read-only health routes answer any origin with `*`.
  */
-export function applyCorsHeaders(req: any, res: any, publicRoute?: boolean): void;
+export function applyCorsHeaders(req: import("http").IncomingMessage, res: import("http").ServerResponse, publicRoute?: boolean): void;
 /**
  * Decides whether a request may proceed.
  * @param {import('http').IncomingMessage} req

@@ -8,18 +8,37 @@ export type McpGatewayOptions = {
      */
     deniedPaths?: string[] | undefined;
 };
+export type McpToolDefinition = {
+    name: string;
+    description?: string | undefined;
+    /**
+     * - JSON Schema of the tool arguments
+     */
+    parameters?: Record<string, unknown> | undefined;
+    handler: (args: Record<string, any>) => Promise<import("../result").UnitResult<unknown>>;
+};
 /**
  * @typedef {Object} McpGatewayOptions
  * @property {string[]} [allowedPaths] - Roots the built-in file tools may read. Defaults to {@link defaultAllowedPaths}.
  * @property {string[]} [deniedPaths] - Locations refused even inside an allowed root. Defaults to {@link defaultDeniedPaths}.
+
+ */
+/**
+ * @typedef {Object} McpToolDefinition
+ * @property {string} name
+ * @property {string} [description]
+ * @property {Record<string, unknown>} [parameters] - JSON Schema of the tool arguments
+ * @property {(args: Record<string, any>) => Promise<import('../result').UnitResult<unknown>>} handler
  */
 export class McpGateway {
     /**
      * @param {McpGatewayOptions} [options]
      */
     constructor(options?: McpGatewayOptions);
-    tools: Map<any, any>;
-    servers: Map<any, any>;
+    /** @type {Map<string, McpToolDefinition>} */
+    tools: Map<string, McpToolDefinition>;
+    /** @type {Map<string, unknown>} */
+    servers: Map<string, unknown>;
     /** @type {string[]} */
     allowedPaths: string[];
     /** @type {string[]} */
@@ -32,15 +51,22 @@ export class McpGateway {
      */
     resolveAllowedPath(requestedPath: unknown): import("../result").UnitResult<string, typeof ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002>;
     registerDefaultTools(): void;
-    registerTool(toolDef: any): import("../result").UnitFailure<"MCP_INVALID_PROTOCOL_003"> | import("../result").UnitSuccess<{
-        registeredTool: any;
+    /**
+     * @param {McpToolDefinition} toolDef
+     */
+    registerTool(toolDef: McpToolDefinition): import("../result").UnitFailure<"MCP_INVALID_PROTOCOL_003"> | import("../result").UnitSuccess<{
+        registeredTool: string;
     }>;
     listTools(): import("../result").UnitSuccess<{
-        name: any;
-        description: any;
-        parameters: any;
+        name: string;
+        description: string | undefined;
+        parameters: Record<string, unknown> | undefined;
     }[]>;
-    callTool(name: any, args?: {}): Promise<any>;
+    /**
+     * @param {string} name
+     * @param {Record<string, any>} [args]
+     */
+    callTool(name: string, args?: Record<string, any>): Promise<import("../result").UnitResult<unknown, string>>;
 }
 /** Env var listing extra allowed roots for the built-in file tools, separated by `path.delimiter`. */
 export const ALLOWED_PATHS_ENV: "NOMAD_MCP_ALLOWED_PATHS";

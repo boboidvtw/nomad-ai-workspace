@@ -81,6 +81,15 @@ function isWithin(child, parent) {
  * @typedef {Object} McpGatewayOptions
  * @property {string[]} [allowedPaths] - Roots the built-in file tools may read. Defaults to {@link defaultAllowedPaths}.
  * @property {string[]} [deniedPaths] - Locations refused even inside an allowed root. Defaults to {@link defaultDeniedPaths}.
+
+ */
+
+/**
+ * @typedef {Object} McpToolDefinition
+ * @property {string} name
+ * @property {string} [description]
+ * @property {Record<string, unknown>} [parameters] - JSON Schema of the tool arguments
+ * @property {(args: Record<string, any>) => Promise<import('../result').UnitResult<unknown>>} handler
  */
 
 class McpGateway {
@@ -88,7 +97,9 @@ class McpGateway {
    * @param {McpGatewayOptions} [options]
    */
   constructor(options = {}) {
+    /** @type {Map<string, McpToolDefinition>} */
     this.tools = new Map();
+    /** @type {Map<string, unknown>} */
     this.servers = new Map();
     /** @type {string[]} */
     this.allowedPaths = options.allowedPaths || defaultAllowedPaths();
@@ -129,7 +140,7 @@ class McpGateway {
         },
         required: ['path']
       },
-      handler: async (args) => {
+      handler: async (/** @type {Record<string, any>} */ args) => {
         const checked = this.resolveAllowedPath(args.path);
         if (!checked.success) return checked;
         const filePath = checked.data;
@@ -152,7 +163,7 @@ class McpGateway {
         },
         required: ['path']
       },
-      handler: async (args) => {
+      handler: async (/** @type {Record<string, any>} */ args) => {
         const checked = this.resolveAllowedPath(args.path);
         if (!checked.success) return checked;
         const dirPath = checked.data;
@@ -169,6 +180,9 @@ class McpGateway {
     });
   }
 
+  /**
+   * @param {McpToolDefinition} toolDef
+   */
   registerTool(toolDef) {
     if (!toolDef || !toolDef.name || typeof toolDef.handler !== 'function') {
       return err(ErrorCodes.MCP_INVALID_PROTOCOL_003, 'Invalid tool definition');
@@ -186,6 +200,10 @@ class McpGateway {
     return ok(list);
   }
 
+  /**
+   * @param {string} name
+   * @param {Record<string, any>} [args]
+   */
   async callTool(name, args = {}) {
     const tool = this.tools.get(name);
     if (!tool) {
@@ -194,7 +212,7 @@ class McpGateway {
     try {
       return await tool.handler(args);
     } catch (e) {
-      return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `Tool ${name} failed: ${e.message}`);
+      return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `Tool ${name} failed: ${(e instanceof Error ? e.message : String(e))}`);
     }
   }
 }

@@ -65,7 +65,7 @@ function ensurePlatformLoaded(key) {
     try {
       item.view.webContents.loadURL(item.url);
     } catch (e) {
-      console.warn(`[Nomad Desktop] Failed to load URL for ${key}:`, e.message);
+      console.warn(`[Nomad Desktop] Failed to load URL for ${key}:`, (e instanceof Error ? e.message : String(e)));
     }
   }
 }
@@ -106,7 +106,7 @@ function applyZoom(platform, factor) {
     try {
       item.view.webContents.setZoomFactor(factor);
     } catch (e) {
-      console.warn(`[Nomad Desktop] Failed to set zoom for ${platform}:`, e.message);
+      console.warn(`[Nomad Desktop] Failed to set zoom for ${platform}:`, (e instanceof Error ? e.message : String(e)));
     }
   }
 }
@@ -130,7 +130,7 @@ async function createMainWindow() {
     const ext = await extLoader(EXTENSION_PATH, { allowFileAccess: true });
     console.log(`[Nomad Desktop] Loaded Extension: ${ext.name} (v${ext.version})`);
   } catch (err) {
-    console.warn('[Nomad Desktop] Extension not loaded (may be packaged or not built):', err.message);
+    console.warn('[Nomad Desktop] Extension not loaded (may be packaged or not built):', (err instanceof Error ? err.message : String(err)));
   }
 
   const isMac = process.platform === 'darwin';
@@ -211,7 +211,7 @@ async function createMainWindow() {
         const res = await item.view.webContents.executeJavaScript(extractorScript);
         return res || { ok: false, error: 'Empty script result' };
       } catch (err) {
-        return { ok: false, error: err.message };
+        return { ok: false, error: (err instanceof Error ? err.message : String(err)) };
       }
     },
     checkStreaming: async (platform) => {
@@ -223,7 +223,7 @@ async function createMainWindow() {
         const res = await item.view.webContents.executeJavaScript(statusScript);
         return res || { ok: true, isStreaming: false };
       } catch (err) {
-        return { ok: false, isStreaming: false, error: err.message };
+        return { ok: false, isStreaming: false, error: (err instanceof Error ? err.message : String(err)) };
       }
     },
     onStep: async (event) => {
@@ -231,7 +231,7 @@ async function createMainWindow() {
         try {
           await sessionManager?.applyInPageRenaming(event.speaker, event.canonicalTitle);
         } catch (e) {
-          console.warn("[Nomad Desktop] Action failed:", e.message);
+          console.warn("[Nomad Desktop] Action failed:", (e instanceof Error ? e.message : String(e)));
         }
         const activeWs = sessionManager?.getActiveWorkspace();
         if (activeWs) {
@@ -326,8 +326,8 @@ async function createMainWindow() {
       let extRes = null;
       let statRes = null;
       let debugDom = null;
-      try { if (extScript) extRes = await wc.executeJavaScript(extScript); } catch (e) { extRes = { ok: false, error: e.message }; }
-      try { if (statScript) statRes = await wc.executeJavaScript(statScript); } catch (e) { statRes = { ok: false, error: e.message }; }
+      try { if (extScript) extRes = await wc.executeJavaScript(extScript); } catch (e) { extRes = { ok: false, error: (e instanceof Error ? e.message : String(e)) }; }
+      try { if (statScript) statRes = await wc.executeJavaScript(statScript); } catch (e) { statRes = { ok: false, error: (e instanceof Error ? e.message : String(e)) }; }
       try {
         debugDom = await wc.executeJavaScript(`(function() {
           return {
@@ -341,7 +341,7 @@ async function createMainWindow() {
             messageContentCount: document.querySelectorAll("message-content").length
           };
         })()`);
-      } catch (e) { debugDom = { error: e.message }; }
+      } catch (e) { debugDom = { error: (e instanceof Error ? e.message : String(e)) }; }
       return { ok: true, platform, extRes, statRes, debugDom };
     },
     onEvalScript: async (platform, script) => {
@@ -352,7 +352,7 @@ async function createMainWindow() {
         const result = await item.view.webContents.executeJavaScript(script);
         return { ok: true, result };
       } catch (e) {
-        return { ok: false, error: e.message };
+        return { ok: false, error: (e instanceof Error ? e.message : String(e)) };
       }
     },
     onToggleWindow: (action) => {
@@ -381,7 +381,7 @@ async function createMainWindow() {
       }
     });
   } catch (err) {
-    console.warn('[Nomad Desktop] Spotlight shortcut registration skipped:', err.message);
+    console.warn('[Nomad Desktop] Spotlight shortcut registration skipped:', (err instanceof Error ? err.message : String(err)));
   }
 
   } catch (err) {
@@ -469,7 +469,7 @@ async function dispatchPromptToTargets(prompt, targets, attachments = []) {
         }
       }
     } catch (e) {
-      results['local'] = { success: false, error: e.message };
+      results['local'] = { success: false, error: (e instanceof Error ? e.message : String(e)) };
     }
   }
 
@@ -487,8 +487,8 @@ async function dispatchPromptToTargets(prompt, targets, attachments = []) {
       results[target] = { ok: true, data: res };
       console.log(`[Nomad Desktop] Inject result for ${target}:`, res);
     } catch (e) {
-      results[target] = { ok: false, error: e.message };
-      console.warn(`[Nomad Desktop] Inject failed for ${target}:`, e.message);
+      results[target] = { ok: false, error: (e instanceof Error ? e.message : String(e)) };
+      console.warn(`[Nomad Desktop] Inject failed for ${target}:`, (e instanceof Error ? e.message : String(e)));
     }
   }
 
@@ -679,7 +679,7 @@ ipcMain.handle('nomad:new-session', async () => {
       try {
         views[key].view.webContents.loadURL(url);
       } catch (e) {
-        console.warn("[Nomad Desktop] Action failed:", e.message);
+        console.warn("[Nomad Desktop] Action failed:", (e instanceof Error ? e.message : String(e)));
       }
     }
   }

@@ -48,7 +48,7 @@ class LocalModelClient {
           if (res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300) {
             try {
               const data = JSON.parse(raw);
-              const models = Array.isArray(data.data) ? data.data.map(m => m.id) : [];
+              const models = Array.isArray(data.data) ? data.data.map((/** @type {{ id: string }} */ m) => m.id) : [];
               resolve(ok({ online: true, endpoint: ep, models }));
             } catch {
               resolve(ok({ online: true, endpoint: ep, models: [] }));
@@ -80,7 +80,7 @@ class LocalModelClient {
    * @param {string} [options.endpoint] - Overrides the client endpoint for this call
    * @param {string} [options.model]
    * @param {number} [options.temperature=0.7]
-   * @returns {Promise<import('../result').UnitResult<{ content: string, model: string, usage?: Object, latencyMs: number }>>}
+   * @returns {Promise<import('../result').UnitResult<{ content: string, model: string, usage: { prompt_tokens?: number, completion_tokens?: number, total_tokens?: number } | null, latencyMs: number }>>}
    */
   async chatCompletion(options = {}) {
     const startTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -124,7 +124,7 @@ class LocalModelClient {
                 latencyMs
               }));
             } catch (e) {
-              resolve(err(ErrorCodes.LOCAL_MODEL_INFERENCE_FAILED_002, 'JSON parse error: ' + e.message));
+              resolve(err(ErrorCodes.LOCAL_MODEL_INFERENCE_FAILED_002, 'JSON parse error: ' + (e instanceof Error ? e.message : String(e))));
             }
           } else {
             resolve(err(ErrorCodes.LOCAL_MODEL_INFERENCE_FAILED_002, `Server error HTTP ${res.statusCode}: ${raw.slice(0, 100)}`));

@@ -30,6 +30,9 @@ function readPid() {
   }
 }
 
+/**
+ * @param {number} pid
+ */
 function writePid(pid) {
   ensureNomadDir();
   fs.writeFileSync(PID_FILE, String(pid), 'utf-8');
@@ -45,6 +48,10 @@ function removePid() {
   }
 }
 
+/**
+ * @param {number | null | undefined} pid
+ * @returns {boolean}
+ */
 function isProcessRunning(pid) {
   if (!pid || pid <= 0) return false;
   try {
@@ -108,6 +115,9 @@ async function startDaemon(daemonScriptPath, port = DEFAULT_DAEMON_PORT) {
   });
 
   child.unref();
+  if (child.pid === undefined) {
+    return err(ErrorCodes.DAEMON_SERVER_START_FAILED_002, 'Failed to spawn the daemon process', { logFile: LOG_FILE });
+  }
   writePid(child.pid);
 
   for (let i = 0; i < 15; i++) {
@@ -152,7 +162,7 @@ async function stopDaemon(timeoutMs = 3000) {
     return err(
       ErrorCodes.DAEMON_PROCESS_KILL_FAILED_004,
       'Failed to send SIGTERM to PID ' + pid,
-      { error: e.message }
+      { error: (e instanceof Error ? e.message : String(e)) }
     );
   }
 

@@ -459,7 +459,7 @@ class SessionManager {
           }
         }
       } catch (err) {
-        console.warn(`[Nomad SessionManager] Failed to get URL for ${platform}:`, err.message);
+        console.warn(`[Nomad SessionManager] Failed to get URL for ${platform}:`, (err instanceof Error ? err.message : String(err)));
       }
     }
     return this.updateWorkspace(workspaceId, { urls });
@@ -479,7 +479,7 @@ class SessionManager {
           views[platform].view.webContents.loadURL(url);
           results[platform] = { loaded: true, url };
         } catch (e) {
-          results[platform] = { loaded: false, error: e.message };
+          results[platform] = { loaded: false, error: (e instanceof Error ? e.message : String(e)) };
         }
       }
     }
@@ -520,7 +520,7 @@ class SessionManager {
     try {
       data = typeof jsonStringOrObj === "string" ? JSON.parse(jsonStringOrObj) : jsonStringOrObj;
     } catch (e) {
-      return { success: false, error: "JSON 解析失敗: " + e.message };
+      return { success: false, error: "JSON 解析失敗: " + (e instanceof Error ? e.message : String(e)) };
     }
 
     let itemsToImport = [];
@@ -650,7 +650,7 @@ class SessionManager {
     try {
       return await item.view.webContents.executeJavaScript(script);
     } catch (e) {
-      return { ok: false, error: e.message };
+      return { ok: false, error: (e instanceof Error ? e.message : String(e)) };
     }
   }
 }

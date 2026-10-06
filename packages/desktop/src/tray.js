@@ -70,7 +70,7 @@ class TrayAndShortcutManager {
         this.toggleWindow();
       });
     } catch (err) {
-      console.warn('[Nomad Tray] Failed to initialize system tray:', err.message);
+      console.warn('[Nomad Tray] Failed to initialize system tray:', (err instanceof Error ? err.message : String(err)));
     }
   }
 
@@ -204,7 +204,7 @@ class TrayAndShortcutManager {
           console.warn(`[Nomad Shortcut] Registration failed for: ${accelerator} (${name})`);
         }
       } catch (err) {
-        console.warn(`[Nomad Shortcut] Error registering ${accelerator}:`, err.message);
+        console.warn(`[Nomad Shortcut] Error registering ${accelerator}:`, (err instanceof Error ? err.message : String(err)));
       }
     }
 

@@ -11,7 +11,8 @@ export class KnowledgeBase {
     chunkSize: number;
     chunkOverlap: number;
     memory: VectorMemoryLite;
-    indexedSources: Set<any>;
+    /** @type {Set<string>} */
+    indexedSources: Set<string>;
     /**
      * Chunk text content into overlapping semantic segments
      * @param {string} text

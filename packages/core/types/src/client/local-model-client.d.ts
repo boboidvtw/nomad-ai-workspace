@@ -35,7 +35,7 @@ export class LocalModelClient {
      * @param {string} [options.endpoint] - Overrides the client endpoint for this call
      * @param {string} [options.model]
      * @param {number} [options.temperature=0.7]
-     * @returns {Promise<import('../result').UnitResult<{ content: string, model: string, usage?: Object, latencyMs: number }>>}
+     * @returns {Promise<import('../result').UnitResult<{ content: string, model: string, usage: { prompt_tokens?: number, completion_tokens?: number, total_tokens?: number } | null, latencyMs: number }>>}
      */
     chatCompletion(options?: {
         messages?: {
@@ -49,7 +49,11 @@ export class LocalModelClient {
     }): Promise<import("../result").UnitResult<{
         content: string;
         model: string;
-        usage?: any;
+        usage: {
+            prompt_tokens?: number;
+            completion_tokens?: number;
+            total_tokens?: number;
+        } | null;
         latencyMs: number;
     }>>;
 }
