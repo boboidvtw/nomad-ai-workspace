@@ -13,6 +13,7 @@
     "docs/.vitepress/cache/**",
     "docs/.vitepress/dist/**",
     "coverage/**",
+    "packages/core/types/**",
     "gemini-voyager-sync/**",
     "gemini-voyager-formal/**",
     ".agent/**",

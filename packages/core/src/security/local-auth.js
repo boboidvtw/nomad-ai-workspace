@@ -54,6 +54,8 @@ function isLoopbackHostname(hostname) {
 /**
  * True when every caller-supplied target in a local-model request (`host`, `endpoint`) is loopback.
  * Prevents the gateway from being used as an SSRF relay to LAN / internet hosts.
+ * @param {{ host?: string, endpoint?: string }} [target]
+ * @returns {boolean}
  */
 function isLoopbackModelTarget({ host, endpoint } = {}) {
   if (host && !isLoopbackHostname(host)) return false;
@@ -184,7 +186,7 @@ function injectDashboardAuth(html, token, gatewayPorts = [DEFAULT_DAEMON_PORT]) 
 
   const headMatch = html.match(/<head[^>]*>/i);
   if (headMatch) {
-    const at = headMatch.index + headMatch[0].length;
+    const at = (headMatch.index ?? 0) + headMatch[0].length;
     return html.slice(0, at) + shim + html.slice(at);
   }
   return shim + html;

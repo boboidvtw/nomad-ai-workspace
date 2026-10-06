@@ -6,14 +6,25 @@
 const { ok, err } = require('../result');
 
 /**
+ * @typedef {Object} ChatMessage
+ * @property {'user'|'assistant'|'system'} role
+ * @property {string} content
+ * @property {string} [timestamp]
+ */
+
+/**
+ * @typedef {Object} ChatExportOptions
+ * @property {string} title - Dialogue title
+ * @property {string} [platform='Multi-AI'] - AI Platform name
+ * @property {string} [model] - Specific model name if known
+ * @property {string} [date] - ISO timestamp or formatted date
+ * @property {ChatMessage[]} messages
+ */
+
+/**
  * Formats a chat dialogue into standard Markdown document.
- * @param {Object} options
- * @param {string} options.title - Dialogue title
- * @param {string} [options.platform='Multi-AI'] - AI Platform name
- * @param {string} [options.model] - Specific model name if known
- * @param {string} [options.date] - ISO timestamp or formatted date
- * @param {Array<{ role: 'user'|'assistant'|'system', content: string, timestamp?: string }>} options.messages
- * @returns {{ success: true, data: { markdown: string, wordCount: number, messageCount: number } }}
+ * @param {Partial<ChatExportOptions>} [options] - `title` and `messages` are validated at runtime
+ * @returns {import('../result').UnitResult<{ markdown: string, wordCount: number, messageCount: number }>}
  */
 function formatChatToMarkdown(options = {}) {
   if (!options || typeof options !== 'object') {

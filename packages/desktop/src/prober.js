@@ -4,34 +4,7 @@
  */
 
 const net = require('net');
-let ok, err, ErrorCodes, MONITORED_SERVICES;
-try {
-  const core = require('@nomad/core');
-  ok = core.ok;
-  err = core.err;
-  ErrorCodes = core.ErrorCodes;
-  MONITORED_SERVICES = core.MONITORED_SERVICES;
-} catch (e) {
-  try {
-    const core = require('@nomad/core');
-    ok = core.ok;
-    err = core.err;
-    ErrorCodes = core.ErrorCodes;
-    MONITORED_SERVICES = core.MONITORED_SERVICES;
-  } catch (e2) {
-    ok = (data) => ({ success: true, data });
-    err = (code, msg, details) => ({ success: false, errorCode: code, message: msg, details });
-    ErrorCodes = { PROBE_CHECK_FAILED_004: 'PROBE_CHECK_FAILED_004' };
-    MONITORED_SERVICES = [
-      { id: 'nomad_gateway', name: 'Nomad Daemon Gateway', port: 8765, host: '127.0.0.1', category: 'gateway', essential: true },
-      { id: 'postgres', name: 'PostgreSQL 16 (OrbStack)', port: 5432, host: '127.0.0.1', category: 'database', essential: false },
-      { id: 'redis', name: 'Redis 7 (OrbStack)', port: 6379, host: '127.0.0.1', category: 'cache', essential: false },
-      { id: 'adminer', name: 'Postgres Adminer', port: 8080, host: '127.0.0.1', category: 'tool', essential: false },
-      { id: 'lmstudio', name: 'LM Studio Inference', port: 1234, host: '127.0.0.1', category: 'ai-engine', essential: false },
-      { id: 'hermes_ws', name: 'Hermes Workspace', port: 8787, host: '127.0.0.1', category: 'agent', essential: false }
-    ];
-  }
-}
+const { ok, err, ErrorCodes, MONITORED_SERVICES } = require('@nomad/core');
 
 /**
  * Probes a single TCP host:port endpoint
@@ -68,7 +41,7 @@ function probePort(host = '127.0.0.1', port, timeoutMs = 350) {
       resolve({ online: false, latencyMs: timeoutMs, error: 'ETIMEDOUT' });
     });
 
-    socket.once('error', (err) => {
+    socket.once('error', (/** @type {NodeJS.ErrnoException} */ err) => {
       if (isResolved) return;
       isResolved = true;
       const latencyMs = Date.now() - startTime;
@@ -82,9 +55,9 @@ function probePort(host = '127.0.0.1', port, timeoutMs = 350) {
 
 /**
  * Probes all configured microservices concurrently
- * @param {Array<Object>} [services=MONITORED_SERVICES]
+ * @param {ReadonlyArray<import('@nomad/core').MonitoredService>} [services=MONITORED_SERVICES]
  * @param {number} [timeoutMs=350]
- * @returns {Promise<{ success: true, data: { services: Array<Object>, summary: Object, timestamp: string } }>}
+ * @returns {Promise<import('@nomad/core').UnitResult<{ services: Array<Object>, summary: Object, timestamp: string }>>}
  */
 async function probeAllServices(services = MONITORED_SERVICES, timeoutMs = 350) {
   try {

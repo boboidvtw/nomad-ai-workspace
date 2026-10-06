@@ -33,10 +33,10 @@ ${text}
 
 class MultiAiOrchestrator {
   /**
-   * @param {Object} options
-   * @param {Function} options.injectPrompt - async (platform, text) => { ok: boolean }
-   * @param {Function} options.extractResponse - async (platform) => { ok: boolean, text: string }
-   * @param {Function} options.checkStreaming - async (platform) => { ok: boolean, isStreaming: boolean }
+   * @param {Object} [options]
+   * @param {Function} [options.injectPrompt] - async (platform, text) => { ok: boolean }
+   * @param {Function} [options.extractResponse] - async (platform) => { ok: boolean, text: string }
+   * @param {Function} [options.checkStreaming] - async (platform) => { ok: boolean, isStreaming: boolean }
    * @param {number} [options.initialWaitMs=2000] - Initial delay before polling
    * @param {number} [options.pollIntervalMs=800] - Polling interval
    * @param {number} [options.maxWaitMs=45000] - Max wait time per AI turn in ms

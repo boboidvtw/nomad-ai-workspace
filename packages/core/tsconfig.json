@@ -1,0 +1,22 @@
+{
+  // JSDoc in the JS sources is the single source of truth for @nomad/core's types.
+  // `npm run build:types` emits ./types from it; `npm run typecheck` checks the JS.
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "types",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "es2022",
+    "lib": ["es2022", "dom"],
+    "strict": false,
+    "strictNullChecks": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "typeRoots": ["../../node_modules/@types"]
+  },
+  "include": ["index.js", "src/**/*.js"],
+  "exclude": ["src/__tests__/**"]
+}

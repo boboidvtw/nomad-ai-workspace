@@ -34,6 +34,7 @@ function calculateLayoutBounds({
   const width = Math.max(200, totalWidth - (Math.max(0, Number(drawerWidth)) || 0));
 
   // Initialize all platforms as invisible
+  /** @type {Record<string, { x: number, y: number, width: number, height: number, visible: boolean }>} */
   const bounds = {};
   for (const p of ALL_PLATFORMS) {
     bounds[p] = { x: 0, y: topBarHeight, width: 0, height: 0, visible: false };

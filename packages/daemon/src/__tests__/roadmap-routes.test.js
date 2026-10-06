@@ -87,3 +87,17 @@ test('Daemon Server: P1/P2/P3 Roadmap Endpoints (Artifacts, Diff, LocalModel, MC
     await daemon.stop();
   }
 });
+
+test('Daemon Server: /api/local-model/chat reaches the local model client', async () => {
+  const daemon = new NomadDaemonServer({ port: 19891 });
+  await daemon.start();
+  try {
+    // Port 1 on loopback is closed, so the client fails fast with a 502 instead of crashing (500).
+    const res = await makeRequest(19891, '/api/local-model/chat', 'POST', { prompt: 'hi', port: 1 });
+    assert.strictEqual(res.status, 502);
+    assert.strictEqual(res.data.success, false);
+    assert.ok(!/not a function/.test(res.data.message), res.data.message);
+  } finally {
+    await daemon.stop();
+  }
+});

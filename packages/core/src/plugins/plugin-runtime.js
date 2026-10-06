@@ -14,8 +14,8 @@ class PluginRuntime {
 
   /**
    * Register a plugin with manifest validation
-   * @param {Object} plugin
-   * @param {Object} plugin.manifest - id, name, version, description
+   * @param {Object} [plugin] - `manifest` is required; validated at runtime
+   * @param {{ id: string, name: string, version: string, description?: string }} [plugin.manifest]
    * @param {Object} [plugin.hooks] - onPromptBeforeDispatch, onResponseSettled
    * @returns {import('../result').UnitResult<{ registeredId: string, version: string }>}
    */

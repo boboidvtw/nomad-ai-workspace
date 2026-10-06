@@ -1,7 +1,30 @@
 /**
  * @nomad/core entry point
  * Complete Ecosystem: Result, Constants, Extensions, Pipeline, Sync, Canvas, Local Client, Diff, Memory, MCP, RAG, Plugins
+ *
+ * Types are generated from the JSDoc in these sources into ./types (`npm run build:types`);
+ * do not hand-edit the .d.ts files.
  */
+
+/**
+ * @template T
+ * @typedef {import('./src/result').UnitSuccess<T>} UnitSuccess
+ */
+/**
+ * @template [E=string]
+ * @typedef {import('./src/result').UnitFailure<E>} UnitFailure
+ */
+/**
+ * @template T
+ * @template [E=string]
+ * @typedef {import('./src/result').UnitResult<T, E>} UnitResult
+ */
+/** @typedef {import('./src/error-codes').ErrorCode} ErrorCode */
+/** @typedef {import('./src/constants').MonitoredService} MonitoredService */
+/** @typedef {import('./src/constants').PlatformConfig} PlatformConfig */
+/** @typedef {import('./src/extensions/template-parser').TemplateVariable} TemplateVariable */
+/** @typedef {import('./src/extensions/markdown-exporter').ChatMessage} ChatMessage */
+/** @typedef {import('./src/extensions/markdown-exporter').ChatExportOptions} ChatExportOptions */
 
 const { ok, err, isOk, isErr, wrapAsync } = require('./src/result');
 const { ErrorCodes } = require('./src/error-codes');

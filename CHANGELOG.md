@@ -17,7 +17,14 @@
 ### 🐛 修復 (Fixed)
 - **Dashboard 任務看板整段腳本無法執行**：43 行 HTML 字串遺失跳脫字元（`\'` / `\"`）導致 SyntaxError，任務卡片、詳情 Modal 與排程清單全部失效；新增 inline script 語法回歸測試。
 
+- **Desktop Bridge 任務 API 全部 500**：`GET /api/tasks` 等 3 條路由使用未定義的 `url` 變數，桌面版獨立模式的任務看板無法載入。
+- **Daemon `/api/local-model/chat` 永遠 500**：呼叫了不存在的 `client.chat()`（應為 `chatCompletion()`）；`LocalModelClient` 也忽略呼叫端傳入的 `host` / `port`，現在會依此組出 endpoint。
+- **Desktop 抽屜切換 `ReferenceError`**：`onToggleDrawer` 使用未宣告的 `drawerOpen` 變數。
+- **CLI `nomad-daemon probe` 失敗時崩潰**、`/api/status` 在探測失敗時回傳 `microservices: undefined`。
+- **根目錄 4 個失敗測試**：上游 Voyager 的 CI / release 測試改為依其實際讀取的檔案（`pr-gate.yml`、`release.yml`、`deploy-docs.yml`、`sponsors.yml`）決定是否執行，不再因本專案有自己的 `.github/workflows` 而誤跑；腳本邏輯測試照常執行。
+
 ### ♻️ 重構 (Changed)
+- **`@nomad/core` 型別合約改為自動產生**：移除漂移嚴重的手寫 `index.d.ts`（59 個 export 中 24 個、67 個錯誤碼中 29 個缺漏），改以 JS 原始碼的 JSDoc 為唯一來源，由 `tsc` 產生 `packages/core/types/`。daemon、desktop、dashboard 以 `checkJs` + `strictNullChecks` 對其做型別檢查；CI 新增 `typecheck:packages` 與 `types:check`（產生結果與 commit 內容不一致即失敗）。
 - **Dashboard 單一來源**：移除 `packages/desktop/src/dashboard-fallback.html` 重複副本與兩份重複的 static handler，Daemon 與 Desktop Bridge 統一透過 `@nomad/dashboard` 套件（`serveDashboard` / `findDashboardPath`）提供頁面；Electron 打包時隨 `node_modules/@nomad` 一併收錄。
 
 - **統一使用 npm 作為套件管理器**：`packageManager` 由 `bun@1.3.12` 改為 `npm@11.19.1`（與 lockfile、CI、文件一致；electron-builder 打包亦改以 npm 解析 workspace 依賴）。原本以 bun 執行的 npm scripts 改用 `node` / `npm run`，TS 維護腳本（`plugin:check`、`plugin:new`、`catalog:build`）改用新增的 `tsx` devDependency 執行；僅 `verify:katex-export`（使用 `Bun.build`）仍需 Bun。移除子套件中無效的 `desktop/package-lock.json`、`gemini-nexus/package-lock.json`、`claude-voyager/yarn.lock`。

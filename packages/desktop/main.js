@@ -412,10 +412,10 @@ async function createMainWindow() {
       }
     },
     onToggleDrawer: () => {
-      drawerOpen = !drawerOpen;
+      isDrawerOpen = !isDrawerOpen;
       updateViewBounds();
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('nomad:remote-update', { drawerOpen });
+        mainWindow.webContents.send('nomad:remote-update', { drawerOpen: isDrawerOpen });
       }
     },
     onNewSession: () => {

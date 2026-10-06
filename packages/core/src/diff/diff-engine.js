@@ -43,6 +43,7 @@ function computeDiff(textA, textB, options = {}) {
     // Backtrack to extract diff chunks
     let i = m;
     let j = n;
+    /** @type {Array<{ type: 'equal'|'add'|'del', value: string, lineA?: number, lineB?: number }>} */
     const diff = [];
 
     while (i > 0 || j > 0) {

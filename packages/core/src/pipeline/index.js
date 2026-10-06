@@ -26,8 +26,8 @@ class PipelineManager {
 
   /**
    * Process prompt & context through the full pipeline
-   * @param {Object} input
-   * @param {string} input.prompt - User query or directive
+   * @param {Object} [input] - `prompt` is required; validated at runtime
+   * @param {string} [input.prompt] - User query or directive
    * @param {string} [input.context] - Background conversational history or system context
    * @param {Object} [input.options]
    * @returns {import('../result').UnitResult<Object>}

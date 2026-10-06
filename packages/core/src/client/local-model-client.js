@@ -12,12 +12,15 @@ const { ErrorCodes } = require('../error-codes');
 class LocalModelClient {
   /**
    * @param {Object} [options]
-   * @param {string} [options.endpoint='http://127.0.0.1:1234/v1']
+   * @param {string} [options.endpoint='http://127.0.0.1:1234/v1'] - Full OpenAI-compatible base URL; wins over host/port
+   * @param {string} [options.host='127.0.0.1'] - Used to build the endpoint when `endpoint` is not given
+   * @param {number} [options.port=1234] - Used to build the endpoint when `endpoint` is not given
    * @param {string} [options.defaultModel='local-model']
    * @param {number} [options.timeoutMs=15000]
    */
   constructor(options = {}) {
-    this.endpoint = options.endpoint || 'http://127.0.0.1:1234/v1';
+    this.endpoint = options.endpoint ||
+      'http://' + (options.host || '127.0.0.1') + ':' + (options.port || 1234) + '/v1';
     this.defaultModel = options.defaultModel || 'local-model';
     this.timeoutMs = options.timeoutMs || 15000;
   }
@@ -42,7 +45,7 @@ class LocalModelClient {
         let raw = '';
         res.on('data', chunk => raw += chunk);
         res.on('end', () => {
-          if (res.statusCode >= 200 && res.statusCode < 300) {
+          if (res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300) {
             try {
               const data = JSON.parse(raw);
               const models = Array.isArray(data.data) ? data.data.map(m => m.id) : [];
@@ -71,8 +74,10 @@ class LocalModelClient {
 
   /**
    * Dispatch chat completion request
-   * @param {Object} options
-   * @param {Array<{role: string, content: string}>} options.messages
+   * @param {Object} [options]
+   * @param {Array<{role: string, content: string}>} [options.messages] - Defaults to a single user turn built from `prompt`
+   * @param {string} [options.prompt] - Shorthand for a single user message
+   * @param {string} [options.endpoint] - Overrides the client endpoint for this call
    * @param {string} [options.model]
    * @param {number} [options.temperature=0.7]
    * @returns {Promise<import('../result').UnitResult<{ content: string, model: string, usage?: Object, latencyMs: number }>>}
@@ -108,7 +113,7 @@ class LocalModelClient {
           const endTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
           const latencyMs = Number((endTime - startTime).toFixed(2));
 
-          if (res.statusCode >= 200 && res.statusCode < 300) {
+          if (res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300) {
             try {
               const data = JSON.parse(raw);
               const message = data.choices?.[0]?.message?.content || '';
