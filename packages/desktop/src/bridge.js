@@ -50,6 +50,8 @@ class LocalSyncBridge {
    * @param {string} [options.authToken] - Shared gateway token (defaults to ~/.nomad/daemon-token)
    * @param {Function} [options.onInspectPlatform] - Debug hook: inspect a platform webview
    * @param {Function} [options.onEvalScript] - Debug hook: run a script in a platform webview
+   * @param {boolean} [options.debugEndpoints=false] - Serve /api/debug/* (they run scripts inside logged-in AI sessions); 404 otherwise
+   * @param {() => (string | undefined)} [options.getDriveSyncDir] - Configured Drive sync folder; HTTP callers cannot choose it
    * @param {Object} [options.sessionManager] - SessionManager for workspace/session routes
    * @param {number} [options.daemonPort=8765] - Daemon port to register with when running on another port
    * @param {import('@nomad/core').AgentRoster} [options.roster]
@@ -68,6 +70,8 @@ class LocalSyncBridge {
     this.orchestrator = options.orchestrator || null;
     this.onInspectPlatform = options.onInspectPlatform || null;
     this.onEvalScript = options.onEvalScript || null;
+    this.debugEndpoints = options.debugEndpoints === true;
+    this.getDriveSyncDir = options.getDriveSyncDir || (() => undefined);
     this.sessionManager = options.sessionManager || null;
 
     this.server = null;
@@ -465,7 +469,8 @@ class LocalSyncBridge {
       }
 
             // 8. Diagnostics & Debug Endpoints
-      if (pathname === '/api/debug/inspect-platform' && req.method === 'POST') {
+      // Off unless explicitly enabled: these fall through to the 404 below.
+      if (this.debugEndpoints && pathname === '/api/debug/inspect-platform' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
         if (!this.onInspectPlatform) {
           return this.sendJson(res, 501, { success: false, message: 'onInspectPlatform not implemented' });
@@ -474,7 +479,7 @@ class LocalSyncBridge {
         return this.sendJson(res, 200, { success: true, data: result });
       }
 
-      if (pathname === '/api/debug/eval' && req.method === 'POST') {
+      if (this.debugEndpoints && pathname === '/api/debug/eval' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
         if (!this.onEvalScript) {
           return this.sendJson(res, 501, { success: false, message: 'onEvalScript not implemented' });
@@ -822,16 +827,16 @@ class LocalSyncBridge {
         return this.sendJson(res, 200, ok(this.pipelineManager.getStats()));
       }
 
+      // Drive sync folder comes from app settings / auto-detection only, never from the request.
       if (pathname === '/api/sync/drive/status' && req.method === 'GET') {
-        const dir = parsedUrl.searchParams.get('dir');
-        const resStatus = getSyncStatus(dir ? { targetDir: dir } : {});
+        const resStatus = getSyncStatus({ targetDir: this.getDriveSyncDir() });
         return this.sendJson(res, resStatus.success ? 200 : 400, resStatus);
       }
 
       if (pathname === '/api/sync/drive/push' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
         const workspaces = this.sessionManager ? this.sessionManager.getWorkspaces() : (body.workspaces || []);
-        const pushRes = exportToDrive({ workspaces, settings: body.settings, targetDir: body.targetDir });
+        const pushRes = exportToDrive({ workspaces, settings: body.settings, targetDir: this.getDriveSyncDir() });
         return this.sendJson(res, pushRes.success ? 200 : 400, pushRes);
       }
 
@@ -839,7 +844,7 @@ class LocalSyncBridge {
         const body = await this.readJsonBody(req);
         const currentWorkspaces = this.sessionManager ? this.sessionManager.getWorkspaces() : [];
         const pullRes = importFromDrive({
-          sourceDir: body.sourceDir,
+          sourceDir: this.getDriveSyncDir(),
           currentWorkspaces,
           strategy: body.strategy || 'merge'
         });
