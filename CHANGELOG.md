@@ -20,6 +20,10 @@
 ### ♻️ 重構 (Changed)
 - **Dashboard 單一來源**：移除 `packages/desktop/src/dashboard-fallback.html` 重複副本與兩份重複的 static handler，Daemon 與 Desktop Bridge 統一透過 `@nomad/dashboard` 套件（`serveDashboard` / `findDashboardPath`）提供頁面；Electron 打包時隨 `node_modules/@nomad` 一併收錄。
 
+### 🗑️ 移除 (Removed)
+- **`packages/gemini-voyager` 上游快照**：此為上游 Voyager v1.9.0（+17 commits）的未修改快照，根目錄 `src/` 已是其超集且無任何建置 / 測試使用（35MB、1688 檔、約 33 萬行）。改以 `voyager-upstream` git remote 追蹤上游，同步方式見 `docs/ARCHITECTURE.md`；subtree 匯入歷史仍保留於 git log。
+- **根目錄 vitest 不再掃描 `packages/**`**：子套件各有自己的測試執行器，先前被根目錄 vitest 誤收而產生 76 個假失敗檔案。
+
 ---
 
 ## [1.4.0] - 2026-10-03
