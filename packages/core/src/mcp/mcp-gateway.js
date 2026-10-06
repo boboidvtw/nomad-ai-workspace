@@ -24,17 +24,20 @@ function defaultDeniedPaths(homeDir = os.homedir()) {
 
 /**
  * Allowed roots when none are passed explicitly: `NOMAD_MCP_ALLOWED_PATHS` if set,
- * otherwise the working directory — unless that is the filesystem root (e.g. a
- * packaged Electron app launched from Finder), in which case nothing is allowed.
+ * else `fallback` if given (e.g. an app-owned workspace dir), else the working
+ * directory — unless that is the filesystem root (e.g. a packaged Electron app
+ * launched from Finder), in which case nothing is allowed.
  * @param {NodeJS.ProcessEnv} [env]
+ * @param {string[]} [fallback]
  * @returns {string[]}
  */
-function defaultAllowedPaths(env = process.env) {
+function defaultAllowedPaths(env = process.env, fallback) {
   const fromEnv = (env[ALLOWED_PATHS_ENV] || '')
     .split(path.delimiter)
     .map(p => p.trim())
     .filter(Boolean);
   if (fromEnv.length > 0) return fromEnv;
+  if (fallback && fallback.length > 0) return fallback;
   const cwd = path.resolve(process.cwd());
   return cwd === path.parse(cwd).root ? [] : [cwd];
 }
@@ -44,10 +47,11 @@ function defaultAllowedPaths(env = process.env) {
  * (yet), the nearest existing ancestor is resolved and the remainder re-appended, so
  * a dangling name under a symlinked directory still maps to its real location.
  * @param {string} target
+ * @param {string} [base] - Directory a relative `target` is resolved against (default: cwd).
  * @returns {string}
  */
-function realpathLoose(target) {
-  const absolute = path.resolve(target);
+function realpathLoose(target, base = process.cwd()) {
+  const absolute = path.resolve(base, target);
   /** @type {string[]} */
   const missing = [];
   let current = absolute;
@@ -95,6 +99,7 @@ class McpGateway {
 
   /**
    * Resolves a tool-supplied path and checks it against the allow/deny lists.
+   * Relative paths are resolved against the first allowed root.
    * @param {unknown} requestedPath
    * @returns {import('../result').UnitResult<string, typeof ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002>}
    */
@@ -102,7 +107,7 @@ class McpGateway {
     if (typeof requestedPath !== 'string' || requestedPath.length === 0) {
       return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, 'Path must be a non-empty string');
     }
-    const resolved = realpathLoose(requestedPath);
+    const resolved = realpathLoose(requestedPath, this.allowedPaths[0]);
     if (this.deniedPaths.some(denied => isWithin(resolved, realpathLoose(denied)))) {
       return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `Access to sensitive path denied: ${requestedPath}`);
     }

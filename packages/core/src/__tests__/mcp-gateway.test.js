@@ -150,3 +150,16 @@ test('McpGateway: default roots come from NOMAD_MCP_ALLOWED_PATHS, else cwd only
   assert.deepStrictEqual(defaultAllowedPaths({}), cwd === path.parse(cwd).root ? [] : [cwd]);
   assert.ok(!defaultAllowedPaths({}).includes(os.homedir()) || process.cwd() === os.homedir());
 });
+
+test('McpGateway: relative paths resolve against the first allowed root; fallback roots apply without env', async (t) => {
+  const box = makeSandbox();
+  t.after(box.cleanup);
+  const gateway = new McpGateway({ allowedPaths: [box.root] });
+  const res = await gateway.callTool('read_file', { path: 'inside.txt' });
+  assert.strictEqual(isOk(res), true);
+  assert.strictEqual(res.data.content, 'inside');
+  assert.strictEqual(isErr(await gateway.callTool('read_file', { path: '../outside/secret.txt' })), true);
+
+  assert.deepStrictEqual(defaultAllowedPaths({}, [box.root]), [box.root]);
+  assert.deepStrictEqual(defaultAllowedPaths({ NOMAD_MCP_ALLOWED_PATHS: box.outside }, [box.root]), [box.outside]);
+});

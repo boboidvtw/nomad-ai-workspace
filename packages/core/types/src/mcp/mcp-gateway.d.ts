@@ -26,6 +26,7 @@ export class McpGateway {
     deniedPaths: string[];
     /**
      * Resolves a tool-supplied path and checks it against the allow/deny lists.
+     * Relative paths are resolved against the first allowed root.
      * @param {unknown} requestedPath
      * @returns {import('../result').UnitResult<string, typeof ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002>}
      */
@@ -45,12 +46,14 @@ export class McpGateway {
 export const ALLOWED_PATHS_ENV: "NOMAD_MCP_ALLOWED_PATHS";
 /**
  * Allowed roots when none are passed explicitly: `NOMAD_MCP_ALLOWED_PATHS` if set,
- * otherwise the working directory — unless that is the filesystem root (e.g. a
- * packaged Electron app launched from Finder), in which case nothing is allowed.
+ * else `fallback` if given (e.g. an app-owned workspace dir), else the working
+ * directory — unless that is the filesystem root (e.g. a packaged Electron app
+ * launched from Finder), in which case nothing is allowed.
  * @param {NodeJS.ProcessEnv} [env]
+ * @param {string[]} [fallback]
  * @returns {string[]}
  */
-export function defaultAllowedPaths(env?: NodeJS.ProcessEnv): string[];
+export function defaultAllowedPaths(env?: NodeJS.ProcessEnv, fallback?: string[]): string[];
 /**
  * Credential / secret directories that stay off-limits even inside an allowed root.
  * @param {string} [homeDir]
