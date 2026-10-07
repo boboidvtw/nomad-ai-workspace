@@ -134,8 +134,58 @@ describe('syncAllPlatformFolders', () => {
     expect(local.claude_nexus_folders).toBe(result.claude);
     expect(local.grok_folders).toBe(result.grok);
     expect(service.uploadClaudeFolders).toHaveBeenCalledWith(result.claude, false);
-    expect(service.uploadGeminiFolders).toHaveBeenCalledWith(result.gemini.folders, false);
+    expect(service.uploadGeminiFolders).toHaveBeenCalledWith(result.gemini, false);
     expect(tabMessages).toEqual([1, 2]);
+  });
+
+  it('uploads the full Gemini FolderData so conversation membership reaches the cloud', async () => {
+    const gvFolderData = {
+      folders: [{ id: 'g1', name: 'Work', updatedAt: 1 }],
+      folderContents: { g1: [{ conversationId: 'c1', title: 'Chat', addedAt: 1 }] },
+    };
+    local = { gvFolderData };
+    const service = createService();
+
+    await syncAllPlatformFolders(service, false);
+
+    expect(service.uploadGeminiFolders).toHaveBeenCalledWith(gvFolderData, false);
+  });
+
+  it('merges cloud Gemini folderContents into local', async () => {
+    local = {
+      gvFolderData: {
+        folders: [{ id: 'g1', name: 'Work', updatedAt: 1 }],
+        folderContents: { g1: [{ conversationId: 'local-c', title: 'L', addedAt: 1 }] },
+      },
+    };
+    const service = createService({
+      gemini: {
+        folders: [{ id: 'g1', name: 'Work', updatedAt: 1 }],
+        folderContents: { g1: [{ conversationId: 'cloud-c', title: 'C', addedAt: 2 }] },
+      } as unknown as unknown[],
+    });
+
+    const result = await syncAllPlatformFolders(service, false);
+
+    const ids = result.gemini.folderContents.g1.map((c) => c.conversationId).sort();
+    expect(ids).toEqual(['cloud-c', 'local-c']);
+    expect(local.gvFolderData).toBe(result.gemini);
+    expect(service.uploadGeminiFolders).toHaveBeenCalledWith(result.gemini, false);
+  });
+
+  it('still accepts a legacy array-only Gemini cloud payload without dropping local membership', async () => {
+    local = {
+      gvFolderData: {
+        folders: [{ id: 'g1', name: 'Work', updatedAt: 1 }],
+        folderContents: { g1: [{ conversationId: 'local-c', title: 'L', addedAt: 1 }] },
+      },
+    };
+    const service = createService({ gemini: [{ id: 'g2', name: 'Cloud', updatedAt: 2 }] });
+
+    const result = await syncAllPlatformFolders(service, false);
+
+    expect(result.gemini.folders.map((f) => f.id).sort()).toEqual(['g1', 'g2']);
+    expect(result.gemini.folderContents.g1.map((c) => c.conversationId)).toEqual(['local-c']);
   });
 
   it('keeps local data for platforms whose cloud download failed', async () => {

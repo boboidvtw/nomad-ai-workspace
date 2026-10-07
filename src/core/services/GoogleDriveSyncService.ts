@@ -63,6 +63,13 @@ const AISTUDIO_FOLDERS_FILE_NAME = 'gemini-voyager-aistudio-folders.json';
 
 type FolderSyncPlatform = 'Claude' | 'ChatGPT' | 'Gemini' | 'Grok';
 
+/**
+ * Body of a per-platform folder file's `data` field. Claude/ChatGPT/Grok store a flat
+ * folder list; Gemini stores the full FolderData (folders + folderContents). Older
+ * Gemini uploads were a bare folder array, so readers must accept both shapes.
+ */
+export type PlatformFolderPayload = unknown[] | FolderData;
+
 /** Per-platform folder file under "Nomad Workspace/<Platform>/" and the state fields it updates. */
 const PLATFORM_FOLDER_FILES: Record<
   FolderSyncPlatform,
@@ -1853,7 +1860,7 @@ export class GoogleDriveSyncService {
     return this.uploadPlatformFolders('Claude', folders, interactive);
   }
 
-  public downloadClaudeFolders(interactive = true): Promise<unknown[] | null> {
+  public downloadClaudeFolders(interactive = true): Promise<PlatformFolderPayload | null> {
     return this.downloadPlatformFolders('Claude', interactive);
   }
 
@@ -1861,15 +1868,16 @@ export class GoogleDriveSyncService {
     return this.uploadPlatformFolders('ChatGPT', folders, interactive);
   }
 
-  public downloadChatGPTFolders(interactive = true): Promise<unknown[] | null> {
+  public downloadChatGPTFolders(interactive = true): Promise<PlatformFolderPayload | null> {
     return this.downloadPlatformFolders('ChatGPT', interactive);
   }
 
-  public uploadGeminiFolders(folders: unknown[], interactive = true): Promise<boolean> {
-    return this.uploadPlatformFolders('Gemini', folders, interactive);
+  /** Pass the full FolderData so conversation membership (folderContents) is synced too. */
+  public uploadGeminiFolders(data: PlatformFolderPayload, interactive = true): Promise<boolean> {
+    return this.uploadPlatformFolders('Gemini', data, interactive);
   }
 
-  public downloadGeminiFolders(interactive = true): Promise<unknown[] | null> {
+  public downloadGeminiFolders(interactive = true): Promise<PlatformFolderPayload | null> {
     return this.downloadPlatformFolders('Gemini', interactive);
   }
 
@@ -1877,13 +1885,13 @@ export class GoogleDriveSyncService {
     return this.uploadPlatformFolders('Grok', folders, interactive);
   }
 
-  public downloadGrokFolders(interactive = true): Promise<unknown[] | null> {
+  public downloadGrokFolders(interactive = true): Promise<PlatformFolderPayload | null> {
     return this.downloadPlatformFolders('Grok', interactive);
   }
 
   private async uploadPlatformFolders(
     platform: FolderSyncPlatform,
-    folders: unknown[],
+    folders: PlatformFolderPayload,
     interactive: boolean,
   ): Promise<boolean> {
     const target = PLATFORM_FOLDER_FILES[platform];
@@ -1923,7 +1931,7 @@ export class GoogleDriveSyncService {
   private async downloadPlatformFolders(
     platform: FolderSyncPlatform,
     interactive: boolean,
-  ): Promise<unknown[] | null> {
+  ): Promise<PlatformFolderPayload | null> {
     const target = PLATFORM_FOLDER_FILES[platform];
     try {
       this.updateState({ isSyncing: true, error: null });
@@ -1955,7 +1963,7 @@ export class GoogleDriveSyncService {
   }
 
   /** Gemini folders predate the per-platform subfolders and may still sit in the root file. */
-  private async downloadLegacyGeminiFolders(token: string): Promise<unknown[] | null> {
+  private async downloadLegacyGeminiFolders(token: string): Promise<PlatformFolderPayload | null> {
     const rootFolderId = await this.ensureBackupFolder(token);
     const legacyFileId = await this.findFileInFolder(token, rootFolderId, FOLDERS_FILE_NAME);
     if (!legacyFileId) {
@@ -1972,7 +1980,7 @@ export class GoogleDriveSyncService {
     token: string,
     fileId: string,
     failurePrefix: string,
-  ): Promise<{ data?: unknown[]; folders?: unknown[] }> {
+  ): Promise<{ data?: PlatformFolderPayload; folders?: unknown[] }> {
     const response = await fetch(DRIVE_API_BASE + '/files/' + fileId + '?alt=media', {
       headers: { Authorization: 'Bearer ' + token },
     });
