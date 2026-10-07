@@ -54,6 +54,7 @@ class LocalSyncBridge {
    * @param {() => (string | undefined)} [options.getDriveSyncDir] - Configured Drive sync folder; HTTP callers cannot choose it
    * @param {Object} [options.sessionManager] - SessionManager for workspace/session routes
    * @param {number} [options.daemonPort=8765] - Daemon port to register with when running on another port
+   * @param {import('@nomad/core').McpGateway} [options.mcpGateway] - Shared MCP gateway (defaults to a new one with core's default roots)
    * @param {import('@nomad/core').AgentRoster} [options.roster]
    * @param {import('@nomad/core').TaskDispatcher} [options.dispatcher]
    * @param {import('@nomad/core').RecurringScheduler} [options.scheduler]
@@ -79,7 +80,7 @@ class LocalSyncBridge {
     this.heartbeatTimer = null;
     this.daemonPort = options.daemonPort || 8765;
     this.pipelineManager = new PipelineManager({ headroomEnabled: true, layaEnabled: true, autoEnhance: true });
-    this.mcpGateway = new McpGateway();
+    this.mcpGateway = options.mcpGateway || new McpGateway();
     this.knowledgeBase = new KnowledgeBase();
     this.localModelClient = new LocalModelClient();
     this.pluginRuntime = new PluginRuntime();

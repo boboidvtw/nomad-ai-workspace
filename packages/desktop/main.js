@@ -10,6 +10,7 @@ const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
 const { TrayAndShortcutManager } = require('./src/tray');
+const { resolveMcpAllowedPaths } = require('./src/mcp-workspace');
 const {
   PipelineManager,
   getSyncStatus,
@@ -23,7 +24,9 @@ const {
 } = require('@nomad/core');
 
 const localModelClient = new LocalModelClient();
-const mcpGateway = new McpGateway();
+const mcpGateway = new McpGateway({
+  allowedPaths: resolveMcpAllowedPaths({ isPackaged: app.isPackaged, userDataDir: app.getPath('userData') })
+});
 const knowledgeBase = new KnowledgeBase();
 const { SessionManager } = require('./src/session-manager');
 
@@ -276,6 +279,7 @@ async function createMainWindow() {
     // /api/debug/* runs scripts inside the logged-in AI webviews: dev builds only, or opt in explicitly.
     debugEndpoints: !app.isPackaged || process.env.NOMAD_DEBUG_ENDPOINTS === '1',
     getDriveSyncDir: () => store.get('driveSync')?.customPath || undefined,
+    mcpGateway,
     getStatus: () => ({
       layout: store.get('layout'),
       activePlatforms: store.get('activePlatforms'),

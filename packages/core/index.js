@@ -85,7 +85,7 @@ const { computeDiff } = require('./src/diff/diff-engine');
 const { tokenize, VectorMemoryLite } = require('./src/memory/vector-memory-lite');
 
 // P3: Model Context Protocol (MCP) Host & Gateway
-const { McpGateway } = require('./src/mcp/mcp-gateway');
+const { McpGateway, ALLOWED_PATHS_ENV: MCP_ALLOWED_PATHS_ENV, defaultAllowedPaths, defaultDeniedPaths } = require('./src/mcp/mcp-gateway');
 
 // P3: Local Knowledge Base & RAG Pipeline
 const { KnowledgeBase } = require('./src/rag/knowledge-base');
@@ -166,6 +166,9 @@ module.exports = {
   VectorMemoryLite,
   // P3: MCP, RAG & Plugins
   McpGateway,
+  MCP_ALLOWED_PATHS_ENV,
+  defaultAllowedPaths,
+  defaultDeniedPaths,
   KnowledgeBase,
   PluginRuntime,
   // Task Control Plane
