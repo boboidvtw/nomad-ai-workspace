@@ -1,4 +1,5 @@
 import type { GoogleDriveSyncService } from '@/core/services/GoogleDriveSyncService';
+import type { PlatformFolderPayload } from '@/core/services/platformFolderFiles';
 import type { FolderData } from '@/core/types/folder';
 import { type FlatSyncFolder, mergeFlatFolders, mergeFolderData } from '@/utils/merge';
 
@@ -98,7 +99,7 @@ function toFolderData(raw: unknown): FolderData {
       };
 }
 
-function mergeFlat(local: FlatSyncFolder[], cloud: unknown[] | null): FlatSyncFolder[] {
+function mergeFlat(local: FlatSyncFolder[], cloud: PlatformFolderPayload | null): FlatSyncFolder[] {
   return cloud !== null ? mergeFlatFolders(local, extractFlatFolders(cloud)) : local;
 }
 
@@ -145,7 +146,8 @@ export async function syncAllPlatformFolders(
   await Promise.all([
     service.uploadClaudeFolders(claude, interactive),
     service.uploadChatGPTFolders(chatgpt, interactive),
-    service.uploadGeminiFolders(gemini.folders, interactive),
+    // Full FolderData, not just `folders`: folderContents carries conversation membership.
+    service.uploadGeminiFolders(gemini, interactive),
     service.uploadGrokFolders(grok, interactive),
   ]);
 

@@ -12,3 +12,4 @@ When you fix a bug that could plausibly return, add an entry to the matching top
 
 - [Content-script DOM injection](regressions/content-dom.md)
 - [Desktop multi-AI orchestrator](regressions/desktop-orchestrator.md)
+- [Google Drive sync](regressions/drive-sync.md)

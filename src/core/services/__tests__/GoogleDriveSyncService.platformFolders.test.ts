@@ -163,6 +163,37 @@ describe.each(PLATFORMS)('$name folder sync', (p) => {
   });
 });
 
+describe('Gemini folder file keeps conversation membership', () => {
+  const folderData = {
+    folders: [
+      { id: 'g1', name: 'Work', parentId: null, isExpanded: true, createdAt: 1, updatedAt: 1 },
+    ],
+    folderContents: { g1: [{ conversationId: 'c1', title: 'Chat', url: '', addedAt: 1 }] },
+  };
+
+  it('uploads the full FolderData as the payload data', async () => {
+    const service = await createService();
+    vi.spyOn(service as any, 'ensureSubfolderFileId').mockResolvedValue('file-id');
+    const upload = vi.spyOn(service as any, 'uploadFileWithRetry').mockResolvedValue(undefined);
+
+    expect(await service.uploadGeminiFolders(folderData)).toBe(true);
+
+    expect(upload).toHaveBeenCalledWith(
+      'token',
+      'file-id',
+      expect.objectContaining({ format: 'nomad.gemini.folders.v1', data: folderData }),
+    );
+  });
+
+  it('returns an uploaded FolderData payload unchanged', async () => {
+    const service = await createService();
+    vi.spyOn(service as any, 'findFileInFolder').mockResolvedValue('file-id');
+    mockFetchJson({ format: 'nomad.gemini.folders.v1', data: folderData });
+
+    expect(await service.downloadGeminiFolders()).toEqual(folderData);
+  });
+});
+
 describe('platform folder download when the file is missing', () => {
   it.each(PLATFORMS.filter((p) => p.name !== 'Gemini'))('returns null for $name', async (p) => {
     const service = await createService();
