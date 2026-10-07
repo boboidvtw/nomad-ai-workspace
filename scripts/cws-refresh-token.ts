@@ -6,10 +6,10 @@
  * Google's own token endpoint, and prints the refresh token to your terminal.
  *
  *   # easiest: point it at the JSON you downloaded when creating the client
- *   bun run scripts/cws-refresh-token.ts ~/Downloads/client_secret_*.json
+ *   npx tsx scripts/cws-refresh-token.ts ~/Downloads/client_secret_*.json
  *
  *   # or pass them explicitly
- *   CLIENT_ID=xxx CLIENT_SECRET=yyy bun run scripts/cws-refresh-token.ts
+ *   CLIENT_ID=xxx CLIENT_SECRET=yyy npx tsx scripts/cws-refresh-token.ts
  *
  * The credentials come from the "Desktop app" OAuth client you create at
  * console.cloud.google.com (APIs & Services → Credentials). The script opens a

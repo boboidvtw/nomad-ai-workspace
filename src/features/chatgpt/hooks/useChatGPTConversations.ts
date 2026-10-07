@@ -55,7 +55,9 @@ export const useChatGPTConversations = (options: UseChatGPTConversationsOptions 
   const [scanTick, setScanTick] = useState(0);
 
   const onConversationContextMenuRef = useRef(options.onConversationContextMenu);
-  onConversationContextMenuRef.current = options.onConversationContextMenu;
+  useEffect(() => {
+    onConversationContextMenuRef.current = options.onConversationContextMenu;
+  });
 
   const bumpScanTick = () => setScanTick((t) => (t + 1) % 10000);
 

@@ -6,7 +6,6 @@ const {
   validateTransition,
   createTaskEntity,
   AGENT_STATUS,
-  DEFAULT_ROSTER,
   AgentRoster,
   TaskDispatcher,
   ApprovalGate,
@@ -258,7 +257,7 @@ describe('Task Control Plane - Task Runner Execution Engine', () => {
     }).data;
 
     const runRes = await runner.dispatchAndRun(task.id, 'agent-claude', {
-      runnerFn: async (t, a) => {
+      runnerFn: async (_t, _a) => {
         return {
           summary: 'Identified 2 unclosed timers',
           content: '# Performance Audit Report\nNo memory leaks detected.',

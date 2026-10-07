@@ -45,7 +45,9 @@ const getRingMetrics = (radius: number, usedPct: number) => {
 export default function UsageRings({ data, side, isDragging, children }: Props) {
   const { t } = useTranslation();
   const hoverTimerRef = useRef<number | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
+  // Timestamp the tooltip opened at; reset labels are relative to it so render stays pure.
+  const [tooltipOpenedAt, setTooltipOpenedAt] = useState<number | null>(null);
+  const showTooltip = tooltipOpenedAt !== null;
 
   const clearHoverTimer = () => {
     if (!hoverTimerRef.current) return;
@@ -60,21 +62,21 @@ export default function UsageRings({ data, side, isDragging, children }: Props) 
   useEffect(() => {
     if (data && !isDragging) return;
     clearHoverTimer();
-    setShowTooltip(false);
+    setTooltipOpenedAt(null);
   }, [data, isDragging]);
 
   const handleMouseEnter = () => {
     if (!data || isDragging) return;
     clearHoverTimer();
     hoverTimerRef.current = window.setTimeout(() => {
-      setShowTooltip(true);
+      setTooltipOpenedAt(Date.now());
       hoverTimerRef.current = null;
     }, HOVER_TOOLTIP_DELAY_MS);
   };
 
   const handleMouseLeave = () => {
     clearHoverTimer();
-    setShowTooltip(false);
+    setTooltipOpenedAt(null);
   };
 
   const usage = useMemo(() => {
@@ -102,7 +104,7 @@ export default function UsageRings({ data, side, isDragging, children }: Props) 
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return t('usageRings.resetUnknown');
 
-    const diffMs = date.getTime() - Date.now();
+    const diffMs = date.getTime() - (tooltipOpenedAt ?? date.getTime());
     const timeText = new Intl.DateTimeFormat(undefined, {
       hour: '2-digit',
       minute: '2-digit',

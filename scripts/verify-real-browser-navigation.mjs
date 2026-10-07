@@ -139,7 +139,7 @@ async function run() {
       throw new Error('Nomad AI Workspace welcome page was not detected');
     }
 
-    const extId = welcomeTarget.url.match(/chrome-extension:\/\/([^\/]+)/)?.[1];
+    const extId = welcomeTarget.url.match(/chrome-extension:\/\/([^/]+)/)?.[1];
     console.log(`[Verify] Extension ID: ${extId}`);
     console.log(`[Verify] Welcome Page URL: ${welcomeTarget.url}`);
     console.log(`[Verify] Service Worker URL: ${swTarget.url}`);

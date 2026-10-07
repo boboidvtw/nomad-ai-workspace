@@ -1,14 +1,10 @@
-const { probeAllServices } = require('@nomad/core');
 const {
   app,
   BrowserWindow,
   WebContentsView,
   session,
   ipcMain,
-  screen,
-  Menu,
   shell,
-  dialog,
   globalShortcut,
 } = require('electron');
 const fs = require('fs');
@@ -401,7 +397,7 @@ async function createMainWindow() {
             title: document.title,
             bodyTextSnippet: (document.body ? document.body.innerText : "").slice(0, 300),
             articleCount: document.querySelectorAll("article").length,
-            turnCount: document.querySelectorAll("[data-testid*=\"conversation-turn\"]").length,
+            turnCount: document.querySelectorAll('[data-testid*="conversation-turn"]').length,
             markdownCount: document.querySelectorAll(".markdown").length,
             responseContainerCount: document.querySelectorAll(".response-container").length,
             messageContentCount: document.querySelectorAll("message-content").length
@@ -948,11 +944,11 @@ app.on('before-quit', async () => {
   if (bridge) {
     try {
       await bridge.stop();
-    } catch (e) {}
+    } catch {}
   }
   try {
     await session.defaultSession.cookies.flushStore();
-  } catch (e) {}
+  } catch {}
 });
 
 app.on('window-all-closed', () => {

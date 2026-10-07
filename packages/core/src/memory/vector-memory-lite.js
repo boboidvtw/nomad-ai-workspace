@@ -17,7 +17,7 @@ function tokenize(text) {
   const lower = text.toLowerCase();
 
   // Word tokens (Western)
-  const words = lower.match(/[a-z0-9_\-\.]+/g) || [];
+  const words = lower.match(/[a-z0-9_\-.]+/g) || [];
 
   // 2-gram and 3-gram tokens for CJK characters
   const ngrams = [];

@@ -197,7 +197,7 @@ test('Bridge: Workspaces and Orchestration Export/Import endpoints', async () =>
     },
   });
 
-  const ws = sessionManager.createWorkspace({
+  sessionManager.createWorkspace({
     prompt: '設計全端分散式系統',
     sequence: ['claude', 'chatgpt'],
   });

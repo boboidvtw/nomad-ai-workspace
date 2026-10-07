@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-import { Folder as FolderIcon, Plus, X, Check } from 'lucide-react';
+import { Folder as FolderIcon, X, Check } from 'lucide-react';
 
 import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
 import type { Folder } from '@/types/folder';

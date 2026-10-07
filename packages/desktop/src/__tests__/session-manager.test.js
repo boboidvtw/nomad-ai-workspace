@@ -343,7 +343,7 @@ test('SessionManager: searchWorkspaces uses VectorMemoryLite BM25 to score seman
   };
 
   const mgr = new SessionManager({ store: mockStore });
-  const ws = mgr.createWorkspace({
+  mgr.createWorkspace({
     title: '1003 | 探索 | 向量檢索演算法評估',
     prompt: '評估 BM25 與 CJK N-gram 分詞在本地端記憶體的查詢表現',
   });

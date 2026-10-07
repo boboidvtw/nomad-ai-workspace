@@ -11,9 +11,6 @@ import {
   parseGeminiUsage,
   parseChatGPTUsage,
   useUniversalUsage,
-  CHATGPT_USAGE_KEY,
-  GV_USAGE_OBSERVER_SRC,
-  GV_USAGE_OBSERVER_CMD,
 } from '../useUniversalUsage';
 
 const storageMock: Record<string, any> = {};
@@ -144,16 +141,8 @@ describe('useUniversalUsage', () => {
     });
 
     it('optimistically updates ChatGPT usage on send button click', async () => {
-      let latestApi: any = null;
       await act(async () => {
-        root.render(
-          <HookHarness
-            platform="chatgpt"
-            onUpdate={(api) => {
-              latestApi = api;
-            }}
-          />,
-        );
+        root.render(<HookHarness platform="chatgpt" onUpdate={() => {}} />);
       });
 
       // Simulate clicking ChatGPT send button
@@ -170,16 +159,8 @@ describe('useUniversalUsage', () => {
     });
 
     it('handles Enter key on chat textarea without shift', async () => {
-      let latestApi: any = null;
       await act(async () => {
-        root.render(
-          <HookHarness
-            platform="chatgpt"
-            onUpdate={(api) => {
-              latestApi = api;
-            }}
-          />,
-        );
+        root.render(<HookHarness platform="chatgpt" onUpdate={() => {}} />);
       });
 
       const textarea = document.createElement('textarea');
@@ -201,16 +182,8 @@ describe('useUniversalUsage', () => {
     });
 
     it('ignores Enter key when IME is composing (Chinese input method)', async () => {
-      let latestApi: any = null;
       await act(async () => {
-        root.render(
-          <HookHarness
-            platform="chatgpt"
-            onUpdate={(api) => {
-              latestApi = api;
-            }}
-          />,
-        );
+        root.render(<HookHarness platform="chatgpt" onUpdate={() => {}} />);
       });
 
       const textarea = document.createElement('textarea');

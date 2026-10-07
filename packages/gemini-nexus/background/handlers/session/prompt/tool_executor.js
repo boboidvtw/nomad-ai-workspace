@@ -8,7 +8,7 @@ export class ToolExecutor {
         this.invocationCounter = 0;
     }
 
-    async executeIfPresent(text, request, onUpdate) {
+    async executeIfPresent(text, request, _onUpdate) {
         const toolCommand = parseToolCommand(text);
         if (!toolCommand) return null;
 

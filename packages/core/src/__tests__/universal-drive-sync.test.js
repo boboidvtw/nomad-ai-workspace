@@ -8,7 +8,6 @@ const {
   importFromDrive,
   getSyncStatus,
   detectLocalDriveFolder,
-  computeChecksum,
   isOk,
   isErr,
   ErrorCodes,

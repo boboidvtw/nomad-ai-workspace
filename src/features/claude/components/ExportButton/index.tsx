@@ -13,7 +13,6 @@ import { Download, FileText, X } from 'lucide-react';
 
 import { useExport } from '../../hooks/useExport';
 import { EXPORT_SELECTORS } from '../../services/exportExtractors';
-import type { ExportFormat } from '../../services/exportFormatters';
 
 const INIT_FLAG = '__claudeNexusExportInit__';
 const HISTORY_PATCH_FLAG = '__claudeNexusHistoryPatch__';

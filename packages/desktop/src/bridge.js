@@ -6,7 +6,6 @@
 
 const http = require('http');
 const fs = require('fs');
-const path = require('path');
 const { serveDashboard } = require('@nomad/dashboard');
 const {
   ok,
@@ -245,7 +244,7 @@ class LocalSyncBridge {
         for (const client of this.sseClients) {
           try {
             client.end();
-          } catch (e) {}
+          } catch {}
         }
         this.sseClients.clear();
 
@@ -271,7 +270,7 @@ class LocalSyncBridge {
     for (const client of this.sseClients) {
       try {
         client.write(payload);
-      } catch (e) {
+      } catch {
         this.sseClients.delete(client);
       }
     }

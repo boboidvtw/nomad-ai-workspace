@@ -9,7 +9,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, FileText, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useExport } from '../../hooks/useExport';
-import type { ExportFormat } from '../../services/exportFormatters';
 import { EXPORT_SELECTORS } from '../../services/exportExtractors';
 import { EXPORT_BUTTON_ROOT_ID, EXPORT_BUTTON_ROOT_SELECTOR } from '@src/constants/selectors';
 

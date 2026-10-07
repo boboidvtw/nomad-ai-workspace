@@ -4,15 +4,14 @@ import { exists, readJson, readProjectFile } from './project-structure/helpers.j
 
 describe('project runtime config', () => {
     it('keeps release version metadata synchronized', async () => {
+        // No package-lock.json here: this package is an npm workspace locked by the
+        // monorepo root lockfile.
         const packageJson = await readJson('package.json');
-        const packageLock = await readJson('package-lock.json');
         const manifest = await readJson('manifest.json');
         const changelog = await readProjectFile('CHANGELOG.md');
         const firstHeading = changelog.split('\n').find((line) => line.startsWith('## '));
 
         expect(manifest.version).toBe(packageJson.version);
-        expect(packageLock.version).toBe(packageJson.version);
-        expect(packageLock.packages[''].version).toBe(packageJson.version);
         expect(firstHeading).toContain(`v${packageJson.version}`);
     });
 

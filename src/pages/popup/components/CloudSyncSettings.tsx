@@ -515,7 +515,7 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
             }
           }
         }
-      } catch (e) {}
+      } catch {}
 
       // 2. Fallback to storage
       try {

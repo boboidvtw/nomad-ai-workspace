@@ -87,23 +87,23 @@ class SettingsStore {
           ...parsed,
           shortcuts: {
             ...DEFAULT_SETTINGS.shortcuts,
-            ...(parsed.shortcuts || {}),
+            ...parsed.shortcuts,
           },
           appearance: {
             ...DEFAULT_SETTINGS.appearance,
-            ...(parsed.appearance || {}),
+            ...parsed.appearance,
           },
           pipeline: {
             ...DEFAULT_SETTINGS.pipeline,
-            ...(parsed.pipeline || {}),
+            ...parsed.pipeline,
           },
           driveSync: {
             ...DEFAULT_SETTINGS.driveSync,
-            ...(parsed.driveSync || {}),
+            ...parsed.driveSync,
           },
           zoomFactors: {
             ...DEFAULT_SETTINGS.zoomFactors,
-            ...(parsed.zoomFactors || {}),
+            ...parsed.zoomFactors,
           },
         };
       } else {

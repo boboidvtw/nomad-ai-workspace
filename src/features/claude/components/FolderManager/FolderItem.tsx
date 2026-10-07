@@ -140,8 +140,10 @@ export default function FolderItem({
       onDrop={handleDrop}
       aria-label={t('folderItem.folderAria', { name: folder.name })}
     >
+      {/* Row click is a mouse shortcut; the chevron button below is the keyboard control. */}
       <div
         className={`flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 transition-colors ${theme.hoverBg}`}
+        role="presentation"
         onClick={() => onToggleExpanded(folder.id)}
       >
         <button

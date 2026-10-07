@@ -6,7 +6,6 @@ import {
     requestTextSelectionFromStorage,
     saveTextSelectionBlacklistToStorage,
     requestTextSelectionBlacklistFromStorage,
-    saveImageToolsBlacklistToStorage,
     requestImageToolsBlacklistFromStorage,
     saveCustomSelectionToolsToStorage,
     requestCustomSelectionToolsFromStorage,

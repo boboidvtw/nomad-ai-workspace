@@ -3,19 +3,15 @@
  * Covers Layout, Zoom, Dispatch, Orchestration, History, Export (MD/JSON), Import, and File Verification.
  */
 
-const http = require('http');
 const fs = require('fs');
-const path = require('path');
-const os = require('os');
 
 const BRIDGE_URL = 'http://127.0.0.1:8765';
-const EXPORT_DIR = path.join(os.homedir(), 'Desktop', 'Nomad_AI_Exports');
 
 async function request(endpoint, options = {}) {
   const url = new URL(endpoint, BRIDGE_URL);
   const fetchOpts = {
     method: options.method || 'GET',
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...options.headers },
   };
   if (options.body) {
     fetchOpts.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);

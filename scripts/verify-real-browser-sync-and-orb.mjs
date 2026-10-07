@@ -129,22 +129,16 @@ async function run() {
     { stdio: 'ignore' },
   );
 
-  let exited = false;
-  browserProcess.on('exit', () => {
-    exited = true;
-  });
-
   try {
     console.log(`[Verify] 1. Waiting for remote debugging on port ${DEBUG_PORT}...`);
     let targets = [];
-    let welcomeTarget = null;
     let extId = null;
 
     for (let attempt = 0; attempt < 30; attempt++) {
       targets = await waitForHttp(`http://127.0.0.1:${DEBUG_PORT}/json`);
       const extTarget = targets.find((t) => t.url && t.url.includes('chrome-extension://'));
       if (extTarget) {
-        const match = extTarget.url.match(/chrome-extension:\/\/([^\/]+)/);
+        const match = extTarget.url.match(/chrome-extension:\/\/([^/]+)/);
         if (match) {
           extId = match[1];
           break;

@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { SettingsStore, DEFAULT_SETTINGS } = require('../store.js');
+const { SettingsStore } = require('../store.js');
 
 test('Store: Defaults are loaded when file does not exist', () => {
   const tmpFile = path.join(os.tmpdir(), `nomad-test-store-${Date.now()}.json`);

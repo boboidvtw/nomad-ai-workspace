@@ -46,7 +46,7 @@ describe('Bridge: Task Control Plane & Multi-Agent Dispatcher', () => {
   it('allows creating, claiming, reviewing, and completing tasks through Local Sync Bridge', async () => {
     const bridge = new LocalSyncBridge({
       port: 19950,
-      onDispatchPrompt: async (platform, prompt) => ({ text: `Mock dispatched to ${platform}` }),
+      onDispatchPrompt: async (platform, _prompt) => ({ text: `Mock dispatched to ${platform}` }),
     });
     await bridge.start();
     const actualPort = bridge.port;

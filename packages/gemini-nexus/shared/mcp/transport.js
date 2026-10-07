@@ -96,7 +96,7 @@ export function stableMcpHeadersKey(headers) {
  */
 export function mergeMcpHeaders(baseHeaders, customHeaders) {
     return {
-        ...(baseHeaders || {}),
+        ...baseHeaders,
         ...normalizeMcpHeaders(customHeaders),
     };
 }

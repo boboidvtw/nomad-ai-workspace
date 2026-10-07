@@ -126,7 +126,7 @@ function main() {
   console.log(`File sizes OK: ${tracked} files over ${result.limit} lines, none grew.`);
   if (result.shrunk.length > 0) {
     console.log(
-      `${result.shrunk.length} baseline entries can be tightened: run \`bun run filesize:update\` (${result.shrunk.join(', ')}).`,
+      `${result.shrunk.length} baseline entries can be tightened: run \`npm run filesize:update\` (${result.shrunk.join(', ')}).`,
     );
   }
 }

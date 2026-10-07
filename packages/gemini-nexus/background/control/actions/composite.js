@@ -33,7 +33,7 @@ export class CompositeActions extends BaseActionHandler {
             // Strip includeSnapshot from each atomic call: run_steps takes a
             // single snapshot at the end (when requested) so intermediate steps
             // don't each drag in a full accessibility tree and blow up tokens.
-            const atomicArgs = { ...(stepArgs || {}), includeSnapshot: false };
+            const atomicArgs = { ...stepArgs, includeSnapshot: false };
 
             let result;
             try {

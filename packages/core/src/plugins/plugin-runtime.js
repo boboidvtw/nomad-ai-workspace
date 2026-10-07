@@ -48,7 +48,7 @@ class PluginRuntime {
     try {
       let currentCtx = { ...context };
 
-      for (const [id, plugin] of this.plugins.entries()) {
+      for (const plugin of this.plugins.values()) {
         if (!plugin.enabled) continue;
         const hookFn = plugin.hooks[hookName];
         if (typeof hookFn === 'function') {

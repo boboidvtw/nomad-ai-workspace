@@ -248,7 +248,7 @@ async function run() {
       } else {
         auditReport.allowedRequestsCount++;
       }
-    } catch (e) {
+    } catch {
       // not a valid URL
     }
   }

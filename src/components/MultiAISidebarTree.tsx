@@ -330,6 +330,22 @@ export const MultiAISidebarTree: React.FC<Props> = ({
     );
   };
 
+  // Only a collapsible header behaves as a button; otherwise it is a plain label.
+  const headerToggleProps: React.HTMLAttributes<HTMLDivElement> = collapsible
+    ? {
+        role: 'button',
+        tabIndex: 0,
+        'aria-expanded': !isWorkspaceCollapsed,
+        onClick: toggleWorkspaceCollapse,
+        onKeyDown: (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleWorkspaceCollapse();
+          }
+        },
+      }
+    : {};
+
   return (
     <div className={`nomad-sidebar-tree select-none ${className}`}>
       {/* Header bar */}
@@ -338,16 +354,7 @@ export const MultiAISidebarTree: React.FC<Props> = ({
           className={`flex items-center justify-between border-b px-3 py-2 ${borderSubtle} ${
             collapsible ? `cursor-pointer ${bgHover} transition-colors` : ''
           }`}
-          onClick={collapsible ? toggleWorkspaceCollapse : undefined}
-          role={collapsible ? 'button' : undefined}
-          tabIndex={collapsible ? 0 : undefined}
-          aria-expanded={collapsible ? !isWorkspaceCollapsed : undefined}
-          onKeyDown={(e) => {
-            if (collapsible && (e.key === 'Enter' || e.key === ' ')) {
-              e.preventDefault();
-              toggleWorkspaceCollapse();
-            }
-          }}
+          {...headerToggleProps}
         >
           <div className="flex items-center gap-1.5">
             {collapsible &&

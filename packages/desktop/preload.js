@@ -99,7 +99,7 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
   // Spotlight HUD
   toggleSpotlight: () => ipcRenderer.invoke('nomad:toggle-spotlight'),
   onToggleSpotlightHud: (/** @type {IpcListener} */ callback) => {
-    ipcRenderer.on('nomad:toggle-spotlight-hud', (event) => callback());
+    ipcRenderer.on('nomad:toggle-spotlight-hud', () => callback());
   },
   onLocalModelResponse: (/** @type {IpcListener} */ callback) => {
     ipcRenderer.on('nomad:local-model-response', (event, data) => callback(data));

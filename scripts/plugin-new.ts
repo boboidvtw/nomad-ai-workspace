@@ -13,7 +13,7 @@
  * declares a range no older than that primitive's `sinceEngine` (plan §5).
  *
  * The scaffold is a starting point, not an approval: fill in the copy, write
- * the real CSS or `domOps`, then run `bun run plugin:check <dir>`, which is the
+ * the real CSS or `domOps`, then run `npm run plugin:check <dir>`, which is the
  * gate for the manifest, the CSS, site containment, primitives, semantic keys,
  * the 10-locale metadata and the README.
  *
@@ -308,7 +308,7 @@ not a formality.
 - Target match count: TODO how many elements the selectors hit on that page.
 - Light theme: TODO screenshot or recording.
 - Dark theme: TODO screenshot or recording.
-- \`bun run plugin:check ${checkPath}\`: TODO the output.
+- \`npm run plugin:check ${checkPath}\`: TODO the output.
 - Popup health: TODO confirm the plugin is not flagged "no effect" on that page.
 `;
 }
@@ -504,8 +504,8 @@ function report(result: ScaffoldResult, dryRun: boolean): void {
   console.log('  1. Read .agents/skills/create-voyager-plugin/SKILL.md before editing.');
   console.log('  2. Write the English name and description, then the 9 other locales.');
   console.log('  3. Replace the placeholder CSS and DOM ops with the real ones.');
-  console.log(`  4. bun run plugin:check ${dir}`);
-  console.log('  5. bun run test src/features/plugins && bun run catalog:build');
+  console.log(`  4. npm run plugin:check ${dir}`);
+  console.log('  5. npm run test src/features/plugins && npm run catalog:build');
   console.log('  6. Collect evidence: light and dark screenshots on a real conversation,');
   console.log('     the target match count, and the plugin:check output.');
   console.log('  7. .github/CODEOWNERS takes one line per site; add this if it has none:');

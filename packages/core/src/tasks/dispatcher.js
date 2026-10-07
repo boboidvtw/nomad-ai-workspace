@@ -9,12 +9,7 @@ const path = require('path');
 const os = require('os');
 const { ok, err } = require('../result');
 const { ErrorCodes } = require('../error-codes');
-const {
-  TASK_STATUS,
-  TASK_PRIORITY,
-  validateTransition,
-  createTaskEntity,
-} = require('./task-model');
+const { TASK_STATUS, validateTransition, createTaskEntity } = require('./task-model');
 const { AgentRoster, AGENT_STATUS } = require('./roster');
 
 class TaskDispatcher {

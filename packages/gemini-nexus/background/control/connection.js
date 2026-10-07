@@ -160,7 +160,7 @@ export class BrowserConnection {
             await this.detach();
         }
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             chrome.debugger.attach({ tabId }, '1.3', async () => {
                 if (chrome.runtime.lastError) {
                     const attachErrorMessage = chrome.runtime.lastError.message;

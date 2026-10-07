@@ -21,7 +21,10 @@
     "public/**",
     "Voyager/**",
     ".build/**",
-    "safari/Models/dmg_source/**"
+    "safari/Models/dmg_source/**",
+    "packages/*/vendor/**",
+    "packages/*/node_modules/**",
+    "packages/*/dist*/**"
   ],
   "rules": {
     "react/rules-of-hooks": "error",
@@ -36,6 +39,9 @@
     // Prefix a binding with _ when it is genuinely meant to stay unused.
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
     "typescript/no-explicit-any": "warn",
+    // Every autoFocus here moves focus into a just-opened dialog, menu or inline
+    // rename field, which is what the WAI-ARIA dialog pattern asks for.
+    "jsx-a11y/no-autofocus": "off",
     "no-console": ["warn", { "allow": ["warn", "error"] }],
 
     // All 11 hits were correct ARIA where the suggested element is not a drop-in:

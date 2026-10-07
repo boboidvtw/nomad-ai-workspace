@@ -10,7 +10,7 @@
             chrome.runtime.onMessage.addListener(this.handleStreamMessage);
         }
 
-        handleStreamMessage(request, sender, sendResponse) {
+        handleStreamMessage(request) {
             // The toolbar only consumes its own quick-ask stream. Sidepanel
             // streams are broadcast via chrome.runtime.sendMessage too; reject
             // them explicitly (a missing source used to fall through here and

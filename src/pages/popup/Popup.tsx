@@ -391,12 +391,7 @@ export default function Popup({ sourceTabId }: PopupProps = {}) {
         )}
       </div>
 
-      <PopupFooter
-        extVersion={release.extVersion}
-        releaseUrl={release.releaseUrl}
-        language={language}
-        t={t}
-      >
+      <PopupFooter extVersion={release.extVersion} releaseUrl={release.releaseUrl} t={t}>
         <DiagnosticsExportCard
           activeUrl={tab.activeUrl}
           loading={plugins.pluginsLoading || !plugins.pluginStateLoaded}

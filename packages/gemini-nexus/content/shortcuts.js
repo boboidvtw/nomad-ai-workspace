@@ -187,7 +187,7 @@
                     else if (command.name === '_execute_action') mapping.openPanel = shortcut;
                 }
                 this.chromeCommandShortcuts = mapping;
-            } catch (error) {
+            } catch {
                 // 静默降级:chrome.commands 不可用时回退到存储的快捷键
             }
         }

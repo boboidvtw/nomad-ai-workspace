@@ -2,7 +2,6 @@
  * Centralizes FolderManager floating UI like popovers and context menus.
  */
 
-import type React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -55,14 +54,15 @@ export function FolderManagerModals({
       {contextMenu ? (
         <div
           className="fixed inset-0 z-[2147483647]"
+          role="presentation"
           onMouseDown={onContextMenuClose}
-          aria-label={t('menu.closeAria')}
         >
           <div
             className={`fixed min-w-[220px] rounded border p-1 text-xs shadow-xl ${theme.menu}`}
             style={{ left: contextMenu.x, top: contextMenu.y }}
             data-claude-nexus-context-menu="1"
             role="menu"
+            tabIndex={-1}
             aria-label={t('menu.labelAria')}
             onMouseDown={(e) => e.stopPropagation()}
           >
@@ -142,7 +142,13 @@ export function FolderManagerModals({
 
       {deleteTarget
         ? createPortal(
-            <div className="fixed inset-0 z-[2147483647]" onMouseDown={onDeleteCancel}>
+            <div
+              className="fixed inset-0 z-[2147483647]"
+              role="presentation"
+              onMouseDown={onDeleteCancel}
+            >
+              {/* The dialog only stops inner clicks from reaching the backdrop's close handler. */}
+              {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
               <div
                 className={`fixed rounded-xl border p-4 pb-4 text-xs shadow-xl transition-all duration-150 ${theme.menu}`}
                 style={{

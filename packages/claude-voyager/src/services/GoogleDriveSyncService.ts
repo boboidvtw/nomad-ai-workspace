@@ -351,7 +351,7 @@ export class GoogleDriveSyncService {
   private async ensureFileId(
     token: string,
     fileName: string,
-    type: 'folders' | 'prompts',
+    _type: 'folders' | 'prompts',
   ): Promise<string> {
     const folderId = await this.ensureBackupFolder(token);
     const currentId = this.fileIdByName[fileName] ?? null;

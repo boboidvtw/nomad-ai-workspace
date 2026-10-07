@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BrowserConnection } from './connection.js';
 
 function createChromeMock({ attachBehavior = 'success' } = {}) {
-    const attachCallback = ({ tabId }, _version, cb) => {
+    const attachCallback = (_target, _version, cb) => {
         if (attachBehavior === 'success') {
             // Defer to mimic async chrome API + allow event-loop interleaving.
             setTimeout(() => cb(), 0);
@@ -16,7 +16,7 @@ function createChromeMock({ attachBehavior = 'success' } = {}) {
         }
     };
 
-    const detachCallback = ({ tabId }, cb) => {
+    const detachCallback = (_target, cb) => {
         setTimeout(() => {
             delete chrome.runtime.lastError;
             cb();

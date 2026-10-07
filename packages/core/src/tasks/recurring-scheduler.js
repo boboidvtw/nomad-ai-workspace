@@ -320,7 +320,7 @@ class RecurringScheduler {
     const taskResult = this.dispatcher.createTask({
       ...schedule.taskTemplate,
       metadata: {
-        ...(schedule.taskTemplate.metadata || {}),
+        ...schedule.taskTemplate.metadata,
         triggeredByScheduleId: schedule.id,
         scheduledName: schedule.name,
       },

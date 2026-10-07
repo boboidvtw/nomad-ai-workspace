@@ -85,6 +85,17 @@ export const FolderItem: React.FC<Props> = ({
       <div
         className={`group flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 ${bgHover} transition-colors`}
         onClick={() => onToggleExpanded(folder.id)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={folder.isExpanded}
+        onKeyDown={(e) => {
+          // Ignore keys bubbling up from the nested menu button.
+          if (e.target !== e.currentTarget) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onToggleExpanded(folder.id);
+          }
+        }}
       >
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
           {folder.isExpanded ? (
@@ -122,6 +133,7 @@ export const FolderItem: React.FC<Props> = ({
           {menuOpen && (
             <div
               className={`absolute top-full right-0 z-30 mt-1 w-28 rounded-md border py-1 shadow-lg ${menuBg}`}
+              role="presentation"
               onClick={(e) => e.stopPropagation()}
             >
               <button

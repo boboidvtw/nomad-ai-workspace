@@ -5,13 +5,11 @@ import type { TranslationKey } from '@/utils/translations';
 export function PopupFooter({
   extVersion,
   releaseUrl,
-  language,
   t,
   children,
 }: {
   extVersion: string | null;
   releaseUrl: string;
-  language: string;
   t: (key: TranslationKey) => string;
   children: ReactNode;
 }) {
