@@ -9,7 +9,7 @@ const {
   findDashboardPath,
   readPid,
   writePid,
-  removePid
+  removePid,
 } = require('../../index');
 
 test('Daemon Prober: probePort detects closed port cleanly without throwing', async () => {

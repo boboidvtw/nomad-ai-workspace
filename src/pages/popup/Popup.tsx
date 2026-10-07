@@ -1,9 +1,11 @@
 import { type ReactNode, useMemo, useState } from 'react';
 
+import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { detectCurrentPlatform } from '@/core/platform/registry';
 import { StorageKeys } from '@/core/types/common';
 import {
   getVoyagerBuildTarget,
@@ -12,8 +14,6 @@ import {
 } from '@/core/utils/browser';
 import type { FormulaCopyFormat } from '@/features/formulaCopy/FormulaCopyService';
 
-import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
-import { detectCurrentPlatform } from '@/core/platform/registry';
 import { CloudSyncSettings } from './components/CloudSyncSettings';
 import { ContextSyncSettings } from './components/ContextSyncSettings';
 import { DiagnosticsExportCard } from './components/DiagnosticsExportCard';
@@ -235,11 +235,11 @@ export default function Popup({ sourceTabId }: PopupProps = {}) {
             </CardContent>
           </Card>
         )}
-                {/* Multi-AI Workspace Tree Explorer */}
-        <Card className="rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm shadow-sm overflow-hidden mb-2">
+        {/* Multi-AI Workspace Tree Explorer */}
+        <Card className="border-border/50 bg-card/60 mb-2 overflow-hidden rounded-xl border shadow-sm backdrop-blur-sm">
           <CardContent className="p-2">
             <MultiAISidebarTree
-              currentPlatform={detectCurrentPlatform(tab.activeUrl) ?? "gemini"}
+              currentPlatform={detectCurrentPlatform(tab.activeUrl) ?? 'gemini'}
               theme="dark"
             />
           </CardContent>

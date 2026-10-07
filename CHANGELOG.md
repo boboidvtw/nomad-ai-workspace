@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🔒 安全性 (Security)
+
 - **Daemon (:8765) 與 Studio Bridge 本地閘道驗證**：所有 `/api/*` 端點改為需要 Bearer Token（`Authorization: Bearer`、`X-Nomad-Token` 或 SSE 用的 `?token=`）。Token 首次啟動時產生於 `~/.nomad/daemon-token`（權限 0600），可用 `NOMAD_DAEMON_TOKEN` / `NOMAD_DAEMON_TOKEN_FILE` 覆寫。
 - **移除 `Access-Control-Allow-Origin: *`**：僅反射 loopback 來源（`127.0.0.1` / `localhost` / `[::1]`），外部網站來源一律 403，杜絕任意網頁跨站呼叫本地 API。
 - **DNS Rebinding 防護**：檢查 `Host` 標頭，非 loopback 主機名稱一律拒絕。
@@ -19,6 +20,7 @@
 - **MCP 預設白名單收窄**：預設由「工作目錄 + 整個家目錄」改為僅工作目錄（若工作目錄為檔案系統根目錄，例如從 Finder 啟動的打包版 App，則不開放任何路徑）；打包版 Desktop 改用 App 專屬的 `<userData>/workspace/`（自動建立），內建 MCP 自檢因此可正常運作。相對路徑以第一個白名單根目錄為基準解析。可用 `NOMAD_MCP_ALLOWED_PATHS`（以 `:` 分隔，Windows 為 `;`）明確指定並覆寫上述預設。`~/.ssh`、`~/.aws`、`~/.gnupg`、`~/.nomad`（含閘道 Token）即使位於白名單內也一律拒絕。
 
 ### 🐛 修復 (Fixed)
+
 - **Dashboard 任務看板整段腳本無法執行**：43 行 HTML 字串遺失跳脫字元（`\'` / `\"`）導致 SyntaxError，任務卡片、詳情 Modal 與排程清單全部失效；新增 inline script 語法回歸測試。
 
 - **Desktop Bridge 任務 API 全部 500**：`GET /api/tasks` 等 3 條路由使用未定義的 `url` 變數，桌面版獨立模式的任務看板無法載入。
@@ -33,6 +35,7 @@
 - **根目錄 4 個失敗測試**：上游 Voyager 的 CI / release 測試改為依其實際讀取的檔案（`pr-gate.yml`、`release.yml`、`deploy-docs.yml`、`sponsors.yml`）決定是否執行，不再因本專案有自己的 `.github/workflows` 而誤跑；腳本邏輯測試照常執行。
 
 ### ♻️ 重構 (Changed)
+
 - **`@nomad/core` 型別合約改為自動產生**：移除漂移嚴重的手寫 `index.d.ts`（59 個 export 中 24 個、67 個錯誤碼中 29 個缺漏），改以 JS 原始碼的 JSDoc 為唯一來源，由 `tsc` 產生 `packages/core/types/`。daemon、desktop、dashboard 以 `checkJs` + `strictNullChecks` 對其做型別檢查；CI 新增 `typecheck:packages` 與 `types:check`（產生結果與 commit 內容不一致即失敗）。
 - **Dashboard 單一來源**：移除 `packages/desktop/src/dashboard-fallback.html` 重複副本與兩份重複的 static handler，Daemon 與 Desktop Bridge 統一透過 `@nomad/dashboard` 套件（`serveDashboard` / `findDashboardPath`）提供頁面；Electron 打包時隨 `node_modules/@nomad` 一併收錄。
 
@@ -42,6 +45,7 @@
 - **微服務探針單一來源**：`packages/daemon/src/prober.js` 與 `packages/desktop/src/prober.js` 兩份完全相同的副本合併為 `@nomad/core` 的 `probePort` / `probeAllServices`；`@nomad/daemon` 對外的同名 export 不變（改由 core 轉出）。
 
 ### 🗑️ 移除 (Removed)
+
 - **`packages/gemini-voyager` 上游快照**：此為上游 Voyager v1.9.0（+17 commits）的未修改快照，根目錄 `src/` 已是其超集且無任何建置 / 測試使用（35MB、1688 檔、約 33 萬行）。改以 `voyager-upstream` git remote 追蹤上游，同步方式見 `docs/ARCHITECTURE.md`；subtree 匯入歷史仍保留於 git log。
 - **根目錄 vitest 不再掃描 `.claude/**`**：該處的 agent / 編輯器 worktree 是整份 repo 的副本，會被重複收集而產生假失敗。
 - **根目錄 vitest 不再掃描 `packages/**`**：子套件各有自己的測試執行器，先前被根目錄 vitest 誤收而產生 76 個假失敗檔案。
@@ -51,9 +55,11 @@
 ## [1.4.0] - 2026-10-03
 
 ### 🤖 專案里程碑：對話紀錄全文檢索與語義標籤過濾、ChatGPT 專注模式預設與 macOS 原生透明選單列圖標 (Full-Text Search, Focus Startup & macOS Transparent Tray)
+
 全新推出工作區歷史對話內容全文搜尋與 8 大工程語義標籤過濾系統，預設啟用 ChatGPT 單欄專注模式並採用延遲載入技術顯著降低系統開銷，並重構 macOS 狀態列圖標符合 Apple HIG 模板遮罩規範。
 
 ### 🚀 新增功能 (Added)
+
 - **對話紀錄全文檢索與標籤多維度過濾系統 (`SessionManager.searchWorkspaces`)**：
   - **即時模糊全文搜尋**：支援對話標題、正文歷史訊息、使用者問答與標籤的即時不分大小寫全文比對。
   - **8 大工程語義標籤過濾**：嚴格對齊工程分類標準（`功能`, `修復`, `設計`, `優化`, `文件`, `探索`, `研究`, `發布`），支援快速點擊按鈕多選篩選與會話計數徽章。
@@ -71,9 +77,11 @@
 ## [1.3.0] - 2026-10-03
 
 ### 🤖 專案里程碑：Nomad AI Studio 獨立桌面超級工作站與四大 AI 同屏同步提問 (Nomad AI Studio Workstation & 4-AI Prompt Sync)
+
 全新推出基於 Electron 40 的獨立桌面端（`packages/desktop`），正式實現 Google Gemini、Anthropic Claude、OpenAI ChatGPT 與 xAI Grok 四大 AI 的全螢幕同屏聚合工作台與跨平台一鍵並發同步提問。
 
 ### 🚀 新增功能 (Added)
+
 - **Nomad AI Studio 獨立桌面超級工作站 (`packages/desktop`)**：
   - 基於 Electron 40 與現代 `WebContentsView` 構建高性能同屏聚合工作站，打破多標籤頁手動切換的認知負擔。
   - **動態多視窗版面**：支援 Quad（四分割九宮格對比）、Dual（雙欄並排對話）與 Focus（單欄專注）三大版面秒級無縫切換。
@@ -91,9 +99,11 @@
 ## [1.2.0] - 2026-10-02
 
 ### 🤖 專案里程碑：xAI Grok 官方深度適配與四大 AI 雲端同步中樞 (Grok Platform Support & 4-Platform Sync)
+
 正式將 xAI Grok (`grok.com` / `x.com/i/grok`) 納入一級旗艦核心支援平台，達成 Google Gemini、Anthropic Claude、OpenAI ChatGPT 與 xAI Grok 四大 AI 的全方位階層樹狀管理與 Google Drive 雲端雙向同步。
 
 ### 🚀 新增功能 (Added)
+
 - **xAI Grok 專屬側邊欄資料夾管理中樞 (`GrokFolderManager`)**：
   - 自動偵測並掛載於 Grok 官方歷史紀錄導航欄頂端，支援新增資料夾、重命名、刪除與樹狀展開。
   - 對話列表項目自動注入專屬科技藍 (`#1D9BF0`) 資料夾歸檔按鈕，並支援 HTML5 原生拖曳（Drag-and-Drop）歸檔。
@@ -124,9 +134,11 @@
 ## [1.1.0] - 2026-10-01
 
 ### 🤖 專案里程碑：OpenAI ChatGPT 官方深度適配 (ChatGPT Platform Support)
+
 正式將 OpenAI ChatGPT (`chatgpt.com` / `chat.openai.com`) 升級為 Nomad AI Workspace 的一級核心支援平台，達成 Gemini、Claude、ChatGPT 三大主流 AI 的無界遊牧體驗。
 
 ### 🚀 新增功能 (Added)
+
 - **ChatGPT 側邊欄樹狀資料夾 (`ChatGPTFolderManager`)**：
   - 支援在 ChatGPT 官方歷史導航欄掛載 Nomad 資料夾系統，支援建立、命名、刪除與層級展開。
   - 對話列表項目自動注入歸檔按鈕，並全面支援 HTML5 原生拖曳（Drag-and-Drop）歸檔。
@@ -147,9 +159,11 @@
 ## [1.0.0] - 2026-09-30
 
 ### 🧭 專案里程碑：Nomad AI Workspace 正式發布 (Official Release)
+
 首個正式全方位跨 AI 平台增強套件，無縫整合 Google Gemini、Anthropic Claude、OpenAI ChatGPT 與 xAI Grok，落實「遊牧無界，安全歸巢 (Roam Freely, Nest Safely)」的本地優先哲學。
 
 ### 🚀 新增功能 (Added)
+
 - **多 AI 階層側邊欄樹狀視圖 (`MultiAISidebarTree`)**：
   - 支援在 Gemini 與 Claude 官方頁面中掛載跨平台樹狀視圖。
   - 具備各平台官方代表色彩徽章（Gemini 藍、Claude 赤銅、ChatGPT 綠、Grok 天藍、DeepSeek 靛藍）。
@@ -176,6 +190,7 @@
   - 支援一鍵將對話乾淨匯出為純 Markdown (`.md`)、PNG 圖片或高解析度 PDF。
 
 ### 🛡️ 效能與穩定性 (Performance & Stability)
+
 - **擴充套件上下文失效防護**：優化 `folderViewHarness` 與 `usageObserverLoader`，在套件重新載入或熱更新時優雅抑制 `Extension context invalidated` 錯誤。
 - **主題色彩對比強化**：修正深淺色模式切換時標籤文字對比不足與淺色主題外洩問題。
 - **多瀏覽器原生建置管線**：支援 Chrome、Edge、Firefox 與 Safari (含 macOS iCloud Drive 備份支援) 的全套自動化編譯指令。

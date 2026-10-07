@@ -9,4 +9,3 @@ export type Conversation = {
   href: string;
   title: string;
 };
-

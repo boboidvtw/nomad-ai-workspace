@@ -4,12 +4,10 @@
  * Created: 2026-03-10
  */
 
-import { createRoot } from 'react-dom/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, BookText, Download, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { createRoot } from 'react-dom/client';
 import { useTranslation } from 'react-i18next';
-import { usePromptLibrary } from '../../hooks/usePromptLibrary';
-import type { Prompt } from '@src/types/prompt';
+
 import {
   CHAT_INPUT_ACTION_ROW_SELECTOR,
   CHAT_INPUT_LEFT_ACTIONS_SELECTOR,
@@ -19,6 +17,10 @@ import {
   PROMPT_BUTTON_ROOT_ID,
   PROMPT_BUTTON_ROOT_SELECTOR,
 } from '@src/constants/selectors';
+import type { Prompt } from '@src/types/prompt';
+import { BookOpen, BookText, Download, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+
+import { usePromptLibrary } from '../../hooks/usePromptLibrary';
 
 const INIT_FLAG = '__claudeNexusPromptInit__';
 const HISTORY_PATCH_FLAG = '__claudeNexusHistoryPatch__';
@@ -44,13 +46,22 @@ const isVisibleElement = (el: HTMLElement | null): el is HTMLElement => {
 
 const pickButtonRowFallback = (root: HTMLElement): HTMLElement | null => {
   const buttons = Array.from(root.querySelectorAll('button')).filter(
-    (node): node is HTMLButtonElement => node instanceof HTMLButtonElement && isVisibleElement(node),
+    (node): node is HTMLButtonElement =>
+      node instanceof HTMLButtonElement && isVisibleElement(node),
   );
   if (buttons.length === 0) return null;
 
   const plusButton = buttons.find((button) => {
-    const label = `${button.getAttribute('aria-label') ?? ''} ${button.textContent ?? ''}`.trim().toLowerCase();
-    return label.includes('attach') || label.includes('plus') || label.includes('add') || label.includes('上传') || label.includes('附件');
+    const label = `${button.getAttribute('aria-label') ?? ''} ${button.textContent ?? ''}`
+      .trim()
+      .toLowerCase();
+    return (
+      label.includes('attach') ||
+      label.includes('plus') ||
+      label.includes('add') ||
+      label.includes('上传') ||
+      label.includes('附件')
+    );
   });
 
   const anchor = plusButton ?? buttons[0];
@@ -69,13 +80,15 @@ const findLeftButtonsContainer = (): HTMLElement | null => {
   const currentRow = input.closest(CHAT_INPUT_ACTION_ROW_SELECTOR);
   if (currentRow instanceof HTMLElement) {
     const currentLeftButtons = currentRow.querySelector(CHAT_INPUT_LEFT_ACTIONS_CURRENT_SELECTOR);
-    if (currentLeftButtons instanceof HTMLElement && isVisibleElement(currentLeftButtons)) return currentLeftButtons;
+    if (currentLeftButtons instanceof HTMLElement && isVisibleElement(currentLeftButtons))
+      return currentLeftButtons;
   }
 
   const container = input.closest(CHAT_INPUT_TOOLBAR_PARENT_SELECTOR);
   if (container instanceof HTMLElement) {
     const currentLeftButtons = container.querySelector(CHAT_INPUT_LEFT_ACTIONS_CURRENT_SELECTOR);
-    if (currentLeftButtons instanceof HTMLElement && isVisibleElement(currentLeftButtons)) return currentLeftButtons;
+    if (currentLeftButtons instanceof HTMLElement && isVisibleElement(currentLeftButtons))
+      return currentLeftButtons;
     const leftButtons = container.querySelector(CHAT_INPUT_LEFT_ACTIONS_SELECTOR);
     if (leftButtons instanceof HTMLElement && isVisibleElement(leftButtons)) return leftButtons;
 
@@ -138,7 +151,16 @@ type PromptPopoverProps = {
 
 const PromptPopover = ({ open, onClose }: PromptPopoverProps) => {
   const { t } = useTranslation();
-  const { tags, loading, createPrompt, updatePrompt, deletePrompt, importFromFile, exportToFile, filterPrompts } = usePromptLibrary();
+  const {
+    tags,
+    loading,
+    createPrompt,
+    updatePrompt,
+    deletePrompt,
+    importFromFile,
+    exportToFile,
+    filterPrompts,
+  } = usePromptLibrary();
 
   const [mode, setMode] = useState<ViewMode>('list');
   const [query, setQuery] = useState('');
@@ -160,7 +182,10 @@ const PromptPopover = ({ open, onClose }: PromptPopoverProps) => {
     setImportMessage(null);
   }, [open]);
 
-  const filtered = useMemo(() => filterPrompts(query, selectedTag), [filterPrompts, query, selectedTag]);
+  const filtered = useMemo(
+    () => filterPrompts(query, selectedTag),
+    [filterPrompts, query, selectedTag],
+  );
 
   useEffect(() => {
     if (!selectedTag) return;
@@ -226,7 +251,9 @@ const PromptPopover = ({ open, onClose }: PromptPopoverProps) => {
   const handleImportFile = async (file: File) => {
     try {
       const result = await importFromFile(file);
-      setImportMessage(t('promptLibrary.importSuccess', { imported: result.imported, skipped: result.skipped }));
+      setImportMessage(
+        t('promptLibrary.importSuccess', { imported: result.imported, skipped: result.skipped }),
+      );
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
       setImportMessage(t('promptLibrary.importFailed', { error: msg }));
@@ -277,13 +304,13 @@ const PromptPopover = ({ open, onClose }: PromptPopoverProps) => {
               </div>
 
               {tags.length ? (
-                <div className="flex flex-nowrap gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex [scrollbar-width:none] flex-nowrap gap-2 overflow-x-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <button
                     type="button"
                     className={
                       selectedTag === null
-                        ? 'whitespace-nowrap rounded-full border border-[#374151] !bg-[#374151] px-3 py-1 text-[12px] !text-white'
-                        : 'whitespace-nowrap rounded-full border border-[#e5e0d8] bg-white px-3 py-1 text-[12px] !text-[#374151] hover:bg-zinc-50'
+                        ? 'rounded-full border border-[#374151] !bg-[#374151] px-3 py-1 text-[12px] whitespace-nowrap !text-white'
+                        : 'rounded-full border border-[#e5e0d8] bg-white px-3 py-1 text-[12px] whitespace-nowrap !text-[#374151] hover:bg-zinc-50'
                     }
                     onClick={() => setSelectedTag(null)}
                   >
@@ -295,8 +322,8 @@ const PromptPopover = ({ open, onClose }: PromptPopoverProps) => {
                       type="button"
                       className={
                         selectedTag === tag
-                          ? 'whitespace-nowrap rounded-full border border-[#374151] !bg-[#374151] px-3 py-1 text-[12px] !text-white'
-                          : 'whitespace-nowrap rounded-full border border-[#e5e0d8] bg-white px-3 py-1 text-[12px] !text-[#374151] hover:bg-zinc-50'
+                          ? 'rounded-full border border-[#374151] !bg-[#374151] px-3 py-1 text-[12px] whitespace-nowrap !text-white'
+                          : 'rounded-full border border-[#e5e0d8] bg-white px-3 py-1 text-[12px] whitespace-nowrap !text-[#374151] hover:bg-zinc-50'
                       }
                       onClick={() => setSelectedTag(tag)}
                     >
@@ -336,12 +363,18 @@ const PromptPopover = ({ open, onClose }: PromptPopoverProps) => {
             </div>
           </div>
 
-          {importMessage ? <div className="mb-2 text-[12px] text-[#6b7280]">{importMessage}</div> : null}
+          {importMessage ? (
+            <div className="mb-2 text-[12px] text-[#6b7280]">{importMessage}</div>
+          ) : null}
 
           {loading ? (
-            <div className="py-6 text-center text-[12px] text-[#6b7280]">{t('promptLibrary.loading')}</div>
+            <div className="py-6 text-center text-[12px] text-[#6b7280]">
+              {t('promptLibrary.loading')}
+            </div>
           ) : filtered.length === 0 ? (
-            <div className="py-6 text-center text-[12px] text-[#6b7280]">{t('promptLibrary.empty')}</div>
+            <div className="py-6 text-center text-[12px] text-[#6b7280]">
+              {t('promptLibrary.empty')}
+            </div>
           ) : (
             <div className="max-h-[18rem] overflow-auto">
               <div className="flex flex-col gap-2">
@@ -350,11 +383,16 @@ const PromptPopover = ({ open, onClose }: PromptPopoverProps) => {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <div className="truncate text-[12px] font-medium">{p.title}</div>
-                        <div className="mt-1 truncate text-[12px] text-[#6b7280]">{buildPreview(p.content)}</div>
+                        <div className="mt-1 truncate text-[12px] text-[#6b7280]">
+                          {buildPreview(p.content)}
+                        </div>
                         {p.tags && p.tags.length ? (
                           <div className="mt-2 flex flex-wrap gap-1">
                             {p.tags.map((tag) => (
-                              <span key={tag} className="rounded border border-[#e5e0d8] bg-white px-1.5 py-0.5 text-[11px] text-[#6b7280]">
+                              <span
+                                key={tag}
+                                className="rounded border border-[#e5e0d8] bg-white px-1.5 py-0.5 text-[11px] text-[#6b7280]"
+                              >
                                 {tag}
                               </span>
                             ))}
@@ -582,7 +620,9 @@ const mountIntoInputToolbar = (): boolean => {
 
   const host = document.createElement('div');
   host.id = PROMPT_BUTTON_ROOT_ID;
-  const firstChild = Array.from(container.children).find((node): node is HTMLElement => node instanceof HTMLElement);
+  const firstChild = Array.from(container.children).find(
+    (node): node is HTMLElement => node instanceof HTMLElement,
+  );
   if (firstChild) {
     container.insertBefore(host, firstChild.nextSibling);
   } else {
@@ -593,7 +633,7 @@ const mountIntoInputToolbar = (): boolean => {
     <div className="flex gap-2">
       <PromptButton />
       <NotebookLMButton />
-    </div>
+    </div>,
   );
   return true;
 };

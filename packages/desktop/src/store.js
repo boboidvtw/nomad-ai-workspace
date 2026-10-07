@@ -13,24 +13,24 @@ const DEFAULT_SETTINGS = {
     toggleFocus: 'CommandOrControl+Shift+F',
     toggleDrawer: 'CommandOrControl+Shift+D',
     newSession: 'CommandOrControl+Shift+N',
-    toggleHUD: 'CommandOrControl+Shift+H'
+    toggleHUD: 'CommandOrControl+Shift+H',
   },
   appearance: {
     theme: 'charcoal', // 'charcoal' | 'oled' | 'cyberpunk' | 'aurora' | 'nordic'
     accentColor: '#38bdf8',
     glassmorphism: true,
-    fontSize: 'normal'
+    fontSize: 'normal',
   },
   pipeline: {
     headroomEnabled: true,
     layaEnabled: true,
     autoEnhance: true,
-    compressionLevel: 'balanced'
+    compressionLevel: 'balanced',
   },
   driveSync: {
     autoSync: false,
     customPath: '',
-    lastSyncedAt: null
+    lastSyncedAt: null,
   },
   layout: 'focus', // 'focus', 'dual', 'triple', 'quad', 'hexa', 'custom'
   activePlatforms: ['chatgpt'],
@@ -41,7 +41,7 @@ const DEFAULT_SETTINGS = {
     gemini: 1.0,
     grok: 1.0,
     deepseek: 1.0,
-    perplexity: 1.0
+    perplexity: 1.0,
   },
   bridgePort: 8765,
   bridgeEnabled: true,
@@ -87,19 +87,19 @@ class SettingsStore {
           ...parsed,
           shortcuts: {
             ...DEFAULT_SETTINGS.shortcuts,
-            ...(parsed.shortcuts || {})
+            ...(parsed.shortcuts || {}),
           },
           appearance: {
             ...DEFAULT_SETTINGS.appearance,
-            ...(parsed.appearance || {})
+            ...(parsed.appearance || {}),
           },
           pipeline: {
             ...DEFAULT_SETTINGS.pipeline,
-            ...(parsed.pipeline || {})
+            ...(parsed.pipeline || {}),
           },
           driveSync: {
             ...DEFAULT_SETTINGS.driveSync,
-            ...(parsed.driveSync || {})
+            ...(parsed.driveSync || {}),
           },
           zoomFactors: {
             ...DEFAULT_SETTINGS.zoomFactors,
@@ -110,7 +110,10 @@ class SettingsStore {
         this.save();
       }
     } catch (err) {
-      console.warn('[Nomad Store] Failed to load settings, using defaults:', (err instanceof Error ? err.message : String(err)));
+      console.warn(
+        '[Nomad Store] Failed to load settings, using defaults:',
+        err instanceof Error ? err.message : String(err),
+      );
       this.data = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
     }
     this.isLoaded = true;
@@ -126,7 +129,10 @@ class SettingsStore {
       }
       fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf-8');
     } catch (err) {
-      console.error('[Nomad Store] Failed to save settings:', (err instanceof Error ? err.message : String(err)));
+      console.error(
+        '[Nomad Store] Failed to save settings:',
+        err instanceof Error ? err.message : String(err),
+      );
     }
   }
 
@@ -169,7 +175,7 @@ class SettingsStore {
     if (partial.shortcuts) {
       this.data.shortcuts = {
         ...this.data.shortcuts,
-        ...partial.shortcuts
+        ...partial.shortcuts,
       };
       delete partial.shortcuts;
     }
@@ -177,7 +183,7 @@ class SettingsStore {
     if (partial.appearance) {
       this.data.appearance = {
         ...this.data.appearance,
-        ...partial.appearance
+        ...partial.appearance,
       };
       delete partial.appearance;
     }
@@ -185,7 +191,7 @@ class SettingsStore {
     if (partial.pipeline) {
       this.data.pipeline = {
         ...this.data.pipeline,
-        ...partial.pipeline
+        ...partial.pipeline,
       };
       delete partial.pipeline;
     }
@@ -193,7 +199,7 @@ class SettingsStore {
     if (partial.driveSync) {
       this.data.driveSync = {
         ...this.data.driveSync,
-        ...partial.driveSync
+        ...partial.driveSync,
       };
       delete partial.driveSync;
     }

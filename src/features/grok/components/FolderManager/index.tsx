@@ -4,14 +4,17 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+
 import { Plus, Cloud, Layers, RefreshCw } from 'lucide-react';
+
+import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
 import type { Folder } from '@/types/folder';
-import { saveGrokFolders } from '../../services/storage';
-import { useGrokFolders } from '../../hooks/useGrokFolders';
+
 import { useGrokConversations } from '../../hooks/useGrokConversations';
+import { useGrokFolders } from '../../hooks/useGrokFolders';
+import { saveGrokFolders } from '../../services/storage';
 import { FolderList } from './FolderList';
 import { FolderManagerModals } from './FolderManagerModals';
-import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
 
 export default function GrokFolderManager() {
   const [contextMenu, setContextMenu] = useState<{
@@ -27,8 +30,8 @@ export default function GrokFolderManager() {
 
   React.useEffect(() => {
     const handleToggle = () => setTreeModalOpen((prev) => !prev);
-    window.addEventListener("nomad:toggle-workspace-modal", handleToggle);
-    return () => window.removeEventListener("nomad:toggle-workspace-modal", handleToggle);
+    window.addEventListener('nomad:toggle-workspace-modal', handleToggle);
+    return () => window.removeEventListener('nomad:toggle-workspace-modal', handleToggle);
   }, []);
 
   const {
@@ -62,9 +65,7 @@ export default function GrokFolderManager() {
       if (downloadRes?.ok && downloadRes.data) {
         const rawCloud = downloadRes.data;
         const cloudFolders: Folder[] = (
-          Array.isArray(rawCloud)
-            ? rawCloud
-            : ((rawCloud as { folders?: Folder[] }).folders || [])
+          Array.isArray(rawCloud) ? rawCloud : (rawCloud as { folders?: Folder[] }).folders || []
         ) as Folder[];
 
         const localMap = new Map<string, Folder>(mergedFolders.map((f) => [f.id, f]));
@@ -98,7 +99,9 @@ export default function GrokFolderManager() {
           },
           (res) => {
             if (res?.ok) {
-              console.log('[Nomad Workspace] Grok folders bidirectional sync completed successfully!');
+              console.log(
+                '[Nomad Workspace] Grok folders bidirectional sync completed successfully!',
+              );
               resolve();
             } else {
               reject(new Error(res?.error || 'Upload failed'));
@@ -118,17 +121,17 @@ export default function GrokFolderManager() {
   const bgHover = isDarkTheme ? 'hover:bg-white/10' : 'hover:bg-black/10';
 
   const content = (
-    <div className="nomad-grok-folder-manager font-sans text-xs select-none mb-1">
+    <div className="nomad-grok-folder-manager mb-1 font-sans text-xs select-none">
       <MultiAISidebarTree
         currentPlatform="grok"
-        theme={isDarkTheme ? "dark" : "light"}
+        theme={isDarkTheme ? 'dark' : 'light'}
         onOpenSyncSettings={handleSyncToDrive}
       >
-        <div className="nomad-local-folder-section pb-2 mb-1">
+        <div className="nomad-local-folder-section mb-1 pb-2">
           {/* Header Bar */}
-          <div className="flex items-center justify-between px-2 py-1.5 border-b border-white/5">
+          <div className="flex items-center justify-between border-b border-white/5 px-2 py-1.5">
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-sky-500 shadow-sm shadow-sky-500/50 flex-shrink-0" />
+              <span className="h-2 w-2 flex-shrink-0 rounded-full bg-sky-500 shadow-sm shadow-sky-500/50" />
               <span className={`font-semibold tracking-wide ${textPrimary}`}>Nomad 資料夾</span>
             </div>
 
@@ -136,36 +139,36 @@ export default function GrokFolderManager() {
               {/* Cloud Sync Button */}
               <button
                 type="button"
-                className={`p-1 rounded ${bgHover} ${textMuted} hover:text-sky-400 transition-colors`}
+                className={`rounded p-1 ${bgHover} ${textMuted} transition-colors hover:text-sky-400`}
                 title="同步 Grok 資料夾至 Google Drive"
                 disabled={isSyncing}
                 onClick={handleSyncToDrive}
               >
                 {isSyncing ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-sky-400" />
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-sky-400" />
                 ) : (
-                  <Cloud className="w-3.5 h-3.5" />
+                  <Cloud className="h-3.5 w-3.5" />
                 )}
               </button>
 
               {/* Full Multi-AI Tree Button */}
               <button
                 type="button"
-                className={`p-1 rounded ${bgHover} ${textMuted} hover:text-sky-400 transition-colors`}
+                className={`rounded p-1 ${bgHover} ${textMuted} transition-colors hover:text-sky-400`}
                 title="開啟 Nomad 多平台總覽樹"
                 onClick={() => setTreeModalOpen(true)}
               >
-                <Layers className="w-3.5 h-3.5" />
+                <Layers className="h-3.5 w-3.5" />
               </button>
 
               {/* Add Folder Button */}
               <button
                 type="button"
-                className={`p-1 rounded ${bgHover} text-sky-400 hover:text-sky-300 transition-colors`}
+                className={`rounded p-1 ${bgHover} text-sky-400 transition-colors hover:text-sky-300`}
                 title="新增資料夾"
                 onClick={() => setAddModalOpen(true)}
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>

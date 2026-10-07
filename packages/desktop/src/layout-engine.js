@@ -7,7 +7,7 @@ const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok', 'deepseek', 'perpl
 
 /**
  * Calculates bounds and visibility for all platforms.
- * 
+ *
  * @param {Object} params
  * @param {number} params.winWidth - Total window content width
  * @param {number} params.winHeight - Total window content height
@@ -41,9 +41,10 @@ function calculateLayoutBounds({
   }
 
   // Filter valid active platforms
-  const active = (activePlatforms && activePlatforms.length > 0)
-    ? activePlatforms.filter(p => ALL_PLATFORMS.includes(p))
-    : ['chatgpt'];
+  const active =
+    activePlatforms && activePlatforms.length > 0
+      ? activePlatforms.filter((p) => ALL_PLATFORMS.includes(p))
+      : ['chatgpt'];
 
   // Determine effective mode
   let effectiveMode = layout;
@@ -66,7 +67,7 @@ function calculateLayoutBounds({
     };
   } else if (effectiveMode === 'dual' || active.length === 2) {
     const p1 = active[0];
-    const p2 = active[1] || ALL_PLATFORMS.find(k => k !== p1) || 'claude';
+    const p2 = active[1] || ALL_PLATFORMS.find((k) => k !== p1) || 'claude';
 
     // Clamp split ratio between 0.2 and 0.8
     const ratio = Math.min(0.8, Math.max(0.2, Number(splitRatio) || 0.5));

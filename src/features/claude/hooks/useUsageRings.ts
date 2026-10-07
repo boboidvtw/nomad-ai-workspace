@@ -5,6 +5,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { fetchUsageData, type UsageData } from '../services/usage';
 
 type UseUsageRingsApi = {

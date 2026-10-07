@@ -44,9 +44,11 @@ export const CHAT_INPUT_SELECTOR = 'div[data-testid="chat-input"]';
 // Parent wrapper used to find adjacent toolbar regions.
 export const CHAT_INPUT_TOOLBAR_PARENT_SELECTOR = 'div.flex.flex-col';
 // Left-side actions container where prompt button is injected.
-export const CHAT_INPUT_LEFT_ACTIONS_SELECTOR = 'div.relative.flex-1.flex.items-center.shrink.min-w-0.gap-1';
+export const CHAT_INPUT_LEFT_ACTIONS_SELECTOR =
+  'div.relative.flex-1.flex.items-center.shrink.min-w-0.gap-1';
 // Current claude.ai left-side controls group next to the composer.
-export const CHAT_INPUT_LEFT_ACTIONS_CURRENT_SELECTOR = 'div.relative.shrink-0.flex.items-center.gap-1';
+export const CHAT_INPUT_LEFT_ACTIONS_CURRENT_SELECTOR =
+  'div.relative.shrink-0.flex.items-center.gap-1';
 // Current visible composer action row.
 export const CHAT_INPUT_ACTION_ROW_SELECTOR = 'div.relative.flex.gap-2.w-full.items-center';
 

@@ -87,8 +87,18 @@ const TASK_PRIORITY = Object.freeze({
 const VALID_TRANSITIONS = {
   [TASK_STATUS.TODO]: [TASK_STATUS.IN_PROGRESS, TASK_STATUS.BLOCKED, TASK_STATUS.CANCELLED],
   [TASK_STATUS.BLOCKED]: [TASK_STATUS.TODO, TASK_STATUS.CANCELLED],
-  [TASK_STATUS.IN_PROGRESS]: [TASK_STATUS.REVIEW, TASK_STATUS.COMPLETED, TASK_STATUS.FAILED, TASK_STATUS.CANCELLED],
-  [TASK_STATUS.REVIEW]: [TASK_STATUS.COMPLETED, TASK_STATUS.IN_PROGRESS, TASK_STATUS.FAILED, TASK_STATUS.CANCELLED],
+  [TASK_STATUS.IN_PROGRESS]: [
+    TASK_STATUS.REVIEW,
+    TASK_STATUS.COMPLETED,
+    TASK_STATUS.FAILED,
+    TASK_STATUS.CANCELLED,
+  ],
+  [TASK_STATUS.REVIEW]: [
+    TASK_STATUS.COMPLETED,
+    TASK_STATUS.IN_PROGRESS,
+    TASK_STATUS.FAILED,
+    TASK_STATUS.CANCELLED,
+  ],
   [TASK_STATUS.FAILED]: [TASK_STATUS.TODO, TASK_STATUS.CANCELLED],
   [TASK_STATUS.COMPLETED]: [],
   [TASK_STATUS.CANCELLED]: [],
@@ -96,19 +106,19 @@ const VALID_TRANSITIONS = {
 
 /**
  * Validates a state transition against the task state machine
- * @param {string} currentStatus 
- * @param {string} nextStatus 
+ * @param {string} currentStatus
+ * @param {string} nextStatus
  * @returns {import('../result').UnitResult<boolean, string>}
  */
 function validateTransition(currentStatus, nextStatus) {
   if (currentStatus === nextStatus) {
     return ok(true);
   }
-  const allowed = (/** @type {Record<string, string[]>} */ (VALID_TRANSITIONS))[currentStatus] || [];
+  const allowed = /** @type {Record<string, string[]>} */ (VALID_TRANSITIONS)[currentStatus] || [];
   if (!allowed.includes(nextStatus)) {
     return err(
       ErrorCodes.TASK_INVALID_STATE_TRANSITION_004,
-      `Cannot transition task status from '${currentStatus}' to '${nextStatus}'. Allowed: [${allowed.join(', ')}]`
+      `Cannot transition task status from '${currentStatus}' to '${nextStatus}'. Allowed: [${allowed.join(', ')}]`,
     );
   }
   return ok(true);
@@ -140,16 +150,18 @@ function createTaskEntity(input) {
   }
 
   /** @type {TaskPriority} */
-  const priority = (/** @type {Array<string | undefined>} */ (Object.values(TASK_PRIORITY))).includes(input.priority)
+  const priority = /** @type {Array<string | undefined>} */ (Object.values(TASK_PRIORITY)).includes(
+    input.priority,
+  )
     ? /** @type {TaskPriority} */ (input.priority)
     : TASK_PRIORITY.MEDIUM;
 
-  const dependencies = Array.isArray(input.dependencies) 
-    ? [...new Set(input.dependencies.filter(Boolean))] 
+  const dependencies = Array.isArray(input.dependencies)
+    ? [...new Set(input.dependencies.filter(Boolean))]
     : [];
 
   const acceptanceCriteria = Array.isArray(input.acceptanceCriteria)
-    ? input.acceptanceCriteria.map(s => String(s).trim()).filter(Boolean)
+    ? input.acceptanceCriteria.map((s) => String(s).trim()).filter(Boolean)
     : [];
 
   const now = new Date().toISOString();
@@ -175,8 +187,8 @@ function createTaskEntity(input) {
       {
         timestamp: now,
         level: 'info',
-        message: `Task initialized with status: ${dependencies.length > 0 ? TASK_STATUS.BLOCKED : TASK_STATUS.TODO}`
-      }
+        message: `Task initialized with status: ${dependencies.length > 0 ? TASK_STATUS.BLOCKED : TASK_STATUS.TODO}`,
+      },
     ],
     createdAt: now,
     updatedAt: now,

@@ -4,7 +4,8 @@
 // contract can never drift from the runtime code again.
 import { execFileSync } from 'node:child_process';
 
-const run = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] });
+const run = (cmd, args) =>
+  execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] });
 
 run('npm', ['run', 'build:types', '--workspace', '@nomad/core']);
 const drift = run('git', ['status', '--porcelain', '--', 'packages/core/types']).trim();

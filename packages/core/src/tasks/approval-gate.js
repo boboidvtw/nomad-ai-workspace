@@ -11,9 +11,9 @@ const { TASK_STATUS, validateTransition } = require('./task-model');
 class ApprovalGate {
   /**
    * Submits an in-progress task for operator review
-   * @param {import('./dispatcher').TaskDispatcher} dispatcher 
-   * @param {string} taskId 
-   * @param {string} agentId 
+   * @param {import('./dispatcher').TaskDispatcher} dispatcher
+   * @param {string} taskId
+   * @param {string} agentId
    * @param {Object} [reviewRequest]
    * @param {string} [reviewRequest.proposal]
    * @param {string} [reviewRequest.diff]
@@ -28,7 +28,7 @@ class ApprovalGate {
     if (task.status !== TASK_STATUS.IN_PROGRESS) {
       return err(
         ErrorCodes.TASK_INVALID_STATE_TRANSITION_004,
-        `Task must be in '${TASK_STATUS.IN_PROGRESS}' to submit for review, current: '${task.status}'`
+        `Task must be in '${TASK_STATUS.IN_PROGRESS}' to submit for review, current: '${task.status}'`,
       );
     }
 
@@ -66,8 +66,8 @@ class ApprovalGate {
 
   /**
    * Records a human operator approval or rejection decision
-   * @param {import('./dispatcher').TaskDispatcher} dispatcher 
-   * @param {string} taskId 
+   * @param {import('./dispatcher').TaskDispatcher} dispatcher
+   * @param {string} taskId
    * @param {Object} [decisionInput]
    * @param {'approve' | 'reject'} [decisionInput.decision] - Required; validated at runtime
    * @param {string} [decisionInput.feedback]
@@ -84,7 +84,7 @@ class ApprovalGate {
     if (task.status !== TASK_STATUS.REVIEW || !task.reviewGate) {
       return err(
         ErrorCodes.APPROVAL_GATE_NOT_PENDING_001,
-        `Task '${taskId}' is not pending approval (status: '${task.status}')`
+        `Task '${taskId}' is not pending approval (status: '${task.status}')`,
       );
     }
 
@@ -92,7 +92,7 @@ class ApprovalGate {
     if (decision !== 'approve' && decision !== 'reject') {
       return err(
         ErrorCodes.APPROVAL_ACTION_INVALID_002,
-        `Invalid approval decision: '${decisionInput.decision}'. Must be 'approve' or 'reject'`
+        `Invalid approval decision: '${decisionInput.decision}'. Must be 'approve' or 'reject'`,
       );
     }
 
@@ -123,7 +123,7 @@ class ApprovalGate {
         if (task.assignee) {
           const agent = dispatcher.roster.agents.get(task.assignee);
           if (agent) {
-            agent.currentTaskIds = agent.currentTaskIds.filter(id => id !== taskId);
+            agent.currentTaskIds = agent.currentTaskIds.filter((id) => id !== taskId);
             if (agent.currentTaskIds.length < agent.maxConcurrency) {
               agent.status = 'idle';
             }
@@ -150,7 +150,7 @@ class ApprovalGate {
 
   /**
    * Lists all tasks pending approval
-   * @param {import('./dispatcher').TaskDispatcher} dispatcher 
+   * @param {import('./dispatcher').TaskDispatcher} dispatcher
    * @returns {import('./task-model').Task[]}
    */
   static listPendingReviews(dispatcher) {

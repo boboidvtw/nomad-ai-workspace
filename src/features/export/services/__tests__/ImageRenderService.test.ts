@@ -75,7 +75,8 @@ describe('ImageRenderService', () => {
     document.head.appendChild(style);
 
     const target = document.createElement('div');
-    target.innerHTML = '<span class="katex" style="font-family: KaTeX_Main"><span class="base">x</span></span>';
+    target.innerHTML =
+      '<span class="katex" style="font-family: KaTeX_Main"><span class="base">x</span></span>';
     document.body.appendChild(target);
     const blob = new Blob(['ok'], { type: 'image/png' });
     (toBlob as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(blob);

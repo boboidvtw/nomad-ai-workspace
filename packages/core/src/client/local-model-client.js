@@ -19,7 +19,8 @@ class LocalModelClient {
    * @param {number} [options.timeoutMs=15000]
    */
   constructor(options = {}) {
-    this.endpoint = options.endpoint ||
+    this.endpoint =
+      options.endpoint ||
       'http://' + (options.host || '127.0.0.1') + ':' + (options.port || 1234) + '/v1';
     this.defaultModel = options.defaultModel || 'local-model';
     this.timeoutMs = options.timeoutMs || 15000;
@@ -35,29 +36,39 @@ class LocalModelClient {
     const url = new URL(`${ep}/models`);
 
     return new Promise((resolve) => {
-      const req = http.request({
-        hostname: url.hostname,
-        port: url.port,
-        path: url.pathname,
-        method: 'GET',
-        timeout: 1000
-      }, (res) => {
-        let raw = '';
-        res.on('data', chunk => raw += chunk);
-        res.on('end', () => {
-          if (res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300) {
-            try {
-              const data = JSON.parse(raw);
-              const models = Array.isArray(data.data) ? data.data.map((/** @type {{ id: string }} */ m) => m.id) : [];
-              resolve(ok({ online: true, endpoint: ep, models }));
-            } catch {
-              resolve(ok({ online: true, endpoint: ep, models: [] }));
+      const req = http.request(
+        {
+          hostname: url.hostname,
+          port: url.port,
+          path: url.pathname,
+          method: 'GET',
+          timeout: 1000,
+        },
+        (res) => {
+          let raw = '';
+          res.on('data', (chunk) => (raw += chunk));
+          res.on('end', () => {
+            if (res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300) {
+              try {
+                const data = JSON.parse(raw);
+                const models = Array.isArray(data.data)
+                  ? data.data.map((/** @type {{ id: string }} */ m) => m.id)
+                  : [];
+                resolve(ok({ online: true, endpoint: ep, models }));
+              } catch {
+                resolve(ok({ online: true, endpoint: ep, models: [] }));
+              }
+            } else {
+              resolve(
+                err(
+                  ErrorCodes.LOCAL_MODEL_UNREACHABLE_001,
+                  `Server returned HTTP ${res.statusCode}`,
+                ),
+              );
             }
-          } else {
-            resolve(err(ErrorCodes.LOCAL_MODEL_UNREACHABLE_001, `Server returned HTTP ${res.statusCode}`));
-          }
-        });
-      });
+          });
+        },
+      );
 
       req.on('timeout', () => {
         req.destroy();
@@ -65,7 +76,9 @@ class LocalModelClient {
       });
 
       req.on('error', (e) => {
-        resolve(err(ErrorCodes.LOCAL_MODEL_UNREACHABLE_001, `Connection refused on ${ep}: ${e.message}`));
+        resolve(
+          err(ErrorCodes.LOCAL_MODEL_UNREACHABLE_001, `Connection refused on ${ep}: ${e.message}`),
+        );
       });
 
       req.end();
@@ -92,53 +105,75 @@ class LocalModelClient {
       model,
       messages: options.messages || [{ role: 'user', content: options.prompt || '' }],
       temperature: options.temperature !== undefined ? options.temperature : 0.7,
-      stream: false
+      stream: false,
     });
 
     return new Promise((resolve) => {
-      const req = http.request({
-        hostname: url.hostname,
-        port: url.port,
-        path: url.pathname,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(payload)
+      const req = http.request(
+        {
+          hostname: url.hostname,
+          port: url.port,
+          path: url.pathname,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload),
+          },
+          timeout: this.timeoutMs,
         },
-        timeout: this.timeoutMs
-      }, (res) => {
-        let raw = '';
-        res.on('data', chunk => raw += chunk);
-        res.on('end', () => {
-          const endTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
-          const latencyMs = Number((endTime - startTime).toFixed(2));
+        (res) => {
+          let raw = '';
+          res.on('data', (chunk) => (raw += chunk));
+          res.on('end', () => {
+            const endTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
+            const latencyMs = Number((endTime - startTime).toFixed(2));
 
-          if (res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300) {
-            try {
-              const data = JSON.parse(raw);
-              const message = data.choices?.[0]?.message?.content || '';
-              resolve(ok({
-                content: message,
-                model: data.model || model,
-                usage: data.usage || null,
-                latencyMs
-              }));
-            } catch (e) {
-              resolve(err(ErrorCodes.LOCAL_MODEL_INFERENCE_FAILED_002, 'JSON parse error: ' + (e instanceof Error ? e.message : String(e))));
+            if (res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300) {
+              try {
+                const data = JSON.parse(raw);
+                const message = data.choices?.[0]?.message?.content || '';
+                resolve(
+                  ok({
+                    content: message,
+                    model: data.model || model,
+                    usage: data.usage || null,
+                    latencyMs,
+                  }),
+                );
+              } catch (e) {
+                resolve(
+                  err(
+                    ErrorCodes.LOCAL_MODEL_INFERENCE_FAILED_002,
+                    'JSON parse error: ' + (e instanceof Error ? e.message : String(e)),
+                  ),
+                );
+              }
+            } else {
+              resolve(
+                err(
+                  ErrorCodes.LOCAL_MODEL_INFERENCE_FAILED_002,
+                  `Server error HTTP ${res.statusCode}: ${raw.slice(0, 100)}`,
+                ),
+              );
             }
-          } else {
-            resolve(err(ErrorCodes.LOCAL_MODEL_INFERENCE_FAILED_002, `Server error HTTP ${res.statusCode}: ${raw.slice(0, 100)}`));
-          }
-        });
-      });
+          });
+        },
+      );
 
       req.on('timeout', () => {
         req.destroy();
-        resolve(err(ErrorCodes.LOCAL_MODEL_TIMEOUT_003, `Inference timed out after ${this.timeoutMs}ms`));
+        resolve(
+          err(ErrorCodes.LOCAL_MODEL_TIMEOUT_003, `Inference timed out after ${this.timeoutMs}ms`),
+        );
       });
 
       req.on('error', (e) => {
-        resolve(err(ErrorCodes.LOCAL_MODEL_UNREACHABLE_001, `Failed to connect to local model: ${e.message}`));
+        resolve(
+          err(
+            ErrorCodes.LOCAL_MODEL_UNREACHABLE_001,
+            `Failed to connect to local model: ${e.message}`,
+          ),
+        );
       });
 
       req.write(payload);
@@ -148,5 +183,5 @@ class LocalModelClient {
 }
 
 module.exports = {
-  LocalModelClient
+  LocalModelClient,
 };

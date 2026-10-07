@@ -5,7 +5,8 @@ const { PLATFORM_INJECTORS } = require('../injectors.js');
 
 test('Injectors: Generates syntactically valid scripts for all platforms', () => {
   const platforms = ['claude', 'chatgpt', 'gemini', 'grok', 'deepseek', 'perplexity'];
-  const samplePrompt = 'Hello "world"! Testing special symbols: <script>alert(1)</script> \n newline & emoji 🚀';
+  const samplePrompt =
+    'Hello "world"! Testing special symbols: <script>alert(1)</script> \n newline & emoji 🚀';
 
   for (const p of platforms) {
     const fn = PLATFORM_INJECTORS[p];
@@ -28,8 +29,8 @@ test('Injectors: Formats attachments into prompt payload properly', () => {
     text: '請分析這段代碼',
     attachments: [
       { name: 'server.py', type: 'text', language: 'python', content: 'print("hello")' },
-      { name: 'architecture.png', type: 'image', mimeType: 'image/png' }
-    ]
+      { name: 'architecture.png', type: 'image', mimeType: 'image/png' },
+    ],
   };
 
   const formatted = formatPromptWithAttachments(payload.text, payload.attachments);

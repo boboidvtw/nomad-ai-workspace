@@ -30,7 +30,7 @@ const {
   applyCorsHeaders,
   authorizeRequest,
   injectDashboardAuth,
-  probeAllServices
+  probeAllServices,
 } = require('@nomad/core');
 const { serveDashboard } = require('./static-handler');
 
@@ -85,32 +85,36 @@ class NomadDaemonServer {
       headroomEnabled: true,
       layaEnabled: true,
       autoEnhance: true,
-      compressionLevel: 'balanced'
+      compressionLevel: 'balanced',
     });
     this.mcpGateway = new McpGateway();
     this.knowledgeBase = new KnowledgeBase();
     this.localModelClient = new LocalModelClient();
     this.pluginRuntime = new PluginRuntime();
     this.roster = options.roster || new AgentRoster();
-    this.dispatcher = options.dispatcher || new TaskDispatcher({
-      roster: this.roster,
-      onTaskEvent: (/** @type {string} */ eventType, /** @type {unknown} */ task) => {
-        this.broadcast(eventType, task);
-      }
-    });
+    this.dispatcher =
+      options.dispatcher ||
+      new TaskDispatcher({
+        roster: this.roster,
+        onTaskEvent: (/** @type {string} */ eventType, /** @type {unknown} */ task) => {
+          this.broadcast(eventType, task);
+        },
+      });
     // Restore persisted tasks from disk
     this.dispatcher.loadFromDisk();
     this.approvalGate = ApprovalGate;
     this.taskRunner = new TaskRunner(this.dispatcher, {
-      localModelClient: this.localModelClient
+      localModelClient: this.localModelClient,
     });
-    this.scheduler = options.scheduler || new RecurringScheduler({
-      dispatcher: this.dispatcher,
-      taskRunner: this.taskRunner,
-      onScheduleEvent: (/** @type {string} */ eventType, /** @type {unknown} */ data) => {
-        this.broadcast(eventType, data);
-      }
-    });
+    this.scheduler =
+      options.scheduler ||
+      new RecurringScheduler({
+        dispatcher: this.dispatcher,
+        taskRunner: this.taskRunner,
+        onScheduleEvent: (/** @type {string} */ eventType, /** @type {unknown} */ data) => {
+          this.broadcast(eventType, data);
+        },
+      });
     this.scheduler.loadFromDisk();
   }
 
@@ -120,7 +124,13 @@ class NomadDaemonServer {
 
       this.server.on('error', (/** @type {NodeJS.ErrnoException} */ e) => {
         if (e.code === 'EADDRINUSE') {
-          reject(err(ErrorCodes.DAEMON_SERVER_PORT_IN_USE_001, 'Port ' + this.port + ' is already in use', { port: this.port }));
+          reject(
+            err(
+              ErrorCodes.DAEMON_SERVER_PORT_IN_USE_001,
+              'Port ' + this.port + ' is already in use',
+              { port: this.port },
+            ),
+          );
         } else {
           reject(err(ErrorCodes.DAEMON_SERVER_START_FAILED_002, e.message, e));
         }
@@ -129,7 +139,13 @@ class NomadDaemonServer {
       this.scheduler.start();
       this.server.listen(this.port, this.host, () => {
         console.log('[Nomad Daemon] Gateway listening at http://' + this.host + ':' + this.port);
-        console.log('[Nomad Daemon] Dashboard available at http://' + this.host + ':' + this.port + '/dashboard');
+        console.log(
+          '[Nomad Daemon] Dashboard available at http://' +
+            this.host +
+            ':' +
+            this.port +
+            '/dashboard',
+        );
         resolve(ok({ port: this.port, host: this.host }));
       });
     });
@@ -165,7 +181,9 @@ class NomadDaemonServer {
    */
   broadcast(event, data) {
     if (this.sseClients.size === 0) return;
-    const payload = ['event: ' + event, 'data: ' + JSON.stringify(data), '', ''].join(String.fromCharCode(10));
+    const payload = ['event: ' + event, 'data: ' + JSON.stringify(data), '', ''].join(
+      String.fromCharCode(10),
+    );
     for (const client of this.sseClients) {
       try {
         client.write(payload);
@@ -182,8 +200,13 @@ class NomadDaemonServer {
    */
   isPublicRoute(method, pathname) {
     if (method !== 'GET' && method !== 'HEAD') return false;
-    return pathname === '/' || pathname === '/api/probe' ||
-      pathname === '/dashboard' || pathname === '/dashboard/' || pathname === '/dashboard/index.html';
+    return (
+      pathname === '/' ||
+      pathname === '/api/probe' ||
+      pathname === '/dashboard' ||
+      pathname === '/dashboard/' ||
+      pathname === '/dashboard/index.html'
+    );
   }
 
   /**
@@ -215,7 +238,12 @@ class NomadDaemonServer {
         try {
           resolve(JSON.parse(body));
         } catch (e) {
-          reject(err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Invalid JSON body: ' + (e instanceof Error ? e.message : String(e))));
+          reject(
+            err(
+              ErrorCodes.BRIDGE_INVALID_BODY_002,
+              'Invalid JSON body: ' + (e instanceof Error ? e.message : String(e)),
+            ),
+          );
         }
       });
       req.on('error', (e) => reject(err(ErrorCodes.BRIDGE_INVALID_BODY_002, e.message)));
@@ -236,8 +264,8 @@ class NomadDaemonServer {
       headers: {
         ...req.headers,
         host: '127.0.0.1:' + targetPort,
-        'x-forwarded-by': 'nomad-daemon'
-      }
+        'x-forwarded-by': 'nomad-daemon',
+      },
     };
 
     const proxyReq = http.request(options, (proxyRes) => {
@@ -247,10 +275,14 @@ class NomadDaemonServer {
 
     proxyReq.on('error', (e) => {
       this.activeStudio = null;
-      return this.sendJson(res, 502, err(
-        ErrorCodes.DAEMON_STUDIO_OFFLINE_001,
-        'Failed to forward request to Nomad AI Studio on port ' + targetPort + ': ' + e.message
-      ));
+      return this.sendJson(
+        res,
+        502,
+        err(
+          ErrorCodes.DAEMON_STUDIO_OFFLINE_001,
+          'Failed to forward request to Nomad AI Studio on port ' + targetPort + ': ' + e.message,
+        ),
+      );
     });
 
     req.pipe(proxyReq);
@@ -279,10 +311,11 @@ class NomadDaemonServer {
     const auth = authorizeRequest(req, url, {
       token: this.authToken,
       boundHost: this.host,
-      publicRoute
+      publicRoute,
     });
     if (!auth.allowed) {
-      const code = auth.status === 401 ? ErrorCodes.BRIDGE_UNAUTHORIZED_005 : ErrorCodes.BRIDGE_FORBIDDEN_006;
+      const code =
+        auth.status === 401 ? ErrorCodes.BRIDGE_UNAUTHORIZED_005 : ErrorCodes.BRIDGE_FORBIDDEN_006;
       return this.sendJson(res, auth.status, err(code, auth.reason));
     }
 
@@ -294,13 +327,19 @@ class NomadDaemonServer {
 
     try {
       // 1. Dashboard static routes
-      if (pathname === '/dashboard' || pathname === '/dashboard/' || pathname === '/dashboard/index.html') {
-        serveDashboard(req, res, (html) => injectDashboardAuth(html, this.authToken, [this.port, DEFAULT_DAEMON_PORT]));
+      if (
+        pathname === '/dashboard' ||
+        pathname === '/dashboard/' ||
+        pathname === '/dashboard/index.html'
+      ) {
+        serveDashboard(req, res, (html) =>
+          injectDashboardAuth(html, this.authToken, [this.port, DEFAULT_DAEMON_PORT]),
+        );
         return;
       }
 
       if (pathname === '/') {
-        res.writeHead(302, { 'Location': '/dashboard' });
+        res.writeHead(302, { Location: '/dashboard' });
         res.end();
         return;
       }
@@ -310,9 +349,14 @@ class NomadDaemonServer {
         res.writeHead(200, {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive'
+          Connection: 'keep-alive',
         });
-        const connectMsg = ['event: connected', 'data: ' + JSON.stringify({ timestamp: new Date().toISOString() }), '', ''].join(String.fromCharCode(10));
+        const connectMsg = [
+          'event: connected',
+          'data: ' + JSON.stringify({ timestamp: new Date().toISOString() }),
+          '',
+          '',
+        ].join(String.fromCharCode(10));
         res.write(connectMsg);
         this.sseClients.add(res);
 
@@ -326,17 +370,30 @@ class NomadDaemonServer {
       if (pathname === '/api/studio/register' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
         if (!body.bridgePort || typeof body.bridgePort !== 'number') {
-          return this.sendJson(res, 400, err(ErrorCodes.STUDIO_REGISTRATION_FAILED_001, 'Missing or invalid bridgePort number'));
+          return this.sendJson(
+            res,
+            400,
+            err(ErrorCodes.STUDIO_REGISTRATION_FAILED_001, 'Missing or invalid bridgePort number'),
+          );
         }
         this.activeStudio = {
           bridgePort: body.bridgePort,
           pid: body.pid || null,
           version: body.version || '1.4.0',
           registeredAt: new Date().toISOString(),
-          lastHeartbeat: Date.now()
+          lastHeartbeat: Date.now(),
         };
-        console.log('[Nomad Daemon] Studio registered on bridge port:', body.bridgePort, '(PID:', body.pid + ')');
-        return this.sendJson(res, 200, ok({ status: 'registered', activeStudio: this.activeStudio }));
+        console.log(
+          '[Nomad Daemon] Studio registered on bridge port:',
+          body.bridgePort,
+          '(PID:',
+          body.pid + ')',
+        );
+        return this.sendJson(
+          res,
+          200,
+          ok({ status: 'registered', activeStudio: this.activeStudio }),
+        );
       }
 
       if (pathname === '/api/studio/heartbeat' && req.method === 'POST') {
@@ -353,10 +410,14 @@ class NomadDaemonServer {
       }
 
       if (pathname === '/api/studio/status' && req.method === 'GET') {
-        return this.sendJson(res, 200, ok({
-          online: this.isStudioAlive(),
-          activeStudio: this.activeStudio
-        }));
+        return this.sendJson(
+          res,
+          200,
+          ok({
+            online: this.isStudioAlive(),
+            activeStudio: this.activeStudio,
+          }),
+        );
       }
 
       // 3.5. Pipeline (Headroom & Laya) & Drive Sync Endpoints
@@ -390,7 +451,10 @@ class NomadDaemonServer {
           return this.proxyToStudio(req, res, this.activeStudio.bridgePort);
         }
         const body = await this.readJsonBody(req);
-        const pullRes = importFromDrive({ currentWorkspaces: body.currentWorkspaces, strategy: body.strategy });
+        const pullRes = importFromDrive({
+          currentWorkspaces: body.currentWorkspaces,
+          strategy: body.strategy,
+        });
         return this.sendJson(res, pullRes.success ? 200 : 400, pullRes);
       }
 
@@ -403,7 +467,11 @@ class NomadDaemonServer {
 
       if (pathname === '/api/artifacts/sandbox' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
-        const html = ArtifactExtractor.generateSandboxHtml(body.code || '', body.type || 'html', body.title || 'Sandbox');
+        const html = ArtifactExtractor.generateSandboxHtml(
+          body.code || '',
+          body.type || 'html',
+          body.title || 'Sandbox',
+        );
         return this.sendJson(res, 200, ok({ html }));
       }
 
@@ -417,23 +485,38 @@ class NomadDaemonServer {
         const port = Number(url.searchParams.get('port') || 1234);
         const host = url.searchParams.get('host') || '127.0.0.1';
         if (!isLoopbackModelTarget({ host })) {
-          return this.sendJson(res, 400, err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Local model host must be a loopback address'));
+          return this.sendJson(
+            res,
+            400,
+            err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Local model host must be a loopback address'),
+          );
         }
         const client = new LocalModelClient({ endpoint: 'http://' + host + ':' + port + '/v1' });
         const probeRes = await client.probe();
         if (probeRes.success) {
           return this.sendJson(res, 200, probeRes);
         } else {
-          return this.sendJson(res, 200, ok({ online: false, port, host, error: probeRes.message }));
+          return this.sendJson(
+            res,
+            200,
+            ok({ online: false, port, host, error: probeRes.message }),
+          );
         }
       }
 
       if (pathname === '/api/local-model/chat' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
         if (!isLoopbackModelTarget(body)) {
-          return this.sendJson(res, 400, err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Local model host must be a loopback address'));
+          return this.sendJson(
+            res,
+            400,
+            err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Local model host must be a loopback address'),
+          );
         }
-        const client = new LocalModelClient({ port: body.port || 1234, host: body.host || '127.0.0.1' });
+        const client = new LocalModelClient({
+          port: body.port || 1234,
+          host: body.host || '127.0.0.1',
+        });
         const chatRes = await client.chatCompletion(body);
         return this.sendJson(res, chatRes.success ? 200 : 502, chatRes);
       }
@@ -446,7 +529,11 @@ class NomadDaemonServer {
       if (pathname === '/api/mcp/call' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
         if (!body.name) {
-          return this.sendJson(res, 400, err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, 'Missing tool name'));
+          return this.sendJson(
+            res,
+            400,
+            err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, 'Missing tool name'),
+          );
         }
         const callRes = await this.mcpGateway.callTool(body.name, body.args || {});
         return this.sendJson(res, callRes.success ? 200 : 400, callRes);
@@ -521,8 +608,10 @@ class NomadDaemonServer {
         return this.sendJson(res, trigRes.success ? 200 : 400, trigRes);
       }
 
-      if ((pathname === '/api/tasks/schedule' && req.method === 'DELETE') ||
-          (pathname === '/api/tasks/schedule/delete' && req.method === 'POST')) {
+      if (
+        (pathname === '/api/tasks/schedule' && req.method === 'DELETE') ||
+        (pathname === '/api/tasks/schedule/delete' && req.method === 'POST')
+      ) {
         const body = req.method === 'POST' ? await this.readJsonBody(req) : {};
         const id = url.searchParams.get('id') || body.id;
         const remRes = this.scheduler.removeSchedule(id);
@@ -535,10 +624,17 @@ class NomadDaemonServer {
         return this.sendJson(res, taskRes.success ? 200 : 400, taskRes);
       }
 
-      if ((pathname === '/api/tasks/detail' || pathname.startsWith('/api/tasks/detail')) && req.method === 'GET') {
+      if (
+        (pathname === '/api/tasks/detail' || pathname.startsWith('/api/tasks/detail')) &&
+        req.method === 'GET'
+      ) {
         const id = url.searchParams.get('id');
         if (!id) {
-          return this.sendJson(res, 400, err(ErrorCodes.TASK_INVALID_PAYLOAD_002, 'Missing task id'));
+          return this.sendJson(
+            res,
+            400,
+            err(ErrorCodes.TASK_INVALID_PAYLOAD_002, 'Missing task id'),
+          );
         }
         const taskRes = this.dispatcher.getTask(id);
         return this.sendJson(res, taskRes.success ? 200 : 404, taskRes);
@@ -558,7 +654,12 @@ class NomadDaemonServer {
 
       if (pathname === '/api/tasks/review' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
-        const revRes = this.approvalGate.submitForReview(this.dispatcher, body.taskId, body.agentId, body);
+        const revRes = this.approvalGate.submitForReview(
+          this.dispatcher,
+          body.taskId,
+          body.agentId,
+          body,
+        );
         return this.sendJson(res, revRes.success ? 200 : 400, revRes);
       }
 
@@ -576,7 +677,11 @@ class NomadDaemonServer {
 
       if (pathname === '/api/tasks/run' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
-        const runRes = await this.taskRunner.dispatchAndRun(body.taskId, body.agentId, body.options || {});
+        const runRes = await this.taskRunner.dispatchAndRun(
+          body.taskId,
+          body.agentId,
+          body.options || {},
+        );
         return this.sendJson(res, runRes.success ? 200 : 400, runRes);
       }
 
@@ -591,7 +696,7 @@ class NomadDaemonServer {
             status: 'online',
             pid: this.activeStudio.pid,
             bridgePort: this.activeStudio.bridgePort,
-            version: this.activeStudio.version
+            version: this.activeStudio.version,
           };
         } else if (typeof this.getStatus === 'function') {
           const directStatus = await this.getStatus();
@@ -602,19 +707,23 @@ class NomadDaemonServer {
 
         const orchestratorStatus = this.orchestrator ? this.orchestrator.getStatus() : null;
 
-        return this.sendJson(res, 200, ok({
-          daemon: {
-            name: 'Nomad Core Daemon',
-            version: '1.4.0',
-            port: this.port,
-            host: this.host,
-            sseClients: this.sseClients.size,
-            uptimeSeconds: Math.floor(process.uptime())
-          },
-          studio: studioInfo,
-          orchestrator: orchestratorStatus,
-          microservices: probeResult.success ? probeResult.data : null
-        }));
+        return this.sendJson(
+          res,
+          200,
+          ok({
+            daemon: {
+              name: 'Nomad Core Daemon',
+              version: '1.4.0',
+              port: this.port,
+              host: this.host,
+              sseClients: this.sseClients.size,
+              uptimeSeconds: Math.floor(process.uptime()),
+            },
+            studio: studioInfo,
+            orchestrator: orchestratorStatus,
+            microservices: probeResult.success ? probeResult.data : null,
+          }),
+        );
       }
 
       // 5. Microservices Probe API
@@ -625,7 +734,7 @@ class NomadDaemonServer {
       }
 
       // 6. Action Endpoints (Proxy to Active Studio if present)
-      const isStudioAction = (
+      const isStudioAction =
         pathname === '/api/prompt' ||
         pathname === '/api/dispatch' ||
         pathname === '/api/layout' ||
@@ -636,8 +745,7 @@ class NomadDaemonServer {
         pathname.startsWith('/api/sessions') ||
         pathname.startsWith('/api/workspaces') ||
         pathname.startsWith('/api/export') ||
-        pathname.startsWith('/api/import')
-      );
+        pathname.startsWith('/api/import');
 
       if (isStudioAction) {
         if (this.isStudioAlive()) {
@@ -648,7 +756,11 @@ class NomadDaemonServer {
         if (pathname === '/api/prompt' && typeof this.onDispatchPrompt === 'function') {
           const body = await this.readJsonBody(req);
           if (!body.prompt || typeof body.prompt !== 'string') {
-            return this.sendJson(res, 400, err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Missing or invalid prompt string'));
+            return this.sendJson(
+              res,
+              400,
+              err(ErrorCodes.BRIDGE_INVALID_BODY_002, 'Missing or invalid prompt string'),
+            );
           }
           const result = await this.onDispatchPrompt(body.prompt, body.targetPlatforms || null);
           return this.sendJson(res, 200, ok(result));
@@ -672,26 +784,37 @@ class NomadDaemonServer {
           return this.sendJson(res, 200, ok(result));
         }
 
-        return this.sendJson(res, 503, err(
-          ErrorCodes.DAEMON_STUDIO_OFFLINE_001,
-          'Nomad AI Studio is not currently running. Launch Studio to execute desktop actions.'
-        ));
+        return this.sendJson(
+          res,
+          503,
+          err(
+            ErrorCodes.DAEMON_STUDIO_OFFLINE_001,
+            'Nomad AI Studio is not currently running. Launch Studio to execute desktop actions.',
+          ),
+        );
       }
 
-      return this.sendJson(res, 404, err(
-        ErrorCodes.BRIDGE_ROUTE_NOT_FOUND_001,
-        'Endpoint not found: ' + req.method + ' ' + pathname
-      ));
-
+      return this.sendJson(
+        res,
+        404,
+        err(
+          ErrorCodes.BRIDGE_ROUTE_NOT_FOUND_001,
+          'Endpoint not found: ' + req.method + ' ' + pathname,
+        ),
+      );
     } catch (e) {
-      return this.sendJson(res, 500, err(
-        ErrorCodes.BRIDGE_EXECUTION_FAILED_003,
-        'Internal Gateway error: ' + (e instanceof Error ? e.message : String(e))
-      ));
+      return this.sendJson(
+        res,
+        500,
+        err(
+          ErrorCodes.BRIDGE_EXECUTION_FAILED_003,
+          'Internal Gateway error: ' + (e instanceof Error ? e.message : String(e)),
+        ),
+      );
     }
   }
 }
 
 module.exports = {
-  NomadDaemonServer
+  NomadDaemonServer,
 };

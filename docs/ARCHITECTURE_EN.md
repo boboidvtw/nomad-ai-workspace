@@ -87,6 +87,7 @@ graph TD
 ## 🧩 2. Core Layered Design
 
 ### 2.1 Platform Adapters & Injection
+
 - **`src/core/platform/registry.ts`**:
   - The Single Source of Truth (SSOT) defining platform IDs, domain names, brand colors, Google Drive subfolder mappings, and lifecycle status (`active` / `ready` / `planned`).
   - Provides `detectCurrentPlatform()` to dynamically resolve platform context based on active tab URLs.
@@ -98,6 +99,7 @@ graph TD
   - Composer inputs across all platforms mount live slash-command listeners to trigger prompt autocomplete.
 
 ### 2.2 Cross-Platform Sidebar Tree (`MultiAISidebarTree.tsx`)
+
 - **Unified Visual Directory**:
   - Aggregates conversation archives across all supported platforms into a single sidebar tree.
   - Displays distinctive official brand badges:
@@ -111,6 +113,7 @@ graph TD
   - Cross-platform navigation opens or focuses targeted conversations in dedicated tabs (annotated with ↗️).
 
 ### 2.3 Universal Prompt Manager
+
 - **Cross-Engine Template Sharing**:
   - Prompts are defined once and recalled across Gemini, Claude, ChatGPT, and Grok.
   - Supports tags, pinning, and fuzzy text search.
@@ -122,12 +125,15 @@ graph TD
 ## ☁️ 3. Google Drive Scheme A: Segregated Storage Architecture
 
 ### 3.1 Why Physical Subdirectory Segregation?
+
 Many commercial extensions mash all platform backups into a single monolithic JSON file, causing severe issues:
+
 1. **Race Conditions**: Concurrent sessions on Claude and Gemini easily overwrite each other.
 2. **Single Point of Corruption**: A single malformed JSON payload destroys the entire history for all platforms.
 3. **Lack of Inspectability**: Users cannot inspect, audit, or restore a single platform data stream independently.
 
 ### 3.2 Directory Hierarchy
+
 Nomad AI Workspace establishes and strictly maintains the following structure:
 
 ```text
@@ -152,6 +158,7 @@ Nomad AI Workspace establishes and strictly maintains the following structure:
 ```
 
 ### 3.3 Conflict Resolution & Merging (`GoogleDriveSyncService.ts`)
+
 - **Multi-Account Tenant Isolation**: Namespaces storage keys according to the active Google user ID and session path (e.g., `/u/0/`, `/u/1/`).
 - **Deterministic Merging Algorithm**:
   - Folders are matched by immutable UUID. If both client and cloud modify the same folder, sub-items merge with preference given to the latest `updatedAt` timestamp.

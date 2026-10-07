@@ -12,7 +12,7 @@ const {
   stopDaemon,
   probeAllServices,
   writePid,
-  removePid
+  removePid,
 } = require('../index');
 const { DEFAULT_DAEMON_PORT } = require('@nomad/core');
 
@@ -39,7 +39,10 @@ async function main() {
       try {
         await server.start();
       } catch (err) {
-        console.error('❌ Failed to start daemon:', (err instanceof Error ? err.message : String(err)) || err);
+        console.error(
+          '❌ Failed to start daemon:',
+          (err instanceof Error ? err.message : String(err)) || err,
+        );
         removePid();
         process.exit(1);
       }
@@ -86,7 +89,7 @@ async function main() {
     case 'restart': {
       console.log('🔄 [Nomad Daemon] Restarting daemon...');
       await stopDaemon(3000);
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 600));
       const scriptPath = path.resolve(__dirname, 'nomad-daemon.js');
       const res = await startDaemon(scriptPath, port);
       if (res.success) {
@@ -105,7 +108,9 @@ async function main() {
       console.log('Running:     ' + (data.running ? '🟢 YES' : '⚪ NO'));
       console.log('PID:         ' + (data.pid || 'None'));
       console.log('Port:        ' + data.port);
-      console.log('Reachable:   ' + (data.reachable ? '🟢 Online (' + data.latencyMs + 'ms)' : '⚪ Offline'));
+      console.log(
+        'Reachable:   ' + (data.reachable ? '🟢 Online (' + data.latencyMs + 'ms)' : '⚪ Offline'),
+      );
       console.log('PID File:    ' + data.pidFile);
       console.log('Log File:    ' + data.logFile);
       break;
@@ -122,10 +127,27 @@ async function main() {
       for (const svc of s.services) {
         const icon = svc.online ? '🟢' : '⚪';
         const ms = svc.online ? '(' + svc.latencyMs + 'ms)' : '';
-        console.log(icon + ' ' + svc.name.padEnd(28) + ' [Port ' + String(svc.port).padEnd(5) + '] ' + (svc.online ? 'Online' : 'Offline') + ' ' + ms);
+        console.log(
+          icon +
+            ' ' +
+            svc.name.padEnd(28) +
+            ' [Port ' +
+            String(svc.port).padEnd(5) +
+            '] ' +
+            (svc.online ? 'Online' : 'Offline') +
+            ' ' +
+            ms,
+        );
       }
       console.log('------------------------------------');
-      console.log('Summary: ' + s.summary.onlineCount + ' online, ' + s.summary.offlineCount + ' offline. Health: ' + s.summary.overallStatus);
+      console.log(
+        'Summary: ' +
+          s.summary.onlineCount +
+          ' online, ' +
+          s.summary.offlineCount +
+          ' offline. Health: ' +
+          s.summary.overallStatus,
+      );
       break;
     }
 
@@ -136,7 +158,7 @@ async function main() {
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('Fatal CLI Error:', err);
   process.exit(1);
 });

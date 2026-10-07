@@ -1,16 +1,16 @@
 /* style.css: content script stylesheet entry (Tailwind preprocessing entry). Last updated: 2026-03-09 */
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 .your-class {
-    color: aliceblue;
+  color: aliceblue;
 }
 
-[data-autoscroll-container="true"]::-webkit-scrollbar {
+[data-autoscroll-container='true']::-webkit-scrollbar {
   display: none;
 }
 
-[data-autoscroll-container="true"] {
+[data-autoscroll-container='true'] {
   scrollbar-width: none;
 }
 
@@ -31,7 +31,10 @@
   color: #6b7280;
   cursor: pointer;
   z-index: 10;
-  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s,
+    color 0.15s;
 }
 
 li:hover .claude-voyager-item-folder-btn,

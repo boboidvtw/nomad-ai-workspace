@@ -11,7 +11,7 @@ const {
   computeChecksum,
   isOk,
   isErr,
-  ErrorCodes
+  ErrorCodes,
 } = require('../../index');
 
 test('Universal Drive Sync: detectLocalDriveFolder resolves a path string', () => {
@@ -29,19 +29,19 @@ test('Universal Drive Sync: exportToDrive writes workspaces, settings and manife
       id: 'ws-test-1',
       title: '1005 | 功能 | 測試工作區 1',
       turns: 2,
-      updatedAt: '2026-10-05T10:00:00.000Z'
+      updatedAt: '2026-10-05T10:00:00.000Z',
     },
     {
       id: 'ws-test-2',
       title: '1005 | 修復 | 測試工作區 2',
       turns: 5,
-      updatedAt: '2026-10-05T10:05:00.000Z'
-    }
+      updatedAt: '2026-10-05T10:05:00.000Z',
+    },
   ];
 
   const settings = {
     layout: 'hexa',
-    appearance: { theme: 'cyberpunk', accentColor: '#a855f7' }
+    appearance: { theme: 'cyberpunk', accentColor: '#a855f7' },
   };
 
   const res = exportToDrive({ workspaces, settings, targetDir: tempDir });
@@ -73,13 +73,13 @@ test('Universal Drive Sync: importFromDrive merges workspaces based on updatedAt
     {
       id: 'ws-common',
       title: '1005 | 設計 | 雲端較新版本',
-      updatedAt: '2026-10-05T12:00:00.000Z'
+      updatedAt: '2026-10-05T12:00:00.000Z',
     },
     {
       id: 'ws-cloud-only',
       title: '1005 | 探索 | 僅在雲端存在',
-      updatedAt: '2026-10-05T11:00:00.000Z'
-    }
+      updatedAt: '2026-10-05T11:00:00.000Z',
+    },
   ];
 
   exportToDrive({ workspaces: cloudWorkspaces, targetDir: tempDir });
@@ -88,19 +88,19 @@ test('Universal Drive Sync: importFromDrive merges workspaces based on updatedAt
     {
       id: 'ws-common',
       title: '1005 | 設計 | 本機舊版本',
-      updatedAt: '2026-10-05T09:00:00.000Z'
+      updatedAt: '2026-10-05T09:00:00.000Z',
     },
     {
       id: 'ws-local-only',
       title: '1005 | 文件 | 僅在本機存在',
-      updatedAt: '2026-10-05T08:00:00.000Z'
-    }
+      updatedAt: '2026-10-05T08:00:00.000Z',
+    },
   ];
 
   const importRes = importFromDrive({
     sourceDir: tempDir,
     currentWorkspaces: localWorkspaces,
-    strategy: 'merge'
+    strategy: 'merge',
   });
 
   assert.strictEqual(isOk(importRes), true);
@@ -108,7 +108,7 @@ test('Universal Drive Sync: importFromDrive merges workspaces based on updatedAt
   assert.strictEqual(reconciled.length, 3); // ws-common, ws-local-only, ws-cloud-only
 
   // Verify ws-common was updated to cloud newer version
-  const common = reconciled.find(w => w.id === 'ws-common');
+  const common = reconciled.find((w) => w.id === 'ws-common');
   assert.strictEqual(common.title, '1005 | 設計 | 雲端較新版本');
 
   // Clean up

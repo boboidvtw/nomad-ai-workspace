@@ -34,4 +34,3 @@ export const formatContent = (messages: ExportMessage[], format: ExportFormat): 
   if (format === 'markdown') return formatMarkdown(messages);
   return formatJson({ messages, exportedAt: new Date().toISOString() });
 };
-

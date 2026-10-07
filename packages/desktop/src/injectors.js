@@ -1,4 +1,3 @@
-
 /**
  * @typedef {Object} PromptAttachment
  * @property {string} [name]
@@ -21,9 +20,20 @@ function formatPromptWithAttachments(text, attachments = []) {
   }
   const parts = [];
   for (const att of attachments) {
-    if (att.content && (att.type === 'text' || att.isText || (att.name && att.name.match(/\.(txt|md|js|ts|py|json|html|css|yaml|yml)$/i)))) {
-      parts.push(`[附檔: ${att.name || 'document'}]\n\`\`\`${att.language || ''}\n${att.content}\n\`\`\``);
-    } else if (att.type === 'image' || att.isImage || (att.name && att.name.match(/\.(png|jpe?g|webp|gif|svg)$/i))) {
+    if (
+      att.content &&
+      (att.type === 'text' ||
+        att.isText ||
+        (att.name && att.name.match(/\.(txt|md|js|ts|py|json|html|css|yaml|yml)$/i)))
+    ) {
+      parts.push(
+        `[附檔: ${att.name || 'document'}]\n\`\`\`${att.language || ''}\n${att.content}\n\`\`\``,
+      );
+    } else if (
+      att.type === 'image' ||
+      att.isImage ||
+      (att.name && att.name.match(/\.(png|jpe?g|webp|gif|svg)$/i))
+    ) {
       parts.push(`[圖片附件: ${att.name || 'image'} (${att.mimeType || 'image/png'})]`);
     } else {
       parts.push(`[附件: ${att.name || 'file'}]`);
@@ -39,7 +49,6 @@ function formatPromptWithAttachments(text, attachments = []) {
  * Nomad AI Studio - DOM Prompt Injectors
  * Cross-platform DOM injection scripts for AI chat interfaces.
  */
-
 
 /** @type {Record<string, (text: string) => string>} Returns a script to run in the platform webview */
 const RAW_PLATFORM_INJECTORS = {
@@ -472,26 +481,32 @@ const RAW_PLATFORM_INJECTORS = {
     } catch (err) {
       return { ok: false, error: err.message };
     }
-  })()`
+  })()`,
 };
-
 
 /** @typedef {(input: string | { text: string, attachments?: PromptAttachment[] }) => string} PlatformInjector */
 
 // The Proxy widens each builder to also accept `{ text, attachments }`, which the
 // target's own type cannot express, hence the cast.
-const PLATFORM_INJECTORS = /** @type {Record<string, PlatformInjector>} */ (/** @type {unknown} */ (new Proxy(RAW_PLATFORM_INJECTORS, {
-  get(target, prop) {
-    const rawFn = target[String(prop)];
-    if (typeof rawFn !== 'function') return rawFn;
-    return (/** @type {string | { text: string, attachments?: PromptAttachment[] }} */ input) => {
-      const text = (typeof input === 'object' && input !== null)
-        ? formatPromptWithAttachments(input.text, input.attachments)
-        : input;
-      return rawFn(text);
-    };
-  }
-})));
+const PLATFORM_INJECTORS = /** @type {Record<string, PlatformInjector>} */ (
+  /** @type {unknown} */ (
+    new Proxy(RAW_PLATFORM_INJECTORS, {
+      get(target, prop) {
+        const rawFn = target[String(prop)];
+        if (typeof rawFn !== 'function') return rawFn;
+        return (
+          /** @type {string | { text: string, attachments?: PromptAttachment[] }} */ input,
+        ) => {
+          const text =
+            typeof input === 'object' && input !== null
+              ? formatPromptWithAttachments(input.text, input.attachments)
+              : input;
+          return rawFn(text);
+        };
+      },
+    })
+  )
+);
 
 module.exports = {
   PLATFORM_INJECTORS,

@@ -2,8 +2,9 @@
  * Wraps chrome.storage.local folder read/write for claude-nexus (no legacy migration).
  */
 
-import type { Folder } from '@src/types/folder';
 import { i18n } from '@src/services/i18n';
+import type { Folder } from '@src/types/folder';
+
 import { extractConversationIdFromHref } from '../utils/dom';
 
 export const STORAGE_KEY = 'claude_nexus_folders';
@@ -80,9 +81,10 @@ export const parseFoldersFromStorageValue = (value: unknown): Folder[] => {
   return folders;
 };
 
-const storageLocalGet = <T,>(key: string): Promise<StorageOpResult<T>> => {
+const storageLocalGet = <T>(key: string): Promise<StorageOpResult<T>> => {
   return new Promise((resolve) => {
-    if (!chrome?.storage?.local) return resolve({ ok: false, error: i18n.t('storage.unavailable') });
+    if (!chrome?.storage?.local)
+      return resolve({ ok: false, error: i18n.t('storage.unavailable') });
     try {
       chrome.storage.local.get([key], (result) => {
         const err = chrome.runtime?.lastError;
@@ -112,7 +114,8 @@ const storageLocalGet = <T,>(key: string): Promise<StorageOpResult<T>> => {
 
 const storageLocalSet = (key: string, value: unknown): Promise<StorageOpResult<void>> => {
   return new Promise((resolve) => {
-    if (!chrome?.storage?.local) return resolve({ ok: false, error: i18n.t('storage.unavailable') });
+    if (!chrome?.storage?.local)
+      return resolve({ ok: false, error: i18n.t('storage.unavailable') });
     try {
       chrome.storage.local.set({ [key]: value }, () => {
         const err = chrome.runtime?.lastError;
@@ -194,5 +197,7 @@ export const saveConversationTitleCache = async (cache: ConversationTitleCache):
   const setRes = await storageLocalSet(CONVERSATION_TITLE_CACHE_KEY, sanitized);
   if (!setRes.ok) return;
 
-  debugLog('storage.set committed', CONVERSATION_TITLE_CACHE_KEY, { titleCount: Object.keys(sanitized).length });
+  debugLog('storage.set committed', CONVERSATION_TITLE_CACHE_KEY, {
+    titleCount: Object.keys(sanitized).length,
+  });
 };

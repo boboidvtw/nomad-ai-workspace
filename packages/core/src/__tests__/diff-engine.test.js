@@ -14,8 +14,8 @@ test('DiffEngine: computes line-by-line diff and similarity ratio', () => {
   assert.strictEqual(res.data.stats.deleted, 1);
   assert.ok(res.data.stats.similarityRatio > 0.5);
 
-  const delChunk = res.data.lines.find(l => l.type === 'del');
+  const delChunk = res.data.lines.find((l) => l.type === 'del');
   assert.ok(delChunk.value.includes('old'));
-  const addChunk = res.data.lines.find(l => l.type === 'add');
+  const addChunk = res.data.lines.find((l) => l.type === 'add');
   assert.ok(addChunk.value.includes('new'));
 });

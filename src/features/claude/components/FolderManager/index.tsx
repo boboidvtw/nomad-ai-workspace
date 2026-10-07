@@ -5,12 +5,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Plus, User, Cloud, Settings, FolderOpen, RefreshCw } from 'lucide-react';
+
 import type { Folder } from '@src/types/folder';
+import { Plus, User, Cloud, Settings, FolderOpen, RefreshCw } from 'lucide-react';
+
+import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
+
 import { useConversations } from '../../hooks/useConversations';
 import { useFolders } from '../../hooks/useFolders';
 import FolderList from './FolderList';
-import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
 import { FolderManagerModals } from './FolderManagerModals';
 
 type ThemeTokens = {
@@ -39,7 +42,8 @@ const getThemeTokens = (isDarkTheme: boolean): ThemeTokens => {
       border: 'border-white/10',
       panelBg: 'bg-transparent',
       hoverBg: 'hover:bg-white/5',
-      input: 'border-white/10 bg-black/20 text-zinc-200 placeholder:text-zinc-600 focus:border-white/20 focus:ring-0',
+      input:
+        'border-white/10 bg-black/20 text-zinc-200 placeholder:text-zinc-600 focus:border-white/20 focus:ring-0',
       icon: 'text-zinc-500 hover:text-zinc-300',
       iconDanger: 'text-zinc-500 hover:text-red-400',
       iconHoverBg: 'hover:bg-white/10',
@@ -56,7 +60,8 @@ const getThemeTokens = (isDarkTheme: boolean): ThemeTokens => {
     border: 'border-black/5',
     panelBg: 'bg-transparent',
     hoverBg: 'hover:bg-black/5',
-    input: 'border-black/10 bg-white/50 text-stone-800 placeholder:text-stone-400 focus:border-black/20 focus:ring-0',
+    input:
+      'border-black/10 bg-white/50 text-stone-800 placeholder:text-stone-400 focus:border-black/20 focus:ring-0',
     icon: 'text-stone-400 hover:text-stone-700',
     iconDanger: 'text-stone-400 hover:text-red-600',
     iconHoverBg: 'hover:bg-black/5',
@@ -82,12 +87,17 @@ export default function FolderManager() {
     toggleExpanded,
     moveConversationToFolder,
   } = useFolders();
-  const handleConversationContextMenu = (payload: { x: number; y: number; conversationId: string }) => setContextMenu(payload);
+  const handleConversationContextMenu = (payload: {
+    x: number;
+    y: number;
+    conversationId: string;
+  }) => setContextMenu(payload);
 
-  const { portalContainer, conversationIndex, conversationTitleIndex, isDarkTheme } = useConversations({
-    hiddenConversationIds: allConversationIdsInFolders,
-    onConversationContextMenu: handleConversationContextMenu,
-  });
+  const { portalContainer, conversationIndex, conversationTitleIndex, isDarkTheme } =
+    useConversations({
+      hiddenConversationIds: allConversationIdsInFolders,
+      onConversationContextMenu: handleConversationContextMenu,
+    });
 
   const theme = useMemo(() => getThemeTokens(isDarkTheme), [isDarkTheme]);
 
@@ -134,7 +144,7 @@ export default function FolderManager() {
         result.push(importedFolder);
       } else {
         const mergedConvIds = Array.from(
-          new Set([...existing.conversationIds, ...importedFolder.conversationIds])
+          new Set([...existing.conversationIds, ...importedFolder.conversationIds]),
         );
         const idx = result.findIndex((f) => f.id === importedFolder.id);
         if (idx !== -1) {
@@ -169,7 +179,7 @@ export default function FolderManager() {
             exportedAt: new Date().toISOString(),
             version: '1.4.1',
             items: promptsData,
-          }
+          },
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -198,9 +208,15 @@ export default function FolderManager() {
         try {
           const payload = JSON.parse(event.target?.result as string);
           if (payload && payload.format === 'claude-voyager.sync.v1') {
-            const cloudFolders = (Array.isArray(payload.data) ? payload.data : (payload.folders?.data || payload.folders || [])) as Folder[];
-            const cloudPrompts = (Array.isArray(payload.prompts) ? payload.prompts : (payload.prompts?.items || [])) as unknown[];
-            
+            const cloudFolders = (
+              Array.isArray(payload.data)
+                ? payload.data
+                : payload.folders?.data || payload.folders || []
+            ) as Folder[];
+            const cloudPrompts = (
+              Array.isArray(payload.prompts) ? payload.prompts : payload.prompts?.items || []
+            ) as unknown[];
+
             const localRes = await chrome.storage.local.get([FOLDERS_KEY, PROMPTS_KEY]);
             const localFolders = (localRes[FOLDERS_KEY] as Folder[]) || [];
             const localPrompts = (localRes[PROMPTS_KEY] as Array<{ id: string }>) || [];
@@ -219,7 +235,7 @@ export default function FolderManager() {
 
             await chrome.storage.local.set({
               [FOLDERS_KEY]: mergedFolders,
-              [PROMPTS_KEY]: mergedPrompts
+              [PROMPTS_KEY]: mergedPrompts,
             });
             alert('本地備份匯入與合併成功！');
           } else {
@@ -244,30 +260,44 @@ export default function FolderManager() {
         });
       }
     } else {
-      chrome.runtime.sendMessage({ type: 'cv.sync.authenticate', payload: { interactive: true } }, (res) => {
-        if (res && res.ok) {
-          fetchSyncState();
-        }
-      });
+      chrome.runtime.sendMessage(
+        { type: 'cv.sync.authenticate', payload: { interactive: true } },
+        (res) => {
+          if (res && res.ok) {
+            fetchSyncState();
+          }
+        },
+      );
     }
   };
 
   const handleSyncClick = () => {
     if (!syncState?.isAuthenticated) {
-      chrome.runtime.sendMessage({ type: 'cv.sync.authenticate', payload: { interactive: true } }, (res) => {
-        if (res && res.ok) {
-          fetchSyncState();
-        }
-      });
+      chrome.runtime.sendMessage(
+        { type: 'cv.sync.authenticate', payload: { interactive: true } },
+        (res) => {
+          if (res && res.ok) {
+            fetchSyncState();
+          }
+        },
+      );
       return;
     }
 
-    setSyncState(prev => prev ? { ...prev, isSyncing: true } : null);
+    setSyncState((prev) => (prev ? { ...prev, isSyncing: true } : null));
 
     chrome.runtime.sendMessage({ type: 'cv.sync.download' }, (response) => {
       if (response && response.ok && response.data) {
-        const cloudFolders = (Array.isArray(response.data) ? response.data : (response.data.folders?.data || response.data.folders || [])) as Folder[];
-        const cloudPrompts = (Array.isArray(response.data?.prompts) ? response.data.prompts : (response.data?.prompts?.items || [])) as unknown[];
+        const cloudFolders = (
+          Array.isArray(response.data)
+            ? response.data
+            : response.data.folders?.data || response.data.folders || []
+        ) as Folder[];
+        const cloudPrompts = (
+          Array.isArray(response.data?.prompts)
+            ? response.data.prompts
+            : response.data?.prompts?.items || []
+        ) as unknown[];
 
         chrome.storage.local.get([FOLDERS_KEY, PROMPTS_KEY], async (localRes) => {
           const localFolders = (localRes[FOLDERS_KEY] as Folder[]) || [];
@@ -285,36 +315,42 @@ export default function FolderManager() {
 
           await chrome.storage.local.set({
             [FOLDERS_KEY]: mergedFolders,
-            [PROMPTS_KEY]: mergedPrompts
+            [PROMPTS_KEY]: mergedPrompts,
           });
 
-          chrome.runtime.sendMessage({
-            type: 'cv.sync.upload',
-            payload: { folders: mergedFolders, prompts: mergedPrompts }
-          }, (uploadRes) => {
-            fetchSyncState();
-            if (uploadRes && uploadRes.ok) {
-              alert('雲端雙向同步完成！');
-            } else {
-              alert('雲端同步失敗：' + (uploadRes?.error || '未知錯誤'));
-            }
-          });
+          chrome.runtime.sendMessage(
+            {
+              type: 'cv.sync.upload',
+              payload: { folders: mergedFolders, prompts: mergedPrompts },
+            },
+            (uploadRes) => {
+              fetchSyncState();
+              if (uploadRes && uploadRes.ok) {
+                alert('雲端雙向同步完成！');
+              } else {
+                alert('雲端同步失敗：' + (uploadRes?.error || '未知錯誤'));
+              }
+            },
+          );
         });
       } else {
         chrome.storage.local.get([FOLDERS_KEY, PROMPTS_KEY], (localRes) => {
           const localFolders = localRes[FOLDERS_KEY] || [];
           const localPrompts = localRes[PROMPTS_KEY] || [];
-          chrome.runtime.sendMessage({
-            type: 'cv.sync.upload',
-            payload: { folders: localFolders, prompts: localPrompts }
-          }, (uploadRes) => {
-            fetchSyncState();
-            if (uploadRes && uploadRes.ok) {
-              alert('本地方案已上傳並與雲端完成同步！');
-            } else {
-              alert('同步失敗：' + (uploadRes?.error || '未知錯誤'));
-            }
-          });
+          chrome.runtime.sendMessage(
+            {
+              type: 'cv.sync.upload',
+              payload: { folders: localFolders, prompts: localPrompts },
+            },
+            (uploadRes) => {
+              fetchSyncState();
+              if (uploadRes && uploadRes.ok) {
+                alert('本地方案已上傳並與雲端完成同步！');
+              } else {
+                alert('同步失敗：' + (uploadRes?.error || '未知錯誤'));
+              }
+            },
+          );
         });
       }
     });
@@ -325,7 +361,9 @@ export default function FolderManager() {
   };
 
   const handleLocalBackupClick = () => {
-    const action = window.confirm('點選「確定」匯出本地方案備份檔案 (JSON)\n點選「取消」匯入並合併備份檔案 (JSON)');
+    const action = window.confirm(
+      '點選「確定」匯出本地方案備份檔案 (JSON)\n點選「取消」匯入並合併備份檔案 (JSON)',
+    );
     if (action) {
       exportLocalBackup();
     } else {
@@ -337,7 +375,10 @@ export default function FolderManager() {
   const [newFolderName, setNewFolderName] = useState('');
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
-  const [pendingDelete, setPendingDelete] = useState<{ folderId: string; anchorRect: DOMRect } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{
+    folderId: string;
+    anchorRect: DOMRect;
+  } | null>(null);
 
   const handleCreateFolder = async () => {
     await addFolder(newFolderName);
@@ -388,7 +429,7 @@ export default function FolderManager() {
         const text = formatContent(extracted.messages, 'markdown');
         const time = new Date().toISOString().replace(/[:.]/g, '-');
         const filename = `claude-export-${conversationId}-${time}.md`;
-        
+
         const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -414,12 +455,12 @@ export default function FolderManager() {
     <div className={`text-sm ${theme.rootText}`}>
       <MultiAISidebarTree
         currentPlatform="claude"
-        theme={isDarkTheme ? "dark" : "light"}
+        theme={isDarkTheme ? 'dark' : 'light'}
         onOpenSyncSettings={handleSyncClick}
       >
         {/* 原最上方的「資料夾」區塊，移入 Nomad Workspace 內 */}
-        <div className="nomad-local-folder-section pb-2 mb-1">
-          <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-black/5 dark:border-white/5 pb-2">
+        <div className="nomad-local-folder-section mb-1 pb-2">
+          <div className="mb-1 flex items-center justify-between border-b border-black/5 px-2 py-1 pb-2 dark:border-white/5">
             <div className={`text-xs font-medium ${theme.headerText}`}>{t('folders.title')}</div>
             <div className="flex items-center gap-1.5">
               {/* 1. Google Drive Auth (User Profile) */}
@@ -427,7 +468,11 @@ export default function FolderManager() {
                 type="button"
                 className={`rounded-md p-1 transition-colors ${theme.icon} ${theme.iconHoverBg} ${syncState?.isAuthenticated ? 'text-emerald-500 hover:text-emerald-400' : ''}`}
                 onClick={handleAuthClick}
-                title={syncState?.isAuthenticated ? '已連結 Google Drive (點擊登出)' : '連結 Google Drive'}
+                title={
+                  syncState?.isAuthenticated
+                    ? '已連結 Google Drive (點擊登出)'
+                    : '連結 Google Drive'
+                }
               >
                 <User className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
@@ -488,7 +533,7 @@ export default function FolderManager() {
               <input
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
-                className={`w-full rounded-md border px-2 py-1 text-sm focus:outline-none focus:ring-1 ${theme.input}`}
+                className={`w-full rounded-md border px-2 py-1 text-sm focus:ring-1 focus:outline-none ${theme.input}`}
                 placeholder={t('folders.folderName')}
                 aria-label={t('folders.folderName')}
                 onKeyDown={(e) => {
@@ -544,7 +589,9 @@ export default function FolderManager() {
         theme={theme}
         contextMenu={contextMenu}
         onContextMenuClose={handleCloseContextMenu}
-        onMoveConversationToFolder={(conversationId, folderId) => moveConversationToFolder(conversationId, folderId)}
+        onMoveConversationToFolder={(conversationId, folderId) =>
+          moveConversationToFolder(conversationId, folderId)
+        }
         onExportConversation={handleExportConversation}
         deleteTarget={pendingDelete}
         onDeleteConfirm={confirmDelete}
@@ -554,4 +601,3 @@ export default function FolderManager() {
     portalContainer,
   );
 }
-

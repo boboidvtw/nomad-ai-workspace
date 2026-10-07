@@ -36,10 +36,10 @@ class KnowledgeBase {
       const end = Math.min(start + this.chunkSize, text.length);
       chunks.push(text.slice(start, end).trim());
       if (end >= text.length) break;
-      start += (this.chunkSize - this.chunkOverlap);
+      start += this.chunkSize - this.chunkOverlap;
     }
 
-    return chunks.filter(c => c.length > 10);
+    return chunks.filter((c) => c.length > 10);
   }
 
   /**
@@ -66,14 +66,17 @@ class KnowledgeBase {
           id: chunkId,
           title: `${doc.title || doc.id} (片段 ${i + 1}/${chunks.length})`,
           content: chunks[i],
-          metadata: { docId: doc.id, chunkIndex: i, totalChunks: chunks.length }
+          metadata: { docId: doc.id, chunkIndex: i, totalChunks: chunks.length },
         });
       }
 
       this.indexedSources.add(doc.id);
       return ok({ docId: doc.id, chunksIndexed: chunks.length });
     } catch (e) {
-      return err(ErrorCodes.RAG_CHUNKING_FAILED_002, 'Failed to chunk and index doc: ' + (e instanceof Error ? e.message : String(e)));
+      return err(
+        ErrorCodes.RAG_CHUNKING_FAILED_002,
+        'Failed to chunk and index doc: ' + (e instanceof Error ? e.message : String(e)),
+      );
     }
   }
 
@@ -96,25 +99,27 @@ class KnowledgeBase {
     const searchRes = this.memory.search(query, { limit: topK });
     if (searchRes.success === false) return searchRes;
 
-    const chunks = searchRes.data.map(r => ({
+    const chunks = searchRes.data.map((r) => ({
       title: r.title,
       content: r.snippet,
-      score: r.score
+      score: r.score,
     }));
 
     if (chunks.length === 0) {
       return ok({ chunks: [], injectedContext: '' });
     }
 
-    const injected = chunks.map((c, idx) => `[本機知識參考 #${idx + 1} - ${c.title}]:\n${c.content}`).join('\n\n');
+    const injected = chunks
+      .map((c, idx) => `[本機知識參考 #${idx + 1} - ${c.title}]:\n${c.content}`)
+      .join('\n\n');
 
     return ok({
       chunks,
-      injectedContext: `> 📚 [Nomad 本機知識庫檢索上下文]:\n${injected}`
+      injectedContext: `> 📚 [Nomad 本機知識庫檢索上下文]:\n${injected}`,
     });
   }
 }
 
 module.exports = {
-  KnowledgeBase
+  KnowledgeBase,
 };

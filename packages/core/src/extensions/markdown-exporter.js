@@ -44,17 +44,20 @@ function formatChatToMarkdown(options = {}) {
     `> **訊息總數**: ${messages.length} 則`,
     '',
     '---',
-    ''
+    '',
   ];
 
   let wordCount = 0;
 
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
-    const roleName = msg.role === 'user' ? '👤 使用者 (User)' :
-                     msg.role === 'assistant' ? `🤖 ${platform} (Assistant)` :
-                     '⚙️ 系統 (System)';
-    
+    const roleName =
+      msg.role === 'user'
+        ? '👤 使用者 (User)'
+        : msg.role === 'assistant'
+          ? `🤖 ${platform} (Assistant)`
+          : '⚙️ 系統 (System)';
+
     const timeStr = msg.timestamp ? ` *(${msg.timestamp})*` : '';
     lines.push(`### ${roleName}${timeStr}`);
     lines.push('');
@@ -71,10 +74,10 @@ function formatChatToMarkdown(options = {}) {
   return ok({
     markdown,
     wordCount,
-    messageCount: messages.length
+    messageCount: messages.length,
   });
 }
 
 module.exports = {
-  formatChatToMarkdown
+  formatChatToMarkdown,
 };

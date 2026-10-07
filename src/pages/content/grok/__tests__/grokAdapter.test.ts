@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
 import { findComposerElement } from '@/components/FloatBall/composerAnchor';
-import { findChatInput, insertTextIntoChatInput } from '@/pages/content/chatInput';
 import { SUPPORTED_PLATFORMS, detectCurrentPlatform } from '@/core/platform/registry';
+import { findChatInput, insertTextIntoChatInput } from '@/pages/content/chatInput';
 
 vi.mock('@/pages/content/prompt', () => ({
   startPromptManager: vi.fn(),

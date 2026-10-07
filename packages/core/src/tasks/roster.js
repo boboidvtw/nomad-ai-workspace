@@ -118,9 +118,14 @@ class AgentRoster {
       role: (profile.role || 'General Assistant').trim(),
       platform: profile.platform || 'claude',
       skills: Array.isArray(profile.skills) ? profile.skills : [],
-      status: profile.status && (/** @type {string[]} */ (Object.values(AGENT_STATUS))).includes(profile.status) ? profile.status : AGENT_STATUS.IDLE,
+      status:
+        profile.status &&
+        /** @type {string[]} */ (Object.values(AGENT_STATUS)).includes(profile.status)
+          ? profile.status
+          : AGENT_STATUS.IDLE,
       maxConcurrency: typeof profile.maxConcurrency === 'number' ? profile.maxConcurrency : 1,
-      budgetTokenLimit: typeof profile.budgetTokenLimit === 'number' ? profile.budgetTokenLimit : 100000,
+      budgetTokenLimit:
+        typeof profile.budgetTokenLimit === 'number' ? profile.budgetTokenLimit : 100000,
       currentTaskIds: Array.isArray(profile.currentTaskIds) ? [...profile.currentTaskIds] : [],
     };
 
@@ -130,13 +135,16 @@ class AgentRoster {
 
   /**
    * Retrieves an agent by ID
-   * @param {string} id 
+   * @param {string} id
    * @returns {import('../result').UnitResult<import('./roster').Agent>}
    */
   getAgent(id) {
     const agent = this.agents.get(id);
     if (!agent) {
-      return err(ErrorCodes.ROSTER_AGENT_NOT_FOUND_001, `Agent with id '${id}' not found in roster`);
+      return err(
+        ErrorCodes.ROSTER_AGENT_NOT_FOUND_001,
+        `Agent with id '${id}' not found in roster`,
+      );
     }
     return ok({ ...agent });
   }
@@ -146,13 +154,13 @@ class AgentRoster {
    * @returns {import('./roster').Agent[]}
    */
   listAgents() {
-    return Array.from(this.agents.values()).map(a => ({ ...a }));
+    return Array.from(this.agents.values()).map((a) => ({ ...a }));
   }
 
   /**
    * Updates an agent's status
-   * @param {string} id 
-   * @param {string} status 
+   * @param {string} id
+   * @param {string} status
    * @returns {import('../result').UnitResult<import('./roster').Agent>}
    */
   updateAgentStatus(id, status) {
@@ -160,7 +168,7 @@ class AgentRoster {
     if (!agent) {
       return err(ErrorCodes.ROSTER_AGENT_NOT_FOUND_001, `Agent with id '${id}' not found`);
     }
-    if (!(/** @type {string[]} */ (Object.values(AGENT_STATUS))).includes(status)) {
+    if (!(/** @type {string[]} */ (Object.values(AGENT_STATUS)).includes(status))) {
       return err(ErrorCodes.ROSTER_INVALID_PROFILE_002, `Invalid status: '${status}'`);
     }
     agent.status = /** @type {AgentStatus} */ (status);
@@ -169,16 +177,17 @@ class AgentRoster {
 
   /**
    * Finds the best agent matching a set of required skills
-   * @param {string[]} requiredSkills 
+   * @param {string[]} requiredSkills
    * @returns {import('../result').UnitResult<import('./roster').Agent>}
    */
   findBestAgentForSkills(requiredSkills = []) {
     if (!Array.isArray(requiredSkills) || requiredSkills.length === 0) {
       // Pick first idle agent
-      const idle = Array.from(this.agents.values()).find(a => a.status === AGENT_STATUS.IDLE);
+      const idle = Array.from(this.agents.values()).find((a) => a.status === AGENT_STATUS.IDLE);
       if (idle) return ok({ ...idle });
       const first = this.agents.values().next().value;
-      if (!first) return err(ErrorCodes.ROSTER_AGENT_NOT_FOUND_001, 'No agents registered in roster');
+      if (!first)
+        return err(ErrorCodes.ROSTER_AGENT_NOT_FOUND_001, 'No agents registered in roster');
       return ok({ ...first });
     }
 

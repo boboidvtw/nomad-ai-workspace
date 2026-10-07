@@ -23,13 +23,16 @@ class PluginRuntime {
   register(plugin = {}) {
     const m = plugin.manifest;
     if (!m || !m.id || !m.name || !m.version) {
-      return err(ErrorCodes.PLUGIN_MANIFEST_INVALID_001, 'Plugin manifest must specify id, name and version');
+      return err(
+        ErrorCodes.PLUGIN_MANIFEST_INVALID_001,
+        'Plugin manifest must specify id, name and version',
+      );
     }
 
     this.plugins.set(m.id, {
       manifest: m,
       hooks: plugin.hooks || {},
-      enabled: true
+      enabled: true,
     });
 
     return ok({ registeredId: m.id, version: m.version });
@@ -58,19 +61,22 @@ class PluginRuntime {
 
       return ok(currentCtx);
     } catch (e) {
-      return err(ErrorCodes.PLUGIN_EXECUTION_FAILED_002, `Hook ${hookName} failed: ${(e instanceof Error ? e.message : String(e))}`);
+      return err(
+        ErrorCodes.PLUGIN_EXECUTION_FAILED_002,
+        `Hook ${hookName} failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
     }
   }
 
   listPlugins() {
-    const list = Array.from(this.plugins.values()).map(p => ({
+    const list = Array.from(this.plugins.values()).map((p) => ({
       ...p.manifest,
-      enabled: p.enabled
+      enabled: p.enabled,
     }));
     return ok(list);
   }
 }
 
 module.exports = {
-  PluginRuntime
+  PluginRuntime,
 };

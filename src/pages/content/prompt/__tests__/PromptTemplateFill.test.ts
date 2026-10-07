@@ -73,7 +73,6 @@ describe('openTemplateFill', () => {
     expect(document.querySelector('.gv-pm-fill')).toBeNull();
   });
 
-
   it('keeps a blank slot literal instead of sending an empty hole', () => {
     const onSubmit = vi.fn();
     const handle = openTemplateFill({

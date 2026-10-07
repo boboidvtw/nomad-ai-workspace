@@ -34,7 +34,7 @@ const {
   MONITORED_SERVICES,
   PLATFORMS,
   LAYOUTS,
-  SEMANTIC_TYPES
+  SEMANTIC_TYPES,
 } = require('./src/constants');
 
 const { extractVariables, interpolate } = require('./src/extensions/template-parser');
@@ -55,11 +55,15 @@ const {
   computeChecksum,
   exportToDrive,
   importFromDrive,
-  getSyncStatus
+  getSyncStatus,
 } = require('./src/sync/universal-drive-sync');
 
 // P1: Canvas & Artifacts
-const { ARTIFACT_TYPES, extractArtifacts, generateSandboxHtml } = require('./src/canvas/artifact-extractor');
+const {
+  ARTIFACT_TYPES,
+  extractArtifacts,
+  generateSandboxHtml,
+} = require('./src/canvas/artifact-extractor');
 
 // P2: Local Model Client (Dual-Track)
 const { LocalModelClient } = require('./src/client/local-model-client');
@@ -75,7 +79,7 @@ const {
   isLoopbackModelTarget,
   applyCorsHeaders,
   authorizeRequest,
-  injectDashboardAuth
+  injectDashboardAuth,
 } = require('./src/security/local-auth');
 
 // P2: Side-by-Side Diff Engine
@@ -85,11 +89,15 @@ const { computeDiff } = require('./src/diff/diff-engine');
 const { tokenize, VectorMemoryLite } = require('./src/memory/vector-memory-lite');
 
 // P3: Model Context Protocol (MCP) Host & Gateway
-const { McpGateway, ALLOWED_PATHS_ENV: MCP_ALLOWED_PATHS_ENV, defaultAllowedPaths, defaultDeniedPaths } = require('./src/mcp/mcp-gateway');
+const {
+  McpGateway,
+  ALLOWED_PATHS_ENV: MCP_ALLOWED_PATHS_ENV,
+  defaultAllowedPaths,
+  defaultDeniedPaths,
+} = require('./src/mcp/mcp-gateway');
 
 // P3: Local Knowledge Base & RAG Pipeline
 const { KnowledgeBase } = require('./src/rag/knowledge-base');
-
 
 // Task Control Plane (Paperclip Native Integration)
 const {
@@ -105,21 +113,20 @@ const {
   TaskRunner,
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
-} = require("./src/tasks/index");
+} = require('./src/tasks/index');
 
 // P3: Nomad Plugin Runtime
 const { PluginRuntime } = require('./src/plugins/plugin-runtime');
 
-
 const ArtifactExtractor = {
   extract: extractArtifacts,
   extractArtifacts,
-  generateSandboxHtml
+  generateSandboxHtml,
 };
 
 const DiffEngine = {
   diffLines: computeDiff,
-  computeDiff
+  computeDiff,
 };
 
 module.exports = {

@@ -6,19 +6,20 @@
  * Goal 3: Cross-Platform Input & Dynamic Variable Template Fill under Extreme Resizing
  */
 
-import { spawn } from "child_process";
-import { writeFileSync, existsSync, mkdirSync } from "fs";
-import { resolve } from "path";
-import http from "http";
+import { spawn } from 'child_process';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import http from 'http';
+import { resolve } from 'path';
 
-const BRAVE_PATH = "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser";
-const EXT_PATH = resolve("/Users/liyungchih-macstudio/Developer/nomad-ai-workspace", "dist_chrome");
-const ARTIFACT_DIR = "/Users/liyungchih-macstudio/.gemini/antigravity-ide/brain/8883b7cc-2294-4d24-9e96-501cca1971c5";
+const BRAVE_PATH = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
+const EXT_PATH = resolve('/Users/liyungchih-macstudio/Developer/nomad-ai-workspace', 'dist_chrome');
+const ARTIFACT_DIR =
+  '/Users/liyungchih-macstudio/.gemini/antigravity-ide/brain/8883b7cc-2294-4d24-9e96-501cca1971c5';
 const DEBUG_PORT = 9335;
-const USER_DATA_DIR = resolve(ARTIFACT_DIR, "scratch/chrome_profile_full_test_" + Date.now());
+const USER_DATA_DIR = resolve(ARTIFACT_DIR, 'scratch/chrome_profile_full_test_' + Date.now());
 
-if (!existsSync(resolve(ARTIFACT_DIR, "scratch"))) {
-  mkdirSync(resolve(ARTIFACT_DIR, "scratch"), { recursive: true });
+if (!existsSync(resolve(ARTIFACT_DIR, 'scratch'))) {
+  mkdirSync(resolve(ARTIFACT_DIR, 'scratch'), { recursive: true });
 }
 
 function sleep(ms) {
@@ -27,17 +28,19 @@ function sleep(ms) {
 
 function fetchJson(url) {
   return new Promise((res, rej) => {
-    http.get(url, (resp) => {
-      let data = "";
-      resp.on("data", (c) => (data += c));
-      resp.on("end", () => {
-        try {
-          res(JSON.parse(data));
-        } catch (e) {
-          rej(e);
-        }
-      });
-    }).on("error", rej);
+    http
+      .get(url, (resp) => {
+        let data = '';
+        resp.on('data', (c) => (data += c));
+        resp.on('end', () => {
+          try {
+            res(JSON.parse(data));
+          } catch (e) {
+            rej(e);
+          }
+        });
+      })
+      .on('error', rej);
   });
 }
 
@@ -50,7 +53,7 @@ async function waitForHttp(url, timeoutMs = 15000) {
       await sleep(300);
     }
   }
-  throw new Error("Timeout waiting for " + url);
+  throw new Error('Timeout waiting for ' + url);
 }
 
 class CDPClient {
@@ -62,20 +65,22 @@ class CDPClient {
 
   async connect() {
     return new Promise((res, rej) => {
-      import("/Users/liyungchih-macstudio/Developer/nomad-ai-workspace/node_modules/ws/index.js").then(({ default: WebSocket }) => {
-        this.ws = new WebSocket(this.wsUrl);
-        this.ws.on("open", res);
-        this.ws.on("error", rej);
-        this.ws.on("message", (raw) => {
-          const msg = JSON.parse(raw.toString());
-          if (msg.id && this.pending.has(msg.id)) {
-            const { resolve: rResolve, reject: rReject } = this.pending.get(msg.id);
-            this.pending.delete(msg.id);
-            if (msg.error) rReject(new Error(JSON.stringify(msg.error)));
-            else rResolve(msg.result);
-          }
-        });
-      });
+      import('/Users/liyungchih-macstudio/Developer/nomad-ai-workspace/node_modules/ws/index.js').then(
+        ({ default: WebSocket }) => {
+          this.ws = new WebSocket(this.wsUrl);
+          this.ws.on('open', res);
+          this.ws.on('error', rej);
+          this.ws.on('message', (raw) => {
+            const msg = JSON.parse(raw.toString());
+            if (msg.id && this.pending.has(msg.id)) {
+              const { resolve: rResolve, reject: rReject } = this.pending.get(msg.id);
+              this.pending.delete(msg.id);
+              if (msg.error) rReject(new Error(JSON.stringify(msg.error)));
+              else rResolve(msg.result);
+            }
+          });
+        },
+      );
     });
   }
 
@@ -88,7 +93,7 @@ class CDPClient {
   }
 
   async evaluate(expr) {
-    const res = await this.send("Runtime.evaluate", {
+    const res = await this.send('Runtime.evaluate', {
       expression: expr,
       awaitPromise: true,
       returnByValue: true,
@@ -106,9 +111,9 @@ class CDPClient {
 }
 
 async function run() {
-  console.log("===============================================================");
-  console.log("🚀 STARTING REAL-BROWSER VERIFICATION: GOALS 1 + 2 + 3");
-  console.log("===============================================================");
+  console.log('===============================================================');
+  console.log('🚀 STARTING REAL-BROWSER VERIFICATION: GOALS 1 + 2 + 3');
+  console.log('===============================================================');
 
   const browserProcess = spawn(
     BRAVE_PATH,
@@ -117,15 +122,15 @@ async function run() {
       `--disable-extensions-except=${EXT_PATH}`,
       `--load-extension=${EXT_PATH}`,
       `--user-data-dir=${USER_DATA_DIR}`,
-      "--no-first-run",
-      "--no-default-browser-check",
-      "about:blank",
+      '--no-first-run',
+      '--no-default-browser-check',
+      'about:blank',
     ],
-    { stdio: "ignore" }
+    { stdio: 'ignore' },
   );
 
   let exited = false;
-  browserProcess.on("exit", () => {
+  browserProcess.on('exit', () => {
     exited = true;
   });
 
@@ -137,7 +142,7 @@ async function run() {
 
     for (let attempt = 0; attempt < 30; attempt++) {
       targets = await waitForHttp(`http://127.0.0.1:${DEBUG_PORT}/json`);
-      const extTarget = targets.find((t) => t.url && t.url.includes("chrome-extension://"));
+      const extTarget = targets.find((t) => t.url && t.url.includes('chrome-extension://'));
       if (extTarget) {
         const match = extTarget.url.match(/chrome-extension:\/\/([^\/]+)/);
         if (match) {
@@ -149,32 +154,32 @@ async function run() {
     }
 
     if (!extId) {
-      throw new Error("Could not detect Extension ID from running browser targets");
+      throw new Error('Could not detect Extension ID from running browser targets');
     }
     console.log(`[Verify] Discovered Extension ID: ${extId}`);
 
     const optionsUrl = `chrome-extension://${extId}/src/pages/options/index.html`;
-    const pageTarget = targets.find((t) => t.type === "page" && t.webSocketDebuggerUrl);
+    const pageTarget = targets.find((t) => t.type === 'page' && t.webSocketDebuggerUrl);
     if (!pageTarget) {
-      throw new Error("No page target found");
+      throw new Error('No page target found');
     }
     console.log(`[Verify] Connecting to Page target: ${pageTarget.url}`);
     const cdp = new CDPClient(pageTarget.webSocketDebuggerUrl);
     await cdp.connect();
-    console.log("[Verify] Connected to Page CDP successfully.");
+    console.log('[Verify] Connected to Page CDP successfully.');
     console.log(`[Verify] Navigating to Options Page: ${optionsUrl}`);
-    await cdp.send("Page.navigate", { url: optionsUrl });
+    await cdp.send('Page.navigate', { url: optionsUrl });
     await sleep(2500);
 
     // =========================================================================
     // GOAL 1: 4-Platform Full Google Drive Bidirectional Sync & Merge
     // =========================================================================
-    console.log("\n---------------------------------------------------------------");
-    console.log("▶ [Goal 1] Verifying 4-Platform Bidirectional Sync & Merge...");
-    console.log("---------------------------------------------------------------");
+    console.log('\n---------------------------------------------------------------');
+    console.log('▶ [Goal 1] Verifying 4-Platform Bidirectional Sync & Merge...');
+    console.log('---------------------------------------------------------------');
 
     // Seed local folders for Gemini, Claude, ChatGPT, and Grok
-    console.log("[Goal 1] Seeding initial local folder structures across 4 platforms...");
+    console.log('[Goal 1] Seeding initial local folder structures across 4 platforms...');
     const seedResult = await cdp.evaluate(`
       new Promise((resolve) => {
         try {
@@ -210,13 +215,18 @@ async function run() {
         }
       })
     `);
-    console.log("[Goal 1] Storage seed verification:", seedResult);
-    if (!seedResult?.hasGemini || !seedResult?.hasClaude || !seedResult?.hasChatGPT || !seedResult?.hasGrok) {
-      throw new Error("Failed to seed initial 4-platform folder data");
+    console.log('[Goal 1] Storage seed verification:', seedResult);
+    if (
+      !seedResult?.hasGemini ||
+      !seedResult?.hasClaude ||
+      !seedResult?.hasChatGPT ||
+      !seedResult?.hasGrok
+    ) {
+      throw new Error('Failed to seed initial 4-platform folder data');
     }
 
     // Test nomad.sync.syncAll (Master All-in-One One-Click Sync)
-    console.log("[Goal 1] Dispatching nomad.sync.syncAll runtime message...");
+    console.log('[Goal 1] Dispatching nomad.sync.syncAll runtime message...');
     const syncAllRes = await cdp.evaluate(`
       new Promise((resolve) => {
         chrome.runtime.sendMessage({
@@ -225,15 +235,17 @@ async function run() {
         }, (res) => resolve(res));
       })
     `);
-    console.log("[Goal 1] nomad.sync.syncAll response received:", {
+    console.log('[Goal 1] nomad.sync.syncAll response received:', {
       ok: syncAllRes?.ok,
       hasData: Boolean(syncAllRes?.data),
       platforms: syncAllRes?.data ? Object.keys(syncAllRes.data) : null,
-      state: syncAllRes?.state
+      state: syncAllRes?.state,
     });
 
     if (!syncAllRes?.ok || !syncAllRes?.data) {
-      throw new Error("nomad.sync.syncAll returned invalid response: " + JSON.stringify(syncAllRes));
+      throw new Error(
+        'nomad.sync.syncAll returned invalid response: ' + JSON.stringify(syncAllRes),
+      );
     }
 
     // Verify storage persistence after syncAll
@@ -249,18 +261,23 @@ async function run() {
         });
       })
     `);
-    console.log("[Goal 1] Verified merged folders in chrome.storage.local:", verifyStorageRes);
-    if (verifyStorageRes.geminiCount < 1 || verifyStorageRes.claudeCount < 1 || verifyStorageRes.chatgptCount < 1 || verifyStorageRes.grokCount < 1) {
-      throw new Error("Persistent storage check failed after syncAll");
+    console.log('[Goal 1] Verified merged folders in chrome.storage.local:', verifyStorageRes);
+    if (
+      verifyStorageRes.geminiCount < 1 ||
+      verifyStorageRes.claudeCount < 1 ||
+      verifyStorageRes.chatgptCount < 1 ||
+      verifyStorageRes.grokCount < 1
+    ) {
+      throw new Error('Persistent storage check failed after syncAll');
     }
 
     // Navigate to Options Page to verify UI dashboard and Take Screenshot
-    console.log("[Goal 1] Navigating to Options Page for visual validation...");
-    await cdp.send("Page.navigate", { url: optionsUrl });
+    console.log('[Goal 1] Navigating to Options Page for visual validation...');
+    await cdp.send('Page.navigate', { url: optionsUrl });
     await sleep(2500);
 
     // Switch sync mode to 'manual' so the Sync Actions card & Master All-in-One button are displayed
-    console.log("[Goal 1] Activating manual sync mode to display All-in-One Sync UI...");
+    console.log('[Goal 1] Activating manual sync mode to display All-in-One Sync UI...');
     await cdp.evaluate(`
       new Promise((resolve) => {
         chrome.runtime.sendMessage({ type: 'gv.sync.setMode', payload: { mode: 'manual' } }, () => {
@@ -295,23 +312,25 @@ async function run() {
         };
       })()
     `);
-    console.log("[Goal 1] Options page UI check:", {
+    console.log('[Goal 1] Options page UI check:', {
       hasSyncAllButton: uiCheck.hasSyncAllButton,
       hasDashboard: uiCheck.hasDashboard,
       syncAllBtnText: uiCheck.syncAllBtnText,
-      containsGemini: uiCheck.dashboardText.includes("Gemini"),
-      containsClaude: uiCheck.dashboardText.includes("Claude"),
-      containsChatGPT: uiCheck.dashboardText.includes("ChatGPT"),
-      containsGrok: uiCheck.dashboardText.includes("Grok"),
+      containsGemini: uiCheck.dashboardText.includes('Gemini'),
+      containsClaude: uiCheck.dashboardText.includes('Claude'),
+      containsChatGPT: uiCheck.dashboardText.includes('ChatGPT'),
+      containsGrok: uiCheck.dashboardText.includes('Grok'),
     });
 
     if (!uiCheck.hasSyncAllButton || !uiCheck.hasDashboard) {
-      console.warn("[Goal 1] UI check retry after brief sleep...");
+      console.warn('[Goal 1] UI check retry after brief sleep...');
       await sleep(1500);
     }
 
     // Interactively click the "一鍵全平台同步" button in the real browser DOM
-    console.log("[Goal 1] Interactively clicking the '一鍵全平台同步' button in real browser DOM...");
+    console.log(
+      "[Goal 1] Interactively clicking the '一鍵全平台同步' button in real browser DOM...",
+    );
     const clickRes = await cdp.evaluate(`
       new Promise((resolve) => {
         const btn = document.querySelector('[data-testid="sync-all-platforms-button"]');
@@ -323,23 +342,23 @@ async function run() {
         }
       })
     `);
-    console.log("[Goal 1] Real DOM click result:", clickRes);
+    console.log('[Goal 1] Real DOM click result:', clickRes);
     await sleep(2000); // Allow sync & status message to render
 
-    const screenshot1 = await cdp.send("Page.captureScreenshot", { format: "png" });
-    const screenshot1Path = resolve(ARTIFACT_DIR, "real_browser_sync_all_options.png");
-    writeFileSync(screenshot1Path, Buffer.from(screenshot1.data, "base64"));
+    const screenshot1 = await cdp.send('Page.captureScreenshot', { format: 'png' });
+    const screenshot1Path = resolve(ARTIFACT_DIR, 'real_browser_sync_all_options.png');
+    writeFileSync(screenshot1Path, Buffer.from(screenshot1.data, 'base64'));
     console.log(`[Goal 1] ✅ Screenshot saved to: ${screenshot1Path}`);
 
     // =========================================================================
     // GOAL 2: Nomad Super Orb 拖曳位置與面板尺寸記憶持久化實測
     // =========================================================================
-    console.log("\n---------------------------------------------------------------");
-    console.log("▶ [Goal 2] Verifying Super Orb Dragging & Panel Size Persistence...");
-    console.log("---------------------------------------------------------------");
+    console.log('\n---------------------------------------------------------------');
+    console.log('▶ [Goal 2] Verifying Super Orb Dragging & Panel Size Persistence...');
+    console.log('---------------------------------------------------------------');
 
     // Test Chat Width & Ball Size persistence
-    console.log("[Goal 2] Testing width control and ball scale storage persistence...");
+    console.log('[Goal 2] Testing width control and ball scale storage persistence...');
     const widthScaleRes = await cdp.evaluate(`
       new Promise((resolve) => {
         chrome.storage.local.set({
@@ -352,13 +371,13 @@ async function run() {
         });
       })
     `);
-    console.log("[Goal 2] Width and Scale saved:", widthScaleRes);
+    console.log('[Goal 2] Width and Scale saved:', widthScaleRes);
     if (widthScaleRes.nomad_chat_width !== 58 || widthScaleRes.floatBallSize !== 1.15) {
-      throw new Error("Failed to persist chat width or float ball size");
+      throw new Error('Failed to persist chat width or float ball size');
     }
 
     // Test Custom Drag Position persistence
-    console.log("[Goal 2] Testing custom drag position storage persistence...");
+    console.log('[Goal 2] Testing custom drag position storage persistence...');
     const dragPosRes = await cdp.evaluate(`
       new Promise((resolve) => {
         const customPos = { x: 340, y: 520, userCustom: true };
@@ -369,26 +388,28 @@ async function run() {
         });
       })
     `);
-    console.log("[Goal 2] Drag position saved:", dragPosRes);
+    console.log('[Goal 2] Drag position saved:', dragPosRes);
     if (dragPosRes?.x !== 340 || dragPosRes?.y !== 520 || dragPosRes?.userCustom !== true) {
-      throw new Error("Failed to persist custom float ball position");
+      throw new Error('Failed to persist custom float ball position');
     }
 
     // Verify Adaptive Anchoring Math across resolutions
-    console.log("[Goal 2] Testing adaptive composer anchoring math across standard display resolutions...");
+    console.log(
+      '[Goal 2] Testing adaptive composer anchoring math across standard display resolutions...',
+    );
     const resolutions = [
-      { name: "Desktop FHD", width: 1920, height: 1080 },
-      { name: "MacBook Pro", width: 1440, height: 900 },
-      { name: "Compact Laptop", width: 1280, height: 800 },
-      { name: "Narrow Split View", width: 800, height: 600 }
+      { name: 'Desktop FHD', width: 1920, height: 1080 },
+      { name: 'MacBook Pro', width: 1440, height: 900 },
+      { name: 'Compact Laptop', width: 1280, height: 800 },
+      { name: 'Narrow Split View', width: 800, height: 600 },
     ];
 
     for (const res of resolutions) {
-      await cdp.send("Emulation.setDeviceMetricsOverride", {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: res.width,
         height: res.height,
         deviceScaleFactor: 1,
-        mobile: false
+        mobile: false,
       });
       await sleep(200);
 
@@ -412,26 +433,29 @@ async function run() {
           return { vw, vh, x: Math.round(x), y: Math.round(y), withinBounds: x >= 8 && x <= maxX && y >= 8 && y <= maxY };
         })()
       `);
-      console.log(`[Goal 2] Resolution ${res.name} (${res.width}x${res.height}) -> Computed Anchor:`, anchorCheck);
+      console.log(
+        `[Goal 2] Resolution ${res.name} (${res.width}x${res.height}) -> Computed Anchor:`,
+        anchorCheck,
+      );
       if (!anchorCheck.withinBounds) {
         throw new Error(`Adaptive anchor out of bounds at resolution ${res.name}`);
       }
     }
 
-    const screenshot2 = await cdp.send("Page.captureScreenshot", { format: "png" });
-    const screenshot2Path = resolve(ARTIFACT_DIR, "real_browser_super_orb_drag_persistence.png");
-    writeFileSync(screenshot2Path, Buffer.from(screenshot2.data, "base64"));
+    const screenshot2 = await cdp.send('Page.captureScreenshot', { format: 'png' });
+    const screenshot2Path = resolve(ARTIFACT_DIR, 'real_browser_super_orb_drag_persistence.png');
+    writeFileSync(screenshot2Path, Buffer.from(screenshot2.data, 'base64'));
     console.log(`[Goal 2] ✅ Screenshot saved to: ${screenshot2Path}`);
 
     // Reset emulation
-    await cdp.send("Emulation.clearDeviceMetricsOverride");
+    await cdp.send('Emulation.clearDeviceMetricsOverride');
 
     // =========================================================================
     // GOAL 3: 跨平台輸入框互動邊界與極端縮放壓力測試
     // =========================================================================
-    console.log("\n---------------------------------------------------------------");
-    console.log("▶ [Goal 3] Testing Dynamic Variable Template Fill under Extreme Resizing...");
-    console.log("---------------------------------------------------------------");
+    console.log('\n---------------------------------------------------------------');
+    console.log('▶ [Goal 3] Testing Dynamic Variable Template Fill under Extreme Resizing...');
+    console.log('---------------------------------------------------------------');
 
     const templateStressRes = await cdp.evaluate(`
       new Promise((resolve) => {
@@ -500,16 +524,21 @@ async function run() {
         resolve({ mounted: true, initialPos });
       })
     `);
-    console.log("[Goal 3] Template surface mounted:", templateStressRes);
+    console.log('[Goal 3] Template surface mounted:', templateStressRes);
 
     // Apply extreme viewport changes (simulate 200% zoom and rapid window resize)
-    console.log("[Goal 3] Simulating extreme resolution jumps (1600x1200 -> 500x800)...");
-    for (const [w, h] of [[1600, 1200], [1024, 768], [600, 900], [480, 800]]) {
-      await cdp.send("Emulation.setDeviceMetricsOverride", {
+    console.log('[Goal 3] Simulating extreme resolution jumps (1600x1200 -> 500x800)...');
+    for (const [w, h] of [
+      [1600, 1200],
+      [1024, 768],
+      [600, 900],
+      [480, 800],
+    ]) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: w,
         height: h,
         deviceScaleFactor: 2, // 200% zoom
-        mobile: false
+        mobile: false,
       });
       await sleep(150);
 
@@ -538,27 +567,26 @@ async function run() {
       }
     }
 
-    const screenshot3 = await cdp.send("Page.captureScreenshot", { format: "png" });
-    const screenshot3Path = resolve(ARTIFACT_DIR, "real_browser_template_fill_stress.png");
-    writeFileSync(screenshot3Path, Buffer.from(screenshot3.data, "base64"));
+    const screenshot3 = await cdp.send('Page.captureScreenshot', { format: 'png' });
+    const screenshot3Path = resolve(ARTIFACT_DIR, 'real_browser_template_fill_stress.png');
+    writeFileSync(screenshot3Path, Buffer.from(screenshot3.data, 'base64'));
     console.log(`[Goal 3] ✅ Screenshot saved to: ${screenshot3Path}`);
 
     // Cleanup emulation
-    await cdp.send("Emulation.clearDeviceMetricsOverride");
+    await cdp.send('Emulation.clearDeviceMetricsOverride');
 
     cdp.close();
 
-    console.log("\n===============================================================");
-    console.log("🎉 ALL REAL-BROWSER VERIFICATIONS (GOALS 1 + 2 + 3) PASSED 100%!");
-    console.log("===============================================================");
-
+    console.log('\n===============================================================');
+    console.log('🎉 ALL REAL-BROWSER VERIFICATIONS (GOALS 1 + 2 + 3) PASSED 100%!');
+    console.log('===============================================================');
   } finally {
-    console.log("[Verify] Shutting down real browser process...");
-    browserProcess.kill("SIGKILL");
+    console.log('[Verify] Shutting down real browser process...');
+    browserProcess.kill('SIGKILL');
   }
 }
 
 run().catch((err) => {
-  console.error("❌ Verification failed with error:", err);
+  console.error('❌ Verification failed with error:', err);
   process.exit(1);
 });

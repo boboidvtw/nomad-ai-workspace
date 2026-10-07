@@ -5,13 +5,14 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { GrokConversation } from '../types';
+
 import {
   extractGrokConversationIdFromHref,
   getGrokTitleCache,
   saveGrokTitleCache,
   type ConversationTitleCache,
 } from '../services/storage';
+import type { GrokConversation } from '../types';
 
 export const GROK_INJECTED_CONTAINER_ID = 'nomad-grok-folder-root';
 export const GROK_CONVERSATION_LINK_SELECTOR = 'a[href*="/chat/"], a[href*="/c/"]';
@@ -24,24 +25,26 @@ interface UseGrokConversationsOptions {
 export const findGrokNav = (): HTMLElement | null => {
   // 1. Explicit sidebar selectors (Shadcn UI data attributes, aside, testid)
   const explicitSidebar = document.querySelector<HTMLElement>(
-    "[data-sidebar=\"sidebar\"], [data-sidebar=\"content\"], aside, [data-testid*=\"sidebar\"]"
+    '[data-sidebar="sidebar"], [data-sidebar="content"], aside, [data-testid*="sidebar"]',
   );
   if (explicitSidebar) {
     return explicitSidebar;
   }
 
   // 2. Scan for elements containing conversation links (a[href*=\"/chat/\"], a[href*=\"/c/\"])
-  const anchors = Array.from(document.querySelectorAll<HTMLAnchorElement>(GROK_CONVERSATION_LINK_SELECTOR));
+  const anchors = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>(GROK_CONVERSATION_LINK_SELECTOR),
+  );
   for (const a of anchors) {
     let p: HTMLElement | null = a.parentElement;
     let candidate: HTMLElement | null = null;
     while (p && p !== document.body && p !== document.documentElement) {
       if (
-        p.tagName === "NAV" ||
-        p.tagName === "ASIDE" ||
-        p.getAttribute("data-sidebar") === "sidebar" ||
-        p.getAttribute("data-sidebar") === "content" ||
-        p.classList.contains("overflow-y-auto")
+        p.tagName === 'NAV' ||
+        p.tagName === 'ASIDE' ||
+        p.getAttribute('data-sidebar') === 'sidebar' ||
+        p.getAttribute('data-sidebar') === 'content' ||
+        p.classList.contains('overflow-y-auto')
       ) {
         candidate = p;
         break;
@@ -55,29 +58,34 @@ export const findGrokNav = (): HTMLElement | null => {
   }
 
   // 3. Search for nav or aside with aria-label or containing history/chat/sidebar
-  const navs = Array.from(document.querySelectorAll<HTMLElement>("nav, aside, [class*=\"sidebar\"]"));
+  const navs = Array.from(document.querySelectorAll<HTMLElement>('nav, aside, [class*="sidebar"]'));
   const historyNav = navs.find((n) => {
-    const label = (n.getAttribute("aria-label") || "").toLowerCase();
+    const label = (n.getAttribute('aria-label') || '').toLowerCase();
     const isSidebarWidth = n.offsetWidth > 0 ? n.offsetWidth <= 450 : true;
     return (
-      (label.includes("history") || label.includes("chat") || label.includes("sidebar") || Boolean(n.querySelector(GROK_CONVERSATION_LINK_SELECTOR))) &&
+      (label.includes('history') ||
+        label.includes('chat') ||
+        label.includes('sidebar') ||
+        Boolean(n.querySelector(GROK_CONVERSATION_LINK_SELECTOR))) &&
       isSidebarWidth
     );
   });
   if (historyNav) return historyNav;
 
   // 4. Search by known Grok sidebar section texts ("聊天", "chats", "對話", "專案", "projects", "imagine")
-  const keywords = ["聊天", "chats", "對話", "專案", "projects", "imagine"];
-  const textElements = Array.from(document.querySelectorAll<HTMLElement>("span, p, div, h2, h3, button"));
+  const keywords = ['聊天', 'chats', '對話', '專案', 'projects', 'imagine'];
+  const textElements = Array.from(
+    document.querySelectorAll<HTMLElement>('span, p, div, h2, h3, button'),
+  );
   for (const el of textElements) {
     const text = el.textContent?.trim().toLowerCase();
     if (text && keywords.includes(text)) {
       let p: HTMLElement | null = el.parentElement;
       while (p && p !== document.body && p !== document.documentElement) {
         if (
-          p.tagName === "ASIDE" ||
-          p.tagName === "NAV" ||
-          p.getAttribute("data-sidebar") === "sidebar" ||
+          p.tagName === 'ASIDE' ||
+          p.tagName === 'NAV' ||
+          p.getAttribute('data-sidebar') === 'sidebar' ||
           (p.offsetWidth > 0 && p.offsetWidth <= 400 && p.offsetHeight > 200)
         ) {
           return p;
@@ -88,10 +96,10 @@ export const findGrokNav = (): HTMLElement | null => {
   }
 
   // 5. Fallback to aside or nav with sidebar width restriction
-  const aside = document.querySelector<HTMLElement>("aside");
+  const aside = document.querySelector<HTMLElement>('aside');
   if (aside) return aside;
 
-  const genericNav = document.querySelector<HTMLElement>("nav");
+  const genericNav = document.querySelector<HTMLElement>('nav');
   if (genericNav && (genericNav.offsetWidth === 0 || genericNav.offsetWidth <= 450)) {
     return genericNav;
   }
@@ -100,7 +108,9 @@ export const findGrokNav = (): HTMLElement | null => {
 };
 
 export const getGrokTitleFromAnchor = (a: HTMLAnchorElement): string => {
-  const textDiv = a.querySelector<HTMLElement>('div.truncate, span.truncate, p.truncate, div.grow, span[class*="text"]');
+  const textDiv = a.querySelector<HTMLElement>(
+    'div.truncate, span.truncate, p.truncate, div.grow, span[class*="text"]',
+  );
   if (textDiv?.textContent?.trim()) {
     return textDiv.textContent.trim();
   }
@@ -137,13 +147,19 @@ export const useGrokConversations = (options: UseGrokConversationsOptions = {}) 
     const originalReplaceState = history.replaceState;
 
     history.pushState = function pushStatePatched(...args) {
-      const ret = originalPushState.apply(this, args as unknown as Parameters<History['pushState']>);
+      const ret = originalPushState.apply(
+        this,
+        args as unknown as Parameters<History['pushState']>,
+      );
       bump();
       return ret;
     };
 
     history.replaceState = function replaceStatePatched(...args) {
-      const ret = originalReplaceState.apply(this, args as unknown as Parameters<History['replaceState']>);
+      const ret = originalReplaceState.apply(
+        this,
+        args as unknown as Parameters<History['replaceState']>,
+      );
       bump();
       return ret;
     };
@@ -169,7 +185,10 @@ export const useGrokConversations = (options: UseGrokConversationsOptions = {}) 
 
     checkDark();
     const mo = new MutationObserver(checkDark);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    mo.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    });
     return () => mo.disconnect();
   }, []);
 
@@ -194,15 +213,17 @@ export const useGrokConversations = (options: UseGrokConversationsOptions = {}) 
 
       if (!nav) return;
 
-      const container = document.createElement("div");
+      const container = document.createElement('div');
       container.id = GROK_INJECTED_CONTAINER_ID;
-      container.className = "nomad-grok-folder-container px-2 pt-2 pb-1 border-b border-white/5";
+      container.className = 'nomad-grok-folder-container px-2 pt-2 pb-1 border-b border-white/5';
 
       // Find optimal insertion anchor inside sidebar:
       // Priority 1: Right before the "聊天" / "Chats" / "History" heading or group
-      const chatKeywords = ["聊天", "chats", "history", "最近", "recents"];
+      const chatKeywords = ['聊天', 'chats', 'history', '最近', 'recents'];
       let targetSection: HTMLElement | null = null;
-      const allTextNodes = Array.from(nav.querySelectorAll<HTMLElement>("h2, h3, h4, span, div, p, button"));
+      const allTextNodes = Array.from(
+        nav.querySelectorAll<HTMLElement>('h2, h3, h4, span, div, p, button'),
+      );
       for (const el of allTextNodes) {
         const text = el.textContent?.trim().toLowerCase();
         if (text && chatKeywords.some((k) => text === k || text.startsWith(k))) {
@@ -210,10 +231,10 @@ export const useGrokConversations = (options: UseGrokConversationsOptions = {}) 
           let cur: HTMLElement | null = el.parentElement;
           while (cur && cur !== nav) {
             if (
-              cur.getAttribute("data-sidebar") === "group" ||
-              cur.getAttribute("data-sidebar") === "content" ||
-              cur.classList.contains("overflow-y-auto") ||
-              cur.classList.contains("flex-col")
+              cur.getAttribute('data-sidebar') === 'group' ||
+              cur.getAttribute('data-sidebar') === 'content' ||
+              cur.classList.contains('overflow-y-auto') ||
+              cur.classList.contains('flex-col')
             ) {
               targetSection = cur;
               break;
@@ -232,7 +253,10 @@ export const useGrokConversations = (options: UseGrokConversationsOptions = {}) 
         if (firstLink) {
           let cur: HTMLElement | null = firstLink.parentElement;
           while (cur && cur !== nav) {
-            if (cur.classList.contains("overflow-y-auto") || cur.getAttribute("data-sidebar") === "group") {
+            if (
+              cur.classList.contains('overflow-y-auto') ||
+              cur.getAttribute('data-sidebar') === 'group'
+            ) {
               targetSection = cur;
               break;
             }
@@ -246,7 +270,9 @@ export const useGrokConversations = (options: UseGrokConversationsOptions = {}) 
       if (targetSection && targetSection.parentElement) {
         targetSection.parentElement.insertBefore(container, targetSection);
       } else {
-        const scrollable = nav.querySelector<HTMLElement>("[data-sidebar=\"content\"], div.overflow-y-auto");
+        const scrollable = nav.querySelector<HTMLElement>(
+          '[data-sidebar="content"], div.overflow-y-auto',
+        );
         if (scrollable) {
           scrollable.insertBefore(container, scrollable.firstChild);
         } else if (nav.firstChild) {
@@ -319,7 +345,9 @@ export const useGrokConversations = (options: UseGrokConversationsOptions = {}) 
     };
 
     const updateConversations = () => {
-      const anchors = Array.from(nav.querySelectorAll<HTMLAnchorElement>(GROK_CONVERSATION_LINK_SELECTOR));
+      const anchors = Array.from(
+        nav.querySelectorAll<HTMLAnchorElement>(GROK_CONVERSATION_LINK_SELECTOR),
+      );
       const nextIndex: Record<string, GrokConversation> = {};
       const titleUpdates: Record<string, string> = {};
 

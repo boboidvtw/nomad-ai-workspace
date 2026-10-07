@@ -7,7 +7,11 @@ import browser from 'webextension-polyfill';
 import { usePopupReleaseInfo } from '../usePopupReleaseInfo';
 
 vi.mock('webextension-polyfill', () => ({
-  default: { storage: { local: { get: vi.fn(), set: vi.fn(), remove: vi.fn().mockResolvedValue(undefined) } } },
+  default: {
+    storage: {
+      local: { get: vi.fn(), set: vi.fn(), remove: vi.fn().mockResolvedValue(undefined) },
+    },
+  },
 }));
 
 type ReleaseInfo = ReturnType<typeof usePopupReleaseInfo>;
@@ -30,7 +34,8 @@ describe('usePopupReleaseInfo', () => {
   const cacheKey = 'nomadLatestVersionCache';
   const now = Date.UTC(2026, 8, 8, 12);
   const minute = 60_000;
-  const dmgUrl = 'https://github.com/boboidvtw/nomad-ai-workspace/releases/download/v1.9.1/Nomad.dmg';
+  const dmgUrl =
+    'https://github.com/boboidvtw/nomad-ai-workspace/releases/download/v1.9.1/Nomad.dmg';
   let container: HTMLDivElement;
   let root: Root;
   let info: ReleaseInfo;
@@ -90,7 +95,9 @@ describe('usePopupReleaseInfo', () => {
     manifest = { ...manifest, update_url: 'https://clients2.google.com/service/update2/crx' };
     await render();
     expect(info.extVersion).toBe('1.8.3');
-    expect(info.releaseUrl).toBe('https://github.com/boboidvtw/nomad-ai-workspace/releases/tag/v1.8.3');
+    expect(info.releaseUrl).toBe(
+      'https://github.com/boboidvtw/nomad-ai-workspace/releases/tag/v1.8.3',
+    );
     expect(info.hasUpdate).toBe(false);
     expect(browser.storage.local.get).not.toHaveBeenCalled();
     expect(fetchRelease).not.toHaveBeenCalled();

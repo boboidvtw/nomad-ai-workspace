@@ -8,8 +8,16 @@ describe('composerAnchor', () => {
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1440 });
-    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 900 });
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1440,
+    });
+    Object.defineProperty(window, 'innerHeight', {
+      writable: true,
+      configurable: true,
+      value: 900,
+    });
   });
 
   afterEach(() => {
@@ -169,7 +177,10 @@ describe('composerAnchor', () => {
       });
 
       const ballSize = { width: 76, height: 76 };
-      const pos = computeComposerAnchorPosition(mockEl, ballSize, { gap: 14, allowAdaptiveSide: true });
+      const pos = computeComposerAnchorPosition(mockEl, ballSize, {
+        gap: 14,
+        allowAdaptiveSide: true,
+      });
 
       // Left space: 280 - 14 - 76 = 190
       expect(pos.x).toBe(190);
@@ -190,7 +201,10 @@ describe('composerAnchor', () => {
       });
 
       const ballSize = { width: 76, height: 76 };
-      const pos = computeComposerAnchorPosition(mockEl, ballSize, { gap: 14, allowAdaptiveSide: true });
+      const pos = computeComposerAnchorPosition(mockEl, ballSize, {
+        gap: 14,
+        allowAdaptiveSide: true,
+      });
 
       // Above: rect.top (800) - 76 - 14 = 710
       expect(pos.y).toBe(710);

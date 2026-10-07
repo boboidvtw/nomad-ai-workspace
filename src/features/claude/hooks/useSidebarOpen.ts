@@ -4,8 +4,9 @@
  * Created: 2026-03-18
  */
 
-import { useEffect, useState } from "react";
-import { SIDEBAR_WIDTH_TARGET_SELECTOR } from "@src/constants/selectors";
+import { useEffect, useState } from 'react';
+
+import { SIDEBAR_WIDTH_TARGET_SELECTOR } from '@src/constants/selectors';
 
 /**
  * Reads current sidebar open state from claude.ai DOM.
@@ -13,7 +14,7 @@ import { SIDEBAR_WIDTH_TARGET_SELECTOR } from "@src/constants/selectors";
  */
 const getSidebarOpen = (): boolean => {
   // Option 1: Check nav element directly if it exists in DOM
-  const nav = document.querySelector("nav");
+  const nav = document.querySelector('nav');
   if (nav instanceof HTMLElement) {
     const width = nav.getBoundingClientRect().width;
     if (width > 60) return true;
@@ -22,12 +23,12 @@ const getSidebarOpen = (): boolean => {
 
   // Option 2: Check for close/collapse buttons (multi-language support)
   const closeButton = document.querySelector(
-    "button[aria-label*=\"Close sidebar\" i], button[aria-label*=\"Hide sidebar\" i], button[aria-label*=\"Collapse sidebar\" i], button[aria-label*=\"關閉\" i], button[aria-label*=\"收合\" i]"
+    'button[aria-label*="Close sidebar" i], button[aria-label*="Hide sidebar" i], button[aria-label*="Collapse sidebar" i], button[aria-label*="關閉" i], button[aria-label*="收合" i]',
   );
   if (closeButton) return true;
 
   const openButton = document.querySelector(
-    "button[aria-label*=\"Open sidebar\" i], button[aria-label*=\"Show sidebar\" i], button[aria-label*=\"Expand sidebar\" i], button[aria-label*=\"開啟\" i], button[aria-label*=\"展開\" i]"
+    'button[aria-label*="Open sidebar" i], button[aria-label*="Show sidebar" i], button[aria-label*="Expand sidebar" i], button[aria-label*="開啟" i], button[aria-label*="展開" i]',
   );
   if (openButton) return false;
 
@@ -61,7 +62,7 @@ export const useSidebarOpen = (): boolean => {
       if (ro) return;
       update();
 
-      if (typeof ResizeObserver === "undefined") return;
+      if (typeof ResizeObserver === 'undefined') return;
       ro = new ResizeObserver(() => {
         if (raf) return;
         raf = window.requestAnimationFrame(() => {
@@ -73,7 +74,8 @@ export const useSidebarOpen = (): boolean => {
     };
 
     const tryAttach = (): boolean => {
-      const nav = document.querySelector("nav") || document.querySelector(SIDEBAR_WIDTH_TARGET_SELECTOR);
+      const nav =
+        document.querySelector('nav') || document.querySelector(SIDEBAR_WIDTH_TARGET_SELECTOR);
       if (!(nav instanceof HTMLElement)) return false;
       attach(nav);
       return true;
@@ -91,7 +93,7 @@ export const useSidebarOpen = (): boolean => {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["class", "style", "aria-expanded", "data-state"],
+      attributeFilter: ['class', 'style', 'aria-expanded', 'data-state'],
     });
 
     return () => {

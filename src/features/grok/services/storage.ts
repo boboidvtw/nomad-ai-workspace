@@ -3,8 +3,8 @@
  * Handles reading and writing Grok folders and title cache in chrome.storage.local.
  */
 
-import type { Folder } from '@/types/folder';
 import { i18n } from '@/services/i18n';
+import type { Folder } from '@/types/folder';
 
 export const GROK_STORAGE_KEY = 'grok_folders';
 export const GROK_CONVERSATION_TITLE_CACHE_KEY = 'grok_conversation_titles';

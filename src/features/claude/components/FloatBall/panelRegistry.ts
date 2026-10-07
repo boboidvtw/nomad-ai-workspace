@@ -5,8 +5,9 @@
  */
 
 import type { FC } from 'react';
-import WidthPanel from './panels/WidthPanel';
+
 import BallSizePanel from './panels/BallSizePanel';
+import WidthPanel from './panels/WidthPanel';
 
 type FloatBallPanelComponentProps = {
   side: 'left' | 'right';

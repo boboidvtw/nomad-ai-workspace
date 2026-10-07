@@ -3,8 +3,8 @@
  * Handles reading and writing ChatGPT folders and title cache in chrome.storage.local.
  */
 
-import type { Folder } from '@/types/folder';
 import { i18n } from '@/services/i18n';
+import type { Folder } from '@/types/folder';
 
 export const CHATGPT_STORAGE_KEY = 'chatgpt_folders';
 export const CHATGPT_CONVERSATION_TITLE_CACHE_KEY = 'chatgpt_conversation_titles';

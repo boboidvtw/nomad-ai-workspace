@@ -175,7 +175,9 @@ describe('background runtime message routing', () => {
   it('restricts IDE sync requests strictly to local loopback addresses', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/pages/background/index.ts'), 'utf8');
     expect(source).toContain('isLoopbackSyncUrl');
-    expect(source).toContain("sendResponse({ ok: false, error: 'Target URL must be a local loopback address' })");
+    expect(source).toContain(
+      "sendResponse({ ok: false, error: 'Target URL must be a local loopback address' })",
+    );
   });
 
   it('accepts sync content messages only from the matching product host', () => {

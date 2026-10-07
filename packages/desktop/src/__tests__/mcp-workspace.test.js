@@ -20,7 +20,10 @@ test('MCP workspace: packaged app gets userData/workspace, created on demand', a
   const gateway = new McpGateway({ allowedPaths: roots });
   const res = await gateway.callTool('list_directory', { path: '.' });
   assert.strictEqual(res.success, true);
-  assert.deepStrictEqual(res.data.items.map(i => i.name), ['note.md']);
+  assert.deepStrictEqual(
+    res.data.items.map((i) => i.name),
+    ['note.md'],
+  );
   assert.strictEqual((await gateway.callTool('list_directory', { path: '..' })).success, false);
 });
 
@@ -29,7 +32,7 @@ test('MCP workspace: NOMAD_MCP_ALLOWED_PATHS overrides the packaged workspace', 
   const roots = resolveMcpAllowedPaths({
     isPackaged: true,
     userDataDir: path.join(os.tmpdir(), 'unused'),
-    env: { NOMAD_MCP_ALLOWED_PATHS: custom }
+    env: { NOMAD_MCP_ALLOWED_PATHS: custom },
   });
   assert.deepStrictEqual(roots, [custom]);
 });

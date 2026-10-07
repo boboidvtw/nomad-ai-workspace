@@ -4,6 +4,7 @@
 
 import type { Conversation } from '@src/types/conversation';
 import type { Folder } from '@src/types/folder';
+
 import FolderItem from './FolderItem';
 
 type ThemeTokens = {
@@ -76,4 +77,3 @@ const FolderList = ({
 };
 
 export default FolderList;
-

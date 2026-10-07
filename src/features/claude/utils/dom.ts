@@ -5,17 +5,20 @@
  */
 
 import type React from 'react';
-import type { Conversation } from '@src/types/conversation';
+
 import {
   CONVERSATION_LINK_SELECTOR,
   CONVERSATION_TITLE_SR_ONLY_SELECTOR,
   CONVERSATION_TITLE_SELECTOR,
   SIDEBAR_CONVERSATION_LIST_SELECTOR,
 } from '@src/constants/selectors';
+import type { Conversation } from '@src/types/conversation';
 
 export const findClaudeNav = (): HTMLElement | null => {
   // Option 1: Look for nav or aside that contains a chat link, new button, or search box
-  const navCandidates = Array.from(document.querySelectorAll<HTMLElement>('nav, aside, [role="navigation"]'));
+  const navCandidates = Array.from(
+    document.querySelectorAll<HTMLElement>('nav, aside, [role="navigation"]'),
+  );
   for (const el of navCandidates) {
     if (
       el.querySelector('a[href^="/chat/"]') ||
@@ -41,13 +44,19 @@ export const findClaudeNav = (): HTMLElement | null => {
   }
 
   // Option 3: Fallback
-  return document.querySelector<HTMLElement>('nav') ?? document.querySelector<HTMLElement>('aside') ?? null;
+  return (
+    document.querySelector<HTMLElement>('nav') ??
+    document.querySelector<HTMLElement>('aside') ??
+    null
+  );
 };
 
 export const findNavUl = (): HTMLElement | null => {
   // Option 1: Find ul or list container that contains a chat link (most reliable to identify the chat list)
   const lists = Array.from(
-    document.querySelectorAll('nav ul, nav ol, nav [role="list"], aside ul, aside ol, aside [role="list"]')
+    document.querySelectorAll(
+      'nav ul, nav ol, nav [role="list"], aside ul, aside ol, aside [role="list"]',
+    ),
   );
   for (const list of lists) {
     if (list.querySelector('a[href^="/chat/"]')) {
@@ -56,7 +65,9 @@ export const findNavUl = (): HTMLElement | null => {
   }
 
   // Option 2: Find ul/list next to or inside the container containing "Today", "Recents", etc.
-  const divs = Array.from(document.querySelectorAll('nav div, nav section, aside div, aside section'));
+  const divs = Array.from(
+    document.querySelectorAll('nav div, nav section, aside div, aside section'),
+  );
   const headerTexts = ['today', '今天', 'recents', '最近', 'yesterday', '昨天'];
   for (const div of divs) {
     const header = div.querySelector('span, h2, h3, div');
@@ -153,4 +164,3 @@ export const estimateIsDarkBackground = (backgroundColor: string) => {
   const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
   return luminance < 0.55;
 };
-

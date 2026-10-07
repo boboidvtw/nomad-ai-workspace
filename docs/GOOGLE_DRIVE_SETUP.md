@@ -7,11 +7,13 @@
 ## 🧭 為什麼選擇「實體子目錄隔離備份」(Scheme A)？
 
 市面上多數同步工具採用「單一 JSON 全量覆蓋」的方式，在高強度多 AI 平台情境下存在嚴重缺陷：
+
 1. **多標籤頁/多平台寫入競爭 (Race Condition)**：當您在 Claude 分頁整理資料夾，同時又在 Gemini 分頁收藏訊息時，兩者回傳雲端會發生互相覆蓋，造成資料遺失。
 2. **單點故障 (Single Point of Failure)**：單一檔案損壞將摧毀所有平台的分類與歷史資料。
 3. **無透明度**：使用者無法在 Google Drive 中直接檢視或還原特定單一平台的對話結構。
 
 ### 📁 Nomad 雲端實體目錄結構
+
 在 Nomad AI Workspace 方案 A 下，雲端硬碟將建立乾淨且嚴格隔離的目錄層級：
 
 ```text
@@ -44,15 +46,18 @@
 Nomad AI Workspace 內建了預設 Client ID，但強烈建議高階使用者建立專屬憑證，享有完全不受配額限制且隱私絕對自主的連線通道。
 
 ### 步驟 1：建立 Google Cloud 專案
+
 1. 開啟 [Google Cloud Console](https://console.cloud.google.com/)。
 2. 點擊左上角專案下拉選單，點選 **「新增專案 (New Project)」**。
 3. 專案名稱輸入 `Nomad-AI-Workspace`（或您喜好的名稱），點擊 **「建立」**。
 
 ### 步驟 2：啟用 Google Drive API
+
 1. 進入剛建立的專案，在頂部搜尋列輸入 `Google Drive API`。
 2. 點選搜尋結果中的 **Google Drive API**，點擊 **「啟用 (Enable)」** 按鈕。
 
 ### 步驟 3：設定 OAuth 同意畫面 (OAuth Consent Screen)
+
 1. 點擊左側導覽選單的 **「API 和服務」>「OAuth 同意畫面」**。
 2. **User Type (使用者類型)**：選擇 **「外部 (External)」**，點擊 **「建立」**。
 3. **應用程式資訊**：
@@ -72,6 +77,7 @@ Nomad AI Workspace 內建了預設 Client ID，但強烈建議高階使用者建
    - 點擊 **「新增」**，接著點擊 **「儲存並繼續」**。
 
 ### 步驟 4：建立 OAuth 2.0 Client ID (用戶端 ID)
+
 1. 點擊左側導覽選單的 **「憑證 (Credentials)」**。
 2. 點擊頂部 **「+ 建立憑證 (+ CREATE CREDENTIALS)」>「OAuth 用戶端 ID」**。
 3. **應用程式類型 (Application type)**：
@@ -118,6 +124,7 @@ Nomad AI Workspace 內建了預設 Client ID，但強烈建議高階使用者建
 ## 🍏 Apple Safari 使用者：iCloud 備份方案
 
 若您在 macOS 上使用 Safari 瀏覽器，Nomad AI Workspace 原生整合了 **Apple iCloud Drive** 備份：
+
 - 系統自動偵測 Safari 執行環境，在「雲端同步」設定中提供 **「iCloud 備份」** 選項。
 - 免除 Google API 配置手續，直接透過 macOS 原生帳號安全隔離存放。
 
@@ -126,13 +133,15 @@ Nomad AI Workspace 內建了預設 Client ID，但強烈建議高階使用者建
 ## ❓ 常見問題與除錯 (FAQ & Troubleshooting)
 
 ### Q1: 出現 `redirect_uri_mismatch` 錯誤？
+
 - **原因**：OAuth Client ID 設定中的 Extension ID 與當前瀏覽器執行的擴充套件 ID 不相符。
 - **解法**：請前往 `chrome://extensions/` 重新確認 ID，並回到 GCP Console 憑證設定更新項目 ID。
 
 ### Q2: 出現 `403 access_denied` 或「此應用程式尚未通過 Google 驗證」警告？
+
 - **原因**：專案處於測試階段（Testing），且登入的 Google 帳號尚未列入「測試使用者」清單中。
 - **解法**：前往 GCP Console > OAuth 同意畫面 >「測試使用者」，確認您的 Google 信箱已被正確加入。
 
 ### Q3: 我的個人 Google Drive 容量會被佔滿嗎？
-- **解答**：完全不會。Nomad 備份的純 JSON 結構極度輕量，即便存放上萬條對話與提示詞，檔案總容量通常僅佔數百 KB 至數 MB，對 Google Drive 的 15GB 免費空間影響微乎其微。
 
+- **解答**：完全不會。Nomad 備份的純 JSON 結構極度輕量，即便存放上萬條對話與提示詞，檔案總容量通常僅佔數百 KB 至數 MB，對 Google Drive 的 15GB 免費空間影響微乎其微。

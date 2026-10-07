@@ -4,7 +4,9 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+
 import type { Folder } from '@/types/folder';
+
 import {
   CHATGPT_STORAGE_KEY,
   getChatGPTFolders,
@@ -33,7 +35,10 @@ export const useChatGPTFolders = () => {
       setFolders(loaded);
     })();
 
-    const handleChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (changes, area) => {
+    const handleChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (
+      changes,
+      area,
+    ) => {
       if (area !== 'local') return;
       if (!changes?.[CHATGPT_STORAGE_KEY]) return;
       const next = parseFoldersFromStorageValue(changes[CHATGPT_STORAGE_KEY].newValue);
@@ -71,7 +76,9 @@ export const useChatGPTFolders = () => {
     const sanitized = sanitizeFolderName(name);
     if (!sanitized) return;
 
-    const nextFolders = foldersRef.current.map((f) => (f.id === folderId ? { ...f, name: sanitized } : f));
+    const nextFolders = foldersRef.current.map((f) =>
+      f.id === folderId ? { ...f, name: sanitized } : f,
+    );
     await persist(nextFolders);
   };
 
@@ -81,7 +88,9 @@ export const useChatGPTFolders = () => {
   };
 
   const toggleExpanded = async (folderId: string) => {
-    const nextFolders = foldersRef.current.map((f) => (f.id === folderId ? { ...f, isExpanded: !f.isExpanded } : f));
+    const nextFolders = foldersRef.current.map((f) =>
+      f.id === folderId ? { ...f, isExpanded: !f.isExpanded } : f,
+    );
     await persist(nextFolders);
   };
 
@@ -98,7 +107,10 @@ export const useChatGPTFolders = () => {
         ? foldersWithout
         : foldersWithout.map((f) =>
             f.id === folderId
-              ? { ...f, conversationIds: Array.from(new Set([...f.conversationIds, conversationId])) }
+              ? {
+                  ...f,
+                  conversationIds: Array.from(new Set([...f.conversationIds, conversationId])),
+                }
               : f,
           );
 

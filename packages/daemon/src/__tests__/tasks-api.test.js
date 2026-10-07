@@ -8,28 +8,33 @@ const { NomadDaemonServer } = require('../server');
 function makeRequest(port, method, path, body = null) {
   return new Promise((resolve, reject) => {
     const data = body ? JSON.stringify(body) : null;
-    const req = http.request({
-      hostname: '127.0.0.1',
-      port,
-      path,
-      method,
-      headers: {
-        ...AUTH,
-        'Content-Type': 'application/json',
-        ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {})
-      }
-    }, (res) => {
-      let responseBody = '';
-      res.on('data', chunk => { responseBody += chunk; });
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(responseBody);
-          resolve({ status: res.statusCode, data: parsed });
-        } catch {
-          resolve({ status: res.statusCode, text: responseBody });
-        }
-      });
-    });
+    const req = http.request(
+      {
+        hostname: '127.0.0.1',
+        port,
+        path,
+        method,
+        headers: {
+          ...AUTH,
+          'Content-Type': 'application/json',
+          ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {}),
+        },
+      },
+      (res) => {
+        let responseBody = '';
+        res.on('data', (chunk) => {
+          responseBody += chunk;
+        });
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(responseBody);
+            resolve({ status: res.statusCode, data: parsed });
+          } catch {
+            resolve({ status: res.statusCode, text: responseBody });
+          }
+        });
+      },
+    );
 
     req.on('error', reject);
     if (data) req.write(data);
@@ -48,14 +53,14 @@ describe('Daemon Server: Task Control Plane REST Endpoints', () => {
       const rosterRes = await makeRequest(TEST_PORT, 'GET', '/api/roster');
       assert.strictEqual(rosterRes.status, 200);
       assert.ok(Array.isArray(rosterRes.data.data));
-      assert.ok(rosterRes.data.data.some(a => a.id === 'agent-claude'));
+      assert.ok(rosterRes.data.data.some((a) => a.id === 'agent-claude'));
 
       // 2. POST /api/tasks (Create task)
       const createTaskRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks', {
         title: 'REST Endpoint Verification Task',
         description: 'Verify all REST task endpoints',
         priority: 'high',
-        acceptanceCriteria: ['All status codes 200', 'State transitions verified']
+        acceptanceCriteria: ['All status codes 200', 'State transitions verified'],
       });
       assert.strictEqual(createTaskRes.status, 200);
       assert.strictEqual(createTaskRes.data.success, true);
@@ -71,7 +76,7 @@ describe('Daemon Server: Task Control Plane REST Endpoints', () => {
       const claimRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks/claim', {
         taskId,
         agentId: 'agent-claude',
-        leaseDurationMs: 60000
+        leaseDurationMs: 60000,
       });
       assert.strictEqual(claimRes.status, 200);
       assert.strictEqual(claimRes.data.data.status, 'in_progress');
@@ -81,7 +86,7 @@ describe('Daemon Server: Task Control Plane REST Endpoints', () => {
       const hbRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks/heartbeat', {
         taskId,
         agentId: 'agent-claude',
-        extendMs: 30000
+        extendMs: 30000,
       });
       assert.strictEqual(hbRes.status, 200);
       assert.strictEqual(hbRes.data.success, true);
@@ -90,7 +95,7 @@ describe('Daemon Server: Task Control Plane REST Endpoints', () => {
       const reviewRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks/review', {
         taskId,
         agentId: 'agent-claude',
-        proposal: 'All verification tests pass. Ready for sign-off.'
+        proposal: 'All verification tests pass. Ready for sign-off.',
       });
       assert.strictEqual(reviewRes.status, 200);
       assert.strictEqual(reviewRes.data.data.status, 'review');
@@ -100,7 +105,7 @@ describe('Daemon Server: Task Control Plane REST Endpoints', () => {
         taskId,
         decision: 'approve',
         feedback: 'Excellent work!',
-        reviewer: 'human-admin'
+        reviewer: 'human-admin',
       });
       assert.strictEqual(approveRes.status, 200);
       assert.strictEqual(approveRes.data.data.status, 'completed');
@@ -108,16 +113,18 @@ describe('Daemon Server: Task Control Plane REST Endpoints', () => {
       // 8. GET /api/tasks?status=completed
       const listRes = await makeRequest(TEST_PORT, 'GET', '/api/tasks?status=completed');
       assert.strictEqual(listRes.status, 200);
-      assert.ok(listRes.data.data.some(t => t.id === taskId));
+      assert.ok(listRes.data.data.some((t) => t.id === taskId));
 
       // 9. POST /api/tasks/run (Automated execution)
-      const autoTask = (await makeRequest(TEST_PORT, 'POST', '/api/tasks', {
-        title: 'Auto Run Task'
-      })).data.data;
+      const autoTask = (
+        await makeRequest(TEST_PORT, 'POST', '/api/tasks', {
+          title: 'Auto Run Task',
+        })
+      ).data.data;
 
       const runRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks/run', {
         taskId: autoTask.id,
-        agentId: 'agent-chatgpt'
+        agentId: 'agent-chatgpt',
       });
       assert.strictEqual(runRes.status, 200);
       assert.strictEqual(runRes.data.data.status, 'completed');
@@ -127,101 +134,117 @@ describe('Daemon Server: Task Control Plane REST Endpoints', () => {
   });
 });
 
+it('supports DAG graph, search query and recurring schedules via REST APIs', async () => {
+  const TEST_PORT = 19920;
+  const server = new NomadDaemonServer({ port: TEST_PORT });
+  await server.start();
 
-  it("supports DAG graph, search query and recurring schedules via REST APIs", async () => {
-    const TEST_PORT = 19920;
-    const server = new NomadDaemonServer({ port: TEST_PORT });
-    await server.start();
+  try {
+    // 1. Create linked tasks
+    const t1 = (await makeRequest(TEST_PORT, 'POST', '/api/tasks', { title: 'Database Migration' }))
+      .data.data;
+    const t2 = (
+      await makeRequest(TEST_PORT, 'POST', '/api/tasks', {
+        title: 'API Gateway Endpoint',
+        dependencies: [t1.id],
+      })
+    ).data.data;
 
-    try {
-      // 1. Create linked tasks
-      const t1 = (await makeRequest(TEST_PORT, "POST", "/api/tasks", { title: "Database Migration" })).data.data;
-      const t2 = (await makeRequest(TEST_PORT, "POST", "/api/tasks", { title: "API Gateway Endpoint", dependencies: [t1.id] })).data.data;
+    // 2. GET /api/tasks/graph
+    const graphRes = await makeRequest(TEST_PORT, 'GET', '/api/tasks/graph');
+    assert.strictEqual(graphRes.status, 200);
+    assert.ok(graphRes.data.data.nodes.length >= 2);
+    const node2 = graphRes.data.data.nodes.find((n) => n.id === t2.id);
+    assert.strictEqual(node2.isBlocked, true);
 
-      // 2. GET /api/tasks/graph
-      const graphRes = await makeRequest(TEST_PORT, "GET", "/api/tasks/graph");
-      assert.strictEqual(graphRes.status, 200);
-      assert.ok(graphRes.data.data.nodes.length >= 2);
-      const node2 = graphRes.data.data.nodes.find(n => n.id === t2.id);
-      assert.strictEqual(node2.isBlocked, true);
+    // 3. GET /api/tasks?query=Gateway
+    const searchRes = await makeRequest(TEST_PORT, 'GET', '/api/tasks?query=Gateway');
+    assert.strictEqual(searchRes.status, 200);
+    assert.ok(searchRes.data.data.some((t) => t.id === t2.id));
 
-      // 3. GET /api/tasks?query=Gateway
-      const searchRes = await makeRequest(TEST_PORT, "GET", "/api/tasks?query=Gateway");
-      assert.strictEqual(searchRes.status, 200);
-      assert.ok(searchRes.data.data.some(t => t.id === t2.id));
+    // 4. GET /api/tasks/schedule
+    const schedList = await makeRequest(TEST_PORT, 'GET', '/api/tasks/schedule');
+    assert.strictEqual(schedList.status, 200);
+    assert.ok(Array.isArray(schedList.data.data));
+    assert.ok(schedList.data.data.length >= 2);
 
-      // 4. GET /api/tasks/schedule
-      const schedList = await makeRequest(TEST_PORT, "GET", "/api/tasks/schedule");
-      assert.strictEqual(schedList.status, 200);
-      assert.ok(Array.isArray(schedList.data.data));
-      assert.ok(schedList.data.data.length >= 2);
+    // 5. POST /api/tasks/schedule/trigger
+    const trigRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks/schedule/trigger', {
+      id: 'schedule-sys-health',
+    });
+    assert.strictEqual(trigRes.status, 200);
+    assert.strictEqual(trigRes.data.success, true);
+    assert.ok(trigRes.data.data.task.id);
+  } finally {
+    await server.stop();
+  }
+});
 
-      // 5. POST /api/tasks/schedule/trigger
-      const trigRes = await makeRequest(TEST_PORT, "POST", "/api/tasks/schedule/trigger", { id: "schedule-sys-health" });
-      assert.strictEqual(trigRes.status, 200);
-      assert.strictEqual(trigRes.data.success, true);
-      assert.ok(trigRes.data.data.task.id);
-    } finally {
-      await server.stop();
-    }
-  });
+it('broadcasts real-time SSE events over /api/events on task lifecycle changes', async () => {
+  const TEST_PORT = 19915;
+  const server = new NomadDaemonServer({ port: TEST_PORT });
+  await server.start();
 
-  it('broadcasts real-time SSE events over /api/events on task lifecycle changes', async () => {
-    const TEST_PORT = 19915;
-    const server = new NomadDaemonServer({ port: TEST_PORT });
-    await server.start();
+  const receivedEvents = [];
+  let sseReq = null;
 
-    const receivedEvents = [];
-    let sseReq = null;
-
-    try {
-      // 1. Establish SSE Connection
-      await new Promise((resolve) => {
-        sseReq = http.request({
+  try {
+    // 1. Establish SSE Connection
+    await new Promise((resolve) => {
+      sseReq = http.request(
+        {
           hostname: '127.0.0.1',
           port: TEST_PORT,
           path: '/api/events',
           method: 'GET',
-          headers: AUTH
-        }, (res) => {
-          res.on('data', chunk => {
+          headers: AUTH,
+        },
+        (res) => {
+          res.on('data', (chunk) => {
             const text = chunk.toString();
             receivedEvents.push(text);
             if (text.includes('event: connected')) {
               resolve();
             }
           });
-        });
-        sseReq.end();
-      });
+        },
+      );
+      sseReq.end();
+    });
 
-      // 2. Trigger task creation
-      const createRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks', {
-        title: 'SSE Broadcast Test Task'
-      });
-      assert.strictEqual(createRes.status, 200);
-      const taskId = createRes.data.data.id;
+    // 2. Trigger task creation
+    const createRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks', {
+      title: 'SSE Broadcast Test Task',
+    });
+    assert.strictEqual(createRes.status, 200);
+    const taskId = createRes.data.data.id;
 
-      // Small tick for event delivery
-      await new Promise(r => setTimeout(r, 20));
+    // Small tick for event delivery
+    await new Promise((r) => setTimeout(r, 20));
 
-      const hasCreatedEvent = receivedEvents.some(raw => raw.includes('event: task:created') && raw.includes(taskId));
-      assert.strictEqual(hasCreatedEvent, true, 'SSE stream should receive task:created event');
+    const hasCreatedEvent = receivedEvents.some(
+      (raw) => raw.includes('event: task:created') && raw.includes(taskId),
+    );
+    assert.strictEqual(hasCreatedEvent, true, 'SSE stream should receive task:created event');
 
-      // 3. Trigger claim
-      await makeRequest(TEST_PORT, 'POST', '/api/tasks/claim', {
-        taskId,
-        agentId: 'agent-claude'
-      });
+    // 3. Trigger claim
+    await makeRequest(TEST_PORT, 'POST', '/api/tasks/claim', {
+      taskId,
+      agentId: 'agent-claude',
+    });
 
-      await new Promise(r => setTimeout(r, 20));
+    await new Promise((r) => setTimeout(r, 20));
 
-      const hasClaimedEvent = receivedEvents.some(raw => raw.includes('event: task:claimed') && raw.includes(taskId));
-      assert.strictEqual(hasClaimedEvent, true, 'SSE stream should receive task:claimed event');
-    } finally {
-      if (sseReq) {
-        try { sseReq.destroy(); } catch {}
-      }
-      await server.stop();
+    const hasClaimedEvent = receivedEvents.some(
+      (raw) => raw.includes('event: task:claimed') && raw.includes(taskId),
+    );
+    assert.strictEqual(hasClaimedEvent, true, 'SSE stream should receive task:claimed event');
+  } finally {
+    if (sseReq) {
+      try {
+        sseReq.destroy();
+      } catch {}
     }
-  });
+    await server.stop();
+  }
+});

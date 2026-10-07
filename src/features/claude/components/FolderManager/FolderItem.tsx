@@ -4,11 +4,13 @@
 
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react';
+
 import type { Conversation } from '@src/types/conversation';
 import type { Folder } from '@src/types/folder';
-import { getConversationIdFromDragEvent, getConversationTitleFromDragEvent } from '../../utils/dom';
+import { ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react';
+
 import { getConversationTitleCache, saveConversationTitleCache } from '../../services/storage';
+import { getConversationIdFromDragEvent, getConversationTitleFromDragEvent } from '../../utils/dom';
 
 type ThemeTokens = {
   rootText: string;
@@ -85,7 +87,7 @@ export default function FolderItem({
       <a
         key={conversationId}
         href={href}
-        className={`block truncate rounded-md pl-8 pr-2 py-1.5 text-sm transition-colors ${theme.rootText} ${theme.hoverBg}`}
+        className={`block truncate rounded-md py-1.5 pr-2 pl-8 text-sm transition-colors ${theme.rootText} ${theme.hoverBg}`}
         tabIndex={0}
         aria-label={t('conversation.openAria', { title })}
         onClick={(e) => {
@@ -95,9 +97,15 @@ export default function FolderItem({
             document.querySelector<HTMLAnchorElement>(`nav a[href*="${conversationId}"]`) ||
             document.querySelector<HTMLAnchorElement>(`a[href^="/chat/${conversationId}"]`);
           if (nativeLink) {
-            nativeLink.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
-            nativeLink.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-            nativeLink.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+            nativeLink.dispatchEvent(
+              new MouseEvent('pointerdown', { bubbles: true, cancelable: true }),
+            );
+            nativeLink.dispatchEvent(
+              new MouseEvent('mousedown', { bubbles: true, cancelable: true }),
+            );
+            nativeLink.dispatchEvent(
+              new MouseEvent('mouseup', { bubbles: true, cancelable: true }),
+            );
             nativeLink.click();
             return;
           }
@@ -106,7 +114,7 @@ export default function FolderItem({
             window.dispatchEvent(
               typeof PopStateEvent === 'function'
                 ? new PopStateEvent('popstate', { state: window.history.state })
-                : new Event('popstate')
+                : new Event('popstate'),
             );
             window.dispatchEvent(new CustomEvent('nomad:locationchange'));
           } catch {
@@ -132,8 +140,8 @@ export default function FolderItem({
       onDrop={handleDrop}
       aria-label={t('folderItem.folderAria', { name: folder.name })}
     >
-      <div 
-        className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-colors cursor-pointer ${theme.hoverBg}`}
+      <div
+        className={`flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 transition-colors ${theme.hoverBg}`}
         onClick={() => onToggleExpanded(folder.id)}
       >
         <button
@@ -145,14 +153,18 @@ export default function FolderItem({
           }}
           aria-label={folder.isExpanded ? t('folderItem.collapse') : t('folderItem.expand')}
         >
-          {folder.isExpanded ? <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />}
+          {folder.isExpanded ? (
+            <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
         </button>
 
         {isEditing ? (
           <input
             value={editingName}
             onChange={(e) => onEditingNameChange(e.target.value)}
-            className={`w-full rounded-md border px-2 py-1 text-sm focus:outline-none focus:ring-1 ${theme.input}`}
+            className={`w-full rounded-md border px-2 py-1 text-sm focus:ring-1 focus:outline-none ${theme.input}`}
             aria-label={t('folderItem.renameAria')}
             onKeyDown={(e) => {
               if (e.key !== 'Enter') return;
@@ -201,13 +213,16 @@ export default function FolderItem({
       {folder.isExpanded ? (
         <div className="mt-[2px] pb-1">
           {folder.conversationIds.length === 0 ? (
-            <div className={`px-8 py-1.5 text-xs ${theme.subtleText}`}>{t('folderItem.dropHint')}</div>
+            <div className={`px-8 py-1.5 text-xs ${theme.subtleText}`}>
+              {t('folderItem.dropHint')}
+            </div>
           ) : (
-            <div className="space-y-[2px]">{folder.conversationIds.map(renderConversationLink)}</div>
+            <div className="space-y-[2px]">
+              {folder.conversationIds.map(renderConversationLink)}
+            </div>
           )}
         </div>
       ) : null}
     </div>
   );
 }
-

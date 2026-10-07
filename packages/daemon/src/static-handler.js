@@ -7,5 +7,5 @@ const { findDashboardPath, serveDashboard } = require('@nomad/dashboard');
 
 module.exports = {
   findDashboardPath,
-  serveDashboard
+  serveDashboard,
 };

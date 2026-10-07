@@ -82,19 +82,19 @@ async function main() {
     }
 
     if (fs.existsSync(xcodeProjectPath)) {
-          const xcodeProject = fs.readFileSync(xcodeProjectPath, 'utf8');
-          if (
-            !xcodeProject.includes('MARKETING_VERSION =') ||
-            !xcodeProject.includes('CURRENT_PROJECT_VERSION =')
-          ) {
-            throw new Error('Xcode version settings not found');
-          }
-          const updatedXcodeProject = xcodeProject.replace(
-            /(MARKETING_VERSION|CURRENT_PROJECT_VERSION) = [^;]+;/g,
-            `$1 = ${newVersion};`,
-          );
-          fs.writeFileSync(xcodeProjectPath, updatedXcodeProject);
-          console.log('Updated Xcode app and extension versions');
+      const xcodeProject = fs.readFileSync(xcodeProjectPath, 'utf8');
+      if (
+        !xcodeProject.includes('MARKETING_VERSION =') ||
+        !xcodeProject.includes('CURRENT_PROJECT_VERSION =')
+      ) {
+        throw new Error('Xcode version settings not found');
+      }
+      const updatedXcodeProject = xcodeProject.replace(
+        /(MARKETING_VERSION|CURRENT_PROJECT_VERSION) = [^;]+;/g,
+        `$1 = ${newVersion};`,
+      );
+      fs.writeFileSync(xcodeProjectPath, updatedXcodeProject);
+      console.log('Updated Xcode app and extension versions');
     }
     console.log('Version bump complete! 🚀');
 

@@ -5,6 +5,7 @@
 import type React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+
 import type { Folder } from '@src/types/folder';
 import { Download } from 'lucide-react';
 
@@ -78,7 +79,9 @@ export function FolderManagerModals({
             <div className={`px-2 py-1 text-[11px] ${theme.mutedText}`}>{t('menu.moveInto')}</div>
             <div className="max-h-[240px] overflow-auto">
               {folders.length === 0 ? (
-                <div className={`px-2 py-1 text-[11px] ${theme.subtleText}`}>{t('menu.emptyFolders')}</div>
+                <div className={`px-2 py-1 text-[11px] ${theme.subtleText}`}>
+                  {t('menu.emptyFolders')}
+                </div>
               ) : (
                 folders.map((f) => (
                   <button
@@ -94,7 +97,9 @@ export function FolderManagerModals({
                     role="menuitem"
                   >
                     <span className="truncate">{f.name}</span>
-                    <span className={`text-[11px] ${theme.subtleText}`}>{f.conversationIds.length}</span>
+                    <span className={`text-[11px] ${theme.subtleText}`}>
+                      {f.conversationIds.length}
+                    </span>
                   </button>
                 ))
               )}
@@ -113,7 +118,7 @@ export function FolderManagerModals({
             >
               {t('menu.moveOut')}
             </button>
-            
+
             {onExportConversation && (
               <>
                 <div className={`my-1 h-px ${theme.divider}`} />
@@ -147,7 +152,8 @@ export function FolderManagerModals({
                     Math.max(8, window.innerWidth - 8 - deletePopoverWidth),
                   ),
                   top:
-                    deleteTarget.anchorRect.bottom + 8 + deletePopoverHeight <= window.innerHeight - 8
+                    deleteTarget.anchorRect.bottom + 8 + deletePopoverHeight <=
+                    window.innerHeight - 8
                       ? deleteTarget.anchorRect.bottom + 8
                       : Math.max(8, deleteTarget.anchorRect.top - 8 - deletePopoverHeight),
                 }}
@@ -156,10 +162,15 @@ export function FolderManagerModals({
                 aria-labelledby="delete-folder-title"
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <div id="delete-folder-title" className={`mb-2 text-[13px] font-medium ${theme.rootText}`}>
+                <div
+                  id="delete-folder-title"
+                  className={`mb-2 text-[13px] font-medium ${theme.rootText}`}
+                >
                   {t('folders.deleteTitle')}
                 </div>
-                <div className={`mb-4 text-[12px] ${theme.mutedText}`}>{t('folders.deleteConfirm')}</div>
+                <div className={`mb-4 text-[12px] ${theme.mutedText}`}>
+                  {t('folders.deleteConfirm')}
+                </div>
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"

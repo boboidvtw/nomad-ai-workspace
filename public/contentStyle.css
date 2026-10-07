@@ -1401,7 +1401,7 @@ html[data-gv-scheme='light'] .timeline-preview-panel {
 body.gv-claude-page #gv-pm-trigger,
 body.gv-gemini-page #gv-pm-trigger,
 body.nomad-chatgpt-page #gv-pm-trigger,
-body[data-nomad-orb-active="true"] #gv-pm-trigger {
+body[data-nomad-orb-active='true'] #gv-pm-trigger {
   opacity: 0 !important;
   pointer-events: none !important;
   z-index: -1 !important;
@@ -3682,7 +3682,9 @@ html[data-gv-scheme='dark'] .gv-pm-support:hover {
   color: inherit !important;
   text-decoration: none !important;
   cursor: pointer;
-  transition: opacity 0.15s ease, color 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease;
 }
 
 .gv-pm-title-link:hover {

@@ -61,12 +61,12 @@ export function PopupFooter({
           </a>
         </div>
 
-        <div className="flex items-center justify-between text-xs px-1">
+        <div className="flex items-center justify-between px-1 text-xs">
           <a
             href="https://www.paypal.me/boboidvtw"
             target="_blank"
             rel="noreferrer"
-            className="text-pink-400 hover:text-pink-300 font-semibold flex items-center gap-1.5 transition-colors"
+            className="flex items-center gap-1.5 font-semibold text-pink-400 transition-colors hover:text-pink-300"
           >
             <span>❤️ 贊助與支持</span>
           </a>

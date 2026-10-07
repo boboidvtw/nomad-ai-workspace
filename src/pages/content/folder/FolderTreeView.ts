@@ -1,9 +1,9 @@
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+
 import browser from 'webextension-polyfill';
 
 import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
-
 import { createBellIcon } from '@/core/icons/bellIcon';
 import { CLOUD_SYNC_PATH, CLOUD_UPLOAD_PATH } from '@/core/icons/cloudSyncPaths';
 import {
@@ -296,7 +296,8 @@ export class FolderTreeView {
 
   private createWorkspaceHeader(): HTMLElement {
     const header = document.createElement('div');
-    header.className = 'nomad-workspace-header flex items-center justify-between px-3 py-2 border-b border-white/10 select-none cursor-pointer';
+    header.className =
+      'nomad-workspace-header flex items-center justify-between px-3 py-2 border-b border-white/10 select-none cursor-pointer';
     header.setAttribute('role', 'button');
     header.setAttribute('tabindex', '0');
     header.setAttribute('aria-expanded', String(!this.isWorkspaceCollapsed));
@@ -307,7 +308,7 @@ export class FolderTreeView {
     const chevron = document.createElement('span');
     chevron.className = 'nomad-workspace-chevron flex-shrink-0 opacity-70';
     chevron.replaceChildren(
-      this.isWorkspaceCollapsed ? createChevronRightIcon(14) : createChevronDownIcon(14)
+      this.isWorkspaceCollapsed ? createChevronRightIcon(14) : createChevronDownIcon(14),
     );
 
     const sparkles = document.createElement('span');
@@ -328,7 +329,8 @@ export class FolderTreeView {
 
     const syncBtn = document.createElement('button');
     syncBtn.type = 'button';
-    syncBtn.className = 'p-1 rounded text-xs opacity-70 hover:opacity-100 hover:bg-white/5 transition-opacity';
+    syncBtn.className =
+      'p-1 rounded text-xs opacity-70 hover:opacity-100 hover:bg-white/5 transition-opacity';
     syncBtn.title = 'Google Drive 雲端同步設定';
     syncBtn.replaceChildren(createCloudIcon(14));
     syncBtn.addEventListener('click', (e) => {
@@ -376,7 +378,7 @@ export class FolderTreeView {
     }
     if (chevron) {
       chevron.replaceChildren(
-        this.isWorkspaceCollapsed ? createChevronRightIcon(14) : createChevronDownIcon(14)
+        this.isWorkspaceCollapsed ? createChevronRightIcon(14) : createChevronDownIcon(14),
       );
     }
     if (body) {
@@ -1801,7 +1803,7 @@ export class FolderTreeView {
           currentPlatform: 'gemini',
           theme: isDarkMode() ? 'dark' : 'light',
           showHeader: false,
-        })
+        }),
       );
     } catch (e) {
       console.warn('[Nomad AI Workspace] MultiAISidebarTree mount skipped:', e);

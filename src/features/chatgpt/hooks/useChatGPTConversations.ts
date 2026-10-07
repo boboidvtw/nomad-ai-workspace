@@ -5,13 +5,14 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { ChatGPTConversation } from '../types';
+
 import {
   extractChatGPTConversationIdFromHref,
   getChatGPTTitleCache,
   saveChatGPTTitleCache,
   type ConversationTitleCache,
 } from '../services/storage';
+import type { ChatGPTConversation } from '../types';
 
 export const CHATGPT_INJECTED_CONTAINER_ID = 'nomad-chatgpt-folder-root';
 const CONVERSATION_LINK_SELECTOR = 'a[href*="/c/"]';
@@ -25,7 +26,11 @@ const findChatGPTNav = (): HTMLElement | null => {
   const navs = Array.from(document.querySelectorAll<HTMLElement>('nav'));
   const historyNav = navs.find((n) => {
     const label = (n.getAttribute('aria-label') || '').toLowerCase();
-    return label.includes('history') || label.includes('chat') || Boolean(n.querySelector(CONVERSATION_LINK_SELECTOR));
+    return (
+      label.includes('history') ||
+      label.includes('chat') ||
+      Boolean(n.querySelector(CONVERSATION_LINK_SELECTOR))
+    );
   });
   return historyNav ?? document.querySelector<HTMLElement>('aside nav') ?? navs[0] ?? null;
 };
@@ -42,7 +47,9 @@ const getTitleFromAnchor = (a: HTMLAnchorElement): string => {
 export const useChatGPTConversations = (options: UseChatGPTConversationsOptions = {}) => {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const [navEl, setNavEl] = useState<HTMLElement | null>(null);
-  const [conversationIndex, setConversationIndex] = useState<Record<string, ChatGPTConversation>>({});
+  const [conversationIndex, setConversationIndex] = useState<Record<string, ChatGPTConversation>>(
+    {},
+  );
   const [conversationTitleIndex, setConversationTitleIndex] = useState<ConversationTitleCache>({});
   const [isDarkTheme, setIsDarkTheme] = useState<boolean>(true);
   const [scanTick, setScanTick] = useState(0);
@@ -69,13 +76,19 @@ export const useChatGPTConversations = (options: UseChatGPTConversationsOptions 
     const originalReplaceState = history.replaceState;
 
     history.pushState = function pushStatePatched(...args) {
-      const ret = originalPushState.apply(this, args as unknown as Parameters<History['pushState']>);
+      const ret = originalPushState.apply(
+        this,
+        args as unknown as Parameters<History['pushState']>,
+      );
       bump();
       return ret;
     };
 
     history.replaceState = function replaceStatePatched(...args) {
-      const ret = originalReplaceState.apply(this, args as unknown as Parameters<History['replaceState']>);
+      const ret = originalReplaceState.apply(
+        this,
+        args as unknown as Parameters<History['replaceState']>,
+      );
       bump();
       return ret;
     };
@@ -100,7 +113,10 @@ export const useChatGPTConversations = (options: UseChatGPTConversationsOptions 
 
     checkDark();
     const mo = new MutationObserver(checkDark);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    mo.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    });
     return () => mo.disconnect();
   }, []);
 
@@ -202,7 +218,9 @@ export const useChatGPTConversations = (options: UseChatGPTConversationsOptions 
     };
 
     const updateConversations = () => {
-      const anchors = Array.from(nav.querySelectorAll<HTMLAnchorElement>(CONVERSATION_LINK_SELECTOR));
+      const anchors = Array.from(
+        nav.querySelectorAll<HTMLAnchorElement>(CONVERSATION_LINK_SELECTOR),
+      );
       const nextIndex: Record<string, ChatGPTConversation> = {};
       const titleUpdates: Record<string, string> = {};
 

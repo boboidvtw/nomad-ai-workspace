@@ -4,7 +4,12 @@
  */
 
 import { useEffect, useState } from 'react';
-import { hasValidExtensionContext, isExtensionContextInvalidatedError } from '@/core/utils/extensionContext';
+
+import {
+  hasValidExtensionContext,
+  isExtensionContextInvalidatedError,
+} from '@/core/utils/extensionContext';
+
 import type { CrossPlatformFolder } from './types';
 
 export const GEMINI_FOLDERS_KEY = 'folders';
@@ -70,8 +75,12 @@ export function useCrossPlatformFolders() {
       });
 
       // 1. Parse Gemini Folders
-      const rawGeminiFolders: Array<{ id: string; name: string; isExpanded?: boolean }> = res[GEMINI_FOLDERS_KEY] || [];
-      const rawGeminiContents: Record<string, Array<{ conversationId: string; title: string; url: string }>> = res[GEMINI_CONTENTS_KEY] || {};
+      const rawGeminiFolders: Array<{ id: string; name: string; isExpanded?: boolean }> =
+        res[GEMINI_FOLDERS_KEY] || [];
+      const rawGeminiContents: Record<
+        string,
+        Array<{ conversationId: string; title: string; url: string }>
+      > = res[GEMINI_CONTENTS_KEY] || {};
 
       const parsedGemini: CrossPlatformFolder[] = rawGeminiFolders.map((f) => {
         const chats = rawGeminiContents[f.id] || [];
@@ -92,7 +101,12 @@ export function useCrossPlatformFolders() {
       setGeminiFolders(parsedGemini);
 
       // 2. Parse Claude Folders
-      const rawClaudeFolders: Array<{ id: string; name: string; conversationIds: string[]; isExpanded?: boolean }> = res[CLAUDE_FOLDERS_KEY] || [];
+      const rawClaudeFolders: Array<{
+        id: string;
+        name: string;
+        conversationIds: string[];
+        isExpanded?: boolean;
+      }> = res[CLAUDE_FOLDERS_KEY] || [];
       const claudeTitleCache: Record<string, string> = res[CLAUDE_TITLES_KEY] || {};
       const parsedClaude: CrossPlatformFolder[] = rawClaudeFolders.map((f) => {
         const chatIds = f.conversationIds || [];
@@ -113,7 +127,12 @@ export function useCrossPlatformFolders() {
       setClaudeFolders(parsedClaude);
 
       // 3. Parse ChatGPT Folders
-      const rawChatGPTFolders: Array<{ id: string; name: string; conversationIds: string[]; isExpanded?: boolean }> = res[CHATGPT_FOLDERS_KEY] || [];
+      const rawChatGPTFolders: Array<{
+        id: string;
+        name: string;
+        conversationIds: string[];
+        isExpanded?: boolean;
+      }> = res[CHATGPT_FOLDERS_KEY] || [];
       const chatgptTitleCache: Record<string, string> = res[CHATGPT_TITLES_KEY] || {};
       const parsedChatGPT: CrossPlatformFolder[] = rawChatGPTFolders.map((f) => {
         const chatIds = f.conversationIds || [];
@@ -134,7 +153,12 @@ export function useCrossPlatformFolders() {
       setChatGPTFolders(parsedChatGPT);
 
       // 4. Parse Grok Folders
-      const rawGrokFolders: Array<{ id: string; name: string; conversationIds: string[]; isExpanded?: boolean }> = res[GROK_FOLDERS_KEY] || [];
+      const rawGrokFolders: Array<{
+        id: string;
+        name: string;
+        conversationIds: string[];
+        isExpanded?: boolean;
+      }> = res[GROK_FOLDERS_KEY] || [];
       const grokTitleCache: Record<string, string> = res[GROK_TITLES_KEY] || {};
       const parsedGrok: CrossPlatformFolder[] = rawGrokFolders.map((f) => {
         const chatIds = f.conversationIds || [];
@@ -166,7 +190,10 @@ export function useCrossPlatformFolders() {
     if (!hasValidExtensionContext()) return;
     void reload();
 
-    const handleStorageChange = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
+    const handleStorageChange = (
+      changes: Record<string, chrome.storage.StorageChange>,
+      areaName: string,
+    ) => {
       if (!hasValidExtensionContext()) return;
       if (
         areaName === 'local' &&

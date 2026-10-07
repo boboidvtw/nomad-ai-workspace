@@ -5,29 +5,26 @@
  * Governed by AGENTS.md Section 7.
  */
 
-const { store } = require("./store");
-const { VectorMemoryLite } = require("@nomad/core");
+const { store } = require('./store');
+const { VectorMemoryLite } = require('@nomad/core');
 
-const SEMANTIC_TYPES = [
-  "功能",
-  "修復",
-  "設計",
-  "優化",
-  "文件",
-  "探索",
-  "研究",
-  "發布",
-];
+const SEMANTIC_TYPES = ['功能', '修復', '設計', '優化', '文件', '探索', '研究', '發布'];
 
 const TYPE_KEYWORDS = [
-  { type: "修復", keywords: ["修復", "修正", "debug", "bug", "報錯", "失敗", "例外", "異常", "fix", "error"] },
-  { type: "優化", keywords: ["優化", "效能", "重構", "加速", "調優", "refactor", "perf", "壞味道"] },
-  { type: "文件", keywords: ["文件", "readme", "手冊", "doc", "註冊表", "規格書"] },
-  { type: "探索", keywords: ["探索", "poc", "spike", "試驗", "原型", "可行性驗證"] },
-  { type: "研究", keywords: ["研究", "調研", "審計", "比較", "生態調研", "文獻", "audit"] },
-  { type: "發布", keywords: ["發布", "部署", "上線", "交付", "release", "deploy"] },
-  { type: "功能", keywords: ["功能", "新增", "實作", "能力", "模組開發", "feat"] },
-  { type: "設計", keywords: ["設計", "架構", "選型", "規範", "拓撲", "blueprint"] },
+  {
+    type: '修復',
+    keywords: ['修復', '修正', 'debug', 'bug', '報錯', '失敗', '例外', '異常', 'fix', 'error'],
+  },
+  {
+    type: '優化',
+    keywords: ['優化', '效能', '重構', '加速', '調優', 'refactor', 'perf', '壞味道'],
+  },
+  { type: '文件', keywords: ['文件', 'readme', '手冊', 'doc', '註冊表', '規格書'] },
+  { type: '探索', keywords: ['探索', 'poc', 'spike', '試驗', '原型', '可行性驗證'] },
+  { type: '研究', keywords: ['研究', '調研', '審計', '比較', '生態調研', '文獻', 'audit'] },
+  { type: '發布', keywords: ['發布', '部署', '上線', '交付', 'release', 'deploy'] },
+  { type: '功能', keywords: ['功能', '新增', '實作', '能力', '模組開發', 'feat'] },
+  { type: '設計', keywords: ['設計', '架構', '選型', '規範', '拓撲', 'blueprint'] },
 ];
 
 /**
@@ -35,10 +32,10 @@ const TYPE_KEYWORDS = [
  */
 function getTaiwanMMDD() {
   const d = new Date();
-  const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-  const twDate = new Date(utc + (3600000 * 8));
-  const mm = String(twDate.getMonth() + 1).padStart(2, "0");
-  const dd = String(twDate.getDate()).padStart(2, "0");
+  const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+  const twDate = new Date(utc + 3600000 * 8);
+  const mm = String(twDate.getMonth() + 1).padStart(2, '0');
+  const dd = String(twDate.getDate()).padStart(2, '0');
   return `${mm}${dd}`;
 }
 
@@ -50,13 +47,13 @@ function getTaiwanMMDD() {
  * @returns {string}
  */
 function inferType(promptText) {
-  const lower = (promptText || "").toLowerCase();
+  const lower = (promptText || '').toLowerCase();
   for (const item of TYPE_KEYWORDS) {
-    if (item.keywords.some(k => lower.includes(k))) {
+    if (item.keywords.some((k) => lower.includes(k))) {
       return item.type;
     }
   }
-  return "設計";
+  return '設計';
 }
 
 /**
@@ -67,18 +64,18 @@ function inferType(promptText) {
  * @returns {string}
  */
 function extractTopic(promptText) {
-  if (!promptText) return "多AI協作任務";
-  
+  if (!promptText) return '多AI協作任務';
+
   let cleaned = promptText
-    .replace(/^請(以|用|幫忙|協助|設計|分析|撰寫|整理).*?視角[，,：:]?/g, "")
-    .replace(/^請(以|用|幫忙|協助|設計|分析|撰寫|整理)[，,：:]?/g, "")
-    .replace(/^(以|用|針對).*?視角[，,：:]?/g, "")
-    .replace(/[，,。！!？?：:\s]+/g, " ")
-    .replace(/[（(].*?[）)]/g, "")
+    .replace(/^請(以|用|幫忙|協助|設計|分析|撰寫|整理).*?視角[，,：:]?/g, '')
+    .replace(/^請(以|用|幫忙|協助|設計|分析|撰寫|整理)[，,：:]?/g, '')
+    .replace(/^(以|用|針對).*?視角[，,：:]?/g, '')
+    .replace(/[，,。！!？?：:\s]+/g, ' ')
+    .replace(/[（(].*?[）)]/g, '')
     .trim();
 
   const words = cleaned.split(/\s+/).filter(Boolean);
-  let topic = words[0] || "協作任務";
+  let topic = words[0] || '協作任務';
   if (topic.length < 4 && words[1]) {
     topic = topic + words[1];
   }
@@ -86,7 +83,7 @@ function extractTopic(promptText) {
     topic = topic.slice(0, 15);
   }
   if (topic.length < 4) {
-    topic = topic + "架構設計";
+    topic = topic + '架構設計';
   }
   return topic;
 }
@@ -98,7 +95,7 @@ function extractTopic(promptText) {
  * @param {string} title
  */
 function parseSemanticTitle(title) {
-  if (!title || typeof title !== "string") return null;
+  if (!title || typeof title !== 'string') return null;
   const match = title.match(/^(\d{4})\s*\|\s*([^|]+)\s*\|\s*(.+)$/);
   if (!match) return null;
   const date = match[1];
@@ -118,8 +115,8 @@ function parseSemanticTitle(title) {
  * @returns {string}
  */
 function getWorkspaceType(workspace) {
-  if (!workspace) return "設計";
-  const title = workspace.title || "";
+  if (!workspace) return '設計';
+  const title = workspace.title || '';
   const parsed = parseSemanticTitle(title);
   if (parsed && SEMANTIC_TYPES.includes(parsed.type)) {
     return parsed.type;
@@ -127,7 +124,7 @@ function getWorkspaceType(workspace) {
   for (const t of SEMANTIC_TYPES) {
     if (title.includes(t)) return t;
   }
-  return inferType(title + " " + (workspace.promptSnippet || ""));
+  return inferType(title + ' ' + (workspace.promptSnippet || ''));
 }
 
 /**
@@ -138,7 +135,7 @@ function getWorkspaceType(workspace) {
  * @returns {string}
  */
 function extractMatchSnippet(text, tokens = [], maxChars = 100) {
-  if (!text || typeof text !== "string") return "";
+  if (!text || typeof text !== 'string') return '';
   const lower = text.toLowerCase();
   let firstIdx = -1;
   let matchLen = 0;
@@ -150,14 +147,14 @@ function extractMatchSnippet(text, tokens = [], maxChars = 100) {
     }
   }
   if (firstIdx === -1) {
-    return text.length > maxChars ? text.slice(0, maxChars) + "..." : text;
+    return text.length > maxChars ? text.slice(0, maxChars) + '...' : text;
   }
   const half = Math.floor(maxChars / 2);
   let start = Math.max(0, firstIdx - half);
   let end = Math.min(text.length, firstIdx + matchLen + half);
   let snippet = text.slice(start, end).trim();
-  if (start > 0) snippet = "..." + snippet;
-  if (end < text.length) snippet = snippet + "...";
+  if (start > 0) snippet = '...' + snippet;
+  if (end < text.length) snippet = snippet + '...';
   return snippet;
 }
 
@@ -216,7 +213,7 @@ class SessionManager {
 
   /** @returns {Workspace[]} */
   getWorkspaces() {
-    return this.store.get("workspaces") || [];
+    return this.store.get('workspaces') || [];
   }
 
   getAllWorkspaces() {
@@ -225,13 +222,13 @@ class SessionManager {
 
   /** @returns {string | null} */
   getActiveWorkspaceId() {
-    return this.store.get("activeWorkspaceId") || null;
+    return this.store.get('activeWorkspaceId') || null;
   }
 
   /** @returns {Workspace | null} */
   getActiveWorkspace() {
     const id = this.getActiveWorkspaceId();
-    return this.getWorkspaces().find(w => w.id === id) || null;
+    return this.getWorkspaces().find((w) => w.id === id) || null;
   }
 
   /**
@@ -244,14 +241,21 @@ class SessionManager {
    * @param {Record<string, string> | null} [params.urls]
    * @returns {Workspace}
    */
-  createWorkspace({ prompt, mode = "relay", sequence = ["claude", "chatgpt"], customTitle = null, title = null, urls = null }) {
+  createWorkspace({
+    prompt,
+    mode = 'relay',
+    sequence = ['claude', 'chatgpt'],
+    customTitle = null,
+    title = null,
+    urls = null,
+  }) {
     const canonicalTitle = title || customTitle || createSemanticTitle(prompt);
     const id = `ws-${Date.now()}`;
     /** @type {Workspace} */
     const workspace = {
       id,
       title: canonicalTitle,
-      promptSnippet: (prompt || "").slice(0, 100),
+      promptSnippet: (prompt || '').slice(0, 100),
       mode,
       sequence,
       createdAt: new Date().toISOString(),
@@ -260,18 +264,18 @@ class SessionManager {
       turns: 0,
       history: [],
       urls: urls || {
-        claude: "",
-        chatgpt: "",
-        gemini: "",
-        grok: "",
+        claude: '',
+        chatgpt: '',
+        gemini: '',
+        grok: '',
       },
     };
 
     const list = [...this.getWorkspaces()];
     list.unshift(workspace);
     if (list.length > 50) list.pop();
-    this.store.set("workspaces", list);
-    this.store.set("activeWorkspaceId", id);
+    this.store.set('workspaces', list);
+    this.store.set('activeWorkspaceId', id);
     return workspace;
   }
 
@@ -282,7 +286,7 @@ class SessionManager {
    */
   updateWorkspace(id, partial = {}) {
     const list = [...this.getWorkspaces()];
-    const index = list.findIndex(w => w.id === id);
+    const index = list.findIndex((w) => w.id === id);
     if (index === -1) return null;
 
     const target = { ...list[index] };
@@ -292,7 +296,7 @@ class SessionManager {
     }
     Object.assign(target, partial, { updatedAt: new Date().toISOString() });
     list[index] = target;
-    this.store.set("workspaces", list);
+    this.store.set('workspaces', list);
     return target;
   }
 
@@ -304,17 +308,17 @@ class SessionManager {
    */
   addTurn(workspaceId, turn = {}) {
     const list = [...this.getWorkspaces()];
-    const index = list.findIndex(w => w.id === workspaceId);
+    const index = list.findIndex((w) => w.id === workspaceId);
     if (index === -1) return null;
 
     const target = { ...list[index] };
     const history = Array.isArray(target.history) ? [...target.history] : [];
 
     const normalizedTurn = {
-      speaker: turn.speaker || "AI",
+      speaker: turn.speaker || 'AI',
       round: Number(turn.round) || 1,
-      type: turn.type || "turn-complete",
-      content: String(turn.content || turn.response || turn.responseSnippet || "").trim(),
+      type: turn.type || 'turn-complete',
+      content: String(turn.content || turn.response || turn.responseSnippet || '').trim(),
       timestamp: turn.timestamp || new Date().toISOString(),
     };
 
@@ -328,7 +332,7 @@ class SessionManager {
     target.updatedAt = new Date().toISOString();
 
     list[index] = target;
-    this.store.set("workspaces", list);
+    this.store.set('workspaces', list);
     return target;
   }
 
@@ -337,10 +341,10 @@ class SessionManager {
    * @param {{ query?: string, q?: string, type?: string, mode?: string, limit?: number | string }} [options]
    */
   searchWorkspaces(options = {}) {
-    const rawQuery = (options.query || options.q || "").trim();
+    const rawQuery = (options.query || options.q || '').trim();
     const queryTokens = rawQuery ? rawQuery.toLowerCase().split(/\s+/).filter(Boolean) : [];
-    const filterType = options.type ? options.type.trim() : "all";
-    const filterMode = options.mode ? options.mode.trim() : "all";
+    const filterType = options.type ? options.type.trim() : 'all';
+    const filterMode = options.mode ? options.mode.trim() : 'all';
     const limit = Math.max(1, Number(options.limit) || 50);
 
     const workspaces = this.getWorkspaces();
@@ -350,12 +354,14 @@ class SessionManager {
     const vectorIndex = new VectorMemoryLite();
     if (rawQuery) {
       for (const ws of workspaces) {
-        const turnTexts = (ws.history || []).map(h => (h.speaker || '') + ': ' + (h.content || h.response || '')).join(' ');
-        const fullDoc = [(ws.title || ''), (ws.promptSnippet || ''), turnTexts].join(' ');
+        const turnTexts = (ws.history || [])
+          .map((h) => (h.speaker || '') + ': ' + (h.content || h.response || ''))
+          .join(' ');
+        const fullDoc = [ws.title || '', ws.promptSnippet || '', turnTexts].join(' ');
         vectorIndex.addDocument({
           id: ws.id,
           title: ws.title || ws.id,
-          content: fullDoc
+          content: fullDoc,
         });
       }
     }
@@ -369,16 +375,16 @@ class SessionManager {
 
     for (const ws of workspaces) {
       const wsType = getWorkspaceType(ws);
-      const wsMode = ws.mode || "relay";
+      const wsMode = ws.mode || 'relay';
 
       // 1. Tag / Type filter
-      if (filterType !== "all" && filterType !== "") {
-        const matchesType = (wsType === filterType) || (ws.title && ws.title.includes(filterType));
+      if (filterType !== 'all' && filterType !== '') {
+        const matchesType = wsType === filterType || (ws.title && ws.title.includes(filterType));
         if (!matchesType) continue;
       }
 
       // 2. Mode filter
-      if (filterMode !== "all" && filterMode !== "") {
+      if (filterMode !== 'all' && filterMode !== '') {
         if (wsMode !== filterMode) continue;
       }
 
@@ -391,8 +397,8 @@ class SessionManager {
         // Matched by filter alone
         score = 10;
       } else {
-        const titleLower = (ws.title || "").toLowerCase();
-        const promptLower = (ws.promptSnippet || "").toLowerCase();
+        const titleLower = (ws.title || '').toLowerCase();
+        const promptLower = (ws.promptSnippet || '').toLowerCase();
         const history = Array.isArray(ws.history) ? ws.history : [];
 
         let allTokensMatched = true;
@@ -404,9 +410,9 @@ class SessionManager {
           if (titleLower.includes(token)) {
             tokenFound = true;
             score += 40;
-            if (!matches.some(m => m.field === "title")) {
+            if (!matches.some((m) => m.field === 'title')) {
               matches.push({
-                field: "title",
+                field: 'title',
                 value: ws.title,
                 snippet: extractMatchSnippet(ws.title, queryTokens),
               });
@@ -417,9 +423,9 @@ class SessionManager {
           if (promptLower.includes(token)) {
             tokenFound = true;
             score += 25;
-            if (!matches.some(m => m.field === "prompt")) {
+            if (!matches.some((m) => m.field === 'prompt')) {
               matches.push({
-                field: "prompt",
+                field: 'prompt',
                 value: ws.promptSnippet,
                 snippet: extractMatchSnippet(ws.promptSnippet, queryTokens),
               });
@@ -427,14 +433,14 @@ class SessionManager {
           }
 
           // Check URLs
-          if (ws.urls && typeof ws.urls === "object") {
+          if (ws.urls && typeof ws.urls === 'object') {
             for (const [platform, url] of Object.entries(ws.urls)) {
               if (url && url.toLowerCase().includes(token)) {
                 tokenFound = true;
                 score += 15;
-                if (!matches.some(m => m.field === "url" && m.platform === platform)) {
+                if (!matches.some((m) => m.field === 'url' && m.platform === platform)) {
                   matches.push({
-                    field: "url",
+                    field: 'url',
                     platform,
                     value: url,
                   });
@@ -446,17 +452,17 @@ class SessionManager {
           // Check turns
           for (let i = 0; i < history.length; i++) {
             const turn = history[i];
-            const content = turn.content || turn.response || "";
+            const content = turn.content || turn.response || '';
             const contentLower = content.toLowerCase();
-            const speakerLower = (turn.speaker || "").toLowerCase();
+            const speakerLower = (turn.speaker || '').toLowerCase();
 
             if (contentLower.includes(token) || speakerLower.includes(token)) {
               tokenFound = true;
               score += 20;
               matches.push({
-                field: "turn",
+                field: 'turn',
                 round: turn.round || 1,
-                speaker: (turn.speaker || "AI").toUpperCase(),
+                speaker: (turn.speaker || 'AI').toUpperCase(),
                 snippet: extractMatchSnippet(content, queryTokens),
                 timestamp: turn.timestamp,
               });
@@ -492,7 +498,7 @@ class SessionManager {
         workspaceId: ws.id,
         title: ws.title,
         type: wsType,
-        mode: ws.mode || "relay",
+        mode: ws.mode || 'relay',
         matches,
         score,
       });
@@ -515,7 +521,7 @@ class SessionManager {
       query: rawQuery,
       filterType,
       filterMode,
-      workspaces: limited.map(r => r.workspace),
+      workspaces: limited.map((r) => r.workspace),
       results: limited,
     };
   }
@@ -531,12 +537,15 @@ class SessionManager {
       try {
         if (item && item.view && !item.view.webContents.isDestroyed()) {
           const currentUrl = item.view.webContents.getURL();
-          if (currentUrl && !currentUrl.startsWith("about:") && !currentUrl.startsWith("data:")) {
+          if (currentUrl && !currentUrl.startsWith('about:') && !currentUrl.startsWith('data:')) {
             urls[platform] = currentUrl;
           }
         }
       } catch (err) {
-        console.warn(`[Nomad SessionManager] Failed to get URL for ${platform}:`, (err instanceof Error ? err.message : String(err)));
+        console.warn(
+          `[Nomad SessionManager] Failed to get URL for ${platform}:`,
+          err instanceof Error ? err.message : String(err),
+        );
       }
     }
     return this.updateWorkspace(workspaceId, { urls });
@@ -547,8 +556,8 @@ class SessionManager {
    */
   async switchWorkspace(workspaceId) {
     const list = this.getWorkspaces();
-    const target = list.find(w => w.id === workspaceId);
-    if (!target) return { success: false, message: "Workspace not found" };
+    const target = list.find((w) => w.id === workspaceId);
+    if (!target) return { success: false, message: 'Workspace not found' };
 
     const views = this.getViews();
     /** @type {Record<string, { loaded: boolean, url?: string, error?: string }>} */
@@ -560,12 +569,12 @@ class SessionManager {
           views[platform].view.webContents.loadURL(url);
           results[platform] = { loaded: true, url };
         } catch (e) {
-          results[platform] = { loaded: false, error: (e instanceof Error ? e.message : String(e)) };
+          results[platform] = { loaded: false, error: e instanceof Error ? e.message : String(e) };
         }
       }
     }
 
-    this.store.set("activeWorkspaceId", workspaceId);
+    this.store.set('activeWorkspaceId', workspaceId);
     return { success: true, workspace: target, results };
   }
 
@@ -574,10 +583,10 @@ class SessionManager {
    */
   deleteWorkspace(workspaceId) {
     let list = this.getWorkspaces();
-    list = list.filter(w => w.id !== workspaceId);
-    this.store.set("workspaces", list);
+    list = list.filter((w) => w.id !== workspaceId);
+    this.store.set('workspaces', list);
     if (this.getActiveWorkspaceId() === workspaceId) {
-      this.store.set("activeWorkspaceId", list[0]?.id || null);
+      this.store.set('activeWorkspaceId', list[0]?.id || null);
     }
     return { success: true };
   }
@@ -587,19 +596,23 @@ class SessionManager {
    */
   exportWorkspaceAsJson(workspaceId) {
     const list = this.getWorkspaces();
-    const ws = list.find(w => w.id === workspaceId);
+    const ws = list.find((w) => w.id === workspaceId);
     if (!ws) return null;
     return JSON.stringify(ws, null, 2);
   }
 
   exportAllWorkspacesAsJson() {
     const list = this.getWorkspaces();
-    return JSON.stringify({
-      version: "1.0.0",
-      exportedAt: new Date().toISOString(),
-      activeWorkspaceId: this.getActiveWorkspaceId(),
-      workspaces: list,
-    }, null, 2);
+    return JSON.stringify(
+      {
+        version: '1.0.0',
+        exportedAt: new Date().toISOString(),
+        activeWorkspaceId: this.getActiveWorkspaceId(),
+        workspaces: list,
+      },
+      null,
+      2,
+    );
   }
 
   /**
@@ -608,9 +621,12 @@ class SessionManager {
   importWorkspacesFromJson(jsonStringOrObj) {
     let data;
     try {
-      data = typeof jsonStringOrObj === "string" ? JSON.parse(jsonStringOrObj) : jsonStringOrObj;
+      data = typeof jsonStringOrObj === 'string' ? JSON.parse(jsonStringOrObj) : jsonStringOrObj;
     } catch (e) {
-      return { success: false, error: "JSON 解析失敗: " + (e instanceof Error ? e.message : String(e)) };
+      return {
+        success: false,
+        error: 'JSON 解析失敗: ' + (e instanceof Error ? e.message : String(e)),
+      };
     }
 
     let itemsToImport = [];
@@ -618,39 +634,39 @@ class SessionManager {
       itemsToImport = data;
     } else if (data && Array.isArray(data.workspaces)) {
       itemsToImport = data.workspaces;
-    } else if (data && typeof data === "object" && (data.title || data.id)) {
+    } else if (data && typeof data === 'object' && (data.title || data.id)) {
       itemsToImport = [data];
     } else {
-      return { success: false, error: "無效的工作區資料格式" };
+      return { success: false, error: '無效的工作區資料格式' };
     }
 
     const currentList = [...this.getWorkspaces()];
     let importedCount = 0;
 
     for (const item of itemsToImport) {
-      if (!item || typeof item !== "object") continue;
-      const id = item.id || ("ws-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4));
-      const title = item.title || createSemanticTitle(item.promptSnippet || "匯入會話");
+      if (!item || typeof item !== 'object') continue;
+      const id = item.id || 'ws-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+      const title = item.title || createSemanticTitle(item.promptSnippet || '匯入會話');
       const normalized = {
         id,
         title,
-        promptSnippet: item.promptSnippet || "",
-        mode: item.mode || "relay",
-        sequence: Array.isArray(item.sequence) ? item.sequence : ["claude", "chatgpt"],
+        promptSnippet: item.promptSnippet || '',
+        mode: item.mode || 'relay',
+        sequence: Array.isArray(item.sequence) ? item.sequence : ['claude', 'chatgpt'],
         createdAt: item.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         completed: Boolean(item.completed),
         turns: Number(item.turns) || 0,
         history: Array.isArray(item.history) ? item.history : [],
         urls: {
-          claude: item.urls?.claude || "",
-          chatgpt: item.urls?.chatgpt || "",
-          gemini: item.urls?.gemini || "",
-          grok: item.urls?.grok || "",
+          claude: item.urls?.claude || '',
+          chatgpt: item.urls?.chatgpt || '',
+          gemini: item.urls?.gemini || '',
+          grok: item.urls?.grok || '',
         },
       };
 
-      const existingIdx = currentList.findIndex(w => w.id === id);
+      const existingIdx = currentList.findIndex((w) => w.id === id);
       if (existingIdx >= 0) {
         currentList[existingIdx] = { ...currentList[existingIdx], ...normalized };
       } else {
@@ -663,9 +679,9 @@ class SessionManager {
       currentList.length = 100;
     }
 
-    this.store.set("workspaces", currentList);
+    this.store.set('workspaces', currentList);
     if (!this.getActiveWorkspaceId() && currentList.length > 0) {
-      this.store.set("activeWorkspaceId", currentList[0].id);
+      this.store.set('activeWorkspaceId', currentList[0].id);
     }
 
     return {
@@ -684,41 +700,47 @@ class SessionManager {
    * @param {Array<Partial<WorkspaceTurn> & { responseSnippet?: string }>} [params.history]
    * @returns {string}
    */
-  exportOrchestrationHistoryAsMarkdown({ title, mode = "relay", sequence = [], history = [] }) {
-    const dateStr = new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false });
+  exportOrchestrationHistoryAsMarkdown({ title, mode = 'relay', sequence = [], history = [] }) {
+    const dateStr = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
     /** @type {Record<string, string>} */
-    const modeMap = { relay: "🔄 任務接力 (Relay)", debate: "⚔️ 交叉辯論 (Debate)", master: "👑 主控分工 (Master)" };
+    const modeMap = {
+      relay: '🔄 任務接力 (Relay)',
+      debate: '⚔️ 交叉辯論 (Debate)',
+      master: '👑 主控分工 (Master)',
+    };
     const modeName = modeMap[mode] || mode;
 
-    let md = "# 🤝 多 AI 圓桌協作對話報告：" + (title || "未命名任務") + "\n\n";
-    md += "- **產出時間**：" + dateStr + " (UTC+8)\n";
-    md += "- **協作架構**：" + modeName + "\n";
-    md += "- **協作序列**：" + sequence.map(s => s.toUpperCase()).join(" ➔ ") + "\n";
-    md += "- **紀錄總筆數**：" + history.length + " 條\n\n";
-    md += "---\n\n";
+    let md = '# 🤝 多 AI 圓桌協作對話報告：' + (title || '未命名任務') + '\n\n';
+    md += '- **產出時間**：' + dateStr + ' (UTC+8)\n';
+    md += '- **協作架構**：' + modeName + '\n';
+    md += '- **協作序列**：' + sequence.map((s) => s.toUpperCase()).join(' ➔ ') + '\n';
+    md += '- **紀錄總筆數**：' + history.length + ' 條\n\n';
+    md += '---\n\n';
 
-    const userPrompt = history.find(h => h.type === "user-prompt" || h.speaker === "user");
+    const userPrompt = history.find((h) => h.type === 'user-prompt' || h.speaker === 'user');
     if (userPrompt) {
-      md += "## 🎯 初始協作目標與議題\n\n```\n" + (userPrompt.content || "") + "\n```\n\n---\n\n";
+      md += '## 🎯 初始協作目標與議題\n\n```\n' + (userPrompt.content || '') + '\n```\n\n---\n\n';
     }
 
-    md += "## 💬 多平臺階段性發言與交接歷史\n\n";
+    md += '## 💬 多平臺階段性發言與交接歷史\n\n';
 
-    const aiTurns = history.filter(h => h.type !== "user-prompt" && h.speaker !== "user");
+    const aiTurns = history.filter((h) => h.type !== 'user-prompt' && h.speaker !== 'user');
     if (aiTurns.length === 0) {
-      md += "*(尚未產生 AI 發言紀錄)*\n";
+      md += '*(尚未產生 AI 發言紀錄)*\n';
     } else {
       aiTurns.forEach((item, idx) => {
-        const speaker = (item.speaker || "AI").toUpperCase();
-        const roundText = item.round ? "【第 " + item.round + " 輪】" : "";
-        const time = item.timestamp ? new Date(item.timestamp).toLocaleTimeString("zh-TW", { hour12: false }) : "";
-        md += "### " + (idx + 1) + ". " + roundText + " 🤖 " + speaker + " (" + time + ")\n\n";
-        md += (item.content || item.response || "") + "\n\n";
-        md += "---\n\n";
+        const speaker = (item.speaker || 'AI').toUpperCase();
+        const roundText = item.round ? '【第 ' + item.round + ' 輪】' : '';
+        const time = item.timestamp
+          ? new Date(item.timestamp).toLocaleTimeString('zh-TW', { hour12: false })
+          : '';
+        md += '### ' + (idx + 1) + '. ' + roundText + ' 🤖 ' + speaker + ' (' + time + ')\n\n';
+        md += (item.content || item.response || '') + '\n\n';
+        md += '---\n\n';
       });
     }
 
-    md += "\n> 本報告由 **Nomad AI Studio** 自動匯出生成 · 跨平臺 AI 協同工作站\n";
+    md += '\n> 本報告由 **Nomad AI Studio** 自動匯出生成 · 跨平臺 AI 協同工作站\n';
     return md;
   }
 
@@ -729,7 +751,7 @@ class SessionManager {
   async applyInPageRenaming(platform, title) {
     const views = this.getViews();
     const item = views[platform];
-    if (!item) return { ok: false, error: "Platform not found" };
+    if (!item) return { ok: false, error: 'Platform not found' };
 
     const script = `(function() {
       try {
@@ -753,7 +775,7 @@ class SessionManager {
     try {
       return await item.view.webContents.executeJavaScript(script);
     } catch (e) {
-      return { ok: false, error: (e instanceof Error ? e.message : String(e)) };
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
     }
   }
 }

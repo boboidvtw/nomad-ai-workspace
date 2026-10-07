@@ -1710,9 +1710,9 @@ export class GoogleDriveSyncService {
    */
   public async ensurePlatformSubfolder(token: string, platformName: string): Promise<string> {
     const rootFolderId = await this.ensureBackupFolder(token);
-    if (!rootFolderId) throw new Error("Could not find or create root backup folder");
+    if (!rootFolderId) throw new Error('Could not find or create root backup folder');
 
-    const cacheKey = "subfolder:" + platformName;
+    const cacheKey = 'subfolder:' + platformName;
     if (this.fileIdByName[cacheKey]) {
       return this.fileIdByName[cacheKey];
     }
@@ -1740,17 +1740,19 @@ export class GoogleDriveSyncService {
       mimeType: BACKUP_FOLDER_MIME_TYPE,
       parents: [rootFolderId],
     };
-    const response = await fetch(DRIVE_API_BASE + "/files", {
-      method: "POST",
+    const response = await fetch(DRIVE_API_BASE + '/files', {
+      method: 'POST',
       headers: {
-        Authorization: "Bearer " + token,
-        "Content-Type": "application/json",
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(metadata),
     });
 
     if (!response.ok) {
-      throw new Error("Failed to create platform subfolder " + platformName + ": " + response.status);
+      throw new Error(
+        'Failed to create platform subfolder ' + platformName + ': ' + response.status,
+      );
     }
 
     const created = await response.json();
@@ -1758,34 +1760,53 @@ export class GoogleDriveSyncService {
     return created.id;
   }
 
-  public async findFileInFolder(token: string, folderId: string, fileName: string): Promise<string | null> {
-    const query = "'" + folderId + "' in parents and name='" + this.escapeDriveQueryValue(fileName) + "' and trashed=false";
-    const response = await fetch(DRIVE_API_BASE + "/files?q=" + encodeURIComponent(query) + "&fields=files(id,name)&pageSize=1", {
-      headers: { Authorization: "Bearer " + token },
-    });
+  public async findFileInFolder(
+    token: string,
+    folderId: string,
+    fileName: string,
+  ): Promise<string | null> {
+    const query =
+      "'" +
+      folderId +
+      "' in parents and name='" +
+      this.escapeDriveQueryValue(fileName) +
+      "' and trashed=false";
+    const response = await fetch(
+      DRIVE_API_BASE +
+        '/files?q=' +
+        encodeURIComponent(query) +
+        '&fields=files(id,name)&pageSize=1',
+      {
+        headers: { Authorization: 'Bearer ' + token },
+      },
+    );
     if (!response.ok) return null;
     const data = await response.json();
     return data.files?.[0]?.id ?? null;
   }
 
-  public async ensureSubfolderFileId(token: string, folderId: string, fileName: string): Promise<string> {
+  public async ensureSubfolderFileId(
+    token: string,
+    folderId: string,
+    fileName: string,
+  ): Promise<string> {
     const existing = await this.findFileInFolder(token, folderId, fileName);
     if (existing) return existing;
 
     const metadata = {
       name: fileName,
       parents: [folderId],
-      mimeType: "application/json",
+      mimeType: 'application/json',
     };
-    const response = await fetch(DRIVE_API_BASE + "/files", {
-      method: "POST",
+    const response = await fetch(DRIVE_API_BASE + '/files', {
+      method: 'POST',
       headers: {
-        Authorization: "Bearer " + token,
-        "Content-Type": "application/json",
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(metadata),
     });
-    if (!response.ok) throw new Error("Failed to create file " + fileName + ": " + response.status);
+    if (!response.ok) throw new Error('Failed to create file ' + fileName + ': ' + response.status);
     const created = await response.json();
     return created.id;
   }
@@ -1799,12 +1820,12 @@ export class GoogleDriveSyncService {
         return false;
       }
 
-      const claudeSubfolderId = await this.ensurePlatformSubfolder(token, "Claude");
-      const fileName = "claude-folders.json";
+      const claudeSubfolderId = await this.ensurePlatformSubfolder(token, 'Claude');
+      const fileName = 'claude-folders.json';
       const fileId = await this.ensureSubfolderFileId(token, claudeSubfolderId, fileName);
 
       const payload = {
-        format: "nomad.claude.folders.v1",
+        format: 'nomad.claude.folders.v1',
         exportedAt: new Date().toISOString(),
         version: EXTENSION_VERSION,
         data: folders,
@@ -1813,11 +1834,11 @@ export class GoogleDriveSyncService {
       await this.uploadFileWithRetry(token, fileId, payload);
       this.updateState({ isSyncing: false, error: null, lastUploadTimeClaude: Date.now() });
       await this.saveState();
-      console.log("[GoogleDriveSyncService] Claude folders uploaded to Nomad Workspace/Claude/");
+      console.log('[GoogleDriveSyncService] Claude folders uploaded to Nomad Workspace/Claude/');
       return true;
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Claude upload failed";
-      console.error("[GoogleDriveSyncService] Claude upload failed:", error);
+      const msg = error instanceof Error ? error.message : 'Claude upload failed';
+      console.error('[GoogleDriveSyncService] Claude upload failed:', error);
       this.updateState({ isSyncing: false, error: msg });
       await this.saveState();
       return false;
@@ -1833,25 +1854,25 @@ export class GoogleDriveSyncService {
         return null;
       }
 
-      const claudeSubfolderId = await this.ensurePlatformSubfolder(token, "Claude");
-      const fileName = "claude-folders.json";
+      const claudeSubfolderId = await this.ensurePlatformSubfolder(token, 'Claude');
+      const fileName = 'claude-folders.json';
       const fileId = await this.findFileInFolder(token, claudeSubfolderId, fileName);
       if (!fileId) {
         this.updateState({ isSyncing: false });
         return null;
       }
 
-      const response = await fetch(DRIVE_API_BASE + "/files/" + fileId + "?alt=media", {
-        headers: { Authorization: "Bearer " + token },
+      const response = await fetch(DRIVE_API_BASE + '/files/' + fileId + '?alt=media', {
+        headers: { Authorization: 'Bearer ' + token },
       });
-      if (!response.ok) throw new Error("Download failed with status: " + response.status);
+      if (!response.ok) throw new Error('Download failed with status: ' + response.status);
       const payload = await response.json();
       this.updateState({ isSyncing: false, error: null, lastSyncTimeClaude: Date.now() });
       await this.saveState();
       return payload.data || [];
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Claude download failed";
-      console.error("[GoogleDriveSyncService] Claude download failed:", error);
+      const msg = error instanceof Error ? error.message : 'Claude download failed';
+      console.error('[GoogleDriveSyncService] Claude download failed:', error);
       this.updateState({ isSyncing: false, error: msg });
       await this.saveState();
       return null;
@@ -1867,12 +1888,12 @@ export class GoogleDriveSyncService {
         return false;
       }
 
-      const chatgptSubfolderId = await this.ensurePlatformSubfolder(token, "ChatGPT");
-      const fileName = "chatgpt-folders.json";
+      const chatgptSubfolderId = await this.ensurePlatformSubfolder(token, 'ChatGPT');
+      const fileName = 'chatgpt-folders.json';
       const fileId = await this.ensureSubfolderFileId(token, chatgptSubfolderId, fileName);
 
       const payload = {
-        format: "nomad.chatgpt.folders.v1",
+        format: 'nomad.chatgpt.folders.v1',
         exportedAt: new Date().toISOString(),
         version: EXTENSION_VERSION,
         data: folders,
@@ -1881,11 +1902,11 @@ export class GoogleDriveSyncService {
       await this.uploadFileWithRetry(token, fileId, payload);
       this.updateState({ isSyncing: false, error: null, lastUploadTimeChatGPT: Date.now() });
       await this.saveState();
-      console.log("[GoogleDriveSyncService] ChatGPT folders uploaded to Nomad Workspace/ChatGPT/");
+      console.log('[GoogleDriveSyncService] ChatGPT folders uploaded to Nomad Workspace/ChatGPT/');
       return true;
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "ChatGPT upload failed";
-      console.error("[GoogleDriveSyncService] ChatGPT upload failed:", error);
+      const msg = error instanceof Error ? error.message : 'ChatGPT upload failed';
+      console.error('[GoogleDriveSyncService] ChatGPT upload failed:', error);
       this.updateState({ isSyncing: false, error: msg });
       await this.saveState();
       return false;
@@ -1901,25 +1922,25 @@ export class GoogleDriveSyncService {
         return null;
       }
 
-      const chatgptSubfolderId = await this.ensurePlatformSubfolder(token, "ChatGPT");
-      const fileName = "chatgpt-folders.json";
+      const chatgptSubfolderId = await this.ensurePlatformSubfolder(token, 'ChatGPT');
+      const fileName = 'chatgpt-folders.json';
       const fileId = await this.findFileInFolder(token, chatgptSubfolderId, fileName);
       if (!fileId) {
         this.updateState({ isSyncing: false });
         return null;
       }
 
-      const response = await fetch(DRIVE_API_BASE + "/files/" + fileId + "?alt=media", {
-        headers: { Authorization: "Bearer " + token },
+      const response = await fetch(DRIVE_API_BASE + '/files/' + fileId + '?alt=media', {
+        headers: { Authorization: 'Bearer ' + token },
       });
-      if (!response.ok) throw new Error("Download failed with status: " + response.status);
+      if (!response.ok) throw new Error('Download failed with status: ' + response.status);
       const payload = await response.json();
       this.updateState({ isSyncing: false, error: null, lastSyncTimeChatGPT: Date.now() });
       await this.saveState();
       return payload.data || [];
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "ChatGPT download failed";
-      console.error("[GoogleDriveSyncService] ChatGPT download failed:", error);
+      const msg = error instanceof Error ? error.message : 'ChatGPT download failed';
+      console.error('[GoogleDriveSyncService] ChatGPT download failed:', error);
       this.updateState({ isSyncing: false, error: msg });
       await this.saveState();
       return null;
@@ -1935,12 +1956,12 @@ export class GoogleDriveSyncService {
         return false;
       }
 
-      const geminiSubfolderId = await this.ensurePlatformSubfolder(token, "Gemini");
-      const fileName = "gemini-folders.json";
+      const geminiSubfolderId = await this.ensurePlatformSubfolder(token, 'Gemini');
+      const fileName = 'gemini-folders.json';
       const fileId = await this.ensureSubfolderFileId(token, geminiSubfolderId, fileName);
 
       const payload = {
-        format: "nomad.gemini.folders.v1",
+        format: 'nomad.gemini.folders.v1',
         exportedAt: new Date().toISOString(),
         version: EXTENSION_VERSION,
         data: folders,
@@ -1949,11 +1970,11 @@ export class GoogleDriveSyncService {
       await this.uploadFileWithRetry(token, fileId, payload);
       this.updateState({ isSyncing: false, error: null, lastUploadTime: Date.now() });
       await this.saveState();
-      console.log("[GoogleDriveSyncService] Gemini folders uploaded to Nomad Workspace/Gemini/");
+      console.log('[GoogleDriveSyncService] Gemini folders uploaded to Nomad Workspace/Gemini/');
       return true;
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Gemini upload failed";
-      console.error("[GoogleDriveSyncService] Gemini upload failed:", error);
+      const msg = error instanceof Error ? error.message : 'Gemini upload failed';
+      console.error('[GoogleDriveSyncService] Gemini upload failed:', error);
       this.updateState({ isSyncing: false, error: msg });
       await this.saveState();
       return false;
@@ -1969,8 +1990,8 @@ export class GoogleDriveSyncService {
         return null;
       }
 
-      const geminiSubfolderId = await this.ensurePlatformSubfolder(token, "Gemini");
-      const fileName = "gemini-folders.json";
+      const geminiSubfolderId = await this.ensurePlatformSubfolder(token, 'Gemini');
+      const fileName = 'gemini-folders.json';
       const fileId = await this.findFileInFolder(token, geminiSubfolderId, fileName);
       if (!fileId) {
         // Fallback to legacy root gemini-voyager-folders.json if present
@@ -1980,33 +2001,32 @@ export class GoogleDriveSyncService {
           this.updateState({ isSyncing: false });
           return null;
         }
-        const resp = await fetch(DRIVE_API_BASE + "/files/" + legacyFileId + "?alt=media", {
-          headers: { Authorization: "Bearer " + token },
+        const resp = await fetch(DRIVE_API_BASE + '/files/' + legacyFileId + '?alt=media', {
+          headers: { Authorization: 'Bearer ' + token },
         });
-        if (!resp.ok) throw new Error("Download legacy failed with status: " + resp.status);
+        if (!resp.ok) throw new Error('Download legacy failed with status: ' + resp.status);
         const legPayload = await resp.json();
         this.updateState({ isSyncing: false, error: null, lastSyncTime: Date.now() });
         await this.saveState();
         return legPayload.data || legPayload.folders || [];
       }
 
-      const response = await fetch(DRIVE_API_BASE + "/files/" + fileId + "?alt=media", {
-        headers: { Authorization: "Bearer " + token },
+      const response = await fetch(DRIVE_API_BASE + '/files/' + fileId + '?alt=media', {
+        headers: { Authorization: 'Bearer ' + token },
       });
-      if (!response.ok) throw new Error("Download failed with status: " + response.status);
+      if (!response.ok) throw new Error('Download failed with status: ' + response.status);
       const payload = await response.json();
       this.updateState({ isSyncing: false, error: null, lastSyncTime: Date.now() });
       await this.saveState();
       return payload.data || [];
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Gemini download failed";
-      console.error("[GoogleDriveSyncService] Gemini download failed:", error);
+      const msg = error instanceof Error ? error.message : 'Gemini download failed';
+      console.error('[GoogleDriveSyncService] Gemini download failed:', error);
       this.updateState({ isSyncing: false, error: msg });
       await this.saveState();
       return null;
     }
   }
-
 
   public async uploadGrokFolders(folders: unknown[], interactive = true): Promise<boolean> {
     try {
@@ -2017,12 +2037,12 @@ export class GoogleDriveSyncService {
         return false;
       }
 
-      const grokSubfolderId = await this.ensurePlatformSubfolder(token, "Grok");
-      const fileName = "grok-folders.json";
+      const grokSubfolderId = await this.ensurePlatformSubfolder(token, 'Grok');
+      const fileName = 'grok-folders.json';
       const fileId = await this.ensureSubfolderFileId(token, grokSubfolderId, fileName);
 
       const payload = {
-        format: "nomad.grok.folders.v1",
+        format: 'nomad.grok.folders.v1',
         exportedAt: new Date().toISOString(),
         version: EXTENSION_VERSION,
         data: folders,
@@ -2031,11 +2051,11 @@ export class GoogleDriveSyncService {
       await this.uploadFileWithRetry(token, fileId, payload);
       this.updateState({ isSyncing: false, error: null, lastUploadTimeGrok: Date.now() });
       await this.saveState();
-      console.log("[GoogleDriveSyncService] Grok folders uploaded to Nomad Workspace/Grok/");
+      console.log('[GoogleDriveSyncService] Grok folders uploaded to Nomad Workspace/Grok/');
       return true;
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Grok upload failed";
-      console.error("[GoogleDriveSyncService] Grok upload failed:", error);
+      const msg = error instanceof Error ? error.message : 'Grok upload failed';
+      console.error('[GoogleDriveSyncService] Grok upload failed:', error);
       this.updateState({ isSyncing: false, error: msg });
       await this.saveState();
       return false;
@@ -2051,25 +2071,25 @@ export class GoogleDriveSyncService {
         return null;
       }
 
-      const grokSubfolderId = await this.ensurePlatformSubfolder(token, "Grok");
-      const fileName = "grok-folders.json";
+      const grokSubfolderId = await this.ensurePlatformSubfolder(token, 'Grok');
+      const fileName = 'grok-folders.json';
       const fileId = await this.findFileInFolder(token, grokSubfolderId, fileName);
       if (!fileId) {
         this.updateState({ isSyncing: false });
         return null;
       }
 
-      const response = await fetch(DRIVE_API_BASE + "/files/" + fileId + "?alt=media", {
-        headers: { Authorization: "Bearer " + token },
+      const response = await fetch(DRIVE_API_BASE + '/files/' + fileId + '?alt=media', {
+        headers: { Authorization: 'Bearer ' + token },
       });
-      if (!response.ok) throw new Error("Download failed with status: " + response.status);
+      if (!response.ok) throw new Error('Download failed with status: ' + response.status);
       const payload = await response.json();
       this.updateState({ isSyncing: false, error: null, lastSyncTimeGrok: Date.now() });
       await this.saveState();
       return payload.data || [];
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Grok download failed";
-      console.error("[GoogleDriveSyncService] Grok download failed:", error);
+      const msg = error instanceof Error ? error.message : 'Grok download failed';
+      console.error('[GoogleDriveSyncService] Grok download failed:', error);
       this.updateState({ isSyncing: false, error: msg });
       await this.saveState();
       return null;

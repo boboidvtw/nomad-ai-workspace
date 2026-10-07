@@ -224,10 +224,8 @@ function showImageLightbox(src: string, alt: string): void {
   document.addEventListener('keydown', onKeyDown);
 }
 
-const CHROME_STORE_URL =
-  'https://github.com/boboidvtw/nomad-ai-workspace';
-const EDGE_STORE_URL =
-  'https://github.com/boboidvtw/nomad-ai-workspace';
+const CHROME_STORE_URL = 'https://github.com/boboidvtw/nomad-ai-workspace';
+const EDGE_STORE_URL = 'https://github.com/boboidvtw/nomad-ai-workspace';
 
 /**
  * Read the current changelog notification mode.
@@ -363,8 +361,6 @@ function createChangelogModal(
   // The changelog notification-mode toggle lives in General Options in the
   // extension settings (StorageKeys.CHANGELOG_NOTIFY_MODE), so it no longer
   // renders inside this modal.
-
-
 
   // Web store rating prompt (Chrome Web Store / Edge Add-ons).
   // Temporarily hidden — keep the code so we can re-enable it later by flipping

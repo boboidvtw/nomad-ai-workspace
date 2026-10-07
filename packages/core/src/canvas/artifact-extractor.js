@@ -16,7 +16,7 @@ const ARTIFACT_TYPES = Object.freeze({
   MERMAID: 'mermaid',
   CODE: 'code',
   MARKDOWN: 'markdown',
-  REACT: 'react'
+  REACT: 'react',
 });
 
 /**
@@ -29,7 +29,10 @@ const ARTIFACT_TYPES = Object.freeze({
 function extractArtifacts(text, options = {}) {
   try {
     if (typeof text !== 'string') {
-      return err(ErrorCodes.PIPELINE_INVALID_INPUT_003, 'Artifact extractor input must be a string');
+      return err(
+        ErrorCodes.PIPELINE_INVALID_INPUT_003,
+        'Artifact extractor input must be a string',
+      );
     }
 
     if (!text.trim()) {
@@ -80,7 +83,7 @@ function extractArtifacts(text, options = {}) {
         language: rawLang || 'plaintext',
         content,
         speaker,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       counter++;
@@ -92,7 +95,7 @@ function extractArtifacts(text, options = {}) {
     while ((svgMatch = standaloneSvgRegex.exec(text)) !== null) {
       const svgContent = svgMatch[1].trim();
       // Ensure it wasn't already caught inside a code block
-      if (!artifacts.some(a => a.content.includes(svgContent))) {
+      if (!artifacts.some((a) => a.content.includes(svgContent))) {
         artifacts.push({
           id: `art-${Date.now()}-${counter}`,
           type: ARTIFACT_TYPES.SVG,
@@ -100,7 +103,7 @@ function extractArtifacts(text, options = {}) {
           language: 'svg',
           content: svgContent,
           speaker,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
         counter++;
       }
@@ -110,7 +113,7 @@ function extractArtifacts(text, options = {}) {
   } catch (e) {
     return err(
       ErrorCodes.BRIDGE_EXECUTION_FAILED_003,
-      'Artifact extraction failed: ' + (e instanceof Error ? e.message : String(e))
+      'Artifact extraction failed: ' + (e instanceof Error ? e.message : String(e)),
     );
   }
 }
@@ -253,5 +256,5 @@ ${content}
 module.exports = {
   ARTIFACT_TYPES,
   extractArtifacts,
-  generateSandboxHtml
+  generateSandboxHtml,
 };

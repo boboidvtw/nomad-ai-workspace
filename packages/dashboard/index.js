@@ -27,10 +27,14 @@ function serveDashboard(req, res, transform) {
   const filePath = findDashboardPath();
   if (!filePath) {
     res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify(err(
-      ErrorCodes.DASHBOARD_FILE_NOT_FOUND_001,
-      'Nomad Dashboard index.html not found on system'
-    )));
+    res.end(
+      JSON.stringify(
+        err(
+          ErrorCodes.DASHBOARD_FILE_NOT_FOUND_001,
+          'Nomad Dashboard index.html not found on system',
+        ),
+      ),
+    );
     return;
   }
 
@@ -40,21 +44,23 @@ function serveDashboard(req, res, transform) {
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
       'Content-Length': Buffer.byteLength(content),
-      'Cache-Control': 'no-cache'
+      'Cache-Control': 'no-cache',
     });
     res.end(content);
   } catch (error) {
     res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify(err(
-      ErrorCodes.DASHBOARD_READ_FAILED_002,
-      'Failed to read Nomad Dashboard file',
-      { error: error instanceof Error ? error.message : String(error) }
-    )));
+    res.end(
+      JSON.stringify(
+        err(ErrorCodes.DASHBOARD_READ_FAILED_002, 'Failed to read Nomad Dashboard file', {
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      ),
+    );
   }
 }
 
 module.exports = {
   DASHBOARD_HTML_PATH,
   findDashboardPath,
-  serveDashboard
+  serveDashboard,
 };

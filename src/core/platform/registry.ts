@@ -14,7 +14,12 @@ export const SUPPORTED_PLATFORMS: Record<PlatformId, AIPlatformConfig> = {
     brandColor: '#4E88F5',
     badgeBg: 'bg-blue-500/15',
     badgeText: 'text-blue-400',
-    domains: ['gemini.google.com', 'aistudio.google.com', 'aistudio.google.cn', 'business.gemini.google'],
+    domains: [
+      'gemini.google.com',
+      'aistudio.google.com',
+      'aistudio.google.cn',
+      'business.gemini.google',
+    ],
     driveFolder: 'Gemini',
     status: 'active',
     homeUrl: 'https://gemini.google.com/',
@@ -77,7 +82,9 @@ export const SUPPORTED_PLATFORMS: Record<PlatformId, AIPlatformConfig> = {
 /**
  * Detects the active platform ID based on the current window location or provided URL.
  */
-export function detectCurrentPlatform(url: string = typeof window !== 'undefined' ? window.location.href : ''): PlatformId | null {
+export function detectCurrentPlatform(
+  url: string = typeof window !== 'undefined' ? window.location.href : '',
+): PlatformId | null {
   if (!url) return null;
   try {
     const parsed = new URL(url);
