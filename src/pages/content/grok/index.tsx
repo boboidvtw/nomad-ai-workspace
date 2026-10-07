@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { type Root, createRoot } from 'react-dom/client';
 
 import FloatBall from '@/components/FloatBall';
 import GrokFolderManager from '@/features/grok/components/FolderManager';
@@ -20,7 +20,18 @@ import './style.css';
 
 const NOMAD_GROK_ROOT_ID = 'nomad-grok-root';
 
-export const mountGrokWorkspace = async () => {
+let mountPromise: Promise<Root> | null = null;
+
+/** Mount once per page; later calls resolve to the same React root. */
+export const mountGrokWorkspace = (): Promise<Root> => {
+  mountPromise ??= mount().catch((error: unknown) => {
+    mountPromise = null; // allow a retry after a failed mount
+    throw error;
+  });
+  return mountPromise;
+};
+
+async function mount(): Promise<Root> {
   document.body.classList.add('nomad-grok-page');
   document.body.setAttribute('data-nomad-orb-active', 'true');
 
@@ -58,6 +69,7 @@ export const mountGrokWorkspace = async () => {
   } catch (e) {
     console.error('[Nomad Workspace] Failed to start Prompt Manager / Slash Commands on Grok:', e);
   }
-};
+  return root;
+}
 
 void mountGrokWorkspace();

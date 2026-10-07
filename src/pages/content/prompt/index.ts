@@ -69,6 +69,7 @@ import {
   type TemplateFillHandle,
 } from './PromptTemplateFill';
 import { extractPlainTitle } from './compactTitle';
+import { createEventActionButton } from './eventActionButton';
 import { activatePromptText } from './promptClickAction';
 import { getPromptNameConflictIds, isPromptNameTaken, normalizePromptName } from './promptName';
 import { isPinned, pinGroupOf, sortPinnedFirst, togglePin } from './promptPinning';
@@ -1005,55 +1006,23 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     supportLink.title = i18n.t('sponsorMe');
 
     if (window.location.hostname.includes('claude.ai')) {
-      const widthBtn = document.createElement('button');
-      widthBtn.type = 'button';
-      widthBtn.className = 'gv-pm-width-btn';
-      widthBtn.title = '調節 Claude 對話寬度 (Width)';
-      widthBtn.textContent = '↔️ 寬度';
-      widthBtn.style.fontSize = '12px';
-      widthBtn.style.cursor = 'pointer';
-      widthBtn.style.background = 'transparent';
-      widthBtn.style.border = 'none';
-      widthBtn.style.padding = '0 6px';
-      widthBtn.style.color = 'inherit';
-      widthBtn.style.opacity = '0.85';
-      widthBtn.style.transition = 'opacity 0.15s ease';
-      widthBtn.addEventListener('mouseenter', () => {
-        widthBtn.style.opacity = '1';
-      });
-      widthBtn.addEventListener('mouseleave', () => {
-        widthBtn.style.opacity = '0.85';
-      });
-      widthBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        window.dispatchEvent(new CustomEvent('nomad:toggle-width-panel'));
-      });
-      secondaryActions.appendChild(widthBtn);
+      secondaryActions.appendChild(
+        createEventActionButton({
+          className: 'gv-pm-width-btn',
+          title: '調節 Claude 對話寬度 (Width)',
+          label: '↔️ 寬度',
+          eventName: 'nomad:toggle-width-panel',
+        }),
+      );
     }
-    const workspaceBtn = document.createElement('button');
-    workspaceBtn.type = 'button';
-    workspaceBtn.className = 'gv-pm-workspace-btn';
-    workspaceBtn.title = '開啟 Nomad 多平台工作空間總覽';
-    workspaceBtn.textContent = '📁 工作空間';
-    workspaceBtn.style.fontSize = '12px';
-    workspaceBtn.style.cursor = 'pointer';
-    workspaceBtn.style.background = 'transparent';
-    workspaceBtn.style.border = 'none';
-    workspaceBtn.style.padding = '0 6px';
-    workspaceBtn.style.color = 'inherit';
-    workspaceBtn.style.opacity = '0.85';
-    workspaceBtn.style.transition = 'opacity 0.15s ease';
-    workspaceBtn.addEventListener('mouseenter', () => {
-      workspaceBtn.style.opacity = '1';
-    });
-    workspaceBtn.addEventListener('mouseleave', () => {
-      workspaceBtn.style.opacity = '0.85';
-    });
-    workspaceBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      window.dispatchEvent(new CustomEvent('nomad:toggle-workspace-modal'));
-    });
-    secondaryActions.appendChild(workspaceBtn);
+    secondaryActions.appendChild(
+      createEventActionButton({
+        className: 'gv-pm-workspace-btn',
+        title: '開啟 Nomad 多平台工作空間總覽',
+        label: '📁 工作空間',
+        eventName: 'nomad:toggle-workspace-modal',
+      }),
+    );
     secondaryActions.appendChild(settingsBtn);
     secondaryActions.appendChild(docsLink);
     secondaryActions.appendChild(supportLink);

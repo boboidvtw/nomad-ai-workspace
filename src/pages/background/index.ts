@@ -110,11 +110,11 @@ import {
 } from '@/pages/content/timeline/hierarchyStorage';
 import type { StarredMessage, StarredMessagesData } from '@/pages/content/timeline/starredTypes';
 import { getTranslation } from '@/utils/i18n';
-import { mergeFlatFolders, mergeFolderData, type FlatSyncFolder } from '@/utils/merge';
 import type { TranslationKey } from '@/utils/translations';
 
 import { unregisterRegisteredContentScripts } from './contentScriptRegistration';
 import { resolveOptionalHighlightSetting } from './highlightOptionalSetting';
+import { handlePlatformFolderSyncMessage, syncAllPlatformFolders } from './multiPlatformFolderSync';
 import {
   isAllowedSyncContentSender,
   isHandledBackgroundRuntimeMessage,
@@ -2047,29 +2047,6 @@ async function handleRuntimeImageMessage(
   };
 }
 
-function isFolderData(value: unknown): value is FolderData {
-  if (typeof value !== 'object' || value === null) return false;
-  const data = value as { folders?: unknown; folderContents?: unknown };
-  return (
-    Array.isArray(data.folders) &&
-    typeof data.folderContents === 'object' &&
-    data.folderContents !== null
-  );
-}
-
-function extractFlatFolders(raw: unknown): FlatSyncFolder[] {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw as FlatSyncFolder[];
-  if (
-    typeof raw === 'object' &&
-    raw !== null &&
-    Array.isArray((raw as { folders?: unknown }).folders)
-  ) {
-    return (raw as { folders: FlatSyncFolder[] }).folders;
-  }
-  return [];
-}
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!isHandledBackgroundRuntimeMessage(message)) return undefined;
 
@@ -2563,169 +2540,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
           case 'cv.sync.upload':
-          case 'nomad.sync.uploadClaude': {
-            const interactive = message.payload?.interactive !== false;
-            const folders = message.payload?.folders ?? [];
-            const success = await googleDriveSyncService.uploadClaudeFolders(folders, interactive);
-            sendResponse({ ok: success, state: await googleDriveSyncService.getState() });
-            return;
-          }
           case 'cv.sync.download':
-          case 'nomad.sync.downloadClaude': {
-            const interactive = message.payload?.interactive !== false;
-            const data = await googleDriveSyncService.downloadClaudeFolders(interactive);
-            sendResponse({
-              ok: data !== null,
-              data,
-              state: await googleDriveSyncService.getState(),
-            });
-            return;
-          }
-          case 'nomad.sync.uploadChatGPT': {
-            const interactive = message.payload?.interactive !== false;
-            const folders = message.payload?.folders ?? [];
-            const success = await googleDriveSyncService.uploadChatGPTFolders(folders, interactive);
-            sendResponse({ ok: success, state: await googleDriveSyncService.getState() });
-            return;
-          }
-          case 'nomad.sync.downloadChatGPT': {
-            const interactive = message.payload?.interactive !== false;
-            const data = await googleDriveSyncService.downloadChatGPTFolders(interactive);
-            sendResponse({
-              ok: data !== null,
-              data,
-              state: await googleDriveSyncService.getState(),
-            });
-            return;
-          }
-          case 'nomad.sync.uploadGemini': {
-            const interactive = message.payload?.interactive !== false;
-            const folders = message.payload?.folders ?? [];
-            const success = await googleDriveSyncService.uploadGeminiFolders(folders, interactive);
-            sendResponse({ ok: success, state: await googleDriveSyncService.getState() });
-            return;
-          }
-          case 'nomad.sync.downloadGemini': {
-            const interactive = message.payload?.interactive !== false;
-            const data = await googleDriveSyncService.downloadGeminiFolders(interactive);
-            sendResponse({
-              ok: data !== null,
-              data,
-              state: await googleDriveSyncService.getState(),
-            });
-            return;
-          }
-          case 'nomad.sync.uploadGrok': {
-            const interactive = message.payload?.interactive !== false;
-            const folders = message.payload?.folders ?? [];
-            const success = await googleDriveSyncService.uploadGrokFolders(folders, interactive);
-            sendResponse({ ok: success, state: await googleDriveSyncService.getState() });
-            return;
-          }
+          case 'nomad.sync.uploadClaude':
+          case 'nomad.sync.downloadClaude':
+          case 'nomad.sync.uploadChatGPT':
+          case 'nomad.sync.downloadChatGPT':
+          case 'nomad.sync.uploadGemini':
+          case 'nomad.sync.downloadGemini':
+          case 'nomad.sync.uploadGrok':
           case 'nomad.sync.downloadGrok': {
-            const interactive = message.payload?.interactive !== false;
-            const data = await googleDriveSyncService.downloadGrokFolders(interactive);
-            sendResponse({
-              ok: data !== null,
-              data,
-              state: await googleDriveSyncService.getState(),
-            });
+            sendResponse(await handlePlatformFolderSyncMessage(googleDriveSyncService, message));
             return;
           }
           case 'nomad.sync.syncAll': {
             const interactive = message.payload?.interactive !== false;
-            // 1. Download cloud folders for all 4 platforms in parallel
-            const [claudeCloud, chatgptCloud, geminiCloud, grokCloud] = await Promise.all([
-              googleDriveSyncService.downloadClaudeFolders(interactive),
-              googleDriveSyncService.downloadChatGPTFolders(interactive),
-              googleDriveSyncService.downloadGeminiFolders(interactive),
-              googleDriveSyncService.downloadGrokFolders(interactive),
-            ]);
-
-            // 2. Read local folders for all 4 platforms
-            const localStore = await chrome.storage.local.get([
-              'claude_nexus_folders',
-              'chatgpt_folders',
-              'grok_folders',
-              'gvFolderData',
-            ]);
-
-            const localClaude = (localStore.claude_nexus_folders || []) as FlatSyncFolder[];
-            const localChatGPT = (localStore.chatgpt_folders || []) as FlatSyncFolder[];
-            const localGrok = (localStore.grok_folders || []) as FlatSyncFolder[];
-            const rawLocalGemini = localStore.gvFolderData;
-            const localGemini: FolderData = isFolderData(rawLocalGemini)
-              ? rawLocalGemini
-              : {
-                  folders: Array.isArray(rawLocalGemini)
-                    ? (rawLocalGemini as FolderData['folders'])
-                    : [],
-                  folderContents: {},
-                };
-
-            // 3. Bidirectional merge
-            const mergedClaude =
-              claudeCloud !== null
-                ? mergeFlatFolders(localClaude, extractFlatFolders(claudeCloud))
-                : localClaude;
-            const mergedChatGPT =
-              chatgptCloud !== null
-                ? mergeFlatFolders(localChatGPT, extractFlatFolders(chatgptCloud))
-                : localChatGPT;
-            const mergedGrok =
-              grokCloud !== null
-                ? mergeFlatFolders(localGrok, extractFlatFolders(grokCloud))
-                : localGrok;
-
-            let mergedGemini = localGemini;
-            if (geminiCloud !== null) {
-              const cloudGeminiData: FolderData = isFolderData(geminiCloud)
-                ? geminiCloud
-                : {
-                    folders: Array.isArray(geminiCloud)
-                      ? (geminiCloud as FolderData['folders'])
-                      : [],
-                    folderContents: {},
-                  };
-              mergedGemini = mergeFolderData(localGemini, cloudGeminiData);
-            }
-
-            // 4. Save merged states to local storage (immediately triggers storage.onChanged on all open tabs for instant live refresh!)
-            await chrome.storage.local.set({
-              claude_nexus_folders: mergedClaude,
-              chatgpt_folders: mergedChatGPT,
-              grok_folders: mergedGrok,
-              gvFolderData: mergedGemini,
-            });
-
-            // 5. Upload merged folders to Google Drive in parallel to achieve full bidirectional synchronization
-            await Promise.all([
-              googleDriveSyncService.uploadClaudeFolders(mergedClaude, interactive),
-              googleDriveSyncService.uploadChatGPTFolders(mergedChatGPT, interactive),
-              googleDriveSyncService.uploadGeminiFolders(mergedGemini.folders, interactive),
-              googleDriveSyncService.uploadGrokFolders(mergedGrok, interactive),
-            ]);
-
-            // 6. Broadcast refresh signal to open tabs
-            try {
-              const tabs = await chrome.tabs.query({});
-              for (const tab of tabs) {
-                if (tab.id) {
-                  chrome.tabs.sendMessage(tab.id, { type: 'nomad.sync.refreshed' }).catch(() => {});
-                }
-              }
-            } catch {}
-
-            sendResponse({
-              ok: true,
-              data: {
-                claude: mergedClaude,
-                chatgpt: mergedChatGPT,
-                gemini: mergedGemini,
-                grok: mergedGrok,
-              },
-              state: await googleDriveSyncService.getState(),
-            });
+            const data = await syncAllPlatformFolders(googleDriveSyncService, interactive);
+            sendResponse({ ok: true, data, state: await googleDriveSyncService.getState() });
             return;
           }
           case 'gv.sync.upload': {

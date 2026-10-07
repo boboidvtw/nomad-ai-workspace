@@ -86,10 +86,18 @@ describe('xAI Grok Adapter & Super Orb Integration', () => {
 
   it('initializes Grok page attributes and mounts Super Orb container', async () => {
     const { mountGrokWorkspace } = await import('../index');
-    await mountGrokWorkspace();
+    const root = await mountGrokWorkspace();
 
     expect(document.body.classList.contains('nomad-grok-page')).toBe(true);
     expect(document.body.getAttribute('data-nomad-orb-active')).toBe('true');
     expect(document.getElementById('nomad-grok-root')).toBeTruthy();
+
+    // Importing the entry already mounted once; a second call must reuse that root
+    // instead of creating another React root on the same container.
+    expect(await mountGrokWorkspace()).toBe(root);
+    expect(document.querySelectorAll('#nomad-grok-root')).toHaveLength(1);
+
+    // Unmount so the Orb's timers do not fire after the test environment is torn down.
+    root.unmount();
   });
 });
