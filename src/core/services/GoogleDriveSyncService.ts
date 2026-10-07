@@ -1926,7 +1926,14 @@ export class GoogleDriveSyncService {
     }
   }
 
-  public async uploadGeminiFolders(folders: unknown[], interactive = true): Promise<boolean> {
+  /**
+   * Gemini stores the full FolderData (folders + folderContents) so conversation membership
+   * syncs too. Older uploads were a bare folder array, so readers must accept both shapes.
+   */
+  public async uploadGeminiFolders(
+    folders: unknown[] | FolderData,
+    interactive = true,
+  ): Promise<boolean> {
     try {
       this.updateState({ isSyncing: true, error: null });
       const token = await this.getAuthToken(interactive);
@@ -1960,7 +1967,7 @@ export class GoogleDriveSyncService {
     }
   }
 
-  public async downloadGeminiFolders(interactive = true): Promise<unknown[] | null> {
+  public async downloadGeminiFolders(interactive = true): Promise<unknown[] | FolderData | null> {
     try {
       this.updateState({ isSyncing: true, error: null });
       const token = await this.getAuthToken(interactive);

@@ -2663,7 +2663,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             await Promise.all([
               googleDriveSyncService.uploadClaudeFolders(mergedClaude, interactive),
               googleDriveSyncService.uploadChatGPTFolders(mergedChatGPT, interactive),
-              googleDriveSyncService.uploadGeminiFolders(mergedGemini.folders, interactive),
+              // Full FolderData, not just `folders`: folderContents carries conversation membership.
+              googleDriveSyncService.uploadGeminiFolders(mergedGemini, interactive),
               googleDriveSyncService.uploadGrokFolders(mergedGrok, interactive),
             ]);
 

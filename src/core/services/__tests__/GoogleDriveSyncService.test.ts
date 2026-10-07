@@ -1271,6 +1271,36 @@ describe('GoogleDriveSyncService plugin-state file', () => {
       expect(downloaded).toEqual(fakeGeminiFolders);
     });
 
+    it("round-trips Gemini FolderData so conversation membership survives", async () => {
+      const chromeMock = createChromeMock();
+      (globalThis as { chrome: MockedChrome }).chrome = chromeMock;
+      const GoogleDriveSyncService = await loadServiceClass();
+      const service = new GoogleDriveSyncService();
+
+      vi.spyOn(service as any, "getAuthToken").mockResolvedValue("token");
+      vi.spyOn(service as any, "ensurePlatformSubfolder").mockResolvedValue("gemini-subfolder-id");
+      vi.spyOn(service as any, "ensureSubfolderFileId").mockResolvedValue("gemini-file-id");
+      const uploadSpy = vi.spyOn(service as any, "uploadFileWithRetry").mockResolvedValue(undefined);
+
+      const folderData = {
+        folders: [{ id: "g1", name: "Work", parentId: null, isExpanded: true, createdAt: 1, updatedAt: 1 }],
+        folderContents: { g1: [{ conversationId: "c1", title: "Chat", url: "", addedAt: 1 }] },
+      };
+      expect(await service.uploadGeminiFolders(folderData)).toBe(true);
+      expect(uploadSpy).toHaveBeenCalledWith("token", "gemini-file-id", expect.objectContaining({
+        format: "nomad.gemini.folders.v1",
+        data: folderData,
+      }));
+
+      vi.spyOn(service as any, "findFileInFolder").mockResolvedValue("gemini-file-id");
+      vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => ({ format: "nomad.gemini.folders.v1", data: folderData }),
+      } as any);
+
+      expect(await service.downloadGeminiFolders()).toEqual(folderData);
+    });
+
     it("resolves platform subfolder matching Voyager legacy alias name", async () => {
       const chromeMock = createChromeMock();
       (globalThis as { chrome: MockedChrome }).chrome = chromeMock;
