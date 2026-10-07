@@ -40,11 +40,17 @@ const PLATFORMS = {
   perplexity: { name: 'Perplexity', url: 'https://www.perplexity.ai', color: '#22B8CD' },
 };
 
+/** @type {BrowserWindow | null} */
 let mainWindow = null;
+/** @type {Record<string, { view: WebContentsView, isLoaded: boolean, name: string, url: string, color: string }>} */
 const views = {};
+/** @type {import('./src/tray').TrayAndShortcutManager | null} */
 let trayManager = null;
+/** @type {import('./src/bridge').LocalSyncBridge | null} */
 let bridge = null;
+/** @type {import('./src/orchestrator').MultiAiOrchestrator | null} */
 let orchestrator = null;
+/** @type {import('./src/session-manager').SessionManager | null} */
 let sessionManager = null;
 let isDrawerOpen = false;
 app.isQuitting = false;
@@ -53,6 +59,9 @@ const TOP_BAR_HEIGHT = 52;
 const BOTTOM_BAR_HEIGHT = 68;
 const DRAWER_WIDTH = 420;
 
+/**
+ * @param {string} key
+ */
 function ensurePlatformLoaded(key) {
   const item = views[key];
   if (!item) return;
@@ -97,6 +106,10 @@ function updateViewBounds() {
   }
 }
 
+/**
+ * @param {string} platform
+ * @param {number} factor
+ */
 function applyZoom(platform, factor) {
   const item = views[platform];
   if (item && item.isLoaded && item.view && item.view.webContents) {
@@ -122,8 +135,8 @@ async function createMainWindow() {
   // 2. Load unpacked extension if available
   try {
     const extLoader = session.defaultSession.extensions?.loadExtension
-      ? (p, opts) => session.defaultSession.extensions.loadExtension(p, opts)
-      : (p, opts) => session.defaultSession.loadExtension(p, opts);
+      ? (/** @type {string} */ p, /** @type {Electron.LoadExtensionOptions} */ opts) => session.defaultSession.extensions.loadExtension(p, opts)
+      : (/** @type {string} */ p, /** @type {Electron.LoadExtensionOptions} */ opts) => session.defaultSession.loadExtension(p, opts);
     const ext = await extLoader(EXTENSION_PATH, { allowFileAccess: true });
     console.log(`[Nomad Desktop] Loaded Extension: ${ext.name} (v${ext.version})`);
   } catch (err) {
@@ -185,7 +198,7 @@ async function createMainWindow() {
   mainWindow.once('ready-to-show', () => {
     updateViewBounds();
     applyAllZooms();
-    mainWindow.show();
+    mainWindow?.show();
   });
 
   // 3.5 Initialize SessionManager
@@ -196,10 +209,10 @@ async function createMainWindow() {
 
   // 4. Initialize Multi-AI Orchestrator Engine
   orchestrator = new MultiAiOrchestrator({
-    injectPrompt: async (platform, text) => {
+    injectPrompt: async (/** @type {string} */ platform, /** @type {string} */ text) => {
       return await dispatchPromptToTargets(text, [platform]);
     },
-    extractResponse: async (platform) => {
+    extractResponse: async (/** @type {string} */ platform) => {
       const item = views[platform];
       if (!item) return { ok: false, error: 'Platform view not found' };
       const extractorScript = PLATFORM_EXTRACTORS[platform]?.getLatestResponse();
@@ -211,7 +224,7 @@ async function createMainWindow() {
         return { ok: false, error: (err instanceof Error ? err.message : String(err)) };
       }
     },
-    checkStreaming: async (platform) => {
+    checkStreaming: async (/** @type {string} */ platform) => {
       const item = views[platform];
       if (!item) return { ok: false, isStreaming: false };
       const statusScript = PLATFORM_EXTRACTORS[platform]?.checkStatus();
@@ -223,7 +236,7 @@ async function createMainWindow() {
         return { ok: false, isStreaming: false, error: (err instanceof Error ? err.message : String(err)) };
       }
     },
-    onStep: async (event) => {
+    onStep: async (/** @type {Record<string, any>} */ event) => {
       if (event.type === 'turn-complete' && event.speaker && event.canonicalTitle) {
         try {
           await sessionManager?.applyInPageRenaming(event.speaker, event.canonicalTitle);
@@ -231,7 +244,7 @@ async function createMainWindow() {
           console.warn("[Nomad Desktop] Action failed:", (e instanceof Error ? e.message : String(e)));
         }
         const activeWs = sessionManager?.getActiveWorkspace();
-        if (activeWs) {
+        if (sessionManager && activeWs) {
           sessionManager.captureActiveUrls(activeWs.id);
           sessionManager.addTurn(activeWs.id, {
             speaker: event.speaker,
@@ -246,9 +259,9 @@ async function createMainWindow() {
       }
       bridge?.broadcast('orchestration-step', event);
     },
-    onComplete: async (summary) => {
+    onComplete: async (/** @type {Record<string, any>} */ summary) => {
       const activeWs = sessionManager?.getActiveWorkspace();
-      if (activeWs) {
+      if (sessionManager && activeWs) {
         sessionManager.captureActiveUrls(activeWs.id);
         sessionManager.updateWorkspace(activeWs.id, {
           completed: true,
@@ -288,7 +301,7 @@ async function createMainWindow() {
       }
       return results;
     },
-    onSetLayout: (data) => {
+    onSetLayout: (/** @type {{ layout?: string, activePlatforms?: string[], splitRatio?: number }} */ data) => {
       if (data.layout) store.set('layout', data.layout);
       if (data.activePlatforms) store.set('activePlatforms', data.activePlatforms);
       if (data.splitRatio) store.set('splitRatio', data.splitRatio);
@@ -299,7 +312,7 @@ async function createMainWindow() {
       }
       return store.getAll();
     },
-    onSetZoom: (data) => {
+    onSetZoom: (/** @type {{ platform?: string, factor?: number, globalFactor?: number, zoomFactors?: Record<string, number> }} */ data) => {
       if (data.platform && typeof data.factor === 'number') {
         store.setZoom(data.platform, data.factor);
         applyZoom(data.platform, data.factor);
@@ -312,7 +325,7 @@ async function createMainWindow() {
       }
       return store.getAll().zoomFactors;
     },
-        onInspectPlatform: async (platform) => {
+        onInspectPlatform: async (/** @type {string} */ platform) => {
       ensurePlatformLoaded(platform);
       const item = views[platform];
       if (!item) return { ok: false, error: "Platform view not found" };
@@ -340,7 +353,7 @@ async function createMainWindow() {
       } catch (e) { debugDom = { error: (e instanceof Error ? e.message : String(e)) }; }
       return { ok: true, platform, extRes, statRes, debugDom };
     },
-    onEvalScript: async (platform, script) => {
+    onEvalScript: async (/** @type {string} */ platform, /** @type {string} */ script) => {
       ensurePlatformLoaded(platform);
       const item = views[platform];
       if (!item) return { ok: false, error: "Platform view not found" };
@@ -351,7 +364,7 @@ async function createMainWindow() {
         return { ok: false, error: (e instanceof Error ? e.message : String(e)) };
       }
     },
-    onToggleWindow: (action) => {
+    onToggleWindow: (/** @type {string} */ action) => {
       if (!mainWindow) return { visible: false };
       if (action === 'show') {
         mainWindow.show();
@@ -389,7 +402,7 @@ async function createMainWindow() {
     mainWindow,
     store,
     bridge,
-    onLayoutChange: (layout) => {
+    onLayoutChange: (/** @type {string} */ layout) => {
       store.set('layout', layout);
       if (layout === 'focus') store.set('activePlatforms', ['chatgpt']);
       else if (layout === 'dual') store.set('activePlatforms', ['chatgpt', 'claude']);
@@ -397,12 +410,12 @@ async function createMainWindow() {
       else if (layout === 'quad') store.set('activePlatforms', ALL_PLATFORMS.slice(0, 4));
       else if (layout === 'hexa') store.set('activePlatforms', ALL_PLATFORMS.slice(0, 6));
       updateViewBounds();
-      trayManager.updateContextMenu();
+      trayManager?.updateContextMenu();
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('nomad:remote-update', store.getAll());
       }
     },
-    onZoomChange: (globalFactor) => {
+    onZoomChange: (/** @type {number} */ globalFactor) => {
       for (const p of ALL_PLATFORMS) {
         store.setZoom(p, globalFactor);
         applyZoom(p, globalFactor);
@@ -419,9 +432,8 @@ async function createMainWindow() {
       }
     },
     onNewSession: () => {
-      if (sessionManager) {
-        sessionManager.createWorkspace({ prompt: '新跨平臺協作' });
-      }
+      if (!sessionManager) return;
+      sessionManager.createWorkspace({ prompt: '新跨平臺協作' });
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getWorkspaces());
       }
@@ -436,21 +448,29 @@ async function createMainWindow() {
   trayManager.init();
 }
 
+/**
+ * @param {string | { text?: string }} prompt - Renderer IPC may send `{ text }`
+ * @param {string[]} targets - Platform ids, or 'local' for the local model
+ * @param {import('./src/injectors').PromptAttachment[]} [attachments]
+ * @returns {Promise<Record<string, unknown>>}
+ */
 async function dispatchPromptToTargets(prompt, targets, attachments = []) {
-  console.log(`[Nomad Desktop] Dispatching prompt to [${targets.join(', ')}]: "${(typeof prompt === 'string' ? prompt : '').slice(0, 30)}..."`);
+  const promptText = typeof prompt === 'string' ? prompt : (prompt.text || '');
+  console.log(`[Nomad Desktop] Dispatching prompt to [${targets.join(', ')}]: "${promptText.slice(0, 30)}..."`);
+  /** @type {Record<string, unknown>} */
   const results = {};
 
   if (targets.includes('local')) {
     try {
       console.log('[Nomad Desktop] Dispatching to Local Model (LM Studio/Ollama)...');
       const chatRes = await localModelClient.chatCompletion({
-        prompt: typeof prompt === 'string' ? prompt : (prompt.text || ''),
-        messages: [{ role: 'user', content: typeof prompt === 'string' ? prompt : (prompt.text || '') }]
+        prompt: promptText,
+        messages: [{ role: 'user', content: promptText }]
       });
       results['local'] = chatRes;
       if (chatRes.success) {
         const activeWs = sessionManager?.getActiveWorkspace();
-        if (activeWs) {
+        if (sessionManager && activeWs) {
           sessionManager.addTurn(activeWs.id, {
             speaker: 'local',
             round: 1,
@@ -479,7 +499,7 @@ async function dispatchPromptToTargets(prompt, targets, attachments = []) {
     if (!injector) continue;
 
     try {
-      const res = await wc.executeJavaScript(injector({ text: prompt, attachments }));
+      const res = await wc.executeJavaScript(injector({ text: promptText, attachments }));
       results[target] = { ok: true, data: res };
       console.log(`[Nomad Desktop] Inject result for ${target}:`, res);
     } catch (e) {
@@ -545,7 +565,7 @@ ipcMain.handle('nomad:orchestration-start', async (event, options) => {
   } else if (options.prompt && !ws.title) {
     sessionManager?.updateWorkspace(ws.id, {
       title: options.title,
-      prompt: options.prompt,
+      promptSnippet: String(options.prompt).slice(0, 100),
     });
   }
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -742,6 +762,7 @@ ipcMain.handle('nomad:drive-sync-status', async (event, customOpts = {}) => {
 });
 
 ipcMain.handle('nomad:drive-sync-push', async (event, customOpts = {}) => {
+  if (!sessionManager) return { success: false, errorCode: 'SESSION_MANAGER_NOT_READY' };
   const workspaces = sessionManager.getWorkspaces();
   const settings = store.getAll();
   const targetDir = customOpts.targetDir || store.get('driveSync')?.customPath || undefined;
@@ -755,15 +776,17 @@ ipcMain.handle('nomad:drive-sync-push', async (event, customOpts = {}) => {
 });
 
 ipcMain.handle('nomad:drive-sync-pull', async (event, customOpts = {}) => {
+  if (!sessionManager) return { success: false, errorCode: 'SESSION_MANAGER_NOT_READY' };
+  const sm = sessionManager;
   const sourceDir = customOpts.sourceDir || store.get('driveSync')?.customPath || undefined;
   const strategy = customOpts.strategy || 'merge';
   const result = importFromDrive({
     sourceDir,
-    currentWorkspaces: sessionManager.getWorkspaces(),
+    currentWorkspaces: sm.getWorkspaces(),
     strategy
   });
   if (result.success) {
-    sessionManager.store.set('workspaces', result.data.reconciledWorkspaces);
+    sm.store.set('workspaces', result.data.reconciledWorkspaces);
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('nomad:workspaces-updated', result.data.reconciledWorkspaces);
     }

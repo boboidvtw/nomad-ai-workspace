@@ -1,4 +1,20 @@
 
+/**
+ * @typedef {Object} PromptAttachment
+ * @property {string} [name]
+ * @property {string} [type] - 'text' | 'image' | other
+ * @property {string} [content]
+ * @property {string} [language]
+ * @property {string} [mimeType]
+ * @property {boolean} [isText]
+ * @property {boolean} [isImage]
+ */
+
+/**
+ * @param {string} text
+ * @param {PromptAttachment[]} [attachments]
+ * @returns {string}
+ */
 function formatPromptWithAttachments(text, attachments = []) {
   if (!Array.isArray(attachments) || attachments.length === 0) {
     return text || '';
@@ -25,8 +41,9 @@ function formatPromptWithAttachments(text, attachments = []) {
  */
 
 
+/** @type {Record<string, (text: string) => string>} Returns a script to run in the platform webview */
 const RAW_PLATFORM_INJECTORS = {
-  claude: (text) => `(function() {
+  claude: (/** @type {string} */ text) => `(function() {
     try {
       const text = ${JSON.stringify(text)};
       const input = document.querySelector('div.ProseMirror[contenteditable="true"]') ||
@@ -66,7 +83,7 @@ const RAW_PLATFORM_INJECTORS = {
     }
   })()`,
 
-  chatgpt: (text) => `(function() {
+  chatgpt: (/** @type {string} */ text) => `(function() {
     try {
       const text = ${JSON.stringify(text)};
       const input = document.querySelector('div.ProseMirror[contenteditable="true"]') ||
@@ -115,7 +132,7 @@ const RAW_PLATFORM_INJECTORS = {
     }
   })()`,
 
-  gemini: (text) => `(function() {
+  gemini: (/** @type {string} */ text) => `(function() {
     try {
       const text = ${JSON.stringify(text)};
       
@@ -239,7 +256,7 @@ const RAW_PLATFORM_INJECTORS = {
     }
   })()`,
 
-  grok: (text) => `(function() {
+  grok: (/** @type {string} */ text) => `(function() {
     try {
       const text = ${JSON.stringify(text)};
       
@@ -395,7 +412,7 @@ const RAW_PLATFORM_INJECTORS = {
     }
   })()`,
 
-  deepseek: (text) => `(function() {
+  deepseek: (/** @type {string} */ text) => `(function() {
     try {
       const text = ${JSON.stringify(text)};
       const input = document.querySelector('textarea[placeholder*="DeepSeek"], textarea#chat-input, textarea');
@@ -426,7 +443,7 @@ const RAW_PLATFORM_INJECTORS = {
     }
   })()`,
 
-  perplexity: (text) => `(function() {
+  perplexity: (/** @type {string} */ text) => `(function() {
     try {
       const text = ${JSON.stringify(text)};
       const input = document.querySelector('textarea[placeholder*="Ask"], textarea[placeholder*="搜尋"], textarea');
@@ -459,18 +476,22 @@ const RAW_PLATFORM_INJECTORS = {
 };
 
 
-const PLATFORM_INJECTORS = new Proxy(RAW_PLATFORM_INJECTORS, {
+/** @typedef {(input: string | { text: string, attachments?: PromptAttachment[] }) => string} PlatformInjector */
+
+// The Proxy widens each builder to also accept `{ text, attachments }`, which the
+// target's own type cannot express, hence the cast.
+const PLATFORM_INJECTORS = /** @type {Record<string, PlatformInjector>} */ (/** @type {unknown} */ (new Proxy(RAW_PLATFORM_INJECTORS, {
   get(target, prop) {
-    const rawFn = target[prop];
+    const rawFn = target[String(prop)];
     if (typeof rawFn !== 'function') return rawFn;
-    return (input) => {
+    return (/** @type {string | { text: string, attachments?: PromptAttachment[] }} */ input) => {
       const text = (typeof input === 'object' && input !== null)
         ? formatPromptWithAttachments(input.text, input.attachments)
         : input;
       return rawFn(text);
     };
   }
-});
+})));
 
 module.exports = {
   PLATFORM_INJECTORS,

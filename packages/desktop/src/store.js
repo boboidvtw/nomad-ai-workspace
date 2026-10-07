@@ -53,11 +53,16 @@ class SettingsStore {
    * @param {string} [customFilePath] - Custom path to settings JSON (for testing)
    */
   constructor(customFilePath) {
+    /** @type {string | null} */
     this.filePath = customFilePath || null;
+    /** @type {Record<string, any>} Settings are free-form JSON keyed by setting name */
     this.data = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
     this.isLoaded = false;
   }
 
+  /**
+   * @param {string} [filePath]
+   */
   init(filePath) {
     if (filePath) {
       this.filePath = filePath;
@@ -125,6 +130,10 @@ class SettingsStore {
     }
   }
 
+  /**
+   * @param {string} key
+   * @returns {any}
+   */
   get(key) {
     return this.data[key];
   }
@@ -133,12 +142,19 @@ class SettingsStore {
     return JSON.parse(JSON.stringify(this.data));
   }
 
+  /**
+   * @param {string} key
+   * @param {unknown} value
+   */
   set(key, value) {
     this.data[key] = value;
     this.save();
     return this.data[key];
   }
 
+  /**
+   * @param {Record<string, unknown>} partial
+   */
   update(partial) {
     if (!partial || typeof partial !== 'object') return this.data;
 
@@ -187,10 +203,18 @@ class SettingsStore {
     return this.getAll();
   }
 
+  /**
+   * @param {string} platform
+   * @returns {number}
+   */
   getZoom(platform) {
     return this.data.zoomFactors[platform] || 1.0;
   }
 
+  /**
+   * @param {string} platform
+   * @param {number} factor
+   */
   setZoom(platform, factor) {
     const clamped = Math.min(2.0, Math.max(0.5, Number(factor) || 1.0));
     this.data.zoomFactors[platform] = Math.round(clamped * 100) / 100;

@@ -188,4 +188,27 @@ describe("Bridge: Task Control Plane & Multi-Agent Dispatcher", () => {
       await bridge.stop();
     }
   });
+
+  it("delegates webview-agent tasks to onDispatchPrompt with { prompt, targets }", async () => {
+    const calls = [];
+    const bridge = new LocalSyncBridge({
+      port: 19974,
+      onDispatchPrompt: async (req) => {
+        calls.push(req);
+        // Mirrors main.js: it destructures { prompt, targets } and iterates targets.
+        return { dispatchedTo: req.targets.join(",") };
+      },
+    });
+    const { port: actualPort } = await bridge.start();
+    try {
+      const created = await makeRequest(actualPort, "POST", "/api/tasks", { title: "Summarise the release notes" });
+      const run = await makeRequest(actualPort, "POST", "/api/tasks/run", { taskId: created.data.data.id, agentId: "agent-claude" });
+      assert.strictEqual(run.status, 200, JSON.stringify(run.data));
+      assert.strictEqual(calls.length, 1);
+      assert.deepStrictEqual(calls[0].targets, ["claude"]);
+      assert.ok(typeof calls[0].prompt === "string" && calls[0].prompt.includes("Summarise the release notes"));
+    } finally {
+      await bridge.stop();
+    }
+  });
 });

@@ -21,6 +21,9 @@
 - **Daemon `/api/local-model/chat` 永遠 500**：呼叫了不存在的 `client.chat()`（應為 `chatCompletion()`）；`LocalModelClient` 也忽略呼叫端傳入的 `host` / `port`，現在會依此組出 endpoint。
 - **Desktop 抽屜切換 `ReferenceError`**：`onToggleDrawer` 使用未宣告的 `drawerOpen` 變數。
 - **指派給 local-model（LM Studio）Agent 的任務一律失敗**：`TaskRunner` 呼叫不存在的 `localModelClient.chat()`（應為 `chatCompletion()`），token 數也讀錯欄位。
+- **桌面版指派給網頁版 AI（Claude、ChatGPT…）的任務一律失敗**：Bridge 以 `(platform, prompt)` 呼叫 `onDispatchPrompt`，但 main.js 預期 `{ prompt, targets }`，導致 `targets.join` 丟出 `TypeError`。
+- **桌面版 IPC 在 SessionManager 初始化前被呼叫時崩潰**：drive-sync push / pull 改為回傳 `SESSION_MANAGER_NOT_READY`。
+- **以 `{ text }` 物件派發提示詞時，網頁版 AI 收到 `[object Object]`**；工作區摘要更新誤寫入不存在的 `prompt` 欄位（應為 `promptSnippet`）。
 - **空的 Agent 名單時 `findBestAgentForSkills` 回傳空物件**：改為回傳 `ROSTER_AGENT_NOT_FOUND_001`。
 - **CLI `nomad-daemon probe` 失敗時崩潰**、`/api/status` 在探測失敗時回傳 `microservices: undefined`。
 - **根目錄 4 個失敗測試**：上游 Voyager 的 CI / release 測試改為依其實際讀取的檔案（`pr-gate.yml`、`release.yml`、`deploy-docs.yml`、`sponsors.yml`）決定是否執行，不再因本專案有自己的 `.github/workflows` 而誤跑；腳本邏輯測試照常執行。
@@ -31,11 +34,12 @@
 
 - **統一使用 npm 作為套件管理器**：`packageManager` 由 `bun@1.3.12` 改為 `npm@11.19.1`（與 lockfile、CI、文件一致；electron-builder 打包亦改以 npm 解析 workspace 依賴）。原本以 bun 執行的 npm scripts 改用 `node` / `npm run`，TS 維護腳本（`plugin:check`、`plugin:new`、`catalog:build`）改用新增的 `tsx` devDependency 執行；僅 `verify:katex-export`（使用 `Bun.build`）仍需 Bun。移除子套件中無效的 `desktop/package-lock.json`、`gemini-nexus/package-lock.json`、`claude-voyager/yarn.lock`。
 
-- **型別檢查收緊為 `strict`**：`@nomad/core`、`@nomad/daemon`、`@nomad/dashboard` 開啟完整 `strict`（含 `noImplicitAny`）；desktop 開啟 `strict` 但暫不含 `noImplicitAny`（Electron 主程序約 300 個未標註參數）。新增 `Task`、`Agent`、`Schedule`、`ServiceProbeResult` 等實體型別，產生的型別中 `any` 由 92 處降至 5 處、`Object` 清零。
+- **型別檢查收緊為 `strict`**：`@nomad/core`、`@nomad/daemon`、`@nomad/dashboard`、desktop 全部開啟完整 `strict`（含 `noImplicitAny`）；desktop 新增 `Workspace`、`WorkspaceTurn`、`PromptAttachment`、`OrchestrationTurn` 等型別。新增 `Task`、`Agent`、`Schedule`、`ServiceProbeResult` 等實體型別，產生的型別中 `any` 由 92 處降至 5 處、`Object` 清零。
 - **微服務探針單一來源**：`packages/daemon/src/prober.js` 與 `packages/desktop/src/prober.js` 兩份完全相同的副本合併為 `@nomad/core` 的 `probePort` / `probeAllServices`；`@nomad/daemon` 對外的同名 export 不變（改由 core 轉出）。
 
 ### 🗑️ 移除 (Removed)
 - **`packages/gemini-voyager` 上游快照**：此為上游 Voyager v1.9.0（+17 commits）的未修改快照，根目錄 `src/` 已是其超集且無任何建置 / 測試使用（35MB、1688 檔、約 33 萬行）。改以 `voyager-upstream` git remote 追蹤上游，同步方式見 `docs/ARCHITECTURE.md`；subtree 匯入歷史仍保留於 git log。
+- **根目錄 vitest 不再掃描 `.claude/**`**：該處的 agent / 編輯器 worktree 是整份 repo 的副本，會被重複收集而產生假失敗。
 - **根目錄 vitest 不再掃描 `packages/**`**：子套件各有自己的測試執行器，先前被根目錄 vitest 誤收而產生 76 個假失敗檔案。
 
 ---

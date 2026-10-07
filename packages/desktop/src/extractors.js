@@ -3,6 +3,7 @@
  * Extracts latest AI responses and detects completion status across platforms.
  */
 
+/** @type {Record<string, { getLatestResponse: () => string, checkStatus: () => string }>} Script builders run inside each platform webview */
 const PLATFORM_EXTRACTORS = {
   claude: {
     getLatestResponse: () => `(function() {

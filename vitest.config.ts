@@ -12,6 +12,8 @@ export default defineConfig({
       '**/dist*/**',
       // Workspace packages have their own runners (node:test, their own vitest configs).
       'packages/**',
+      // Agent/editor worktrees under .claude/ are full copies of this repo.
+      '.claude/**',
       // These suites assert upstream Voyager's CI/release setup and read those files at
       // module load, so they only run where that setup exists. Gate on the files they
       // read, not on `.github/workflows` itself: this repo has its own, different CI.

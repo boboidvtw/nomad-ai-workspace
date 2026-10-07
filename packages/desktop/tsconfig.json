@@ -9,8 +9,6 @@
     "target": "es2022",
     "lib": ["es2022", "dom"],
     "strict": true,
-    // noImplicitAny is still off here (~300 untyped params in the Electron main process).
-    "noImplicitAny": false,
     "skipLibCheck": true,
     "types": ["node"],
     "typeRoots": ["../../node_modules/@types"]
