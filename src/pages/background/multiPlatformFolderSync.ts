@@ -1,7 +1,5 @@
-import type {
-  GoogleDriveSyncService,
-  PlatformFolderPayload,
-} from '@/core/services/GoogleDriveSyncService';
+import type { GoogleDriveSyncService } from '@/core/services/GoogleDriveSyncService';
+import type { PlatformFolderPayload } from '@/core/services/platformFolderFiles';
 import type { FolderData } from '@/core/types/folder';
 import { type FlatSyncFolder, mergeFlatFolders, mergeFolderData } from '@/utils/merge';
 
