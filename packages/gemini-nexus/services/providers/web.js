@@ -59,7 +59,7 @@ function constructPayload(prompt, fileList, contextIds, { temporaryChat = false 
 }
 
 function stripNativeContextIds(context = {}) {
-    const { contextIds, ...authContext } = context;
+    const { contextIds: _contextIds, ...authContext } = context;
     return authContext;
 }
 

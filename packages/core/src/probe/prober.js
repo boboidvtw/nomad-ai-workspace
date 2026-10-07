@@ -89,14 +89,14 @@ async function probeAllServices(services = MONITORED_SERVICES, timeoutMs = 350) 
         online: result.online,
         latencyMs: result.latencyMs,
         error: result.error || null,
-        statusText: result.online ? '🟢 Online' : '⚪ Offline'
+        statusText: result.online ? '🟢 Online' : '⚪ Offline',
       };
     });
 
     const evaluated = await Promise.all(probePromises);
-    const onlineCount = evaluated.filter(s => s.online).length;
+    const onlineCount = evaluated.filter((s) => s.online).length;
     const offlineCount = evaluated.length - onlineCount;
-    const allEssentialOnline = evaluated.filter(s => s.essential).every(s => s.online);
+    const allEssentialOnline = evaluated.filter((s) => s.essential).every((s) => s.online);
 
     return ok({
       timestamp: new Date().toISOString(),
@@ -106,19 +106,17 @@ async function probeAllServices(services = MONITORED_SERVICES, timeoutMs = 350) 
         onlineCount,
         offlineCount,
         allEssentialOnline,
-        overallStatus: allEssentialOnline ? 'healthy' : 'degraded'
-      }
+        overallStatus: allEssentialOnline ? 'healthy' : 'degraded',
+      },
     });
   } catch (error) {
-    return err(
-      ErrorCodes.PROBE_CHECK_FAILED_004,
-      'Failed to execute microservice health probe',
-      { error: error instanceof Error ? error.message : String(error) }
-    );
+    return err(ErrorCodes.PROBE_CHECK_FAILED_004, 'Failed to execute microservice health probe', {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 
 module.exports = {
   probePort,
-  probeAllServices
+  probeAllServices,
 };

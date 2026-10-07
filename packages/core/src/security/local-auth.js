@@ -66,7 +66,8 @@ function isLoopbackModelTarget({ host, endpoint } = {}) {
   if (endpoint) {
     try {
       const parsed = new URL(endpoint);
-      if (!['http:', 'https:'].includes(parsed.protocol) || !isLoopbackHostname(parsed.hostname)) return false;
+      if (!['http:', 'https:'].includes(parsed.protocol) || !isLoopbackHostname(parsed.hostname))
+        return false;
     } catch {
       return false;
     }
@@ -80,7 +81,9 @@ function isLoopbackModelTarget({ host, endpoint } = {}) {
  * @returns {string}
  */
 function hostnameFromHostHeader(hostHeader) {
-  const value = String(hostHeader || '').trim().toLowerCase();
+  const value = String(hostHeader || '')
+    .trim()
+    .toLowerCase();
   if (value.startsWith('[')) {
     const end = value.indexOf(']');
     return end === -1 ? value : value.slice(0, end + 1);
@@ -97,7 +100,12 @@ function isAllowedHostHeader(hostHeader, boundHost) {
   if (!hostHeader) return true;
   const hostname = hostnameFromHostHeader(hostHeader);
   if (isLoopbackHostname(hostname)) return true;
-  return Boolean(boundHost) && boundHost !== '0.0.0.0' && boundHost !== '::' && hostname === String(boundHost).toLowerCase();
+  return (
+    Boolean(boundHost) &&
+    boundHost !== '0.0.0.0' &&
+    boundHost !== '::' &&
+    hostname === String(boundHost).toLowerCase()
+  );
 }
 
 /**
@@ -110,7 +118,10 @@ function isAllowedOrigin(origin) {
   if (!origin) return true;
   try {
     const parsed = new URL(origin);
-    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && isLoopbackHostname(parsed.hostname);
+    return (
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+      isLoopbackHostname(parsed.hostname)
+    );
   } catch {
     return false;
   }
@@ -158,7 +169,10 @@ function applyCorsHeaders(req, res, publicRoute = false) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Nomad-Token, X-Requested-With');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, X-Nomad-Token, X-Requested-With',
+  );
 }
 
 /**
@@ -193,9 +207,15 @@ function authorizeRequest(req, url, { token, boundHost, publicRoute = false }) {
  * @param {number[]} [gatewayPorts]
  */
 function injectDashboardAuth(html, token, gatewayPorts = [DEFAULT_DAEMON_PORT]) {
-  const config = JSON.stringify({ token, ports: gatewayPorts.map(String) }).replace(/</g, '\\u003c');
-  const shim = '<script>(function(){' +
-    'var C=' + config + ';window.__NOMAD_TOKEN__=C.token;' +
+  const config = JSON.stringify({ token, ports: gatewayPorts.map(String) }).replace(
+    /</g,
+    '\\u003c',
+  );
+  const shim =
+    '<script>(function(){' +
+    'var C=' +
+    config +
+    ';window.__NOMAD_TOKEN__=C.token;' +
     'function gw(u){try{var x=new URL(u,location.href);var p=x.port||(x.protocol==="https:"?"443":"80");' +
     'return /^(127\\.0\\.0\\.1|localhost|\\[::1\\])$/.test(x.hostname)&&(x.origin===location.origin||C.ports.indexOf(p)!==-1);}catch(e){return false;}}' +
     'var F=window.fetch;if(F){window.fetch=function(i,o){var u=typeof i==="string"?i:(i&&i.url);' +
@@ -226,5 +246,5 @@ module.exports = {
   tokensMatch,
   applyCorsHeaders,
   authorizeRequest,
-  injectDashboardAuth
+  injectDashboardAuth,
 };

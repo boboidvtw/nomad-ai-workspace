@@ -26,7 +26,7 @@ class TrayAndShortcutManager {
     onZoomChange,
     onToggleDrawer,
     onNewSession,
-    onToggleHud
+    onToggleHud,
   }) {
     this.mainWindow = mainWindow;
     this.store = store;
@@ -48,7 +48,11 @@ class TrayAndShortcutManager {
 
   createTray() {
     const isMac = process.platform === 'darwin';
-    const iconFile = isMac ? 'trayTemplate.png' : (process.platform === 'win32' ? 'nomad.ico' : 'nomad.png');
+    const iconFile = isMac
+      ? 'trayTemplate.png'
+      : process.platform === 'win32'
+        ? 'nomad.ico'
+        : 'nomad.png';
     const iconPath = path.join(__dirname, '..', iconFile);
 
     try {
@@ -70,7 +74,10 @@ class TrayAndShortcutManager {
         this.toggleWindow();
       });
     } catch (err) {
-      console.warn('[Nomad Tray] Failed to initialize system tray:', (err instanceof Error ? err.message : String(err)));
+      console.warn(
+        '[Nomad Tray] Failed to initialize system tray:',
+        err instanceof Error ? err.message : String(err),
+      );
     }
   }
 
@@ -80,7 +87,8 @@ class TrayAndShortcutManager {
     const currentLayout = this.store.get('layout') || 'dual';
     const bridgePort = this.store.get('bridgePort') || 8765;
     const shortcuts = this.store.get('shortcuts') || {};
-    const shortcut = shortcuts.toggleWindow || this.store.get('shortcut') || 'CommandOrControl+Shift+Space';
+    const shortcut =
+      shortcuts.toggleWindow || this.store.get('shortcut') || 'CommandOrControl+Shift+Space';
     const isMac = process.platform === 'darwin';
     const shortcutLabel = shortcut.replace('CommandOrControl', isMac ? 'Cmd' : 'Ctrl');
 
@@ -182,7 +190,7 @@ class TrayAndShortcutManager {
       toggleFocus: shortcuts.toggleFocus,
       toggleDrawer: shortcuts.toggleDrawer,
       newSession: shortcuts.newSession,
-      toggleHUD: shortcuts.toggleHUD
+      toggleHUD: shortcuts.toggleHUD,
     };
 
     /** @type {Record<string, () => void>} */
@@ -191,7 +199,7 @@ class TrayAndShortcutManager {
       toggleFocus: () => this.onLayoutChange('focus'),
       toggleDrawer: () => this.onToggleDrawer(),
       newSession: () => this.onNewSession(),
-      toggleHUD: () => this.onToggleHud()
+      toggleHUD: () => this.onToggleHud(),
     };
 
     for (const [name, accelerator] of Object.entries(actions)) {
@@ -205,7 +213,10 @@ class TrayAndShortcutManager {
           console.warn(`[Nomad Shortcut] Registration failed for: ${accelerator} (${name})`);
         }
       } catch (err) {
-        console.warn(`[Nomad Shortcut] Error registering ${accelerator}:`, (err instanceof Error ? err.message : String(err)));
+        console.warn(
+          `[Nomad Shortcut] Error registering ${accelerator}:`,
+          err instanceof Error ? err.message : String(err),
+        );
       }
     }
 

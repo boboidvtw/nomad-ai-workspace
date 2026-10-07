@@ -1,6 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import {
+  fillPromptTemplate,
+  isPromptTemplate,
+  promptTemplateVariables,
+} from '@/features/prompt/model/promptTemplate';
+
 import { findChatInput, insertTextIntoChatInput } from '../chatInput';
-import { fillPromptTemplate, isPromptTemplate, promptTemplateVariables } from '@/features/prompt/model/promptTemplate';
 
 describe('Universal Prompts Cross-Platform Navigation & Input Adaptation', () => {
   let container: HTMLDivElement;

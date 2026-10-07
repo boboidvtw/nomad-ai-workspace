@@ -3,7 +3,9 @@
  */
 
 import React from 'react';
+
 import type { Folder } from '@/types/folder';
+
 import type { ConversationTitleCache } from '../../services/storage';
 import { FolderItem } from './FolderItem';
 

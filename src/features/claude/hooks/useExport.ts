@@ -5,6 +5,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
+
 import { extractConversationMessages } from '../services/exportExtractors';
 import { formatContent } from '../services/exportFormatters';
 import type { ExportFormat } from '../services/exportFormatters';
@@ -79,7 +80,10 @@ export const useExport = (): ExportApi => {
       const text = formatContent(extracted.messages, format);
       const filename = getFilename(format);
       downloadText(filename, text, mime);
-      setResult({ messageCount: extracted.messages.length, failedMessages: extracted.failedMessages });
+      setResult({
+        messageCount: extracted.messages.length,
+        failedMessages: extracted.failedMessages,
+      });
       setStatus('success');
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
@@ -90,4 +94,3 @@ export const useExport = (): ExportApi => {
 
   return { format, setFormat, status, result, error, exportConversation };
 };
-

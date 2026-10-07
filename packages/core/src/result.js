@@ -29,7 +29,7 @@ function ok(data) {
   return {
     success: true,
     // undefined is normalised to null so results always serialise with a `data` key
-    data: /** @type {T} */ (data !== undefined ? data : null)
+    data: /** @type {T} */ (data !== undefined ? data : null),
   };
 }
 
@@ -45,7 +45,7 @@ function err(errorCode, message, details = null) {
   const result = {
     success: false,
     errorCode,
-    message: String(message || 'Unknown error occurred')
+    message: String(message || 'Unknown error occurred'),
   };
   if (details !== null && details !== undefined) {
     result.details = details;
@@ -91,7 +91,7 @@ async function wrapAsync(fnOrPromise, fallbackErrorCode = 'CORE_ASYNC_OPERATION_
     return err(
       fallbackErrorCode,
       error instanceof Error ? error.message : String(error),
-      error instanceof Error ? { stack: error.stack } : null
+      error instanceof Error ? { stack: error.stack } : null,
     );
   }
 }
@@ -101,5 +101,5 @@ module.exports = {
   err,
   isOk,
   isErr,
-  wrapAsync
+  wrapAsync,
 };

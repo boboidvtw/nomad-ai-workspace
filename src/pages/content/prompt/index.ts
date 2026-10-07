@@ -328,9 +328,12 @@ async function getLatestVersionCached(): Promise<string | null> {
       return cached.version;
     }
 
-    const resp = await fetch('https://api.github.com/repos/boboidvtw/nomad-ai-workspace/releases/latest', {
-      headers: { Accept: 'application/vnd.github+json' },
-    });
+    const resp = await fetch(
+      'https://api.github.com/repos/boboidvtw/nomad-ai-workspace/releases/latest',
+      {
+        headers: { Accept: 'application/vnd.github+json' },
+      },
+    );
     if (resp.status === 404) {
       return null;
     }
@@ -742,7 +745,11 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       // and log the error so site-specific failures (e.g. on Claude/ChatGPT
       // custom websites) are diagnosable from the console.
       const openReleasesFallback = () => {
-        window.open('https://github.com/boboidvtw/nomad-ai-workspace/releases', '_blank', 'noopener');
+        window.open(
+          'https://github.com/boboidvtw/nomad-ai-workspace/releases',
+          '_blank',
+          'noopener',
+        );
       };
       // If badge was active, clear it
       if (changelogBadgeActive) {
@@ -1023,28 +1030,28 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       });
       secondaryActions.appendChild(widthBtn);
     }
-    const workspaceBtn = document.createElement("button");
-    workspaceBtn.type = "button";
-    workspaceBtn.className = "gv-pm-workspace-btn";
-    workspaceBtn.title = "開啟 Nomad 多平台工作空間總覽";
-    workspaceBtn.textContent = "📁 工作空間";
-    workspaceBtn.style.fontSize = "12px";
-    workspaceBtn.style.cursor = "pointer";
-    workspaceBtn.style.background = "transparent";
-    workspaceBtn.style.border = "none";
-    workspaceBtn.style.padding = "0 6px";
-    workspaceBtn.style.color = "inherit";
-    workspaceBtn.style.opacity = "0.85";
-    workspaceBtn.style.transition = "opacity 0.15s ease";
-    workspaceBtn.addEventListener("mouseenter", () => {
-      workspaceBtn.style.opacity = "1";
+    const workspaceBtn = document.createElement('button');
+    workspaceBtn.type = 'button';
+    workspaceBtn.className = 'gv-pm-workspace-btn';
+    workspaceBtn.title = '開啟 Nomad 多平台工作空間總覽';
+    workspaceBtn.textContent = '📁 工作空間';
+    workspaceBtn.style.fontSize = '12px';
+    workspaceBtn.style.cursor = 'pointer';
+    workspaceBtn.style.background = 'transparent';
+    workspaceBtn.style.border = 'none';
+    workspaceBtn.style.padding = '0 6px';
+    workspaceBtn.style.color = 'inherit';
+    workspaceBtn.style.opacity = '0.85';
+    workspaceBtn.style.transition = 'opacity 0.15s ease';
+    workspaceBtn.addEventListener('mouseenter', () => {
+      workspaceBtn.style.opacity = '1';
     });
-    workspaceBtn.addEventListener("mouseleave", () => {
-      workspaceBtn.style.opacity = "0.85";
+    workspaceBtn.addEventListener('mouseleave', () => {
+      workspaceBtn.style.opacity = '0.85';
     });
-    workspaceBtn.addEventListener("click", (e) => {
+    workspaceBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      window.dispatchEvent(new CustomEvent("nomad:toggle-workspace-modal"));
+      window.dispatchEvent(new CustomEvent('nomad:toggle-workspace-modal'));
     });
     secondaryActions.appendChild(workspaceBtn);
     secondaryActions.appendChild(settingsBtn);
@@ -1512,8 +1519,12 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     function applyPanelViewUI(): void {
       const isStarredView = panelView === 'starred';
       panel.setAttribute('data-gv-panel-view', panelView);
-      titleText.textContent = isStarredView ? ("Nomad · " + i18n.t("pm_starred_library")) : "Nomad AI Workspace";
-      titleText.title = isStarredView ? ("Nomad · " + i18n.t("pm_starred_library") + " (前往 GitHub)") : "Nomad AI Workspace (前往 GitHub)";
+      titleText.textContent = isStarredView
+        ? 'Nomad · ' + i18n.t('pm_starred_library')
+        : 'Nomad AI Workspace';
+      titleText.title = isStarredView
+        ? 'Nomad · ' + i18n.t('pm_starred_library') + ' (前往 GitHub)'
+        : 'Nomad AI Workspace (前往 GitHub)';
       backupBtn.replaceChildren(
         createStarIcon(15),
         document.createTextNode(i18n.t('pm_starred_library')),
@@ -2679,7 +2690,11 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
 
     docsLink.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      window.open('https://github.com/boboidvtw/nomad-ai-workspace#readme', '_blank', 'noopener,noreferrer');
+      window.open(
+        'https://github.com/boboidvtw/nomad-ai-workspace#readme',
+        '_blank',
+        'noopener,noreferrer',
+      );
     });
 
     supportLink.addEventListener('click', (ev) => {

@@ -5,8 +5,9 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Prompt } from '@src/types/prompt';
+
 import { readStoredPromptLibrary, writeStoredPromptLibrary } from '@src/services/storage';
+import type { Prompt } from '@src/types/prompt';
 
 type PromptDraft = {
   title: string;
@@ -122,93 +123,113 @@ export const usePromptLibrary = (): PromptLibraryApi => {
     await writeStoredPromptLibrary(next);
   }, []);
 
-  const createPrompt = useCallback(async (draft: PromptDraft): Promise<Prompt> => {
-    const normalized = normalizeDraft(draft);
-    const prompt: Prompt = {
-      id: generateId(),
-      title: normalized.title,
-      content: normalized.content,
-      tags: normalized.tags,
-      createdAt: Date.now(),
-    };
-    const next = [prompt, ...prompts];
-    await persist(next);
-    return prompt;
-  }, [persist, prompts]);
-
-  const updatePrompt = useCallback(async (id: string, draft: PromptDraft): Promise<Prompt | null> => {
-    const index = prompts.findIndex((p) => p.id === id);
-    if (index < 0) return null;
-    const normalized = normalizeDraft(draft);
-    const updated: Prompt = { ...prompts[index], title: normalized.title, content: normalized.content, tags: normalized.tags };
-    const next = prompts.slice();
-    next[index] = updated;
-    await persist(next);
-    return updated;
-  }, [persist, prompts]);
-
-  const deletePrompt = useCallback(async (id: string): Promise<boolean> => {
-    const next = prompts.filter((p) => p.id !== id);
-    if (next.length === prompts.length) return false;
-    await persist(next);
-    return true;
-  }, [persist, prompts]);
-
-  const importFromFile = useCallback(async (file: File): Promise<{ imported: number; skipped: number }> => {
-    const text = await file.text();
-    const parsed = JSON.parse(text) as unknown;
-    if (!parsed || typeof parsed !== 'object') throw new Error('Invalid file');
-
-    const data = parsed as Partial<GeminiVoyagerPromptsExport>;
-    if (data.format !== 'gemini-voyager.prompts.v1') throw new Error('Unsupported format');
-    if (!Array.isArray(data.items)) throw new Error('Invalid items');
-
-    const existing = new Set(prompts.map((p) => p.content));
-    const nextImported: Prompt[] = [];
-    let skipped = 0;
-
-    for (const item of data.items) {
-      if (!item || typeof item !== 'object') {
-        skipped += 1;
-        continue;
-      }
-      const v = item as Partial<GeminiVoyagerPromptsExport['items'][number]>;
-      if (typeof v.text !== 'string') {
-        skipped += 1;
-        continue;
-      }
-      const content = v.text.trim();
-      if (!content) {
-        skipped += 1;
-        continue;
-      }
-      if (existing.has(content)) {
-        skipped += 1;
-        continue;
-      }
-      existing.add(content);
-
-      const title = content.split('\n')[0]?.trim() || 'Untitled';
-      const tags =
-        v.tags && Array.isArray(v.tags) && v.tags.every((t) => typeof t === 'string')
-          ? v.tags.map((t) => t.trim()).filter(Boolean).filter((t, i, arr) => arr.indexOf(t) === i)
-          : [];
-
-      nextImported.push({
+  const createPrompt = useCallback(
+    async (draft: PromptDraft): Promise<Prompt> => {
+      const normalized = normalizeDraft(draft);
+      const prompt: Prompt = {
         id: generateId(),
-        title: title.length > 60 ? `${title.slice(0, 60)}…` : title,
-        content,
-        tags: tags.length ? tags : undefined,
+        title: normalized.title,
+        content: normalized.content,
+        tags: normalized.tags,
         createdAt: Date.now(),
-      });
-    }
+      };
+      const next = [prompt, ...prompts];
+      await persist(next);
+      return prompt;
+    },
+    [persist, prompts],
+  );
 
-    if (nextImported.length) {
-      await persist([...nextImported, ...prompts]);
-    }
+  const updatePrompt = useCallback(
+    async (id: string, draft: PromptDraft): Promise<Prompt | null> => {
+      const index = prompts.findIndex((p) => p.id === id);
+      if (index < 0) return null;
+      const normalized = normalizeDraft(draft);
+      const updated: Prompt = {
+        ...prompts[index],
+        title: normalized.title,
+        content: normalized.content,
+        tags: normalized.tags,
+      };
+      const next = prompts.slice();
+      next[index] = updated;
+      await persist(next);
+      return updated;
+    },
+    [persist, prompts],
+  );
 
-    return { imported: nextImported.length, skipped };
-  }, [persist, prompts]);
+  const deletePrompt = useCallback(
+    async (id: string): Promise<boolean> => {
+      const next = prompts.filter((p) => p.id !== id);
+      if (next.length === prompts.length) return false;
+      await persist(next);
+      return true;
+    },
+    [persist, prompts],
+  );
+
+  const importFromFile = useCallback(
+    async (file: File): Promise<{ imported: number; skipped: number }> => {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as unknown;
+      if (!parsed || typeof parsed !== 'object') throw new Error('Invalid file');
+
+      const data = parsed as Partial<GeminiVoyagerPromptsExport>;
+      if (data.format !== 'gemini-voyager.prompts.v1') throw new Error('Unsupported format');
+      if (!Array.isArray(data.items)) throw new Error('Invalid items');
+
+      const existing = new Set(prompts.map((p) => p.content));
+      const nextImported: Prompt[] = [];
+      let skipped = 0;
+
+      for (const item of data.items) {
+        if (!item || typeof item !== 'object') {
+          skipped += 1;
+          continue;
+        }
+        const v = item as Partial<GeminiVoyagerPromptsExport['items'][number]>;
+        if (typeof v.text !== 'string') {
+          skipped += 1;
+          continue;
+        }
+        const content = v.text.trim();
+        if (!content) {
+          skipped += 1;
+          continue;
+        }
+        if (existing.has(content)) {
+          skipped += 1;
+          continue;
+        }
+        existing.add(content);
+
+        const title = content.split('\n')[0]?.trim() || 'Untitled';
+        const tags =
+          v.tags && Array.isArray(v.tags) && v.tags.every((t) => typeof t === 'string')
+            ? v.tags
+                .map((t) => t.trim())
+                .filter(Boolean)
+                .filter((t, i, arr) => arr.indexOf(t) === i)
+            : [];
+
+        nextImported.push({
+          id: generateId(),
+          title: title.length > 60 ? `${title.slice(0, 60)}…` : title,
+          content,
+          tags: tags.length ? tags : undefined,
+          createdAt: Date.now(),
+        });
+      }
+
+      if (nextImported.length) {
+        await persist([...nextImported, ...prompts]);
+      }
+
+      return { imported: nextImported.length, skipped };
+    },
+    [persist, prompts],
+  );
 
   const exportToFile = useCallback(async (): Promise<void> => {
     const now = new Date();
@@ -231,11 +252,34 @@ export const usePromptLibrary = (): PromptLibraryApi => {
 
   const tags = useMemo(() => buildTagSet(prompts), [prompts]);
 
-  const filterPrompts = useCallback((query: string, tag: string | null): Prompt[] => {
-    return prompts.filter((p) => matchesTag(p, tag) && matchesQuery(p, query));
-  }, [prompts]);
+  const filterPrompts = useCallback(
+    (query: string, tag: string | null): Prompt[] => {
+      return prompts.filter((p) => matchesTag(p, tag) && matchesQuery(p, query));
+    },
+    [prompts],
+  );
 
   return useMemo(() => {
-    return { prompts, tags, loading, createPrompt, updatePrompt, deletePrompt, importFromFile, exportToFile, filterPrompts };
-  }, [createPrompt, deletePrompt, exportToFile, filterPrompts, importFromFile, loading, prompts, tags, updatePrompt]);
+    return {
+      prompts,
+      tags,
+      loading,
+      createPrompt,
+      updatePrompt,
+      deletePrompt,
+      importFromFile,
+      exportToFile,
+      filterPrompts,
+    };
+  }, [
+    createPrompt,
+    deletePrompt,
+    exportToFile,
+    filterPrompts,
+    importFromFile,
+    loading,
+    prompts,
+    tags,
+    updatePrompt,
+  ]);
 };

@@ -1,20 +1,22 @@
-import { startPromptManager } from '@/pages/content/prompt';
-import { startSlashPromptFeature } from '@/pages/content/prompt/slashPromptFeature';
+import { createRoot } from 'react-dom/client';
+
+import { APP_ROOT_ID, APP_ROOT_SELECTOR } from '@src/constants/selectors';
 /**
  * index.tsx
  * Nomad AI Workspace — Claude Content Script Entry
  * Mounts Claude-specific workspace components (FolderManager, Timeline, FloatBall).
  */
-
-import { createRoot } from 'react-dom/client';
 import { i18n, initI18n, LANGUAGE_CHANGE_MESSAGE_TYPE } from '@src/services/i18n';
-import { APP_ROOT_ID, APP_ROOT_SELECTOR } from '@src/constants/selectors';
+
+import { initExportButtonInjection } from '@/features/claude/components/ExportButton';
+import FloatBall from '@/features/claude/components/FloatBall';
+
 import './style.css';
 import FolderManager from '@/features/claude/components/FolderManager';
-import Timeline from '@/features/claude/components/Timeline';
-import FloatBall from '@/features/claude/components/FloatBall';
-import { initExportButtonInjection } from '@/features/claude/components/ExportButton';
 import { initPromptButtonInjection } from '@/features/claude/components/PromptButton';
+import Timeline from '@/features/claude/components/Timeline';
+import { startPromptManager } from '@/pages/content/prompt';
+import { startSlashPromptFeature } from '@/pages/content/prompt/slashPromptFeature';
 
 const mount = async () => {
   document.body.classList.add('gv-claude-page');
@@ -52,19 +54,20 @@ const mount = async () => {
     const pending = sessionStorage.getItem('__pending_export');
     if (pending) {
       sessionStorage.removeItem('__pending_export');
-      
+
       const checkAndRun = () => {
         const messages = document.querySelectorAll('[data-test-render-count]');
         if (messages.length > 0) {
           setTimeout(async () => {
             try {
-              const { extractConversationMessages } = await import('@/features/claude/services/exportExtractors');
+              const { extractConversationMessages } =
+                await import('@/features/claude/services/exportExtractors');
               const { formatContent } = await import('@/features/claude/services/exportFormatters');
               const extracted = await extractConversationMessages();
               const text = formatContent(extracted.messages, pending as any);
               const time = new Date().toISOString().replace(/[:.]/g, '-');
               const filename = `claude-export-${window.location.pathname.split('/chat/')?.[1] ?? ''}-${time}.md`;
-              
+
               const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
               const url = URL.createObjectURL(blob);
               const a = document.createElement('a');

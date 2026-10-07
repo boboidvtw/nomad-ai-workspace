@@ -25,12 +25,12 @@ test('Desktop Store: Shortcuts & Appearance configuration persistence', () => {
   store.update({
     shortcuts: {
       toggleWindow: 'CommandOrControl+Alt+Space',
-      toggleHUD: 'CommandOrControl+Shift+U'
+      toggleHUD: 'CommandOrControl+Shift+U',
     },
     appearance: {
       theme: 'cyberpunk',
-      accentColor: '#a855f7'
-    }
+      accentColor: '#a855f7',
+    },
   });
 
   assert.strictEqual(store.get('shortcuts').toggleWindow, 'CommandOrControl+Alt+Space');
@@ -46,5 +46,7 @@ test('Desktop Store: Shortcuts & Appearance configuration persistence', () => {
   assert.strictEqual(reloadedStore.get('appearance').theme, 'cyberpunk');
 
   // Cleanup
-  try { fs.unlinkSync(tempPath); } catch {}
+  try {
+    fs.unlinkSync(tempPath);
+  } catch {}
 });

@@ -9,7 +9,7 @@ const path = require('path');
 const os = require('os');
 const { ok, err } = require('../result');
 const { ErrorCodes } = require('../error-codes');
-const { TASK_STATUS, TASK_PRIORITY, validateTransition, createTaskEntity } = require('./task-model');
+const { TASK_STATUS, validateTransition, createTaskEntity } = require('./task-model');
 const { AgentRoster, AGENT_STATUS } = require('./roster');
 
 class TaskDispatcher {
@@ -25,7 +25,10 @@ class TaskDispatcher {
     this.roster = options.roster || new AgentRoster();
     this.defaultLeaseDurationMs = options.defaultLeaseDurationMs || 30000;
     this.storagePath = options.storagePath || path.join(os.homedir(), '.nomad', 'tasks.json');
-    this.autoPersist = options.autoPersist !== undefined ? Boolean(options.autoPersist) : Boolean(options.storagePath);
+    this.autoPersist =
+      options.autoPersist !== undefined
+        ? Boolean(options.autoPersist)
+        : Boolean(options.storagePath);
     this.onTaskEvent = typeof options.onTaskEvent === 'function' ? options.onTaskEvent : null;
     /** @type {Map<string, import('./task-model').Task>} */
     this.tasks = new Map();
@@ -33,8 +36,8 @@ class TaskDispatcher {
 
   /**
    * Emits a task event and persists state if autoPersist is true
-   * @param {string} eventType 
-   * @param {import('./task-model').Task} task 
+   * @param {string} eventType
+   * @param {import('./task-model').Task} task
    */
   _notify(eventType, task) {
     if (this.onTaskEvent) {
@@ -51,7 +54,7 @@ class TaskDispatcher {
 
   /**
    * Persists all tasks to disk atomically
-   * @param {string} [customPath] 
+   * @param {string} [customPath]
    * @returns {Promise<import('../result').UnitResult<{ persisted: boolean, path?: string, count: number }>>}
    */
   async saveToDisk(customPath = this.storagePath) {
@@ -69,13 +72,17 @@ class TaskDispatcher {
       fs.renameSync(tmpPath, customPath);
       return ok({ persisted: true, path: customPath, count: this.tasks.size });
     } catch (e) {
-      return err(ErrorCodes.TASK_STORAGE_SAVE_FAILED_008, `Failed to save tasks to disk: ${(e instanceof Error ? e.message : String(e))}`, { error: e });
+      return err(
+        ErrorCodes.TASK_STORAGE_SAVE_FAILED_008,
+        `Failed to save tasks to disk: ${e instanceof Error ? e.message : String(e)}`,
+        { error: e },
+      );
     }
   }
 
   /**
    * Loads tasks from disk and restores state, automatically resolving offline lease expiries
-   * @param {string} [customPath] 
+   * @param {string} [customPath]
    * @returns {import('../result').UnitResult<{ loaded: boolean, path?: string, count: number, reason?: string }>}
    */
   loadFromDisk(customPath = this.storagePath) {
@@ -89,7 +96,10 @@ class TaskDispatcher {
       }
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) {
-        return err(ErrorCodes.TASK_STORAGE_LOAD_FAILED_009, 'Stored tasks format invalid: expected an array');
+        return err(
+          ErrorCodes.TASK_STORAGE_LOAD_FAILED_009,
+          'Stored tasks format invalid: expected an array',
+        );
       }
 
       this.tasks.clear();
@@ -102,9 +112,18 @@ class TaskDispatcher {
       // Reconcile any leases that expired while offline
       const reclaimed = this.checkExpiredLeases();
 
-      return ok({ loaded: true, path: customPath, count: this.tasks.size, reclaimedCount: reclaimed.length });
+      return ok({
+        loaded: true,
+        path: customPath,
+        count: this.tasks.size,
+        reclaimedCount: reclaimed.length,
+      });
     } catch (e) {
-      return err(ErrorCodes.TASK_STORAGE_LOAD_FAILED_009, `Failed to load tasks from disk: ${(e instanceof Error ? e.message : String(e))}`, { error: e });
+      return err(
+        ErrorCodes.TASK_STORAGE_LOAD_FAILED_009,
+        `Failed to load tasks from disk: ${e instanceof Error ? e.message : String(e)}`,
+        { error: e },
+      );
     }
   }
 
@@ -140,7 +159,7 @@ class TaskDispatcher {
 
   /**
    * Retrieves a task by ID
-   * @param {string} id 
+   * @param {string} id
    * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   getTask(id) {
@@ -165,32 +184,34 @@ class TaskDispatcher {
     let list = Array.from(this.tasks.values());
 
     if (filter.status) {
-      list = list.filter(t => t.status === filter.status);
+      list = list.filter((t) => t.status === filter.status);
     }
     if (filter.assignee) {
-      list = list.filter(t => t.assignee === filter.assignee);
+      list = list.filter((t) => t.assignee === filter.assignee);
     }
     if (filter.priority) {
-      list = list.filter(t => t.priority === filter.priority);
+      list = list.filter((t) => t.priority === filter.priority);
     }
     if (filter.parentGoal) {
-      list = list.filter(t => t.parentGoal === filter.parentGoal);
+      list = list.filter((t) => t.parentGoal === filter.parentGoal);
     }
-    if (filter.query && typeof filter.query === "string") {
+    if (filter.query && typeof filter.query === 'string') {
       const q = filter.query.toLowerCase().trim();
       if (q) {
-        list = list.filter(t => {
+        list = list.filter((t) => {
           const matchTitle = t.title && t.title.toLowerCase().includes(q);
           const matchDesc = t.description && t.description.toLowerCase().includes(q);
           const matchId = t.id && t.id.toLowerCase().includes(q);
           const matchAssignee = t.assignee && t.assignee.toLowerCase().includes(q);
-          const matchLogs = Array.isArray(t.logs) && t.logs.some(l => l.message && l.message.toLowerCase().includes(q));
+          const matchLogs =
+            Array.isArray(t.logs) &&
+            t.logs.some((l) => l.message && l.message.toLowerCase().includes(q));
           return matchTitle || matchDesc || matchId || matchAssignee || matchLogs;
         });
       }
     }
 
-    return list.map(t => ({ ...t }));
+    return list.map((t) => ({ ...t }));
   }
 
   /**
@@ -208,14 +229,14 @@ class TaskDispatcher {
 
     for (const t of allTasks) {
       const upstream = Array.isArray(t.dependencies) ? t.dependencies : [];
-      const unsatisfiedDependencies = upstream.filter(depId => {
+      const unsatisfiedDependencies = upstream.filter((depId) => {
         const dep = taskMap.get(depId);
-        return !dep || dep.status !== "completed";
+        return !dep || dep.status !== 'completed';
       });
 
       const downstream = allTasks
-        .filter(other => Array.isArray(other.dependencies) && other.dependencies.includes(t.id))
-        .map(other => other.id);
+        .filter((other) => Array.isArray(other.dependencies) && other.dependencies.includes(t.id))
+        .map((other) => other.id);
 
       nodes.push({
         id: t.id,
@@ -233,7 +254,7 @@ class TaskDispatcher {
         edges.push({
           from: depId,
           to: t.id,
-          satisfied: taskMap.has(depId) && taskMap.get(depId).status === "completed"
+          satisfied: taskMap.has(depId) && taskMap.get(depId).status === 'completed',
         });
       }
     }
@@ -242,15 +263,15 @@ class TaskDispatcher {
       nodes,
       edges,
       totalCount: nodes.length,
-      blockedCount: nodes.filter(n => n.isBlocked).length
+      blockedCount: nodes.filter((n) => n.isBlocked).length,
     };
   }
 
   /**
    * Atomically claims a task for an agent with an exclusive lease
-   * @param {string} taskId 
-   * @param {string} agentId 
-   * @param {number} [leaseDurationMs] 
+   * @param {string} taskId
+   * @param {string} agentId
+   * @param {number} [leaseDurationMs]
    * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   claimTask(taskId, agentId, leaseDurationMs = this.defaultLeaseDurationMs) {
@@ -270,7 +291,7 @@ class TaskDispatcher {
     if (task.status === TASK_STATUS.BLOCKED) {
       return err(
         ErrorCodes.TASK_DEPENDENCY_UNRESOLVED_005,
-        `Task '${taskId}' is blocked pending unresolved dependencies: [${task.dependencies.join(', ')}]`
+        `Task '${taskId}' is blocked pending unresolved dependencies: [${task.dependencies.join(', ')}]`,
       );
     }
 
@@ -283,7 +304,7 @@ class TaskDispatcher {
       if (leaseExpires > now && task.lease.agentId !== agentId) {
         return err(
           ErrorCodes.TASK_ALREADY_CLAIMED_003,
-          `Task '${taskId}' is already claimed by agent '${task.lease.agentId}' until ${task.lease.expiresAt}`
+          `Task '${taskId}' is already claimed by agent '${task.lease.agentId}' until ${task.lease.expiresAt}`,
         );
       }
     }
@@ -326,9 +347,9 @@ class TaskDispatcher {
 
   /**
    * Renews the heartbeat lease on an in-progress task
-   * @param {string} taskId 
-   * @param {string} agentId 
-   * @param {number} [extendMs] 
+   * @param {string} taskId
+   * @param {string} agentId
+   * @param {number} [extendMs]
    * @returns {import('../result').UnitResult<import('./task-model').TaskLease>}
    */
   renewHeartbeat(taskId, agentId, extendMs = this.defaultLeaseDurationMs) {
@@ -340,7 +361,7 @@ class TaskDispatcher {
     if (!task.lease || task.lease.agentId !== agentId) {
       return err(
         ErrorCodes.TASK_ALREADY_CLAIMED_003,
-        `Agent '${agentId}' does not hold the active lease on task '${taskId}'`
+        `Agent '${agentId}' does not hold the active lease on task '${taskId}'`,
       );
     }
 
@@ -349,7 +370,7 @@ class TaskDispatcher {
     if (currentExpiry < now) {
       return err(
         ErrorCodes.TASK_HEARTBEAT_EXPIRED_006,
-        `Lease for task '${taskId}' expired at ${task.lease.expiresAt}`
+        `Lease for task '${taskId}' expired at ${task.lease.expiresAt}`,
       );
     }
 
@@ -391,7 +412,7 @@ class TaskDispatcher {
           // Free up agent slot
           const agent = this.roster.agents.get(expiredAgentId);
           if (agent) {
-            agent.currentTaskIds = agent.currentTaskIds.filter(id => id !== task.id);
+            agent.currentTaskIds = agent.currentTaskIds.filter((id) => id !== task.id);
             if (agent.currentTaskIds.length < agent.maxConcurrency) {
               agent.status = AGENT_STATUS.IDLE;
             }
@@ -408,9 +429,9 @@ class TaskDispatcher {
 
   /**
    * Marks a task as completed and automatically wakes up dependent tasks
-   * @param {string} taskId 
-   * @param {string} agentId 
-   * @param {string} [summary] 
+   * @param {string} taskId
+   * @param {string} agentId
+   * @param {string} [summary]
    * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   completeTask(taskId, agentId, summary = '') {
@@ -437,7 +458,7 @@ class TaskDispatcher {
     // Release agent in roster
     const agent = this.roster.agents.get(agentId);
     if (agent) {
-      agent.currentTaskIds = agent.currentTaskIds.filter(id => id !== taskId);
+      agent.currentTaskIds = agent.currentTaskIds.filter((id) => id !== taskId);
       if (agent.currentTaskIds.length < agent.maxConcurrency) {
         agent.status = AGENT_STATUS.IDLE;
       }
@@ -452,9 +473,9 @@ class TaskDispatcher {
 
   /**
    * Marks a task as failed
-   * @param {string} taskId 
-   * @param {string} agentId 
-   * @param {string} [reason] 
+   * @param {string} taskId
+   * @param {string} agentId
+   * @param {string} [reason]
    * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   failTask(taskId, agentId, reason = '') {
@@ -480,7 +501,7 @@ class TaskDispatcher {
 
     const agent = this.roster.agents.get(agentId);
     if (agent) {
-      agent.currentTaskIds = agent.currentTaskIds.filter(id => id !== taskId);
+      agent.currentTaskIds = agent.currentTaskIds.filter((id) => id !== taskId);
       if (agent.currentTaskIds.length < agent.maxConcurrency) {
         agent.status = AGENT_STATUS.IDLE;
       }
@@ -492,8 +513,8 @@ class TaskDispatcher {
 
   /**
    * Cancels a task
-   * @param {string} taskId 
-   * @param {string} [reason] 
+   * @param {string} taskId
+   * @param {string} [reason]
    * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
   cancelTask(taskId, reason = '') {
@@ -521,7 +542,7 @@ class TaskDispatcher {
     if (oldAssignee) {
       const agent = this.roster.agents.get(oldAssignee);
       if (agent) {
-        agent.currentTaskIds = agent.currentTaskIds.filter(id => id !== taskId);
+        agent.currentTaskIds = agent.currentTaskIds.filter((id) => id !== taskId);
         if (agent.currentTaskIds.length < agent.maxConcurrency) {
           agent.status = AGENT_STATUS.IDLE;
         }
@@ -534,8 +555,8 @@ class TaskDispatcher {
 
   /**
    * Appends an artifact to the task
-   * @param {string} taskId 
-   * @param {{ name?: string, type?: string, content?: string, uri?: string | null }} artifact 
+   * @param {string} taskId
+   * @param {{ name?: string, type?: string, content?: string, uri?: string | null }} artifact
    * @returns {import('../result').UnitResult<import('./task-model').TaskArtifact>}
    */
   addArtifact(taskId, artifact) {
@@ -560,8 +581,8 @@ class TaskDispatcher {
 
   /**
    * Appends a log entry to the task
-   * @param {string} taskId 
-   * @param {{ level?: import('./task-model').TaskLog['level'], message: string }} log 
+   * @param {string} taskId
+   * @param {{ level?: import('./task-model').TaskLog['level'], message: string }} log
    */
   appendLog(taskId, log) {
     const task = this.tasks.get(taskId);
@@ -578,11 +599,14 @@ class TaskDispatcher {
 
   /**
    * Private helper to check and unblock dependent tasks
-   * @param {string} completedTaskId 
+   * @param {string} completedTaskId
    */
   _resolveDependencies(completedTaskId) {
     for (const otherTask of this.tasks.values()) {
-      if (otherTask.status === TASK_STATUS.BLOCKED && otherTask.dependencies.includes(completedTaskId)) {
+      if (
+        otherTask.status === TASK_STATUS.BLOCKED &&
+        otherTask.dependencies.includes(completedTaskId)
+      ) {
         let allMet = true;
         for (const depId of otherTask.dependencies) {
           const dep = this.tasks.get(depId);

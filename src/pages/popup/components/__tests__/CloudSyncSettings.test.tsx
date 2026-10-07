@@ -1091,7 +1091,9 @@ describe('CloudSyncSettings auth flow', () => {
     expect(dashboard?.textContent).toContain('Claude');
     expect(dashboard?.textContent).toContain('ChatGPT');
 
-    const syncAllBtn = container.querySelector('[data-testid="sync-all-platforms-button"]') as HTMLButtonElement | null;
+    const syncAllBtn = container.querySelector(
+      '[data-testid="sync-all-platforms-button"]',
+    ) as HTMLButtonElement | null;
     expect(syncAllBtn).toBeTruthy();
 
     await act(async () => {
@@ -1100,7 +1102,7 @@ describe('CloudSyncSettings auth flow', () => {
     await flushMicrotasks();
 
     expect(sendMessageMock).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'nomad.sync.syncAll' })
+      expect.objectContaining({ type: 'nomad.sync.syncAll' }),
     );
   });
 });

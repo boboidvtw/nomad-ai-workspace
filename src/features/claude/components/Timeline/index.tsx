@@ -10,14 +10,14 @@ export default function Timeline() {
   if (nodes.length === 0) return null;
 
   return (
-    <div className="fixed right-3 top-[10vh] bottom-[10vh] z-50 w-[2.5rem] overflow-visible">
+    <div className="fixed top-[10vh] right-3 bottom-[10vh] z-50 w-[2.5rem] overflow-visible">
       <div
         className={`flex h-full w-full flex-col items-center ${
           nodes.length === 1 ? 'justify-center' : ''
         }`}
       >
         {nodes.map((n, i) => {
-          const isActive = i === activeIndex; 
+          const isActive = i === activeIndex;
           const sizeRem = isActive ? 1 : 0.625;
           const backgroundColor = '#d4a27a';
           const activeBackgroundColor = '#c96442';
@@ -26,7 +26,10 @@ export default function Timeline() {
           const tooltipText = n.text;
 
           return (
-            <div key={n.id} className={`flex w-full flex-col items-center ${isLast ? '' : 'flex-1'}`}>
+            <div
+              key={n.id}
+              className={`flex w-full flex-col items-center ${isLast ? '' : 'flex-1'}`}
+            >
               <div className="group relative flex items-center justify-center">
                 <button
                   type="button"
@@ -45,7 +48,7 @@ export default function Timeline() {
                 />
 
                 {tooltipText ? (
-                  <div className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 translate-x-1 opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100">
+                  <div className="pointer-events-none absolute top-1/2 right-full mr-3 translate-x-1 -translate-y-1/2 opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100">
                     <div className="relative w-[18rem] rounded-[0.75rem] border border-[#e5e0d8] bg-white px-[0.75rem] py-[0.4rem] text-[0.75rem] leading-4 text-[#374151] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
                       <div
                         style={{
@@ -58,9 +61,9 @@ export default function Timeline() {
                       >
                         {tooltipText}
                       </div>
-                      <div className="absolute left-full top-1/2 -translate-y-1/2">
-                        <div className="h-0 w-0 border-y-[6px] border-y-transparent border-l-[6px] border-l-[#e5e0d8]" />
-                        <div className="absolute left-[-6px] top-1/2 -translate-y-1/2 h-0 w-0 border-y-[5px] border-y-transparent border-l-[5px] border-l-white" />
+                      <div className="absolute top-1/2 left-full -translate-y-1/2">
+                        <div className="h-0 w-0 border-y-[6px] border-l-[6px] border-y-transparent border-l-[#e5e0d8]" />
+                        <div className="absolute top-1/2 left-[-6px] h-0 w-0 -translate-y-1/2 border-y-[5px] border-l-[5px] border-y-transparent border-l-white" />
                       </div>
                     </div>
                   </div>

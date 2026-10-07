@@ -4,9 +4,9 @@
  * Supports Claude, Gemini, and ChatGPT across multiple display resolutions and zoom levels.
  */
 
-import { findChatInput } from "@/pages/content/chatInput";
+import { findChatInput } from '@/pages/content/chatInput';
 
-export type PlatformId = "claude" | "gemini" | "chatgpt" | "grok";
+export type PlatformId = 'claude' | 'gemini' | 'chatgpt' | 'grok';
 
 export type Size = {
   width: number;
@@ -43,36 +43,36 @@ export function findComposerElement(platform?: PlatformId): HTMLElement | null {
   };
 
   // 1. Platform-specific preferred selectors
-  if (platform === "chatgpt") {
+  if (platform === 'chatgpt') {
     const el =
-      trySelector("#thread-bottom-container form") ||
-      trySelector("form:has(#prompt-textarea)") ||
+      trySelector('#thread-bottom-container form') ||
+      trySelector('form:has(#prompt-textarea)') ||
       trySelector('form[data-testid="composer-form"]') ||
       trySelector('div[class*="--thread-content-max-width"] form') ||
       trySelector('form:has([data-testid*="send-button"])') ||
       trySelector('div:has(> #prompt-textarea)') ||
-      trySelector("#prompt-textarea");
+      trySelector('#prompt-textarea');
     if (el) return el;
-  } else if (platform === "gemini") {
+  } else if (platform === 'gemini') {
     const el =
-      trySelector("input-area-v2") ||
-      trySelector("input-container .input-area-container") ||
-      trySelector("input-container") ||
-      trySelector(".input-area-container") ||
-      trySelector(".input-and-toolbox-container") ||
-      trySelector("rich-textarea") ||
-      trySelector(".input-area");
+      trySelector('input-area-v2') ||
+      trySelector('input-container .input-area-container') ||
+      trySelector('input-container') ||
+      trySelector('.input-area-container') ||
+      trySelector('.input-and-toolbox-container') ||
+      trySelector('rich-textarea') ||
+      trySelector('.input-area');
     if (el) return el;
-  } else if (platform === "claude") {
+  } else if (platform === 'claude') {
     const el =
       trySelector('fieldset:has([contenteditable="true"])') ||
       trySelector('fieldset:has([data-testid="chat-input"])') ||
-      trySelector("div:has(> div.ProseMirror)") ||
+      trySelector('div:has(> div.ProseMirror)') ||
       trySelector('div[data-testid="chat-input-container"]') ||
       trySelector('[data-testid="chat-input"]') ||
       trySelector('div[contenteditable="true"].ProseMirror');
     if (el) return el;
-  } else if (platform === "grok") {
+  } else if (platform === 'grok') {
     const el =
       trySelector('form:has(textarea)') ||
       trySelector('div:has(> textarea[placeholder*="Grok"])') ||
@@ -86,12 +86,12 @@ export function findComposerElement(platform?: PlatformId): HTMLElement | null {
 
   // 2. Cross-platform universal selectors
   const universal =
-    trySelector("#thread-bottom-container form") ||
-    trySelector("form:has(#prompt-textarea)") ||
+    trySelector('#thread-bottom-container form') ||
+    trySelector('form:has(#prompt-textarea)') ||
     trySelector('fieldset:has([contenteditable="true"])') ||
-    trySelector("input-area-v2") ||
-    trySelector("input-container") ||
-    trySelector(".input-area-container") ||
+    trySelector('input-area-v2') ||
+    trySelector('input-container') ||
+    trySelector('.input-area-container') ||
     trySelector('form:has(textarea, [contenteditable="true"])');
   if (universal) return universal;
 
@@ -126,19 +126,23 @@ export function computeComposerAnchorPosition(
   ballSize: Size,
   gapOrOptions: number | AnchorOptions = 14,
 ): Point {
-  const gap = typeof gapOrOptions === "number" ? gapOrOptions : (gapOrOptions?.gap ?? 14);
+  const gap = typeof gapOrOptions === 'number' ? gapOrOptions : (gapOrOptions?.gap ?? 14);
   const allowAdaptiveSide =
-    typeof gapOrOptions === "object" ? Boolean(gapOrOptions.allowAdaptiveSide) : false;
+    typeof gapOrOptions === 'object' ? Boolean(gapOrOptions.allowAdaptiveSide) : false;
 
   const rect = composer.getBoundingClientRect();
   const vw =
-    typeof window !== "undefined" && window.visualViewport
+    typeof window !== 'undefined' && window.visualViewport
       ? window.visualViewport.width
-      : (typeof window !== "undefined" ? window.innerWidth : 1440);
+      : typeof window !== 'undefined'
+        ? window.innerWidth
+        : 1440;
   const vh =
-    typeof window !== "undefined" && window.visualViewport
+    typeof window !== 'undefined' && window.visualViewport
       ? window.visualViewport.height
-      : (typeof window !== "undefined" ? window.innerHeight : 900);
+      : typeof window !== 'undefined'
+        ? window.innerHeight
+        : 900;
 
   const maxX = Math.max(8, vw - ballSize.width - 8);
   let x = rect.right + gap;

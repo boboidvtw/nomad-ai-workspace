@@ -19,7 +19,7 @@ const ALLOWED_PATHS_ENV = 'NOMAD_MCP_ALLOWED_PATHS';
  * @returns {string[]}
  */
 function defaultDeniedPaths(homeDir = os.homedir()) {
-  return ['.ssh', '.aws', '.gnupg', '.nomad'].map(name => path.join(homeDir, name));
+  return ['.ssh', '.aws', '.gnupg', '.nomad'].map((name) => path.join(homeDir, name));
 }
 
 /**
@@ -34,7 +34,7 @@ function defaultDeniedPaths(homeDir = os.homedir()) {
 function defaultAllowedPaths(env = process.env, fallback) {
   const fromEnv = (env[ALLOWED_PATHS_ENV] || '')
     .split(path.delimiter)
-    .map(p => p.trim())
+    .map((p) => p.trim())
     .filter(Boolean);
   if (fromEnv.length > 0) return fromEnv;
   if (fallback && fallback.length > 0) return fallback;
@@ -119,11 +119,17 @@ class McpGateway {
       return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, 'Path must be a non-empty string');
     }
     const resolved = realpathLoose(requestedPath, this.allowedPaths[0]);
-    if (this.deniedPaths.some(denied => isWithin(resolved, realpathLoose(denied)))) {
-      return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `Access to sensitive path denied: ${requestedPath}`);
+    if (this.deniedPaths.some((denied) => isWithin(resolved, realpathLoose(denied)))) {
+      return err(
+        ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002,
+        `Access to sensitive path denied: ${requestedPath}`,
+      );
     }
-    if (!this.allowedPaths.some(root => isWithin(resolved, realpathLoose(root)))) {
-      return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `Path is outside allowed roots: ${requestedPath}`);
+    if (!this.allowedPaths.some((root) => isWithin(resolved, realpathLoose(root)))) {
+      return err(
+        ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002,
+        `Path is outside allowed roots: ${requestedPath}`,
+      );
     }
     return ok(resolved);
   }
@@ -136,9 +142,9 @@ class McpGateway {
       parameters: {
         type: 'object',
         properties: {
-          path: { type: 'string', description: '本機檔案絕對路徑' }
+          path: { type: 'string', description: '本機檔案絕對路徑' },
         },
-        required: ['path']
+        required: ['path'],
       },
       handler: async (/** @type {Record<string, any>} */ args) => {
         const checked = this.resolveAllowedPath(args.path);
@@ -148,8 +154,12 @@ class McpGateway {
           return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `File does not exist: ${filePath}`);
         }
         const content = fs.readFileSync(filePath, 'utf-8');
-        return ok({ path: filePath, content: content.slice(0, 10000), truncated: content.length > 10000 });
-      }
+        return ok({
+          path: filePath,
+          content: content.slice(0, 10000),
+          truncated: content.length > 10000,
+        });
+      },
     });
 
     // Tool 2: list_directory
@@ -159,24 +169,27 @@ class McpGateway {
       parameters: {
         type: 'object',
         properties: {
-          path: { type: 'string', description: '目錄絕對路徑' }
+          path: { type: 'string', description: '目錄絕對路徑' },
         },
-        required: ['path']
+        required: ['path'],
       },
       handler: async (/** @type {Record<string, any>} */ args) => {
         const checked = this.resolveAllowedPath(args.path);
         if (!checked.success) return checked;
         const dirPath = checked.data;
         if (!fs.existsSync(dirPath)) {
-          return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `Directory does not exist: ${dirPath}`);
+          return err(
+            ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002,
+            `Directory does not exist: ${dirPath}`,
+          );
         }
         const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-        const items = entries.map(e => ({
+        const items = entries.map((e) => ({
           name: e.name,
-          type: e.isDirectory() ? 'directory' : 'file'
+          type: e.isDirectory() ? 'directory' : 'file',
         }));
         return ok({ path: dirPath, items: items.slice(0, 100) });
-      }
+      },
     });
   }
 
@@ -192,10 +205,10 @@ class McpGateway {
   }
 
   listTools() {
-    const list = Array.from(this.tools.values()).map(t => ({
+    const list = Array.from(this.tools.values()).map((t) => ({
       name: t.name,
       description: t.description,
-      parameters: t.parameters
+      parameters: t.parameters,
     }));
     return ok(list);
   }
@@ -212,7 +225,10 @@ class McpGateway {
     try {
       return await tool.handler(args);
     } catch (e) {
-      return err(ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002, `Tool ${name} failed: ${(e instanceof Error ? e.message : String(e))}`);
+      return err(
+        ErrorCodes.MCP_TOOL_EXECUTION_FAILED_002,
+        `Tool ${name} failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
     }
   }
 }
@@ -221,5 +237,5 @@ module.exports = {
   McpGateway,
   ALLOWED_PATHS_ENV,
   defaultAllowedPaths,
-  defaultDeniedPaths
+  defaultDeniedPaths,
 };

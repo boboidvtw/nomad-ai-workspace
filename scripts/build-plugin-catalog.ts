@@ -25,7 +25,7 @@
  * name primitives this build ships, its `engine` range may not admit a build
  * older than those primitives, and every semantic key it relies on must be
  * defined by its own site. Those rules live in `scripts/lib/pluginChecks.ts` so
- * that `bun run plugin:check` enforces exactly the same ones before a
+ * that `npm run plugin:check` enforces exactly the same ones before a
  * contribution ever reaches this script. Any violation aborts the build: the
  * snapshot we ship is expected to be clean, and a broken host file would be
  * silently discarded by every client.

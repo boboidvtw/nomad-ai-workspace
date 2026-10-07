@@ -107,9 +107,11 @@ export function mountHideArchivedNudge({
     onEnable();
   });
 
+  // The header may be nested (e.g. inside the workspace body), so insert relative
+  // to its own parent rather than assuming it is a direct child of the container.
   const header = container.querySelector('.gv-folder-header');
-  if (header && header.nextSibling) {
-    container.insertBefore(card, header.nextSibling);
+  if (header) {
+    header.after(card);
   } else {
     container.appendChild(card);
   }

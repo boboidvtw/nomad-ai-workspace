@@ -6,7 +6,9 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { RotateCcw, X } from 'lucide-react';
+
 import { CHAT_WIDTH_RANGE, useWidthControl } from '../../../hooks/useWidthControl';
 
 type Props = {
@@ -79,9 +81,11 @@ export default function WidthPanel({ side, onClose }: Props) {
         </div>
 
         <div className={`absolute top-1/2 -translate-y-1/2 ${arrowWrapperClass}`}>
-          <div className={`h-0 w-0 border-y-[6px] border-y-transparent ${arrowBorderClass} ${side === 'left' ? 'border-l-[6px]' : 'border-r-[6px]'}`} />
           <div
-            className={`absolute ${arrowBorderOffsetClass} top-1/2 -translate-y-1/2 h-0 w-0 border-y-[5px] border-y-transparent ${arrowFillClass} ${
+            className={`h-0 w-0 border-y-[6px] border-y-transparent ${arrowBorderClass} ${side === 'left' ? 'border-l-[6px]' : 'border-r-[6px]'}`}
+          />
+          <div
+            className={`absolute ${arrowBorderOffsetClass} top-1/2 h-0 w-0 -translate-y-1/2 border-y-[5px] border-y-transparent ${arrowFillClass} ${
               side === 'left' ? 'border-l-[5px]' : 'border-r-[5px]'
             }`}
           />
@@ -90,4 +94,3 @@ export default function WidthPanel({ side, onClose }: Props) {
     </div>
   );
 }
-

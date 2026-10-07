@@ -4,46 +4,48 @@
  * Last updated: 2026-10-01
  */
 
-import type { Prompt } from "@src/types/prompt";
-import { hasValidExtensionContext } from "@/core/utils/extensionContext";
+import type { Prompt } from '@src/types/prompt';
 
-export const CHAT_WIDTH_STORAGE_KEY = "chatWidth";
-export const FLOAT_BALL_POSITION_STORAGE_KEY = "floatBallPosition";
-export const FLOAT_BALL_SIZE_STORAGE_KEY = "floatBallSize";
-export const PROMPT_LIBRARY_STORAGE_KEY = "promptLibrary";
-export const GV_PROMPT_ITEMS_KEY = "gvPromptItems";
+import { hasValidExtensionContext } from '@/core/utils/extensionContext';
+
+export const CHAT_WIDTH_STORAGE_KEY = 'chatWidth';
+export const FLOAT_BALL_POSITION_STORAGE_KEY = 'floatBallPosition';
+export const FLOAT_BALL_SIZE_STORAGE_KEY = 'floatBallSize';
+export const PROMPT_LIBRARY_STORAGE_KEY = 'promptLibrary';
+export const GV_PROMPT_ITEMS_KEY = 'gvPromptItems';
 
 const parseChatWidth = (value: unknown): number | undefined => {
-  if (typeof value !== "number" || Number.isNaN(value) || !Number.isFinite(value)) return undefined;
+  if (typeof value !== 'number' || Number.isNaN(value) || !Number.isFinite(value)) return undefined;
   return value;
 };
 
 export type FloatBallPosition = { x: number; y: number; userCustom?: boolean };
 
 const parseFloatBallPosition = (value: unknown): FloatBallPosition | undefined => {
-  if (!value || typeof value !== "object") return undefined;
+  if (!value || typeof value !== 'object') return undefined;
   const v = value as Partial<FloatBallPosition>;
-  if (typeof v.x !== "number" || Number.isNaN(v.x) || !Number.isFinite(v.x)) return undefined;
-  if (typeof v.y !== "number" || Number.isNaN(v.y) || !Number.isFinite(v.y)) return undefined;
+  if (typeof v.x !== 'number' || Number.isNaN(v.x) || !Number.isFinite(v.x)) return undefined;
+  if (typeof v.y !== 'number' || Number.isNaN(v.y) || !Number.isFinite(v.y)) return undefined;
   return { x: v.x, y: v.y, userCustom: v.userCustom ? Boolean(v.userCustom) : false };
 };
 
 const parseFloatBallSize = (value: unknown): number | undefined => {
-  if (typeof value !== "number" || Number.isNaN(value) || !Number.isFinite(value)) return undefined;
+  if (typeof value !== 'number' || Number.isNaN(value) || !Number.isFinite(value)) return undefined;
   return value;
 };
 
 const parsePrompt = (value: unknown): Prompt | undefined => {
-  if (!value || typeof value !== "object") return undefined;
+  if (!value || typeof value !== 'object') return undefined;
   const v = value as Partial<Prompt>;
-  if (typeof v.id !== "string" || !v.id) return undefined;
-  if (typeof v.title !== "string") return undefined;
-  if (typeof v.content !== "string") return undefined;
+  if (typeof v.id !== 'string' || !v.id) return undefined;
+  if (typeof v.title !== 'string') return undefined;
+  if (typeof v.content !== 'string') return undefined;
   if (v.tags !== undefined) {
     if (!Array.isArray(v.tags)) return undefined;
-    if (!v.tags.every((t) => typeof t === "string")) return undefined;
+    if (!v.tags.every((t) => typeof t === 'string')) return undefined;
   }
-  if (typeof v.createdAt !== "number" || Number.isNaN(v.createdAt) || !Number.isFinite(v.createdAt)) return undefined;
+  if (typeof v.createdAt !== 'number' || Number.isNaN(v.createdAt) || !Number.isFinite(v.createdAt))
+    return undefined;
   return { id: v.id, title: v.title, content: v.content, tags: v.tags, createdAt: v.createdAt };
 };
 
@@ -59,7 +61,8 @@ const parsePromptLibrary = (value: unknown): Prompt[] | undefined => {
  */
 export const readStoredChatWidth = async (): Promise<number | undefined> => {
   try {
-    if (typeof chrome === "undefined" || !chrome?.storage?.local || !hasValidExtensionContext()) return undefined;
+    if (typeof chrome === 'undefined' || !chrome?.storage?.local || !hasValidExtensionContext())
+      return undefined;
     const result = await new Promise<Record<string, unknown>>((resolve) => {
       try {
         if (!hasValidExtensionContext()) return resolve({});
@@ -82,7 +85,8 @@ export const readStoredChatWidth = async (): Promise<number | undefined> => {
  */
 export const writeStoredChatWidth = async (chatWidth: number): Promise<void> => {
   try {
-    if (typeof chrome === "undefined" || !chrome?.storage?.local || !hasValidExtensionContext()) return;
+    if (typeof chrome === 'undefined' || !chrome?.storage?.local || !hasValidExtensionContext())
+      return;
     await new Promise<void>((resolve) => {
       try {
         if (!hasValidExtensionContext()) return resolve();
@@ -104,7 +108,8 @@ export const writeStoredChatWidth = async (chatWidth: number): Promise<void> => 
  */
 export const readStoredFloatBallPosition = async (): Promise<FloatBallPosition | undefined> => {
   try {
-    if (typeof chrome === "undefined" || !chrome?.storage?.local || !hasValidExtensionContext()) return undefined;
+    if (typeof chrome === 'undefined' || !chrome?.storage?.local || !hasValidExtensionContext())
+      return undefined;
     const result = await new Promise<Record<string, unknown>>((resolve) => {
       try {
         if (!hasValidExtensionContext()) return resolve({});
@@ -127,7 +132,8 @@ export const readStoredFloatBallPosition = async (): Promise<FloatBallPosition |
  */
 export const writeStoredFloatBallPosition = async (position: FloatBallPosition): Promise<void> => {
   try {
-    if (typeof chrome === "undefined" || !chrome?.storage?.local || !hasValidExtensionContext()) return;
+    if (typeof chrome === 'undefined' || !chrome?.storage?.local || !hasValidExtensionContext())
+      return;
     await new Promise<void>((resolve) => {
       try {
         if (!hasValidExtensionContext()) return resolve();
@@ -149,7 +155,8 @@ export const writeStoredFloatBallPosition = async (position: FloatBallPosition):
  */
 export const readStoredFloatBallSize = async (): Promise<number | undefined> => {
   try {
-    if (typeof chrome === "undefined" || !chrome?.storage?.local || !hasValidExtensionContext()) return undefined;
+    if (typeof chrome === 'undefined' || !chrome?.storage?.local || !hasValidExtensionContext())
+      return undefined;
     const result = await new Promise<Record<string, unknown>>((resolve) => {
       try {
         if (!hasValidExtensionContext()) return resolve({});
@@ -172,7 +179,8 @@ export const readStoredFloatBallSize = async (): Promise<number | undefined> => 
  */
 export const writeStoredFloatBallSize = async (size: number): Promise<void> => {
   try {
-    if (typeof chrome === "undefined" || !chrome?.storage?.local || !hasValidExtensionContext()) return;
+    if (typeof chrome === 'undefined' || !chrome?.storage?.local || !hasValidExtensionContext())
+      return;
     await new Promise<void>((resolve) => {
       try {
         if (!hasValidExtensionContext()) return resolve();
@@ -194,7 +202,8 @@ export const writeStoredFloatBallSize = async (size: number): Promise<void> => {
  */
 export const readStoredPromptLibrary = async (): Promise<Prompt[] | undefined> => {
   try {
-    if (typeof chrome === "undefined" || !chrome?.storage?.local || !hasValidExtensionContext()) return undefined;
+    if (typeof chrome === 'undefined' || !chrome?.storage?.local || !hasValidExtensionContext())
+      return undefined;
     const result = await new Promise<Record<string, unknown>>((resolve) => {
       try {
         if (!hasValidExtensionContext()) return resolve({});
@@ -215,13 +224,19 @@ export const readStoredPromptLibrary = async (): Promise<Prompt[] | undefined> =
         const it = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
         return {
           id: typeof it.id === 'string' ? it.id : `prompt-${Date.now()}`,
-          title: typeof it.name === 'string' ? it.name : (typeof it.text === 'string' ? it.text.slice(0, 30) : 'Prompt'),
+          title:
+            typeof it.name === 'string'
+              ? it.name
+              : typeof it.text === 'string'
+                ? it.text.slice(0, 30)
+                : 'Prompt',
           content: typeof it.text === 'string' ? it.text : '',
-          tags: Array.isArray(it.tags) ? it.tags.filter((t): t is string => typeof t === 'string') : [],
+          tags: Array.isArray(it.tags)
+            ? it.tags.filter((t): t is string => typeof t === 'string')
+            : [],
           createdAt: typeof it.createdAt === 'number' ? it.createdAt : Date.now(),
         };
-      })
-
+      });
 
       const map = new Map<string, Prompt>();
       for (const p of claudeItems) map.set(p.content, p);
@@ -244,7 +259,8 @@ export const readStoredPromptLibrary = async (): Promise<Prompt[] | undefined> =
  */
 export const writeStoredPromptLibrary = async (prompts: Prompt[]): Promise<void> => {
   try {
-    if (typeof chrome === "undefined" || !chrome?.storage?.local || !hasValidExtensionContext()) return;
+    if (typeof chrome === 'undefined' || !chrome?.storage?.local || !hasValidExtensionContext())
+      return;
     const gvFormat = prompts.map((p) => ({
       id: p.id,
       name: p.title,
@@ -263,7 +279,7 @@ export const writeStoredPromptLibrary = async (prompts: Prompt[]): Promise<void>
           () => {
             if (chrome.runtime?.lastError) return resolve();
             resolve();
-          }
+          },
         );
       } catch {
         resolve();

@@ -9,7 +9,7 @@ const {
   isAllowedOrigin,
   isLoopbackModelTarget,
   authorizeRequest,
-  injectDashboardAuth
+  injectDashboardAuth,
 } = require('../security/local-auth');
 
 const TOKEN = 'a'.repeat(64);
@@ -75,19 +75,43 @@ test('LocalAuth: authorizeRequest enforces token, origin and host', () => {
   const base = { host: '127.0.0.1:8765' };
 
   assert.equal(authorizeRequest(fakeReq(base), url, { token: TOKEN }).status, 401);
-  assert.equal(authorizeRequest(fakeReq({ ...base, authorization: 'Bearer wrong' }), url, { token: TOKEN }).status, 401);
-  assert.equal(authorizeRequest(fakeReq({ ...base, authorization: 'Bearer ' + TOKEN }), url, { token: TOKEN }).allowed, true);
-  assert.equal(authorizeRequest(fakeReq({ ...base, 'x-nomad-token': TOKEN }), url, { token: TOKEN }).allowed, true);
-  assert.equal(authorizeRequest(fakeReq(base), new URL(url + '?token=' + TOKEN), { token: TOKEN }).allowed, true);
+  assert.equal(
+    authorizeRequest(fakeReq({ ...base, authorization: 'Bearer wrong' }), url, { token: TOKEN })
+      .status,
+    401,
+  );
+  assert.equal(
+    authorizeRequest(fakeReq({ ...base, authorization: 'Bearer ' + TOKEN }), url, { token: TOKEN })
+      .allowed,
+    true,
+  );
+  assert.equal(
+    authorizeRequest(fakeReq({ ...base, 'x-nomad-token': TOKEN }), url, { token: TOKEN }).allowed,
+    true,
+  );
+  assert.equal(
+    authorizeRequest(fakeReq(base), new URL(url + '?token=' + TOKEN), { token: TOKEN }).allowed,
+    true,
+  );
 
-  const evilOrigin = { ...base, origin: 'https://evil.example.com', authorization: 'Bearer ' + TOKEN };
+  const evilOrigin = {
+    ...base,
+    origin: 'https://evil.example.com',
+    authorization: 'Bearer ' + TOKEN,
+  };
   assert.equal(authorizeRequest(fakeReq(evilOrigin), url, { token: TOKEN }).status, 403);
 
   const rebinding = { host: 'attacker.example:8765', authorization: 'Bearer ' + TOKEN };
   assert.equal(authorizeRequest(fakeReq(rebinding), url, { token: TOKEN }).status, 403);
-  assert.equal(authorizeRequest(fakeReq(rebinding), url, { token: TOKEN, publicRoute: true }).status, 403);
+  assert.equal(
+    authorizeRequest(fakeReq(rebinding), url, { token: TOKEN, publicRoute: true }).status,
+    403,
+  );
 
-  assert.equal(authorizeRequest(fakeReq(base), url, { token: TOKEN, publicRoute: true }).allowed, true);
+  assert.equal(
+    authorizeRequest(fakeReq(base), url, { token: TOKEN, publicRoute: true }).allowed,
+    true,
+  );
 });
 
 test('LocalAuth: injectDashboardAuth embeds token shim right after <head>', () => {

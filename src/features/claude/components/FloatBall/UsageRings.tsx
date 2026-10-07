@@ -7,6 +7,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import type { UsageData } from '../../services/usage';
 
 type Props = {
@@ -44,7 +45,9 @@ const getRingMetrics = (radius: number, usedPct: number) => {
 export default function UsageRings({ data, side, isDragging, children }: Props) {
   const { t } = useTranslation();
   const hoverTimerRef = useRef<number | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
+  // Timestamp the tooltip opened at; reset labels are relative to it so render stays pure.
+  const [tooltipOpenedAt, setTooltipOpenedAt] = useState<number | null>(null);
+  const showTooltip = tooltipOpenedAt !== null;
 
   const clearHoverTimer = () => {
     if (!hoverTimerRef.current) return;
@@ -59,21 +62,21 @@ export default function UsageRings({ data, side, isDragging, children }: Props) 
   useEffect(() => {
     if (data && !isDragging) return;
     clearHoverTimer();
-    setShowTooltip(false);
+    setTooltipOpenedAt(null);
   }, [data, isDragging]);
 
   const handleMouseEnter = () => {
     if (!data || isDragging) return;
     clearHoverTimer();
     hoverTimerRef.current = window.setTimeout(() => {
-      setShowTooltip(true);
+      setTooltipOpenedAt(Date.now());
       hoverTimerRef.current = null;
     }, HOVER_TOOLTIP_DELAY_MS);
   };
 
   const handleMouseLeave = () => {
     clearHoverTimer();
-    setShowTooltip(false);
+    setTooltipOpenedAt(null);
   };
 
   const usage = useMemo(() => {
@@ -101,7 +104,7 @@ export default function UsageRings({ data, side, isDragging, children }: Props) 
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return t('usageRings.resetUnknown');
 
-    const diffMs = date.getTime() - Date.now();
+    const diffMs = date.getTime() - (tooltipOpenedAt ?? date.getTime());
     const timeText = new Intl.DateTimeFormat(undefined, {
       hour: '2-digit',
       minute: '2-digit',
@@ -170,26 +173,48 @@ export default function UsageRings({ data, side, isDragging, children }: Props) 
           <div className="relative w-[15rem] rounded-xl border border-[#e5e0d8] bg-white p-3 text-[12px] text-[#374151] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
             <div className="space-y-3">
               <div>
-                <div className="mb-1 font-medium text-[#111827]">{t('usageRings.fiveHourWindow')}</div>
-                <div>{t('usageRings.usedPercent', { value: tooltipPayload.usage.fiveHourUsed })}</div>
-                <div>{t('usageRings.remainingPercent', { value: tooltipPayload.usage.fiveHourRemaining })}</div>
-                <div className="text-[#6b7280]">{formatResetLabel(tooltipPayload.data.fiveResetAt)}</div>
+                <div className="mb-1 font-medium text-[#111827]">
+                  {t('usageRings.fiveHourWindow')}
+                </div>
+                <div>
+                  {t('usageRings.usedPercent', { value: tooltipPayload.usage.fiveHourUsed })}
+                </div>
+                <div>
+                  {t('usageRings.remainingPercent', {
+                    value: tooltipPayload.usage.fiveHourRemaining,
+                  })}
+                </div>
+                <div className="text-[#6b7280]">
+                  {formatResetLabel(tooltipPayload.data.fiveResetAt)}
+                </div>
               </div>
 
               <div className="h-px bg-[#f1ece4]" />
 
               <div>
-                <div className="mb-1 font-medium text-[#111827]">{t('usageRings.sevenDayWindow')}</div>
-                <div>{t('usageRings.usedPercent', { value: tooltipPayload.usage.sevenDayUsed })}</div>
-                <div>{t('usageRings.remainingPercent', { value: tooltipPayload.usage.sevenDayRemaining })}</div>
-                <div className="text-[#6b7280]">{formatResetLabel(tooltipPayload.data.sevenResetAt)}</div>
+                <div className="mb-1 font-medium text-[#111827]">
+                  {t('usageRings.sevenDayWindow')}
+                </div>
+                <div>
+                  {t('usageRings.usedPercent', { value: tooltipPayload.usage.sevenDayUsed })}
+                </div>
+                <div>
+                  {t('usageRings.remainingPercent', {
+                    value: tooltipPayload.usage.sevenDayRemaining,
+                  })}
+                </div>
+                <div className="text-[#6b7280]">
+                  {formatResetLabel(tooltipPayload.data.sevenResetAt)}
+                </div>
               </div>
             </div>
 
             <div className={`absolute top-1/2 -translate-y-1/2 ${arrowWrapperClass}`}>
-              <div className={`h-0 w-0 border-y-[6px] border-y-transparent ${arrowBorderClass} ${side === 'left' ? 'border-l-[6px]' : 'border-r-[6px]'}`} />
               <div
-                className={`absolute ${arrowBorderOffsetClass} top-1/2 -translate-y-1/2 h-0 w-0 border-y-[5px] border-y-transparent ${arrowFillClass} ${
+                className={`h-0 w-0 border-y-[6px] border-y-transparent ${arrowBorderClass} ${side === 'left' ? 'border-l-[6px]' : 'border-r-[6px]'}`}
+              />
+              <div
+                className={`absolute ${arrowBorderOffsetClass} top-1/2 h-0 w-0 -translate-y-1/2 border-y-[5px] border-y-transparent ${arrowFillClass} ${
                   side === 'left' ? 'border-l-[5px]' : 'border-r-[5px]'
                 }`}
               />

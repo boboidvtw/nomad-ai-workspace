@@ -317,7 +317,7 @@ function buildWebPromptWithHistory(currentText, history) {
 }
 
 function stripNativeWebContextIds(context = {}) {
-    const { contextIds, ...authContext } = context;
+    const { contextIds: _contextIds, ...authContext } = context;
     return authContext;
 }
 

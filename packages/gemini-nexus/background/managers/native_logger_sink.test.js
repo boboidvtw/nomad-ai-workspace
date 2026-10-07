@@ -214,7 +214,7 @@ describe('NativeLoggerSink', () => {
         expect(sink._buffer.map((e) => e.message)).toEqual(['fail', 'b']); // both re-queued in order
     });
     it('handles host-not-found disconnect gracefully without uncaught error', () => {
-        const { runtime, port, listeners } = makeMockRuntime();
+        const { runtime, listeners } = makeMockRuntime();
         runtime.lastError = { message: 'Specified native messaging host not found.' };
         const sink = new NativeLoggerSink({ runtime, enabled: true });
         sink.connect();
@@ -226,7 +226,7 @@ describe('NativeLoggerSink', () => {
     });
 
     it('resets hostUnavailable when connect() or setEnabled(true) is called', () => {
-        const { runtime, port, listeners } = makeMockRuntime();
+        const { runtime, listeners } = makeMockRuntime();
         runtime.lastError = { message: 'Specified native messaging host not found.' };
         const sink = new NativeLoggerSink({ runtime, enabled: true });
         sink.connect();

@@ -28,7 +28,7 @@ describe('CompositeActions.runSteps validation', () => {
 
     it('rejects more than 8 steps', async () => {
         const { composite } = createComposite({ actions: {} });
-        const steps = Array.from({ length: 9 }, (_, i) => ({
+        const steps = Array.from({ length: 9 }, (_, _i) => ({
             tool: 'wait_for_timeout',
             args: { timeout: 1 },
         }));

@@ -4,7 +4,6 @@
  * Created: 2026-03-10
  */
 
-import type { ExportExtractionResult, ExportMessage, ExportRole } from './exportTypes';
 import {
   ASSISTANT_COPY_BUTTON_SELECTOR,
   ASSISTANT_MESSAGE_SELECTOR,
@@ -13,6 +12,8 @@ import {
   TOOLBAR_ACTIONS_SELECTOR,
   USER_MESSAGE_SELECTOR,
 } from '@src/constants/selectors';
+
+import type { ExportExtractionResult, ExportMessage, ExportRole } from './exportTypes';
 
 export const EXPORT_SELECTORS = {
   toolbarActions: TOOLBAR_ACTIONS_SELECTOR,
@@ -78,7 +79,14 @@ const extractBlock = (node: Node, listDepth: number): string => {
     return `\n\`\`\`\n${text}\n\`\`\`\n`;
   }
 
-  if (tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4' || tag === 'h5' || tag === 'h6') {
+  if (
+    tag === 'h1' ||
+    tag === 'h2' ||
+    tag === 'h3' ||
+    tag === 'h4' ||
+    tag === 'h5' ||
+    tag === 'h6'
+  ) {
     const level = Number(tag.slice(1));
     const hashes = '#'.repeat(Number.isFinite(level) ? level : 2);
     const title = normalizeText(node.textContent ?? '');
@@ -153,10 +161,12 @@ const buildCandidates = (): Candidate[] => {
   const candidates: Candidate[] = [];
 
   const userNodes = Array.from(document.querySelectorAll(EXPORT_SELECTORS.userMessage));
-  for (const el of userNodes) candidates.push({ role: 'user', element: el, position: getElementTop(el) });
+  for (const el of userNodes)
+    candidates.push({ role: 'user', element: el, position: getElementTop(el) });
 
   const assistantNodes = Array.from(document.querySelectorAll(EXPORT_SELECTORS.assistantMessage));
-  for (const el of assistantNodes) candidates.push({ role: 'assistant', element: el, position: getElementTop(el) });
+  for (const el of assistantNodes)
+    candidates.push({ role: 'assistant', element: el, position: getElementTop(el) });
 
   return candidates.sort((a, b) => a.position - b.position);
 };
@@ -195,4 +205,3 @@ export const extractConversationMessages = async (): Promise<ExportExtractionRes
 
   return { messages, failedMessages };
 };
-

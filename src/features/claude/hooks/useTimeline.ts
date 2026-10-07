@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+
 import {
   AUTOSCROLL_CONTAINER_SELECTOR,
   CONVERSATION_LINK_SELECTOR,

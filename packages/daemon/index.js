@@ -11,7 +11,7 @@ const {
   isProcessRunning,
   getDaemonStatus,
   startDaemon,
-  stopDaemon
+  stopDaemon,
 } = require('./src/process-manager');
 const { findDashboardPath, serveDashboard } = require('./src/static-handler');
 
@@ -27,5 +27,5 @@ module.exports = {
   startDaemon,
   stopDaemon,
   findDashboardPath,
-  serveDashboard
+  serveDashboard,
 };

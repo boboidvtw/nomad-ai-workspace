@@ -1,7 +1,10 @@
 function extractSrcFallback(sheet: CSSStyleSheet, family: string): string {
   const text = (sheet.ownerNode as HTMLElement | null)?.textContent || '';
   if (!text) return '';
-  const fontFaceRegex = new RegExp(`@font-face\\s*\\{[^}]*font-family\\s*:\\s*['"]?${family}['"]?[^}]*\\}`, 'i');
+  const fontFaceRegex = new RegExp(
+    `@font-face\\s*\\{[^}]*font-family\\s*:\\s*['"]?${family}['"]?[^}]*\\}`,
+    'i',
+  );
   const block = text.match(fontFaceRegex)?.[0] ?? text;
   const match = block.match(/src\s*:\s*([\s\S]*?)(?:;\s*(?:[a-z-]+\s*:|\})|\}\s*$)/i);
   return match ? match[1].trim() : '';

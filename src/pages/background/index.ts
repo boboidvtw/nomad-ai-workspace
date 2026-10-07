@@ -109,8 +109,8 @@ import {
   resolveTimelineHierarchyDataForStorageScope,
 } from '@/pages/content/timeline/hierarchyStorage';
 import type { StarredMessage, StarredMessagesData } from '@/pages/content/timeline/starredTypes';
-import { mergeFlatFolders, mergeFolderData, type FlatSyncFolder } from '@/utils/merge';
 import { getTranslation } from '@/utils/i18n';
+import { mergeFlatFolders, mergeFolderData, type FlatSyncFolder } from '@/utils/merge';
 import type { TranslationKey } from '@/utils/translations';
 
 import { unregisterRegisteredContentScripts } from './contentScriptRegistration';
@@ -1193,7 +1193,8 @@ async function doSyncPluginContentScripts(): Promise<void> {
   const cssResources = isFirefox()
     ? manifestContentScript.css?.map(toRelativeExtensionPath)
     : manifestContentScript.css;
-  const { topFrameOrigins, embeddedFrameOrigins } = partitionPluginOriginPatterns(safePluginMatches);
+  const { topFrameOrigins, embeddedFrameOrigins } =
+    partitionPluginOriginPatterns(safePluginMatches);
 
   try {
     const registrations: chrome.scripting.RegisteredContentScript[] = [];
@@ -2046,7 +2047,6 @@ async function handleRuntimeImageMessage(
   };
 }
 
-
 function isFolderData(value: unknown): value is FolderData {
   if (typeof value !== 'object' || value === null) return false;
   const data = value as { folders?: unknown; folderContents?: unknown };
@@ -2060,7 +2060,11 @@ function isFolderData(value: unknown): value is FolderData {
 function extractFlatFolders(raw: unknown): FlatSyncFolder[] {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw as FlatSyncFolder[];
-  if (typeof raw === 'object' && raw !== null && Array.isArray((raw as { folders?: unknown }).folders)) {
+  if (
+    typeof raw === 'object' &&
+    raw !== null &&
+    Array.isArray((raw as { folders?: unknown }).folders)
+  ) {
     return (raw as { folders: FlatSyncFolder[] }).folders;
   }
   return [];
@@ -2535,7 +2539,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       // Handle sync operations
-      if (message && message.type && (message.type.startsWith('gv.sync.') || message.type.startsWith('cv.sync.') || message.type.startsWith('nomad.sync.'))) {
+      if (
+        message &&
+        message.type &&
+        (message.type.startsWith('gv.sync.') ||
+          message.type.startsWith('cv.sync.') ||
+          message.type.startsWith('nomad.sync.'))
+      ) {
         switch (message.type) {
           case 'cv.sync.authenticate':
           case 'nomad.sync.authenticate':
@@ -2552,7 +2562,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse({ ok: true, state: await googleDriveSyncService.getState() });
             return;
           }
-                    case 'cv.sync.upload':
+          case 'cv.sync.upload':
           case 'nomad.sync.uploadClaude': {
             const interactive = message.payload?.interactive !== false;
             const folders = message.payload?.folders ?? [];
@@ -2564,7 +2574,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           case 'nomad.sync.downloadClaude': {
             const interactive = message.payload?.interactive !== false;
             const data = await googleDriveSyncService.downloadClaudeFolders(interactive);
-            sendResponse({ ok: data !== null, data, state: await googleDriveSyncService.getState() });
+            sendResponse({
+              ok: data !== null,
+              data,
+              state: await googleDriveSyncService.getState(),
+            });
             return;
           }
           case 'nomad.sync.uploadChatGPT': {
@@ -2577,7 +2591,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           case 'nomad.sync.downloadChatGPT': {
             const interactive = message.payload?.interactive !== false;
             const data = await googleDriveSyncService.downloadChatGPTFolders(interactive);
-            sendResponse({ ok: data !== null, data, state: await googleDriveSyncService.getState() });
+            sendResponse({
+              ok: data !== null,
+              data,
+              state: await googleDriveSyncService.getState(),
+            });
             return;
           }
           case 'nomad.sync.uploadGemini': {
@@ -2590,7 +2608,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           case 'nomad.sync.downloadGemini': {
             const interactive = message.payload?.interactive !== false;
             const data = await googleDriveSyncService.downloadGeminiFolders(interactive);
-            sendResponse({ ok: data !== null, data, state: await googleDriveSyncService.getState() });
+            sendResponse({
+              ok: data !== null,
+              data,
+              state: await googleDriveSyncService.getState(),
+            });
             return;
           }
           case 'nomad.sync.uploadGrok': {
@@ -2603,7 +2625,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           case 'nomad.sync.downloadGrok': {
             const interactive = message.payload?.interactive !== false;
             const data = await googleDriveSyncService.downloadGrokFolders(interactive);
-            sendResponse({ ok: data !== null, data, state: await googleDriveSyncService.getState() });
+            sendResponse({
+              ok: data !== null,
+              data,
+              state: await googleDriveSyncService.getState(),
+            });
             return;
           }
           case 'nomad.sync.syncAll': {
@@ -2630,24 +2656,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             const rawLocalGemini = localStore.gvFolderData;
             const localGemini: FolderData = isFolderData(rawLocalGemini)
               ? rawLocalGemini
-              : { folders: Array.isArray(rawLocalGemini) ? (rawLocalGemini as FolderData['folders']) : [], folderContents: {} };
+              : {
+                  folders: Array.isArray(rawLocalGemini)
+                    ? (rawLocalGemini as FolderData['folders'])
+                    : [],
+                  folderContents: {},
+                };
 
             // 3. Bidirectional merge
-            const mergedClaude = claudeCloud !== null
-              ? mergeFlatFolders(localClaude, extractFlatFolders(claudeCloud))
-              : localClaude;
-            const mergedChatGPT = chatgptCloud !== null
-              ? mergeFlatFolders(localChatGPT, extractFlatFolders(chatgptCloud))
-              : localChatGPT;
-            const mergedGrok = grokCloud !== null
-              ? mergeFlatFolders(localGrok, extractFlatFolders(grokCloud))
-              : localGrok;
+            const mergedClaude =
+              claudeCloud !== null
+                ? mergeFlatFolders(localClaude, extractFlatFolders(claudeCloud))
+                : localClaude;
+            const mergedChatGPT =
+              chatgptCloud !== null
+                ? mergeFlatFolders(localChatGPT, extractFlatFolders(chatgptCloud))
+                : localChatGPT;
+            const mergedGrok =
+              grokCloud !== null
+                ? mergeFlatFolders(localGrok, extractFlatFolders(grokCloud))
+                : localGrok;
 
             let mergedGemini = localGemini;
             if (geminiCloud !== null) {
               const cloudGeminiData: FolderData = isFolderData(geminiCloud)
                 ? geminiCloud
-                : { folders: Array.isArray(geminiCloud) ? (geminiCloud as FolderData['folders']) : [], folderContents: {} };
+                : {
+                    folders: Array.isArray(geminiCloud)
+                      ? (geminiCloud as FolderData['folders'])
+                      : [],
+                    folderContents: {},
+                  };
               mergedGemini = mergeFolderData(localGemini, cloudGeminiData);
             }
 
@@ -3073,7 +3112,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         try {
           const targetUrl = new URL(rawUrl);
-          const allowedHosts = ['gemini.google.com', 'aistudio.google.com', 'chatgpt.com', 'claude.ai', 'grok.com'];
+          const allowedHosts = [
+            'gemini.google.com',
+            'aistudio.google.com',
+            'chatgpt.com',
+            'claude.ai',
+            'grok.com',
+          ];
           const host = targetUrl.hostname.toLowerCase();
           const isAllowed = allowedHosts.some((h) => host === h || host.endsWith(`.${h}`));
           if (!isAllowed || targetUrl.protocol !== 'https:') {

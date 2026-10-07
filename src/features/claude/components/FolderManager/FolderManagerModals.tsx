@@ -2,9 +2,9 @@
  * Centralizes FolderManager floating UI like popovers and context menus.
  */
 
-import type React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+
 import type { Folder } from '@src/types/folder';
 import { Download } from 'lucide-react';
 
@@ -54,14 +54,15 @@ export function FolderManagerModals({
       {contextMenu ? (
         <div
           className="fixed inset-0 z-[2147483647]"
+          role="presentation"
           onMouseDown={onContextMenuClose}
-          aria-label={t('menu.closeAria')}
         >
           <div
             className={`fixed min-w-[220px] rounded border p-1 text-xs shadow-xl ${theme.menu}`}
             style={{ left: contextMenu.x, top: contextMenu.y }}
             data-claude-nexus-context-menu="1"
             role="menu"
+            tabIndex={-1}
             aria-label={t('menu.labelAria')}
             onMouseDown={(e) => e.stopPropagation()}
           >
@@ -78,7 +79,9 @@ export function FolderManagerModals({
             <div className={`px-2 py-1 text-[11px] ${theme.mutedText}`}>{t('menu.moveInto')}</div>
             <div className="max-h-[240px] overflow-auto">
               {folders.length === 0 ? (
-                <div className={`px-2 py-1 text-[11px] ${theme.subtleText}`}>{t('menu.emptyFolders')}</div>
+                <div className={`px-2 py-1 text-[11px] ${theme.subtleText}`}>
+                  {t('menu.emptyFolders')}
+                </div>
               ) : (
                 folders.map((f) => (
                   <button
@@ -94,7 +97,9 @@ export function FolderManagerModals({
                     role="menuitem"
                   >
                     <span className="truncate">{f.name}</span>
-                    <span className={`text-[11px] ${theme.subtleText}`}>{f.conversationIds.length}</span>
+                    <span className={`text-[11px] ${theme.subtleText}`}>
+                      {f.conversationIds.length}
+                    </span>
                   </button>
                 ))
               )}
@@ -113,7 +118,7 @@ export function FolderManagerModals({
             >
               {t('menu.moveOut')}
             </button>
-            
+
             {onExportConversation && (
               <>
                 <div className={`my-1 h-px ${theme.divider}`} />
@@ -137,7 +142,13 @@ export function FolderManagerModals({
 
       {deleteTarget
         ? createPortal(
-            <div className="fixed inset-0 z-[2147483647]" onMouseDown={onDeleteCancel}>
+            <div
+              className="fixed inset-0 z-[2147483647]"
+              role="presentation"
+              onMouseDown={onDeleteCancel}
+            >
+              {/* The dialog only stops inner clicks from reaching the backdrop's close handler. */}
+              {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
               <div
                 className={`fixed rounded-xl border p-4 pb-4 text-xs shadow-xl transition-all duration-150 ${theme.menu}`}
                 style={{
@@ -147,7 +158,8 @@ export function FolderManagerModals({
                     Math.max(8, window.innerWidth - 8 - deletePopoverWidth),
                   ),
                   top:
-                    deleteTarget.anchorRect.bottom + 8 + deletePopoverHeight <= window.innerHeight - 8
+                    deleteTarget.anchorRect.bottom + 8 + deletePopoverHeight <=
+                    window.innerHeight - 8
                       ? deleteTarget.anchorRect.bottom + 8
                       : Math.max(8, deleteTarget.anchorRect.top - 8 - deletePopoverHeight),
                 }}
@@ -156,10 +168,15 @@ export function FolderManagerModals({
                 aria-labelledby="delete-folder-title"
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <div id="delete-folder-title" className={`mb-2 text-[13px] font-medium ${theme.rootText}`}>
+                <div
+                  id="delete-folder-title"
+                  className={`mb-2 text-[13px] font-medium ${theme.rootText}`}
+                >
                   {t('folders.deleteTitle')}
                 </div>
-                <div className={`mb-4 text-[12px] ${theme.mutedText}`}>{t('folders.deleteConfirm')}</div>
+                <div className={`mb-4 text-[12px] ${theme.mutedText}`}>
+                  {t('folders.deleteConfirm')}
+                </div>
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"

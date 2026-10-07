@@ -5,8 +5,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { readStoredChatWidth, writeStoredChatWidth } from '@/services/storage';
 import { hasValidExtensionContext } from '@/core/utils/extensionContext';
+import { readStoredChatWidth, writeStoredChatWidth } from '@/services/storage';
 
 type WidthControlApi = {
   chatWidth: number;

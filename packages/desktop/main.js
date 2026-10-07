@@ -1,5 +1,12 @@
-const { probeAllServices } = require('@nomad/core');
-const { app, BrowserWindow, WebContentsView, session, ipcMain, screen, Menu, shell, dialog, globalShortcut } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  WebContentsView,
+  session,
+  ipcMain,
+  shell,
+  globalShortcut,
+} = require('electron');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -20,12 +27,15 @@ const {
   DiffEngine,
   LocalModelClient,
   McpGateway,
-  KnowledgeBase
+  KnowledgeBase,
 } = require('@nomad/core');
 
 const localModelClient = new LocalModelClient();
 const mcpGateway = new McpGateway({
-  allowedPaths: resolveMcpAllowedPaths({ isPackaged: app.isPackaged, userDataDir: app.getPath('userData') })
+  allowedPaths: resolveMcpAllowedPaths({
+    isPackaged: app.isPackaged,
+    userDataDir: app.getPath('userData'),
+  }),
 });
 const knowledgeBase = new KnowledgeBase();
 const { SessionManager } = require('./src/session-manager');
@@ -74,7 +84,10 @@ function ensurePlatformLoaded(key) {
     try {
       item.view.webContents.loadURL(item.url);
     } catch (e) {
-      console.warn(`[Nomad Desktop] Failed to load URL for ${key}:`, (e instanceof Error ? e.message : String(e)));
+      console.warn(
+        `[Nomad Desktop] Failed to load URL for ${key}:`,
+        e instanceof Error ? e.message : String(e),
+      );
     }
   }
 }
@@ -119,7 +132,10 @@ function applyZoom(platform, factor) {
     try {
       item.view.webContents.setZoomFactor(factor);
     } catch (e) {
-      console.warn(`[Nomad Desktop] Failed to set zoom for ${platform}:`, (e instanceof Error ? e.message : String(e)));
+      console.warn(
+        `[Nomad Desktop] Failed to set zoom for ${platform}:`,
+        e instanceof Error ? e.message : String(e),
+      );
     }
   }
 }
@@ -138,18 +154,25 @@ async function createMainWindow() {
   // 2. Load unpacked extension if available
   try {
     const extLoader = session.defaultSession.extensions?.loadExtension
-      ? (/** @type {string} */ p, /** @type {Electron.LoadExtensionOptions} */ opts) => session.defaultSession.extensions.loadExtension(p, opts)
-      : (/** @type {string} */ p, /** @type {Electron.LoadExtensionOptions} */ opts) => session.defaultSession.loadExtension(p, opts);
+      ? (/** @type {string} */ p, /** @type {Electron.LoadExtensionOptions} */ opts) =>
+          session.defaultSession.extensions.loadExtension(p, opts)
+      : (/** @type {string} */ p, /** @type {Electron.LoadExtensionOptions} */ opts) =>
+          session.defaultSession.loadExtension(p, opts);
     const ext = await extLoader(EXTENSION_PATH, { allowFileAccess: true });
     console.log(`[Nomad Desktop] Loaded Extension: ${ext.name} (v${ext.version})`);
   } catch (err) {
-    console.warn('[Nomad Desktop] Extension not loaded (may be packaged or not built):', (err instanceof Error ? err.message : String(err)));
+    console.warn(
+      '[Nomad Desktop] Extension not loaded (may be packaged or not built):',
+      err instanceof Error ? err.message : String(err),
+    );
   }
 
   const isMac = process.platform === 'darwin';
   const iconPath = isMac
     ? path.join(__dirname, 'nomad.icns')
-    : (process.platform === 'win32' ? path.join(__dirname, 'nomad.ico') : path.join(__dirname, 'nomad.png'));
+    : process.platform === 'win32'
+      ? path.join(__dirname, 'nomad.ico')
+      : path.join(__dirname, 'nomad.png');
 
   mainWindow = new BrowserWindow({
     width: 1440,
@@ -224,7 +247,7 @@ async function createMainWindow() {
         const res = await item.view.webContents.executeJavaScript(extractorScript);
         return res || { ok: false, error: 'Empty script result' };
       } catch (err) {
-        return { ok: false, error: (err instanceof Error ? err.message : String(err)) };
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
       }
     },
     checkStreaming: async (/** @type {string} */ platform) => {
@@ -236,7 +259,11 @@ async function createMainWindow() {
         const res = await item.view.webContents.executeJavaScript(statusScript);
         return res || { ok: true, isStreaming: false };
       } catch (err) {
-        return { ok: false, isStreaming: false, error: (err instanceof Error ? err.message : String(err)) };
+        return {
+          ok: false,
+          isStreaming: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
       }
     },
     onStep: async (/** @type {Record<string, any>} */ event) => {
@@ -244,7 +271,10 @@ async function createMainWindow() {
         try {
           await sessionManager?.applyInPageRenaming(event.speaker, event.canonicalTitle);
         } catch (e) {
-          console.warn("[Nomad Desktop] Action failed:", (e instanceof Error ? e.message : String(e)));
+          console.warn(
+            '[Nomad Desktop] Action failed:',
+            e instanceof Error ? e.message : String(e),
+          );
         }
         const activeWs = sessionManager?.getActiveWorkspace();
         if (sessionManager && activeWs) {
@@ -268,12 +298,16 @@ async function createMainWindow() {
         sessionManager.captureActiveUrls(activeWs.id);
         sessionManager.updateWorkspace(activeWs.id, {
           completed: true,
-          history: (orchestrator && orchestrator.history && orchestrator.history.length > 0)
-            ? orchestrator.history
-            : (activeWs.history || [])
+          history:
+            orchestrator && orchestrator.history && orchestrator.history.length > 0
+              ? orchestrator.history
+              : activeWs.history || [],
         });
         if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
+          mainWindow.webContents.send(
+            'nomad:workspaces-updated',
+            sessionManager.getAllWorkspaces(),
+          );
         }
       }
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -308,7 +342,9 @@ async function createMainWindow() {
       }
       return results;
     },
-    onSetLayout: (/** @type {{ layout?: string, activePlatforms?: string[], splitRatio?: number }} */ data) => {
+    onSetLayout: (
+      /** @type {{ layout?: string, activePlatforms?: string[], splitRatio?: number }} */ data,
+    ) => {
       if (data.layout) store.set('layout', data.layout);
       if (data.activePlatforms) store.set('activePlatforms', data.activePlatforms);
       if (data.splitRatio) store.set('splitRatio', data.splitRatio);
@@ -319,7 +355,9 @@ async function createMainWindow() {
       }
       return store.getAll();
     },
-    onSetZoom: (/** @type {{ platform?: string, factor?: number, globalFactor?: number, zoomFactors?: Record<string, number> }} */ data) => {
+    onSetZoom: (
+      /** @type {{ platform?: string, factor?: number, globalFactor?: number, zoomFactors?: Record<string, number> }} */ data,
+    ) => {
       if (data.platform && typeof data.factor === 'number') {
         store.setZoom(data.platform, data.factor);
         applyZoom(data.platform, data.factor);
@@ -332,18 +370,26 @@ async function createMainWindow() {
       }
       return store.getAll().zoomFactors;
     },
-        onInspectPlatform: async (/** @type {string} */ platform) => {
+    onInspectPlatform: async (/** @type {string} */ platform) => {
       ensurePlatformLoaded(platform);
       const item = views[platform];
-      if (!item) return { ok: false, error: "Platform view not found" };
+      if (!item) return { ok: false, error: 'Platform view not found' };
       const wc = item.view.webContents;
       const extScript = PLATFORM_EXTRACTORS[platform]?.getLatestResponse();
       const statScript = PLATFORM_EXTRACTORS[platform]?.checkStatus();
       let extRes = null;
       let statRes = null;
       let debugDom = null;
-      try { if (extScript) extRes = await wc.executeJavaScript(extScript); } catch (e) { extRes = { ok: false, error: (e instanceof Error ? e.message : String(e)) }; }
-      try { if (statScript) statRes = await wc.executeJavaScript(statScript); } catch (e) { statRes = { ok: false, error: (e instanceof Error ? e.message : String(e)) }; }
+      try {
+        if (extScript) extRes = await wc.executeJavaScript(extScript);
+      } catch (e) {
+        extRes = { ok: false, error: e instanceof Error ? e.message : String(e) };
+      }
+      try {
+        if (statScript) statRes = await wc.executeJavaScript(statScript);
+      } catch (e) {
+        statRes = { ok: false, error: e instanceof Error ? e.message : String(e) };
+      }
       try {
         debugDom = await wc.executeJavaScript(`(function() {
           return {
@@ -351,24 +397,26 @@ async function createMainWindow() {
             title: document.title,
             bodyTextSnippet: (document.body ? document.body.innerText : "").slice(0, 300),
             articleCount: document.querySelectorAll("article").length,
-            turnCount: document.querySelectorAll("[data-testid*=\"conversation-turn\"]").length,
+            turnCount: document.querySelectorAll('[data-testid*="conversation-turn"]').length,
             markdownCount: document.querySelectorAll(".markdown").length,
             responseContainerCount: document.querySelectorAll(".response-container").length,
             messageContentCount: document.querySelectorAll("message-content").length
           };
         })()`);
-      } catch (e) { debugDom = { error: (e instanceof Error ? e.message : String(e)) }; }
+      } catch (e) {
+        debugDom = { error: e instanceof Error ? e.message : String(e) };
+      }
       return { ok: true, platform, extRes, statRes, debugDom };
     },
     onEvalScript: async (/** @type {string} */ platform, /** @type {string} */ script) => {
       ensurePlatformLoaded(platform);
       const item = views[platform];
-      if (!item) return { ok: false, error: "Platform view not found" };
+      if (!item) return { ok: false, error: 'Platform view not found' };
       try {
         const result = await item.view.webContents.executeJavaScript(script);
         return { ok: true, result };
       } catch (e) {
-        return { ok: false, error: (e instanceof Error ? e.message : String(e)) };
+        return { ok: false, error: e instanceof Error ? e.message : String(e) };
       }
     },
     onToggleWindow: (/** @type {string} */ action) => {
@@ -388,18 +436,20 @@ async function createMainWindow() {
   try {
     await bridge.start();
 
-  try {
-    globalShortcut.register('CommandOrControl+Shift+P', () => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.show();
-        mainWindow.focus();
-        mainWindow.webContents.send('nomad:toggle-spotlight-hud');
-      }
-    });
-  } catch (err) {
-    console.warn('[Nomad Desktop] Spotlight shortcut registration skipped:', (err instanceof Error ? err.message : String(err)));
-  }
-
+    try {
+      globalShortcut.register('CommandOrControl+Shift+P', () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.show();
+          mainWindow.focus();
+          mainWindow.webContents.send('nomad:toggle-spotlight-hud');
+        }
+      });
+    } catch (err) {
+      console.warn(
+        '[Nomad Desktop] Spotlight shortcut registration skipped:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
   } catch (err) {
     console.error('[Nomad Desktop] Failed to start local sync bridge:', err);
   }
@@ -449,7 +499,7 @@ async function createMainWindow() {
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('nomad:remote-update', { openHud: true });
       }
-    }
+    },
   });
 
   trayManager.init();
@@ -462,8 +512,10 @@ async function createMainWindow() {
  * @returns {Promise<Record<string, unknown>>}
  */
 async function dispatchPromptToTargets(prompt, targets, attachments = []) {
-  const promptText = typeof prompt === 'string' ? prompt : (prompt.text || '');
-  console.log(`[Nomad Desktop] Dispatching prompt to [${targets.join(', ')}]: "${promptText.slice(0, 30)}..."`);
+  const promptText = typeof prompt === 'string' ? prompt : prompt.text || '';
+  console.log(
+    `[Nomad Desktop] Dispatching prompt to [${targets.join(', ')}]: "${promptText.slice(0, 30)}..."`,
+  );
   /** @type {Record<string, unknown>} */
   const results = {};
 
@@ -472,7 +524,7 @@ async function dispatchPromptToTargets(prompt, targets, attachments = []) {
       console.log('[Nomad Desktop] Dispatching to Local Model (LM Studio/Ollama)...');
       const chatRes = await localModelClient.chatCompletion({
         prompt: promptText,
-        messages: [{ role: 'user', content: promptText }]
+        messages: [{ role: 'user', content: promptText }],
       });
       results['local'] = chatRes;
       if (chatRes.success) {
@@ -481,10 +533,13 @@ async function dispatchPromptToTargets(prompt, targets, attachments = []) {
           sessionManager.addTurn(activeWs.id, {
             speaker: 'local',
             round: 1,
-            content: chatRes.data.content
+            content: chatRes.data.content,
           });
           if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
+            mainWindow.webContents.send(
+              'nomad:workspaces-updated',
+              sessionManager.getAllWorkspaces(),
+            );
           }
         }
         if (mainWindow && !mainWindow.isDestroyed()) {
@@ -492,7 +547,7 @@ async function dispatchPromptToTargets(prompt, targets, attachments = []) {
         }
       }
     } catch (e) {
-      results['local'] = { success: false, error: (e instanceof Error ? e.message : String(e)) };
+      results['local'] = { success: false, error: e instanceof Error ? e.message : String(e) };
     }
   }
 
@@ -510,8 +565,11 @@ async function dispatchPromptToTargets(prompt, targets, attachments = []) {
       results[target] = { ok: true, data: res };
       console.log(`[Nomad Desktop] Inject result for ${target}:`, res);
     } catch (e) {
-      results[target] = { ok: false, error: (e instanceof Error ? e.message : String(e)) };
-      console.warn(`[Nomad Desktop] Inject failed for ${target}:`, (e instanceof Error ? e.message : String(e)));
+      results[target] = { ok: false, error: e instanceof Error ? e.message : String(e) };
+      console.warn(
+        `[Nomad Desktop] Inject failed for ${target}:`,
+        e instanceof Error ? e.message : String(e),
+      );
     }
   }
 
@@ -576,7 +634,10 @@ ipcMain.handle('nomad:orchestration-start', async (event, options) => {
     });
   }
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('nomad:workspaces-updated', sessionManager?.getAllWorkspaces() || []);
+    mainWindow.webContents.send(
+      'nomad:workspaces-updated',
+      sessionManager?.getAllWorkspaces() || [],
+    );
   }
   return await orchestrator.start({
     ...options,
@@ -635,53 +696,59 @@ ipcMain.handle('nomad:delete-workspace', (event, id) => {
   return ok;
 });
 
-
-ipcMain.handle("nomad:export-markdown", async (event, customOpts = {}) => {
-  if (!sessionManager) return { success: false, error: "SessionManager not ready" };
+ipcMain.handle('nomad:export-markdown', async (event, customOpts = {}) => {
+  if (!sessionManager) return { success: false, error: 'SessionManager not ready' };
   const history = customOpts.history || (orchestrator ? orchestrator.history : []);
-  const title = customOpts.title || (orchestrator ? orchestrator.getStatus().canonicalTitle : "多AI協作報告");
-  const mode = customOpts.mode || (orchestrator ? orchestrator.mode : "relay");
-  const sequence = customOpts.sequence || (orchestrator ? orchestrator.sequence : ["claude", "chatgpt"]);
+  const title =
+    customOpts.title || (orchestrator ? orchestrator.getStatus().canonicalTitle : '多AI協作報告');
+  const mode = customOpts.mode || (orchestrator ? orchestrator.mode : 'relay');
+  const sequence =
+    customOpts.sequence || (orchestrator ? orchestrator.sequence : ['claude', 'chatgpt']);
 
-  const markdown = sessionManager.exportOrchestrationHistoryAsMarkdown({ title, mode, sequence, history });
-  const exportDir = path.join(os.homedir(), "Desktop", "Nomad_AI_Exports");
+  const markdown = sessionManager.exportOrchestrationHistoryAsMarkdown({
+    title,
+    mode,
+    sequence,
+    history,
+  });
+  const exportDir = path.join(os.homedir(), 'Desktop', 'Nomad_AI_Exports');
   if (!fs.existsSync(exportDir)) {
     fs.mkdirSync(exportDir, { recursive: true });
   }
 
-  const safeTitle = (title || "nomad_report").replace(/[\\/:*?"<>|\s]/g, "_");
-  const filename = safeTitle + "_" + Date.now() + ".md";
+  const safeTitle = (title || 'nomad_report').replace(/[\\/:*?"<>|\s]/g, '_');
+  const filename = safeTitle + '_' + Date.now() + '.md';
   const filePath = path.join(exportDir, filename);
-  fs.writeFileSync(filePath, markdown, "utf8");
+  fs.writeFileSync(filePath, markdown, 'utf8');
 
   return { success: true, filePath, exportDir, filename, markdown };
 });
 
-ipcMain.handle("nomad:export-workspaces", async () => {
-  if (!sessionManager) return { success: false, error: "SessionManager not ready" };
+ipcMain.handle('nomad:export-workspaces', async () => {
+  if (!sessionManager) return { success: false, error: 'SessionManager not ready' };
   const json = sessionManager.exportAllWorkspacesAsJson();
-  const exportDir = path.join(os.homedir(), "Desktop", "Nomad_AI_Exports");
+  const exportDir = path.join(os.homedir(), 'Desktop', 'Nomad_AI_Exports');
   if (!fs.existsSync(exportDir)) {
     fs.mkdirSync(exportDir, { recursive: true });
   }
-  const filename = "nomad_workspaces_" + Date.now() + ".json";
+  const filename = 'nomad_workspaces_' + Date.now() + '.json';
   const filePath = path.join(exportDir, filename);
-  fs.writeFileSync(filePath, json, "utf8");
+  fs.writeFileSync(filePath, json, 'utf8');
 
   return { success: true, filePath, exportDir, filename, data: JSON.parse(json) };
 });
 
-ipcMain.handle("nomad:import-workspaces", async (event, rawJsonOrObj) => {
-  if (!sessionManager) return { success: false, error: "SessionManager not ready" };
+ipcMain.handle('nomad:import-workspaces', async (event, rawJsonOrObj) => {
+  if (!sessionManager) return { success: false, error: 'SessionManager not ready' };
   const result = sessionManager.importWorkspacesFromJson(rawJsonOrObj);
   if (result.success && mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send("nomad:workspaces-updated", sessionManager.getAllWorkspaces());
+    mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
   }
   return result;
 });
 
-ipcMain.handle("nomad:open-export-folder", async () => {
-  const exportDir = path.join(os.homedir(), "Desktop", "Nomad_AI_Exports");
+ipcMain.handle('nomad:open-export-folder', async () => {
+  const exportDir = path.join(os.homedir(), 'Desktop', 'Nomad_AI_Exports');
   if (!fs.existsSync(exportDir)) {
     fs.mkdirSync(exportDir, { recursive: true });
   }
@@ -702,7 +769,7 @@ ipcMain.handle('nomad:new-session', async () => {
       try {
         views[key].view.webContents.loadURL(url);
       } catch (e) {
-        console.warn("[Nomad Desktop] Action failed:", (e instanceof Error ? e.message : String(e)));
+        console.warn('[Nomad Desktop] Action failed:', e instanceof Error ? e.message : String(e));
       }
     }
   }
@@ -735,7 +802,6 @@ ipcMain.handle('nomad:orchestration-status', async () => {
   if (!orchestrator) return { status: 'offline' };
   return orchestrator.getStatus();
 });
-
 
 // --- Global Shortcuts, Appearance, Drive Sync & Pipeline IPC ---
 
@@ -790,7 +856,7 @@ ipcMain.handle('nomad:drive-sync-pull', async (event, customOpts = {}) => {
   const result = importFromDrive({
     sourceDir,
     currentWorkspaces: sm.getWorkspaces(),
-    strategy
+    strategy,
   });
   if (result.success) {
     sm.store.set('workspaces', result.data.reconciledWorkspaces);
@@ -805,7 +871,6 @@ ipcMain.handle('nomad:pipeline-process', async (event, input) => {
   const pm = new PipelineManager(store.get('pipeline') || {});
   return pm.process(input);
 });
-
 
 // P1: Canvas & Artifacts IPC
 ipcMain.handle('nomad:extract-artifacts', (event, text) => {
@@ -877,11 +942,13 @@ app.on('before-quit', async () => {
     orchestrator.stop();
   }
   if (bridge) {
-    try { await bridge.stop(); } catch (e) {}
+    try {
+      await bridge.stop();
+    } catch {}
   }
   try {
     await session.defaultSession.cookies.flushStore();
-  } catch (e) {}
+  } catch {}
 });
 
 app.on('window-all-closed', () => {

@@ -3,9 +3,11 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Folder as FolderIcon, Plus, X, Check } from 'lucide-react';
-import type { Folder } from '@/types/folder';
+
+import { Folder as FolderIcon, X, Check } from 'lucide-react';
+
 import { MultiAISidebarTree } from '@/components/MultiAISidebarTree';
+import type { Folder } from '@/types/folder';
 
 interface Props {
   isDarkTheme: boolean;
@@ -46,9 +48,15 @@ export const FolderManagerModals: React.FC<Props> = ({
   const [newFolderName, setNewFolderName] = useState('');
   const [editName, setEditName] = useState('');
 
-  const modalBg = isDarkTheme ? 'bg-zinc-900 border-white/10 text-zinc-100' : 'bg-white border-black/10 text-stone-900';
-  const inputBg = isDarkTheme ? 'bg-black/30 border-white/15 text-white' : 'bg-stone-50 border-black/15 text-stone-900';
-  const menuBg = isDarkTheme ? 'bg-zinc-900 border-white/10 text-zinc-200 shadow-2xl' : 'bg-white border-black/10 text-stone-800 shadow-2xl';
+  const modalBg = isDarkTheme
+    ? 'bg-zinc-900 border-white/10 text-zinc-100'
+    : 'bg-white border-black/10 text-stone-900';
+  const inputBg = isDarkTheme
+    ? 'bg-black/30 border-white/15 text-white'
+    : 'bg-stone-50 border-black/15 text-stone-900';
+  const menuBg = isDarkTheme
+    ? 'bg-zinc-900 border-white/10 text-zinc-200 shadow-2xl'
+    : 'bg-white border-black/10 text-stone-800 shadow-2xl';
 
   useEffect(() => {
     if (renameFolder) setEditName(renameFolder.name);
@@ -71,15 +79,15 @@ export const FolderManagerModals: React.FC<Props> = ({
     <>
       {/* 1. Add Folder Modal */}
       {addModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
           <div className={`w-full max-w-sm rounded-xl border p-4 shadow-xl ${modalBg}`}>
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="text-sm font-semibold flex items-center gap-2">
-                <FolderIcon className="w-4 h-4 text-emerald-400" />
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                <FolderIcon className="h-4 w-4 text-emerald-400" />
                 新增 Nomad 資料夾
               </h3>
-              <button onClick={onCloseAddModal} className="text-zinc-400 hover:text-white p-1">
-                <X className="w-4 h-4" />
+              <button onClick={onCloseAddModal} className="p-1 text-zinc-400 hover:text-white">
+                <X className="h-4 w-4" />
               </button>
             </div>
             <div className="py-3">
@@ -98,14 +106,14 @@ export const FolderManagerModals: React.FC<Props> = ({
                     onCloseAddModal();
                   }
                 }}
-                className={`w-full px-3 py-2 text-xs rounded-lg border outline-none focus:ring-1 focus:ring-emerald-500 ${inputBg}`}
+                className={`w-full rounded-lg border px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-emerald-500 ${inputBg}`}
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={onCloseAddModal}
-                className="px-3 py-1.5 text-xs rounded-lg hover:bg-white/5 transition-colors"
+                className="rounded-lg px-3 py-1.5 text-xs transition-colors hover:bg-white/5"
               >
                 取消
               </button>
@@ -119,7 +127,7 @@ export const FolderManagerModals: React.FC<Props> = ({
                     onCloseAddModal();
                   }
                 }}
-                className="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium transition-colors"
+                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
               >
                 確認新增
               </button>
@@ -130,12 +138,12 @@ export const FolderManagerModals: React.FC<Props> = ({
 
       {/* 2. Rename Folder Modal */}
       {renameFolder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
           <div className={`w-full max-w-sm rounded-xl border p-4 shadow-xl ${modalBg}`}>
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <h3 className="text-sm font-semibold">重新命名資料夾</h3>
-              <button onClick={onCloseRenameModal} className="text-zinc-400 hover:text-white p-1">
-                <X className="w-4 h-4" />
+              <button onClick={onCloseRenameModal} className="p-1 text-zinc-400 hover:text-white">
+                <X className="h-4 w-4" />
               </button>
             </div>
             <div className="py-3">
@@ -152,14 +160,14 @@ export const FolderManagerModals: React.FC<Props> = ({
                     onCloseRenameModal();
                   }
                 }}
-                className={`w-full px-3 py-2 text-xs rounded-lg border outline-none focus:ring-1 focus:ring-emerald-500 ${inputBg}`}
+                className={`w-full rounded-lg border px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-emerald-500 ${inputBg}`}
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={onCloseRenameModal}
-                className="px-3 py-1.5 text-xs rounded-lg hover:bg-white/5 transition-colors"
+                className="rounded-lg px-3 py-1.5 text-xs transition-colors hover:bg-white/5"
               >
                 取消
               </button>
@@ -172,7 +180,7 @@ export const FolderManagerModals: React.FC<Props> = ({
                     onCloseRenameModal();
                   }
                 }}
-                className="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium transition-colors"
+                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
               >
                 儲存
               </button>
@@ -191,12 +199,12 @@ export const FolderManagerModals: React.FC<Props> = ({
             left: Math.min(window.innerWidth - 180, contextMenu.x),
           }}
         >
-          <div className="px-2.5 py-1 text-[11px] font-semibold text-zinc-400 border-b border-white/5">
+          <div className="border-b border-white/5 px-2.5 py-1 text-[11px] font-semibold text-zinc-400">
             移動對話至...
           </div>
           <button
             type="button"
-            className="w-full px-2.5 py-1.5 text-xs text-left hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
+            className="w-full px-2.5 py-1.5 text-left text-xs text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
             onClick={() => {
               onMoveToFolder(contextMenu.conversationId, null);
               onCloseContextMenu();
@@ -212,16 +220,16 @@ export const FolderManagerModals: React.FC<Props> = ({
                 <button
                   key={f.id}
                   type="button"
-                  className={`flex items-center justify-between w-full px-2.5 py-1.5 text-xs text-left hover:bg-emerald-500/15 hover:text-emerald-300 transition-colors ${
-                    isInFolder ? 'text-emerald-400 font-medium' : ''
+                  className={`flex w-full items-center justify-between px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-emerald-500/15 hover:text-emerald-300 ${
+                    isInFolder ? 'font-medium text-emerald-400' : ''
                   }`}
                   onClick={() => {
                     onMoveToFolder(contextMenu.conversationId, f.id);
                     onCloseContextMenu();
                   }}
                 >
-                  <span className="truncate flex-1">{f.name}</span>
-                  {isInFolder && <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
+                  <span className="flex-1 truncate">{f.name}</span>
+                  {isInFolder && <Check className="h-3.5 w-3.5 flex-shrink-0 text-emerald-400" />}
                 </button>
               );
             })}
@@ -231,17 +239,22 @@ export const FolderManagerModals: React.FC<Props> = ({
 
       {/* 4. Multi-AI Workspace Tree Explorer Modal */}
       {treeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className={`w-full max-w-md rounded-2xl border shadow-2xl overflow-hidden ${modalBg}`}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <div className="text-sm font-semibold flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div
+            className={`w-full max-w-md overflow-hidden rounded-2xl border shadow-2xl ${modalBg}`}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm font-semibold">
                 <span>📁 Nomad 多平台工作空間</span>
               </div>
-              <button onClick={onCloseTreeModal} className="text-zinc-400 hover:text-white p-1 rounded-md">
-                <X className="w-4 h-4" />
+              <button
+                onClick={onCloseTreeModal}
+                className="rounded-md p-1 text-zinc-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="p-2 max-h-[70vh] overflow-y-auto">
+            <div className="max-h-[70vh] overflow-y-auto p-2">
               <MultiAISidebarTree
                 currentPlatform="chatgpt"
                 theme={isDarkTheme ? 'dark' : 'light'}

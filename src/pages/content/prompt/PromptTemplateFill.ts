@@ -301,8 +301,14 @@ function positionAgainst(surface: HTMLElement, anchor: HTMLElement): void {
   const pad = 8;
   const anchorRect = anchor.getBoundingClientRect();
   const rect = surface.getBoundingClientRect();
-  const vw = typeof window !== 'undefined' && window.visualViewport ? window.visualViewport.width : window.innerWidth;
-  const vh = typeof window !== 'undefined' && window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const vw =
+    typeof window !== 'undefined' && window.visualViewport
+      ? window.visualViewport.width
+      : window.innerWidth;
+  const vh =
+    typeof window !== 'undefined' && window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
 
   let left = anchorRect.left;
   if (left + rect.width > vw - pad) left = vw - pad - rect.width;

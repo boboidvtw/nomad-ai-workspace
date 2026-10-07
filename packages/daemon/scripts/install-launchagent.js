@@ -81,6 +81,9 @@ try {
   console.log('[Nomad Daemon] Successfully registered and started LaunchAgent (com.nomad.daemon)!');
   console.log(`[Nomad Daemon] Logs: ${stdoutLog}`);
 } catch (e) {
-  console.error('[Nomad Daemon] Failed to register LaunchAgent:', (e instanceof Error ? e.message : String(e)));
+  console.error(
+    '[Nomad Daemon] Failed to register LaunchAgent:',
+    e instanceof Error ? e.message : String(e),
+  );
   process.exit(1);
 }

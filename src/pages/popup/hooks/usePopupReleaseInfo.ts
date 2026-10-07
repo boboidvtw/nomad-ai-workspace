@@ -40,7 +40,9 @@ export function usePopupReleaseInfo(isSafariBrowser: boolean) {
       if (version) {
         setExtVersion(version);
         // Clear legacy voyager version cache
-        try { void browser.storage.local.remove?.('gvLatestVersionCache'); } catch {}
+        try {
+          void browser.storage.local.remove?.('gvLatestVersionCache');
+        } catch {}
       }
     } catch (err) {
       console.error('[Nomad AI Workspace] Failed to get extension version:', err);

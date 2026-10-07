@@ -48,13 +48,16 @@ graph TB
 ```
 
 ### 🤝 主從協調與反向代理機制 (Primary-Secondary Handshake Protocol)
+
 為徹底消除 Daemon 與 Desktop Studio 搶佔 Port 8765 的痛點，系統實作了智慧主從代理通道：
+
 1. **單一統一對外端口 (SSOT Port 8765)**：所有外部腳本、瀏覽器套件與 CLI 工具永遠呼叫 `http://127.0.0.1:8765`。
 2. **自動向 Daemon 握手註冊**：若 Daemon 已在線，Studio 啟動時自動使用備用連接埠（如 8766），並向 Daemon 發送 `POST /api/studio/register`，每 10 秒發送一次心跳檢測。
 3. **無縫請求轉發 (Transparent Reverse Proxy)**：Daemon 收到任何桌面端操作請求（`/api/prompt`、`/api/layout`、`/api/zoom`、`/api/orchestrate` 等）時，自動以內部代理轉發給當前活躍的 Studio 實體；若 Studio 離線，Daemon 則回傳結構化離線狀態 (`DAEMON_STUDIO_OFFLINE_001`)。
 4. **無感獨立模式 (Zero-Config Standalone Fallback)**：若 Daemon 未啟動，Studio 會直接綁定 Port 8765 獨立服務，完全向下相容。
 
 ### 套件目錄職責清單
+
 1. **`packages/core` (`@nomad/core`)**：定義全域通用的 `Result<T, E>` 零異常合約、標準化 `ErrorCodes` 命名空間與端口定義。
 2. **`packages/daemon` (`@nomad/daemon`)**：跨平台常駐背景行程，提供 PID 管理、多服務健康探針 (`/api/probe`) 與靜態 Web 伺服器。
 3. **`packages/dashboard` (`@nomad/dashboard`)**：個人 AI 控制面板前端，支援 LangGraph 流程圖可視化與開源資源導覽。
@@ -62,6 +65,7 @@ graph TB
 5. **瀏覽器外掛矩陣 (`packages/claude-voyager`, `packages/gemini-nexus`)**：涵蓋 Claude、Gemini、ChatGPT 等官方頁面的階層資料夾、提示詞與操作增強。
 
 ### 與上游 Voyager 的關係與同步
+
 根目錄的瀏覽器擴充套件（`src/`）是從上游 [voyager-crew/voyager](https://github.com/voyager-crew/voyager) **v1.9.0** 分支延伸開發的 Nomad 版本（品牌、多平台側邊欄、Drive 實體子目錄同步等）。過去曾以 subtree 方式在 `packages/gemini-voyager` 保留一份上游快照，但根目錄早已是它的超集、也沒有任何建置或測試使用它，因此已移除；完整的匯入歷史仍保留在 git log 中（`776c34dd`）。
 
 需要參考或移植上游修正時，改用 git remote：
@@ -153,6 +157,7 @@ graph TD
 ## 🧩 2. 核心分層架構 (Layered Design)
 
 ### 2.1 注入與適配器層 (Platform Adapters & Injection)
+
 - **`src/core/platform/registry.ts`**：
   - 系統單一真相來源 (SSOT)，定義各平台的 ID、網域名稱、品牌主色、Google Drive 對應子資料夾及啟用狀態 (`active` / `ready` / `planned`)。
   - 提供 `detectCurrentPlatform()` 根據當前分頁 URL 自動判定對應平台環境。
@@ -162,6 +167,7 @@ graph TD
   - 對話輸入框注入 Slash Prompt 監聽器，即時補捉 `/` 觸發自訂提示詞選單。
 
 ### 2.2 跨平台階層側邊欄 (`MultiAISidebarTree.tsx`)
+
 - **單一視覺整合**：
   - 集中檢視使用者在所有 AI 平台上儲存的對話與分類資料夾。
   - 頂層為各 AI 平台根節點，帶有鮮明的官方配色徽章：
@@ -177,6 +183,7 @@ graph TD
   - 監聽 `chrome.storage.onChanged`，當其他視窗或背景同步更新資料夾結構時，即時重繪側邊欄樹狀圖。
 
 ### 2.3 通用提示詞管理器 (`Universal Prompt Manager`)
+
 - **跨端資料共享**：
   - 提示詞定義於通用模型中，不再局限於特定 AI 引擎。
   - 支援標籤（Tags）、置頂（Pinning）與即時搜尋過濾。
@@ -190,12 +197,15 @@ graph TD
 ## ☁️ 3. Google Drive 方案 A：實體子目錄隔離架構 (Scheme A Segregated Storage)
 
 ### 3.1 為什麼堅持實體子目錄隔離？
+
 市面上許多工具將所有備份雜湊揉合在單一巨大的 JSON 檔案中，極易引發以下問題：
+
 1. **多端併發寫入覆蓋 (Race Condition)**：在 Claude 與 Gemini 同時對話時，雲端同步容易相互覆蓋。
 2. **單點損壞風險**：單一格式解析錯誤將導致所有 AI 平台的歷史與提示詞全毀。
 3. **資料無法獨立檢視**：使用者無法在 Google Drive 中直接檢視或還原特定平台的資料。
 
 ### 3.2 實體目錄層級結構
+
 Nomad AI Workspace 嚴格建立並維護以下雲端階層：
 
 ```text
@@ -220,6 +230,7 @@ Nomad AI Workspace 嚴格建立並維護以下雲端階層：
 ```
 
 ### 3.3 同步協同與衝突解決 (`GoogleDriveSyncService.ts`)
+
 - **多帳號租戶隔離 (`AccountIsolationService.ts`)**：
   - 根據目前登入的 Google 帳號與路徑命名空間（例如 `/u/0/`、`/u/1/`）隔離儲存鍵名。
 - **智慧合併演算法 (`merge.ts`)**：
@@ -237,4 +248,3 @@ Nomad AI Workspace 嚴格建立並維護以下雲端階層：
    - OAuth 範圍嚴格限定為 `https://www.googleapis.com/auth/drive.file`。此權限**只能讀取與寫入 Nomad AI Workspace 自身建立的檔案與目錄**，完全無法存取使用者雲端硬碟中的私人文件或照片。
 3. **自訂 Client ID 支援**：
    - 使用者可選擇自行在 Google Cloud Platform 建立專屬 OAuth Client ID，將連線所有權完全掌握在個人手中。
-

@@ -28,7 +28,7 @@ class PipelineManager {
       totalProcessed: 0,
       totalSavedTokens: 0,
       totalLayaLatencyMs: 0,
-      intents: /** @type {Record<string, number>} */ ({})
+      intents: /** @type {Record<string, number>} */ ({}),
     };
   }
 
@@ -42,12 +42,15 @@ class PipelineManager {
    */
   process(input = {}) {
     try {
-      const rawPrompt = typeof input === 'string' ? input : (input.prompt || '');
+      const rawPrompt = typeof input === 'string' ? input : input.prompt || '';
       const rawContext = input.context || '';
       const opts = input.options || {};
 
       if (!rawPrompt.trim() && !rawContext.trim()) {
-        return err(ErrorCodes.PIPELINE_INVALID_INPUT_003, 'Pipeline input must contain prompt or context');
+        return err(
+          ErrorCodes.PIPELINE_INVALID_INPUT_003,
+          'Pipeline input must contain prompt or context',
+        );
       }
 
       const combinedText = rawContext ? `${rawContext}\n\n${rawPrompt}` : rawPrompt;
@@ -56,10 +59,10 @@ class PipelineManager {
       let headroomResult = null;
       let textAfterHeadroom = combinedText;
 
-      if (this.headroomEnabled && (opts.headroom !== false)) {
+      if (this.headroomEnabled && opts.headroom !== false) {
         const compRes = compress(combinedText, {
           level: opts.compressionLevel || this.compressionLevel,
-          maxTokens: opts.maxTokens || this.maxTokens
+          maxTokens: opts.maxTokens || this.maxTokens,
         });
 
         if (!compRes.success) {
@@ -74,7 +77,7 @@ class PipelineManager {
           compressedTokens: tokens,
           savedTokens: 0,
           savingsRatio: 0,
-          text: combinedText
+          text: combinedText,
         };
       }
 
@@ -82,10 +85,10 @@ class PipelineManager {
       let layaResult = null;
       let finalPrompt = textAfterHeadroom;
 
-      if (this.layaEnabled && (opts.laya !== false)) {
+      if (this.layaEnabled && opts.laya !== false) {
         const layaRes = decide(rawPrompt, {
           enhance: opts.enhance !== undefined ? opts.enhance : this.autoEnhance,
-          preferredPlatform: opts.preferredPlatform
+          preferredPlatform: opts.preferredPlatform,
         });
 
         if (!layaRes.success) {
@@ -95,7 +98,9 @@ class PipelineManager {
         layaResult = layaRes.data;
         if (layaResult.enhanced) {
           // If enhanced, inject directive to prompt
-          finalPrompt = rawContext ? `${headroomResult.text}\n\n${layaResult.enhancedPrompt}` : layaResult.enhancedPrompt;
+          finalPrompt = rawContext
+            ? `${headroomResult.text}\n\n${layaResult.enhancedPrompt}`
+            : layaResult.enhancedPrompt;
         }
       }
 
@@ -115,24 +120,25 @@ class PipelineManager {
         processedPrompt: finalPrompt,
         headroom: headroomResult,
         laya: layaResult,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (e) {
       return err(
         ErrorCodes.PIPELINE_INVALID_INPUT_003,
-        'Pipeline execution error: ' + (e instanceof Error ? e.message : String(e))
+        'Pipeline execution error: ' + (e instanceof Error ? e.message : String(e)),
       );
     }
   }
 
   getStats() {
-    const avgLatency = this.stats.totalProcessed > 0
-      ? Number((this.stats.totalLayaLatencyMs / this.stats.totalProcessed).toFixed(3))
-      : 0;
+    const avgLatency =
+      this.stats.totalProcessed > 0
+        ? Number((this.stats.totalLayaLatencyMs / this.stats.totalProcessed).toFixed(3))
+        : 0;
 
     return {
       ...this.stats,
-      avgLayaLatencyMs: avgLatency
+      avgLayaLatencyMs: avgLatency,
     };
   }
 }
@@ -141,5 +147,5 @@ module.exports = {
   estimateTokens,
   compress,
   decide,
-  PipelineManager
+  PipelineManager,
 };

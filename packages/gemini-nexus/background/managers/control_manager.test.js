@@ -102,7 +102,7 @@ describe('BrowserControlManager native tab group indicator', () => {
     });
 
     it('keeps previously controlled tabs in the same group when switching control targets', async () => {
-        chrome.tabs.group = vi.fn(({ groupId, tabIds }) =>
+        chrome.tabs.group = vi.fn(({ groupId }) =>
             Promise.resolve(Number.isInteger(groupId) ? groupId : 9)
         );
         const manager = new BrowserControlManager();

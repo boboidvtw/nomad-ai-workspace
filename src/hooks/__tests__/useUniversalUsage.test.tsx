@@ -1,6 +1,9 @@
-import React, { act, useEffect } from "react";
-import { type Root, createRoot } from "react-dom/client";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import React, { act, useEffect } from 'react';
+import { type Root, createRoot } from 'react-dom/client';
+
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import { StorageKeys } from '@/core/types/common';
 
 import {
   clampPercentage,
@@ -8,11 +11,7 @@ import {
   parseGeminiUsage,
   parseChatGPTUsage,
   useUniversalUsage,
-  CHATGPT_USAGE_KEY,
-  GV_USAGE_OBSERVER_SRC,
-  GV_USAGE_OBSERVER_CMD,
-} from "../useUniversalUsage";
-import { StorageKeys } from "@/core/types/common";
+} from '../useUniversalUsage';
 
 const storageMock: Record<string, any> = {};
 
@@ -20,7 +19,7 @@ function HookHarness({
   platform,
   onUpdate,
 }: {
-  platform: "claude" | "gemini" | "chatgpt";
+  platform: 'claude' | 'gemini' | 'chatgpt';
   onUpdate: (api: ReturnType<typeof useUniversalUsage>) => void;
 }) {
   const api = useUniversalUsage(platform);
@@ -30,7 +29,7 @@ function HookHarness({
   return null;
 }
 
-describe("useUniversalUsage", () => {
+describe('useUniversalUsage', () => {
   let container: HTMLDivElement;
   let root: Root;
 
@@ -56,7 +55,7 @@ describe("useUniversalUsage", () => {
       },
     };
 
-    container = document.createElement("div");
+    container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
   });
@@ -68,20 +67,20 @@ describe("useUniversalUsage", () => {
     vi.clearAllMocks();
   });
 
-  describe("utility functions", () => {
-    it("clampPercentage clamps value within 0 and 100", () => {
+  describe('utility functions', () => {
+    it('clampPercentage clamps value within 0 and 100', () => {
       expect(clampPercentage(-10)).toBe(0);
       expect(clampPercentage(55.4)).toBe(55);
       expect(clampPercentage(120)).toBe(100);
     });
 
-    it("detectPlatform returns a platform string", () => {
+    it('detectPlatform returns a platform string', () => {
       expect(detectPlatform()).toBeDefined();
     });
 
-    it("parseGeminiUsage handles numeric and string percentages", () => {
+    it('parseGeminiUsage handles numeric and string percentages', () => {
       const parsed = parseGeminiUsage({
-        daily: { percent: "42%", resetEpoch: 1700000000 },
+        daily: { percent: '42%', resetEpoch: 1700000000 },
         weekly: { percent: 18, resetEpoch: 1700000500 },
       });
 
@@ -91,35 +90,30 @@ describe("useUniversalUsage", () => {
       expect(parsed?.fiveResetAt).toBe(new Date(1700000000 * 1000).toISOString());
     });
 
-    it("parseGeminiUsage handles null or empty input gracefully", () => {
+    it('parseGeminiUsage handles null or empty input gracefully', () => {
       expect(parseGeminiUsage(null)).toBeNull();
       expect(parseGeminiUsage(undefined)).toBeNull();
-      expect(parseGeminiUsage("invalid")).toBeNull();
+      expect(parseGeminiUsage('invalid')).toBeNull();
     });
 
-    it("parseChatGPTUsage calculates percentages from history timestamps", () => {
+    it('parseChatGPTUsage calculates percentages from history timestamps', () => {
       const now = Date.now();
-      const history = [
-        now - 1000,
-        now - 2000,
-        now - 3000,
-        now - 10 * 3600 * 1000,
-      ];
+      const history = [now - 1000, now - 2000, now - 3000, now - 10 * 3600 * 1000];
 
       const res = parseChatGPTUsage({ history });
       expect(res.fiveHour).toBeGreaterThan(0);
       expect(res.sevenDay).toBeGreaterThan(0);
     });
 
-    it("parseChatGPTUsage falls back to default baseline when history is empty", () => {
+    it('parseChatGPTUsage falls back to default baseline when history is empty', () => {
       const res = parseChatGPTUsage({});
       expect(res.fiveHour).toBe(10);
       expect(res.sevenDay).toBe(4);
     });
   });
 
-  describe("hook lifecycle and event synchronization", () => {
-    it("reads Gemini usage from chrome.storage.local", async () => {
+  describe('hook lifecycle and event synchronization', () => {
+    it('reads Gemini usage from chrome.storage.local', async () => {
       storageMock[StorageKeys.GV_USAGE_CACHE] = {
         daily: { percent: 30 },
         weekly: { percent: 15 },
@@ -127,7 +121,14 @@ describe("useUniversalUsage", () => {
 
       let latestApi: any = null;
       await act(async () => {
-        root.render(<HookHarness platform="gemini" onUpdate={(api) => { latestApi = api; }} />);
+        root.render(
+          <HookHarness
+            platform="gemini"
+            onUpdate={(api) => {
+              latestApi = api;
+            }}
+          />,
+        );
       });
 
       await act(async () => {
@@ -139,42 +140,40 @@ describe("useUniversalUsage", () => {
       expect(latestApi?.usageData?.sevenDay).toBe(15);
     });
 
-    it("optimistically updates ChatGPT usage on send button click", async () => {
-      let latestApi: any = null;
+    it('optimistically updates ChatGPT usage on send button click', async () => {
       await act(async () => {
-        root.render(<HookHarness platform="chatgpt" onUpdate={(api) => { latestApi = api; }} />);
+        root.render(<HookHarness platform="chatgpt" onUpdate={() => {}} />);
       });
 
       // Simulate clicking ChatGPT send button
-      const sendBtn = document.createElement("button");
-      sendBtn.setAttribute("data-testid", "send-button");
+      const sendBtn = document.createElement('button');
+      sendBtn.setAttribute('data-testid', 'send-button');
       document.body.appendChild(sendBtn);
 
       await act(async () => {
-        sendBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        sendBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       });
 
       expect(chrome.storage.local.set).toHaveBeenCalled();
       sendBtn.remove();
     });
 
-    it("handles Enter key on chat textarea without shift", async () => {
-      let latestApi: any = null;
+    it('handles Enter key on chat textarea without shift', async () => {
       await act(async () => {
-        root.render(<HookHarness platform="chatgpt" onUpdate={(api) => { latestApi = api; }} />);
+        root.render(<HookHarness platform="chatgpt" onUpdate={() => {}} />);
       });
 
-      const textarea = document.createElement("textarea");
-      textarea.id = "prompt-textarea";
+      const textarea = document.createElement('textarea');
+      textarea.id = 'prompt-textarea';
       document.body.appendChild(textarea);
 
       await act(async () => {
         textarea.dispatchEvent(
-          new KeyboardEvent("keydown", {
-            key: "Enter",
+          new KeyboardEvent('keydown', {
+            key: 'Enter',
             shiftKey: false,
             bubbles: true,
-          })
+          }),
         );
       });
 
@@ -182,25 +181,24 @@ describe("useUniversalUsage", () => {
       textarea.remove();
     });
 
-    it("ignores Enter key when IME is composing (Chinese input method)", async () => {
-      let latestApi: any = null;
+    it('ignores Enter key when IME is composing (Chinese input method)', async () => {
       await act(async () => {
-        root.render(<HookHarness platform="chatgpt" onUpdate={(api) => { latestApi = api; }} />);
+        root.render(<HookHarness platform="chatgpt" onUpdate={() => {}} />);
       });
 
-      const textarea = document.createElement("textarea");
-      textarea.id = "prompt-textarea";
+      const textarea = document.createElement('textarea');
+      textarea.id = 'prompt-textarea';
       document.body.appendChild(textarea);
 
       const setCallCountBefore = (chrome.storage.local.set as any).mock.calls.length;
 
       await act(async () => {
         textarea.dispatchEvent(
-          new KeyboardEvent("keydown", {
-            key: "Enter",
+          new KeyboardEvent('keydown', {
+            key: 'Enter',
             isComposing: true,
             bubbles: true,
-          })
+          }),
         );
       });
 

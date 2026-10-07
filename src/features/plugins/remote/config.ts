@@ -11,7 +11,8 @@
  * The accesses must stay static (`import.meta.env.NAME`) for the replacement
  * to apply; tests see the defaults.
  */
-export const DEFAULT_PLUGIN_CATALOG_BASE_URL = 'https://raw.githubusercontent.com/boboidvtw/nomad-ai-workspace/main/catalog';
+export const DEFAULT_PLUGIN_CATALOG_BASE_URL =
+  'https://raw.githubusercontent.com/boboidvtw/nomad-ai-workspace/main/catalog';
 
 function readCatalogUrlOverride(): string | undefined {
   try {

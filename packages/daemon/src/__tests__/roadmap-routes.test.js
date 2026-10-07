@@ -8,27 +8,32 @@ const { NomadDaemonServer } = require('../server');
 function makeRequest(port, path, method = 'GET', body = null) {
   return new Promise((resolve, reject) => {
     const payload = body ? JSON.stringify(body) : null;
-    const req = http.request({
-      hostname: '127.0.0.1',
-      port,
-      path,
-      method,
-      headers: payload ? {
-        ...AUTH,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(payload)
-      } : { ...AUTH }
-    }, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          resolve({ status: res.statusCode, data: JSON.parse(data) });
-        } catch {
-          resolve({ status: res.statusCode, raw: data });
-        }
-      });
-    });
+    const req = http.request(
+      {
+        hostname: '127.0.0.1',
+        port,
+        path,
+        method,
+        headers: payload
+          ? {
+              ...AUTH,
+              'Content-Type': 'application/json',
+              'Content-Length': Buffer.byteLength(payload),
+            }
+          : { ...AUTH },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            resolve({ status: res.statusCode, data: JSON.parse(data) });
+          } catch {
+            resolve({ status: res.statusCode, raw: data });
+          }
+        });
+      },
+    );
     req.on('error', reject);
     if (payload) req.write(payload);
     req.end();
@@ -40,14 +45,19 @@ test('Daemon Server: P1/P2/P3 Roadmap Endpoints (Artifacts, Diff, LocalModel, MC
   await daemon.start();
   try {
     const fence = '```';
-    const sampleText = ['Here is a diagram:', fence + 'mermaid', 'graph TD;', 'A-->B;', fence].join(String.fromCharCode(10));
+    const sampleText = ['Here is a diagram:', fence + 'mermaid', 'graph TD;', 'A-->B;', fence].join(
+      String.fromCharCode(10),
+    );
     const extRes = await makeRequest(19890, '/api/artifacts/extract', 'POST', { text: sampleText });
     assert.strictEqual(extRes.status, 200);
     assert.strictEqual(extRes.data.success, true);
     assert.strictEqual(extRes.data.data.length, 1);
     assert.strictEqual(extRes.data.data[0].type, 'mermaid');
 
-    const sbRes = await makeRequest(19890, '/api/artifacts/sandbox', 'POST', { code: '<h1>Hello Sandbox</h1>', type: 'html' });
+    const sbRes = await makeRequest(19890, '/api/artifacts/sandbox', 'POST', {
+      code: '<h1>Hello Sandbox</h1>',
+      type: 'html',
+    });
     assert.strictEqual(sbRes.status, 200);
     assert.strictEqual(sbRes.data.success, true);
     assert.ok(sbRes.data.data.html.includes('Hello Sandbox'));
@@ -67,18 +77,18 @@ test('Daemon Server: P1/P2/P3 Roadmap Endpoints (Artifacts, Diff, LocalModel, MC
     const toolsRes = await makeRequest(19890, '/api/mcp/tools', 'GET');
     assert.strictEqual(toolsRes.status, 200);
     assert.strictEqual(toolsRes.data.success, true);
-    assert.ok(toolsRes.data.data.some(t => t.name === 'read_file'));
+    assert.ok(toolsRes.data.data.some((t) => t.name === 'read_file'));
 
     const ingestRes = await makeRequest(19890, '/api/rag/ingest', 'POST', {
       id: 'doc-1',
       title: 'Nomad Protocol',
-      text: 'Nomad AI Studio connects ChatGPT, Claude, and Gemini with local LM Studio models.'
+      text: 'Nomad AI Studio connects ChatGPT, Claude, and Gemini with local LM Studio models.',
     });
     assert.strictEqual(ingestRes.status, 200);
     assert.strictEqual(ingestRes.data.success, true);
 
     const retRes = await makeRequest(19890, '/api/rag/retrieve', 'POST', {
-      prompt: 'Nomad AI LM Studio'
+      prompt: 'Nomad AI LM Studio',
     });
     assert.strictEqual(retRes.status, 200);
     assert.strictEqual(retRes.data.success, true);
@@ -93,7 +103,10 @@ test('Daemon Server: /api/local-model/chat reaches the local model client', asyn
   await daemon.start();
   try {
     // Port 1 on loopback is closed, so the client fails fast with a 502 instead of crashing (500).
-    const res = await makeRequest(19891, '/api/local-model/chat', 'POST', { prompt: 'hi', port: 1 });
+    const res = await makeRequest(19891, '/api/local-model/chat', 'POST', {
+      prompt: 'hi',
+      port: 1,
+    });
     assert.strictEqual(res.status, 502);
     assert.strictEqual(res.data.success, false);
     assert.ok(!/not a function/.test(res.data.message), res.data.message);

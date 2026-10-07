@@ -94,7 +94,7 @@
     }
 
     globalThis.GeminiNexusCrop = {
-        ...(globalThis.GeminiNexusCrop || {}),
+        ...globalThis.GeminiNexusCrop,
         cropImage,
     };
 })();

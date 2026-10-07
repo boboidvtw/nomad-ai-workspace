@@ -173,7 +173,8 @@ export default function UsageRings({ data, side, isDragging, children }: Props) 
               strokeDasharray={usage.sevenDayMetrics.circumference}
               strokeDashoffset={usage.sevenDayMetrics.offset}
               style={{
-                transition: "stroke-dashoffset 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.4s ease",
+                transition:
+                  'stroke-dashoffset 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.4s ease',
               }}
             />
             <circle
@@ -187,7 +188,8 @@ export default function UsageRings({ data, side, isDragging, children }: Props) 
               strokeDasharray={usage.fiveHourMetrics.circumference}
               strokeDashoffset={usage.fiveHourMetrics.offset}
               style={{
-                transition: "stroke-dashoffset 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.4s ease",
+                transition:
+                  'stroke-dashoffset 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.4s ease',
               }}
             />
           </g>

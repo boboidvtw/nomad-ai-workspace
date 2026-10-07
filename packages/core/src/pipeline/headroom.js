@@ -14,7 +14,7 @@ const FILLER_PATTERNS = [
   /^(sure[!, ]*i'd be happy to help( with that)?[.!]?\s*)/gim,
   /^(certainly[!, ]*here is (the|an) (overview|explanation|solution)[^.\n]*[.!]?\s*)/gim,
   /^(as an ai language model[!, ]*)/gim,
-  /^(hello[!, ]*how can i help you today\??\s*)/gim
+  /^(hello[!, ]*how can i help you today\??\s*)/gim,
 ];
 
 /**
@@ -32,10 +32,12 @@ function estimateTokens(text) {
 
   for (let i = 0; i < text.length; i++) {
     const code = text.charCodeAt(i);
-    if ((code >= 0x4e00 && code <= 0x9fff) ||
-        (code >= 0x3400 && code <= 0x4dbf) ||
-        (code >= 0xac00 && code <= 0xd7af) ||
-        (code >= 0x3040 && code <= 0x30ff)) {
+    if (
+      (code >= 0x4e00 && code <= 0x9fff) ||
+      (code >= 0x3400 && code <= 0x4dbf) ||
+      (code >= 0xac00 && code <= 0xd7af) ||
+      (code >= 0x3040 && code <= 0x30ff)
+    ) {
       cjkCount++;
     } else {
       nonCjkCount++;
@@ -68,7 +70,7 @@ function compress(text, options = {}) {
         compressedTokens: 0,
         savedTokens: 0,
         savingsRatio: 0,
-        text: ''
+        text: '',
       });
     }
 
@@ -114,7 +116,7 @@ function compress(text, options = {}) {
             '',
             `> ⚡ [Headroom: 已壓縮並省略中間 ${omittedCount} 行歷史上下文，保留核心目標與最新指令]`,
             '',
-            ...tailLines
+            ...tailLines,
           ].join('\n');
         }
       }
@@ -130,17 +132,17 @@ function compress(text, options = {}) {
       compressedTokens,
       savedTokens,
       savingsRatio,
-      text: result
+      text: result,
     });
   } catch (e) {
     return err(
       ErrorCodes.PIPELINE_HEADROOM_COMPRESSION_FAILED_001,
-      'Headroom compression error: ' + (e instanceof Error ? e.message : String(e))
+      'Headroom compression error: ' + (e instanceof Error ? e.message : String(e)),
     );
   }
 }
 
 module.exports = {
   estimateTokens,
-  compress
+  compress,
 };

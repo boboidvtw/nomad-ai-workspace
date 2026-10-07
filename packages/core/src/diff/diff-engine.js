@@ -80,19 +80,19 @@ function computeDiff(textA, textB, options = {}) {
         added,
         deleted,
         unchanged,
-        similarityRatio
+        similarityRatio,
       },
       labelA: options.labelA || 'Perspective A',
-      labelB: options.labelB || 'Perspective B'
+      labelB: options.labelB || 'Perspective B',
     });
   } catch (e) {
     return err(
       ErrorCodes.DIFF_EXECUTION_FAILED_001,
-      'Diff computation error: ' + (e instanceof Error ? e.message : String(e))
+      'Diff computation error: ' + (e instanceof Error ? e.message : String(e)),
     );
   }
 }
 
 module.exports = {
-  computeDiff
+  computeDiff,
 };

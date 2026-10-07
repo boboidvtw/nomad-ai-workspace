@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+
 import {
   FLOAT_BALL_SIZE_STORAGE_KEY,
   readStoredFloatBallSize,
@@ -32,7 +33,10 @@ export const useBallSizeControl = (): BallSizeControlApi => {
   }, []);
 
   useEffect(() => {
-    const handleChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (changes, area) => {
+    const handleChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (
+      changes,
+      area,
+    ) => {
       if (area !== 'local') return;
       if (!changes?.[FLOAT_BALL_SIZE_STORAGE_KEY]) return;
       const next = changes[FLOAT_BALL_SIZE_STORAGE_KEY].newValue;

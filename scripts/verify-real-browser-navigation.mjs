@@ -10,7 +10,8 @@ import { resolve } from 'node:path';
 const BROWSER_PATH = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
 const EXTENSION_PATH = resolve(process.cwd(), 'dist_chrome');
 const PROFILE_PATH = resolve('/tmp/nomad-brave-nav-verify-' + Date.now());
-const ARTIFACT_DIR = '/Users/liyungchih-macstudio/.gemini/antigravity-ide/brain/fab1e8a4-4953-4c8e-ae8e-a635b27cc988';
+const ARTIFACT_DIR =
+  '/Users/liyungchih-macstudio/.gemini/antigravity-ide/brain/fab1e8a4-4953-4c8e-ae8e-a635b27cc988';
 const DEBUG_PORT = 9333;
 
 if (!existsSync(PROFILE_PATH)) {
@@ -31,7 +32,7 @@ const browserProcess = spawn(
     `--load-extension=${EXTENSION_PATH}`,
     'about:blank',
   ],
-  { stdio: ['ignore', 'pipe', 'pipe'] }
+  { stdio: ['ignore', 'pipe', 'pipe'] },
 );
 
 browserProcess.stderr.on('data', (d) => {
@@ -125,7 +126,9 @@ async function run() {
     for (let attempt = 0; attempt < 20; attempt++) {
       targets = await waitForHttp(`http://127.0.0.1:${DEBUG_PORT}/json`);
       welcomeTarget = targets.find((t) => t.url && t.url.includes('src/pages/welcome/index.html'));
-      swTarget = targets.find((t) => t.type === 'service_worker' && t.url.includes('service-worker-loader.js'));
+      swTarget = targets.find(
+        (t) => t.type === 'service_worker' && t.url.includes('service-worker-loader.js'),
+      );
       if (welcomeTarget && swTarget) break;
       await sleep(500);
     }
@@ -136,7 +139,7 @@ async function run() {
       throw new Error('Nomad AI Workspace welcome page was not detected');
     }
 
-    const extId = welcomeTarget.url.match(/chrome-extension:\/\/([^\/]+)/)?.[1];
+    const extId = welcomeTarget.url.match(/chrome-extension:\/\/([^/]+)/)?.[1];
     console.log(`[Verify] Extension ID: ${extId}`);
     console.log(`[Verify] Welcome Page URL: ${welcomeTarget.url}`);
     console.log(`[Verify] Service Worker URL: ${swTarget.url}`);
@@ -158,7 +161,9 @@ async function run() {
     console.log(`[Verify] Captured Welcome Page Screenshot: ${welcomeScreenshotPath}`);
 
     // Populating chrome.storage.local with mock multi-platform data
-    console.log('[Verify] 4. Populating chrome.storage.local with multi-platform folders and conversations...');
+    console.log(
+      '[Verify] 4. Populating chrome.storage.local with multi-platform folders and conversations...',
+    );
     const initDataResult = await welcomeCdp.evaluate(`
       new Promise((resolve, reject) => {
         const mockFolders = [
@@ -206,7 +211,9 @@ async function run() {
     console.log('[Verify] Storage initialization result:', initDataResult);
 
     // Test background gv.openConversation routing
-    console.log('[Verify] 5. Testing background runtime message routing for gv.openConversation...');
+    console.log(
+      '[Verify] 5. Testing background runtime message routing for gv.openConversation...',
+    );
 
     // 5.1 Test valid Claude conversation URL
     const openClaudeResult = await welcomeCdp.evaluate(`
@@ -253,13 +260,20 @@ async function run() {
         }, (res) => resolve(res));
       })
     `);
-    console.log('[Verify] 5.4 gv.openConversation (Security Check - Malicious Host):', securityCheckResult);
+    console.log(
+      '[Verify] 5.4 gv.openConversation (Security Check - Malicious Host):',
+      securityCheckResult,
+    );
     if (securityCheckResult?.ok !== false || securityCheckResult?.error !== 'disallowed_host') {
-      throw new Error('Security boundary failed: malicious host was not rejected with disallowed_host');
+      throw new Error(
+        'Security boundary failed: malicious host was not rejected with disallowed_host',
+      );
     }
 
     // 6. Verify tabs created/focused by background
-    console.log('[Verify] 6. Checking browser tabs created/focused by gv.openConversation in real browser...');
+    console.log(
+      '[Verify] 6. Checking browser tabs created/focused by gv.openConversation in real browser...',
+    );
     await sleep(1500);
     const updatedTargets = await waitForHttp(`http://127.0.0.1:${DEBUG_PORT}/json`);
     const openUrls = updatedTargets.map((t) => t.url);
@@ -270,7 +284,9 @@ async function run() {
     const gptTab = openUrls.some((u) => u.includes('chatgpt.com/c/gpt_c1'));
     const geminiTab = openUrls.some((u) => u.includes('gemini.google.com'));
 
-    console.log(`[Verify] Tab verification: Claude=${claudeTab}, ChatGPT=${gptTab}, Gemini=${geminiTab}`);
+    console.log(
+      `[Verify] Tab verification: Claude=${claudeTab}, ChatGPT=${gptTab}, Gemini=${geminiTab}`,
+    );
     if (!claudeTab || !gptTab || !geminiTab) {
       throw new Error('Expected tabs for all three platforms to be created/focused in browser');
     }
@@ -289,8 +305,10 @@ async function run() {
     writeFileSync(optionsScreenshotPath, Buffer.from(optionsScreenshot.data, 'base64'));
     console.log(`[Verify] Captured Options Page Screenshot: ${optionsScreenshotPath}`);
 
-        // 8. Test in-page SPA Navigation and Native Click Triggering
-    console.log('[Verify] 8. Testing in-page SPA navigation and click event handling in real browser context...');
+    // 8. Test in-page SPA Navigation and Native Click Triggering
+    console.log(
+      '[Verify] 8. Testing in-page SPA navigation and click event handling in real browser context...',
+    );
     const spaTestResult = await welcomeCdp.evaluate(`
       (() => {
         const events = [];
@@ -344,9 +362,11 @@ async function run() {
       })()
     `);
     console.log('[Verify] 8. In-page SPA navigation simulation result:', spaTestResult);
-    if (spaTestResult.claudeNavigatedPath !== '/chat/test_claude_123' ||
-        spaTestResult.gptNavigatedPath !== '/c/test_gpt_456' ||
-        spaTestResult.geminiNavigatedPath !== '/app/test_gemini_789') {
+    if (
+      spaTestResult.claudeNavigatedPath !== '/chat/test_claude_123' ||
+      spaTestResult.gptNavigatedPath !== '/c/test_gpt_456' ||
+      spaTestResult.geminiNavigatedPath !== '/app/test_gemini_789'
+    ) {
       throw new Error('SPA route navigation failed to update browser path properly');
     }
 

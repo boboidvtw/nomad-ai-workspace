@@ -10,7 +10,7 @@ const { ApprovalGate } = require('./approval-gate');
 
 class TaskRunner {
   /**
-   * @param {import('./dispatcher').TaskDispatcher} dispatcher 
+   * @param {import('./dispatcher').TaskDispatcher} dispatcher
    * @param {Object} [options]
    * @param {import('../client/local-model-client').LocalModelClient} [options.localModelClient]
    * @param {Function} [options.orchestratorDelegate]
@@ -23,8 +23,8 @@ class TaskRunner {
 
   /**
    * Dispatches and executes a task end-to-end
-   * @param {string} taskId 
-   * @param {string} agentId 
+   * @param {string} taskId
+   * @param {string} agentId
    * @param {Object} [options]
    * @param {Function} [options.runnerFn] - Custom async (task, agent) => { summary, artifact }
    * @param {string} [options.customPrompt]
@@ -32,90 +32,108 @@ class TaskRunner {
    */
   async dispatchAndRun(taskId, agentId, options = {}) {
     // The callback may return a Result itself (e.g. a failed claim); wrapAsync passes those through.
-    return /** @type {Promise<import('../result').UnitResult<import('./task-model').Task | undefined>>} */ (wrapAsync(async () => {
-      // 1. Claim task
-      const claimRes = this.dispatcher.claimTask(taskId, agentId);
-      if (!claimRes.success) {
-        return claimRes;
-      }
-      const task = claimRes.data;
-      const agentRes = this.dispatcher.roster.getAgent(agentId);
-      const agent = agentRes.success ? agentRes.data : { id: agentId, name: agentId, platform: 'claude', role: 'General Assistant' };
+    return /** @type {Promise<import('../result').UnitResult<import('./task-model').Task | undefined>>} */ (
+      wrapAsync(async () => {
+        // 1. Claim task
+        const claimRes = this.dispatcher.claimTask(taskId, agentId);
+        if (!claimRes.success) {
+          return claimRes;
+        }
+        const task = claimRes.data;
+        const agentRes = this.dispatcher.roster.getAgent(agentId);
+        const agent = agentRes.success
+          ? agentRes.data
+          : { id: agentId, name: agentId, platform: 'claude', role: 'General Assistant' };
 
-      // 2. Start heartbeat loop
-      const heartbeat = this.startHeartbeatLoop(taskId, agentId, 5000);
+        // 2. Start heartbeat loop
+        const heartbeat = this.startHeartbeatLoop(taskId, agentId, 5000);
 
-      try {
-        let outputContent = '';
-        let outputSummary = '';
+        try {
+          let outputContent = '';
+          let outputSummary = '';
 
-        if (typeof options.runnerFn === 'function') {
-          // Custom runner
-          const runResult = await options.runnerFn(task, agent);
-          outputSummary = runResult?.summary || 'Custom execution completed';
-          outputContent = runResult?.content || '';
-        } else if (agent.platform === 'local-model' && this.localModelClient) {
-          // Execute via local model (LM Studio)
-          const prompt = options.customPrompt || `Task: ${task.title}\nDescription: ${task.description || 'None'}\nCriteria: ${(task.acceptanceCriteria || []).join(', ')}`;
-          const inferenceRes = await this.localModelClient.chatCompletion({
-            messages: [
-              { role: 'system', content: `You are ${agent.name}, an expert AI agent with role: ${agent.role}. Complete the user task accurately.` },
-              { role: 'user', content: prompt }
-            ]
-          });
-          if (inferenceRes.success) {
-            outputContent = inferenceRes.data.content;
-            const tokens = inferenceRes.data.usage && inferenceRes.data.usage.total_tokens;
-            outputSummary = `Local model execution complete (${tokens || 0} tokens)`;
+          if (typeof options.runnerFn === 'function') {
+            // Custom runner
+            const runResult = await options.runnerFn(task, agent);
+            outputSummary = runResult?.summary || 'Custom execution completed';
+            outputContent = runResult?.content || '';
+          } else if (agent.platform === 'local-model' && this.localModelClient) {
+            // Execute via local model (LM Studio)
+            const prompt =
+              options.customPrompt ||
+              `Task: ${task.title}\nDescription: ${task.description || 'None'}\nCriteria: ${(task.acceptanceCriteria || []).join(', ')}`;
+            const inferenceRes = await this.localModelClient.chatCompletion({
+              messages: [
+                {
+                  role: 'system',
+                  content: `You are ${agent.name}, an expert AI agent with role: ${agent.role}. Complete the user task accurately.`,
+                },
+                { role: 'user', content: prompt },
+              ],
+            });
+            if (inferenceRes.success) {
+              outputContent = inferenceRes.data.content;
+              const tokens = inferenceRes.data.usage && inferenceRes.data.usage.total_tokens;
+              outputSummary = `Local model execution complete (${tokens || 0} tokens)`;
+            } else {
+              throw new Error(`Local model inference failed: ${inferenceRes.message}`);
+            }
+          } else if (typeof this.orchestratorDelegate === 'function') {
+            // Delegate to Webview MultiAiOrchestrator
+            const prompt =
+              options.customPrompt ||
+              `【任務】：${task.title}\n【說明】：${task.description || ''}\n【驗收標準】：${(task.acceptanceCriteria || []).join('; ')}`;
+            const orchRes = await this.orchestratorDelegate(agent.platform, prompt);
+            outputContent = orchRes?.text || 'Delegated to webview';
+            outputSummary = `Webview orchestrated on platform: ${agent.platform}`;
           } else {
-            throw new Error(`Local model inference failed: ${inferenceRes.message}`);
+            // Default automated mock execution
+            outputContent = `Completed task [${task.title}] by ${agent.name}.\nAcceptance criteria verified: ${task.acceptanceCriteria.length} items.`;
+            outputSummary = `Executed successfully by ${agent.name}`;
           }
-        } else if (typeof this.orchestratorDelegate === 'function') {
-          // Delegate to Webview MultiAiOrchestrator
-          const prompt = options.customPrompt || `【任務】：${task.title}\n【說明】：${task.description || ''}\n【驗收標準】：${(task.acceptanceCriteria || []).join('; ')}`;
-          const orchRes = await this.orchestratorDelegate(agent.platform, prompt);
-          outputContent = orchRes?.text || 'Delegated to webview';
-          outputSummary = `Webview orchestrated on platform: ${agent.platform}`;
-        } else {
-          // Default automated mock execution
-          outputContent = `Completed task [${task.title}] by ${agent.name}.\nAcceptance criteria verified: ${task.acceptanceCriteria.length} items.`;
-          outputSummary = `Executed successfully by ${agent.name}`;
-        }
 
-        // 3. Attach artifact if output exists
-        if (outputContent) {
-          this.dispatcher.addArtifact(taskId, {
-            name: `${task.title} - Deliverable`,
-            type: 'text/markdown',
-            content: outputContent,
-          });
-        }
+          // 3. Attach artifact if output exists
+          if (outputContent) {
+            this.dispatcher.addArtifact(taskId, {
+              name: `${task.title} - Deliverable`,
+              type: 'text/markdown',
+              content: outputContent,
+            });
+          }
 
-        // 4. Human-in-the-loop approval or completion
-        if (task.requireApproval) {
-          ApprovalGate.submitForReview(this.dispatcher, taskId, agentId, {
-            proposal: `Execution finished by ${agent.name}. Review required before finalization.`,
-            diff: outputContent.substring(0, 500),
-          });
-          return ok(this.dispatcher.tasks.get(taskId));
-        } else {
-          const compRes = this.dispatcher.completeTask(taskId, agentId, outputSummary);
-          return compRes;
+          // 4. Human-in-the-loop approval or completion
+          if (task.requireApproval) {
+            ApprovalGate.submitForReview(this.dispatcher, taskId, agentId, {
+              proposal: `Execution finished by ${agent.name}. Review required before finalization.`,
+              diff: outputContent.substring(0, 500),
+            });
+            return ok(this.dispatcher.tasks.get(taskId));
+          } else {
+            const compRes = this.dispatcher.completeTask(taskId, agentId, outputSummary);
+            return compRes;
+          }
+        } catch (errObj) {
+          this.dispatcher.failTask(
+            taskId,
+            agentId,
+            errObj instanceof Error ? errObj.message : String(errObj),
+          );
+          return err(
+            ErrorCodes.TASK_EXECUTION_FAILED_007,
+            errObj instanceof Error ? errObj.message : String(errObj),
+          );
+        } finally {
+          heartbeat.stop();
         }
-      } catch (errObj) {
-        this.dispatcher.failTask(taskId, agentId, (errObj instanceof Error ? errObj.message : String(errObj)));
-        return err(ErrorCodes.TASK_EXECUTION_FAILED_007, (errObj instanceof Error ? errObj.message : String(errObj)));
-      } finally {
-        heartbeat.stop();
-      }
-    }));
+      })
+    );
   }
 
   /**
    * Starts a background lease renewal loop
-   * @param {string} taskId 
-   * @param {string} agentId 
-   * @param {number} [intervalMs=5000] 
+   * @param {string} taskId
+   * @param {string} agentId
+   * @param {number} [intervalMs=5000]
    * @returns {{ stop: () => void }}
    */
   startHeartbeatLoop(taskId, agentId, intervalMs = 5000) {

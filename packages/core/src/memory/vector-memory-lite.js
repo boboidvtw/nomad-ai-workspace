@@ -17,7 +17,7 @@ function tokenize(text) {
   const lower = text.toLowerCase();
 
   // Word tokens (Western)
-  const words = lower.match(/[a-z0-9_\-\.]+/g) || [];
+  const words = lower.match(/[a-z0-9_\-.]+/g) || [];
 
   // 2-gram and 3-gram tokens for CJK characters
   const ngrams = [];
@@ -79,13 +79,16 @@ class VectorMemoryLite {
         content: doc.content,
         metadata: doc.metadata || {},
         termFreq,
-        length: tokens.length
+        length: tokens.length,
       });
 
       this.docCount++;
       return ok({ indexedId: doc.id, termsCount: termFreq.size });
     } catch (e) {
-      return err(ErrorCodes.MEMORY_INDEX_FAILED_001, 'Index error: ' + (e instanceof Error ? e.message : String(e)));
+      return err(
+        ErrorCodes.MEMORY_INDEX_FAILED_001,
+        'Index error: ' + (e instanceof Error ? e.message : String(e)),
+      );
     }
   }
 
@@ -128,7 +131,9 @@ class VectorMemoryLite {
       }
 
       const scores = new Map();
-      const avgLength = Array.from(this.documents.values()).reduce((sum, d) => sum + d.length, 0) / this.docCount || 1;
+      const avgLength =
+        Array.from(this.documents.values()).reduce((sum, d) => sum + d.length, 0) / this.docCount ||
+        1;
       const k1 = 1.2;
       const b = 0.75;
 
@@ -164,7 +169,7 @@ class VectorMemoryLite {
           title: doc.title,
           score: Number(score.toFixed(3)),
           snippet,
-          metadata: doc.metadata
+          metadata: doc.metadata,
         });
       }
 
@@ -172,7 +177,10 @@ class VectorMemoryLite {
       const limit = options.limit || 10;
       return ok(results.slice(0, limit));
     } catch (e) {
-      return err(ErrorCodes.MEMORY_QUERY_FAILED_002, 'Search query error: ' + (e instanceof Error ? e.message : String(e)));
+      return err(
+        ErrorCodes.MEMORY_QUERY_FAILED_002,
+        'Search query error: ' + (e instanceof Error ? e.message : String(e)),
+      );
     }
   }
 
@@ -185,5 +193,5 @@ class VectorMemoryLite {
 
 module.exports = {
   tokenize,
-  VectorMemoryLite
+  VectorMemoryLite,
 };

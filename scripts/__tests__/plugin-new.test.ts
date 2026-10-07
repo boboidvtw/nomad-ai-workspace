@@ -117,7 +117,7 @@ describe('plugin:new scaffold', () => {
     // The command names the directory that was actually written, so a
     // --catalog run does not tell the contributor to check the default tree.
     expect(readme).toContain(
-      `bun run plugin:check ${relative(process.cwd(), result.pluginDir).split(sep).join('/')}`,
+      `npm run plugin:check ${relative(process.cwd(), result.pluginDir).split(sep).join('/')}`,
     );
     expect(readme).toContain('sites/deepseek/plugins/reading-guide');
     expect(readme).toContain('Light theme');

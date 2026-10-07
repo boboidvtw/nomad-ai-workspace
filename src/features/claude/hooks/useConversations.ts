@@ -5,7 +5,19 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+
+import {
+  CONVERSATION_LINK_SELECTOR,
+  CONVERSATION_LIST_ITEM_SELECTOR,
+  SIDEBAR_NAV_SELECTOR,
+} from '@src/constants/selectors';
 import type { Conversation } from '@src/types/conversation';
+
+import {
+  CONVERSATION_TITLE_CACHE_KEY,
+  getConversationTitleCache,
+  saveConversationTitleCache,
+} from '@/features/claude/services/storage';
 import {
   estimateIsDarkBackground,
   extractConversationIdFromHref,
@@ -14,16 +26,6 @@ import {
   getConversationTitleFromAnchor,
   scanConversations,
 } from '@/features/claude/utils/dom';
-import {
-  CONVERSATION_TITLE_CACHE_KEY,
-  getConversationTitleCache,
-  saveConversationTitleCache,
-} from '@/features/claude/services/storage';
-import {
-  CONVERSATION_LINK_SELECTOR,
-  CONVERSATION_LIST_ITEM_SELECTOR,
-  SIDEBAR_NAV_SELECTOR,
-} from '@src/constants/selectors';
 
 const INJECTED_CONTAINER_ID = '__claude_nexus_folder_manager__';
 
@@ -60,7 +62,10 @@ type UseConversationsOptions = {
   onConversationContextMenu?: (payload: { x: number; y: number; conversationId: string }) => void;
 };
 
-export const useConversations = ({ hiddenConversationIds, onConversationContextMenu }: UseConversationsOptions) => {
+export const useConversations = ({
+  hiddenConversationIds,
+  onConversationContextMenu,
+}: UseConversationsOptions) => {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const [navUlEl, setNavUlEl] = useState<HTMLElement | null>(null);
 
@@ -85,7 +90,10 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
       setConversationTitleIndex(loaded);
     })();
 
-    const handleChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (changes, area) => {
+    const handleChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (
+      changes,
+      area,
+    ) => {
       if (area !== 'local') return;
       if (!changes?.[CONVERSATION_TITLE_CACHE_KEY]) return;
       void (async () => {
@@ -109,13 +117,19 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
     const originalReplaceState = history.replaceState;
 
     history.pushState = function pushStatePatched(...args) {
-      const ret = originalPushState.apply(this, args as unknown as Parameters<History['pushState']>);
+      const ret = originalPushState.apply(
+        this,
+        args as unknown as Parameters<History['pushState']>,
+      );
       bump();
       return ret;
     };
 
     history.replaceState = function replaceStatePatched(...args) {
-      const ret = originalReplaceState.apply(this, args as unknown as Parameters<History['replaceState']>);
+      const ret = originalReplaceState.apply(
+        this,
+        args as unknown as Parameters<History['replaceState']>,
+      );
       bump();
       return ret;
     };
@@ -156,14 +170,25 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
       // 1. Locate date/history heading section inside nav (Today / Recents / Yesterday / Previous days)
       let recentsSection: HTMLElement | null = null;
       const historyKeywords = [
-        'today', '今天', 
-        'recents', '最近', '最近對話', '最近的對話', 
-        'yesterday', '昨天', 
-        'previous 7 days', '過去 7 天', '前 7 天', 
-        'previous 30 days', '過去 30 天', '前 30 天'
+        'today',
+        '今天',
+        'recents',
+        '最近',
+        '最近對話',
+        '最近的對話',
+        'yesterday',
+        '昨天',
+        'previous 7 days',
+        '過去 7 天',
+        '前 7 天',
+        'previous 30 days',
+        '過去 30 天',
+        '前 30 天',
       ];
 
-      const allTextCandidates = Array.from(nav.querySelectorAll('h2, h3, h4, span, div, p, button'));
+      const allTextCandidates = Array.from(
+        nav.querySelectorAll('h2, h3, h4, span, div, p, button'),
+      );
       for (const el of allTextCandidates) {
         const text = el.textContent?.trim().toLowerCase();
         if (text && historyKeywords.some((k) => text === k || text.startsWith(k))) {
@@ -265,7 +290,9 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
       }
 
       // 6. Fallback: Before bottom user menu or profile row
-      const bottomProfile = nav.querySelector('button[data-testid="user-menu-button"], div.mt-auto');
+      const bottomProfile = nav.querySelector(
+        'button[data-testid="user-menu-button"], div.mt-auto',
+      );
       if (bottomProfile && bottomProfile.parentElement && nav.contains(bottomProfile)) {
         bottomProfile.parentElement.insertBefore(container, bottomProfile);
         setPortalContainer(container);
@@ -462,4 +489,3 @@ export const useConversations = ({ hiddenConversationIds, onConversationContextM
     isDarkTheme,
   };
 };
-

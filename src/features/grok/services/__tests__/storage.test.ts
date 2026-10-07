@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  extractGrokConversationIdFromHref,
-  parseFoldersFromStorageValue,
-} from '../storage';
+
+import { extractGrokConversationIdFromHref, parseFoldersFromStorageValue } from '../storage';
 
 describe('Grok Storage Service', () => {
   describe('extractGrokConversationIdFromHref', () => {
@@ -13,7 +11,9 @@ describe('Grok Storage Service', () => {
     });
 
     it('extracts ID from absolute grok.com/chat/ URL', () => {
-      expect(extractGrokConversationIdFromHref('https://grok.com/chat/grok-chat-12345')).toBe('grok-chat-12345');
+      expect(extractGrokConversationIdFromHref('https://grok.com/chat/grok-chat-12345')).toBe(
+        'grok-chat-12345',
+      );
     });
 
     it('extracts ID from relative and absolute /c/ URL', () => {

@@ -1,5 +1,4 @@
 import {
-    countUserAttachmentsByType,
     getDataUrlMime,
     normalizeUserAttachments,
 } from '../../shared/attachments/index.js';

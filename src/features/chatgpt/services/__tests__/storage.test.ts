@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  extractChatGPTConversationIdFromHref,
-  parseFoldersFromStorageValue,
-} from '../storage';
+
+import { extractChatGPTConversationIdFromHref, parseFoldersFromStorageValue } from '../storage';
 
 describe('ChatGPT Storage Service', () => {
   describe('extractChatGPTConversationIdFromHref', () => {
@@ -13,13 +11,15 @@ describe('ChatGPT Storage Service', () => {
     });
 
     it('extracts ID from absolute chatgpt.com URL', () => {
-      expect(extractChatGPTConversationIdFromHref('https://chatgpt.com/c/chat-12345')).toBe('chat-12345');
+      expect(extractChatGPTConversationIdFromHref('https://chatgpt.com/c/chat-12345')).toBe(
+        'chat-12345',
+      );
     });
 
     it('extracts ID from custom GPT path with /c/', () => {
-      expect(extractChatGPTConversationIdFromHref('https://chatgpt.com/g/g-abcde/c/gpt-chat-999')).toBe(
-        'gpt-chat-999',
-      );
+      expect(
+        extractChatGPTConversationIdFromHref('https://chatgpt.com/g/g-abcde/c/gpt-chat-999'),
+      ).toBe('gpt-chat-999');
     });
 
     it('returns null for non-conversation URLs', () => {

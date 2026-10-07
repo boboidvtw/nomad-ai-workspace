@@ -32,8 +32,8 @@ test('Markdown Exporter: formatChatToMarkdown formats conversation with headers 
     date: '2026-10-04T12:00:00Z',
     messages: [
       { role: 'user', content: '如何優化 Monorepo 的微服務通訊？' },
-      { role: 'assistant', content: '建議採用主從握手協定（Handshake Protocol）搭配反向代理。' }
-    ]
+      { role: 'assistant', content: '建議採用主從握手協定（Handshake Protocol）搭配反向代理。' },
+    ],
   });
 
   assert.equal(res.success, true);

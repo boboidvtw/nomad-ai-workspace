@@ -28,8 +28,11 @@
 import browser from 'webextension-polyfill';
 
 import { StorageKeys } from '@/core/types/common';
-import { hasValidExtensionContext, isExtensionContextInvalidatedError } from '@/core/utils/extensionContext';
 import { decodeBatchExecute } from '@/core/utils/batchexecute';
+import {
+  hasValidExtensionContext,
+  isExtensionContextInvalidatedError,
+} from '@/core/utils/extensionContext';
 import { getCurrentLanguage, getTranslationSync, initI18n } from '@/utils/i18n';
 import type { AppLanguage } from '@/utils/language';
 import type { TranslationKey } from '@/utils/translations';

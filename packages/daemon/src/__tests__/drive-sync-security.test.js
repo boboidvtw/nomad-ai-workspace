@@ -25,9 +25,16 @@ after(() => fs.rmSync(sandbox, { recursive: true, force: true }));
  * @param {Record<string, unknown>} [body]
  */
 async function call(route, body) {
-  const res = await fetch(`http://127.0.0.1:${PORT}${route}`, body
-    ? { method: 'POST', headers: { ...AUTH, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-    : { headers: AUTH });
+  const res = await fetch(
+    `http://127.0.0.1:${PORT}${route}`,
+    body
+      ? {
+          method: 'POST',
+          headers: { ...AUTH, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }
+      : { headers: AUTH },
+  );
   return { status: res.status, json: await res.json() };
 }
 
@@ -35,14 +42,17 @@ test('Daemon Drive sync: ignores caller-supplied directories', async () => {
   assert.strictEqual(os.homedir(), fakeHome);
   const evilDir = path.join(sandbox, 'evil');
   fs.mkdirSync(evilDir);
-  fs.writeFileSync(path.join(evilDir, 'nomad-workspaces.json'), JSON.stringify({ workspaces: [{ id: 'planted' }] }));
+  fs.writeFileSync(
+    path.join(evilDir, 'nomad-workspaces.json'),
+    JSON.stringify({ workspaces: [{ id: 'planted' }] }),
+  );
 
   const daemon = new NomadDaemonServer({ port: PORT });
   await daemon.start();
   try {
     const push = await call('/api/sync/drive/push', {
       workspaces: [{ id: 'ws-1' }],
-      targetDir: path.join(evilDir, 'nested')
+      targetDir: path.join(evilDir, 'nested'),
     });
     assert.strictEqual(push.status, 200);
     assert.strictEqual(push.json.data.targetDir, DETECTED_DIR);
@@ -54,7 +64,10 @@ test('Daemon Drive sync: ignores caller-supplied directories', async () => {
 
     const pull = await call('/api/sync/drive/pull', { sourceDir: evilDir, strategy: 'overwrite' });
     assert.strictEqual(pull.status, 200);
-    assert.deepStrictEqual(pull.json.data.reconciledWorkspaces.map((/** @type {{ id: string }} */ w) => w.id), ['ws-1']);
+    assert.deepStrictEqual(
+      pull.json.data.reconciledWorkspaces.map((/** @type {{ id: string }} */ w) => w.id),
+      ['ws-1'],
+    );
   } finally {
     await daemon.stop();
   }

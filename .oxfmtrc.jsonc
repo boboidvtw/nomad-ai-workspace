@@ -66,5 +66,9 @@
     "CLAUDE.md",
     "src/pages/content/changelog/notes/",
     "*.zip",
+    // Subtree imports keep their upstream style (gemini-nexus ships its own
+    // .prettierrc) so later subtree pulls stay reviewable.
+    "packages/gemini-nexus/",
+    "packages/claude-voyager/",
   ],
 }

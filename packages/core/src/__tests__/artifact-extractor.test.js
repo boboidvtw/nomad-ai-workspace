@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const {
   extractArtifacts,
   generateSandboxHtml,
-  ARTIFACT_TYPES
+  ARTIFACT_TYPES,
 } = require('../canvas/artifact-extractor');
 const { isOk } = require('../result');
 
@@ -46,7 +46,7 @@ test('ArtifactExtractor: generates valid sandboxed HTML for iframe rendering', (
   const htmlArtifact = {
     type: ARTIFACT_TYPES.HTML,
     content: '<button>Click Me</button>',
-    title: 'Button Component'
+    title: 'Button Component',
   };
 
   const sandboxedHtml = generateSandboxHtml(htmlArtifact);
@@ -56,7 +56,7 @@ test('ArtifactExtractor: generates valid sandboxed HTML for iframe rendering', (
   const mermaidArtifact = {
     type: ARTIFACT_TYPES.MERMAID,
     content: 'graph LR; A --> B;',
-    title: 'Flowchart'
+    title: 'Flowchart',
   };
 
   const sandboxedMermaid = generateSandboxHtml(mermaidArtifact);

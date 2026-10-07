@@ -42,8 +42,18 @@ const parseUsageData = (value: unknown): UsageData | null => {
   const fiveResetAt = (fiveHour as { resets_at?: unknown }).resets_at;
   const sevenResetAt = (sevenDay as { resets_at?: unknown }).resets_at;
 
-  if (typeof fiveUtilization !== 'number' || Number.isNaN(fiveUtilization) || !Number.isFinite(fiveUtilization)) return null;
-  if (typeof sevenUtilization !== 'number' || Number.isNaN(sevenUtilization) || !Number.isFinite(sevenUtilization)) return null;
+  if (
+    typeof fiveUtilization !== 'number' ||
+    Number.isNaN(fiveUtilization) ||
+    !Number.isFinite(fiveUtilization)
+  )
+    return null;
+  if (
+    typeof sevenUtilization !== 'number' ||
+    Number.isNaN(sevenUtilization) ||
+    !Number.isFinite(sevenUtilization)
+  )
+    return null;
   if (typeof fiveResetAt !== 'string' || !fiveResetAt) return null;
   if (typeof sevenResetAt !== 'string' || !sevenResetAt) return null;
 

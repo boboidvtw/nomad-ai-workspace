@@ -36,7 +36,7 @@ test('Core Result: wrapAsync catches thrown exceptions safely', async () => {
 
 test('Core Constants: MONITORED_SERVICES contains essential port 8765 and dependencies', () => {
   assert.equal(Array.isArray(MONITORED_SERVICES), true);
-  const p8765 = MONITORED_SERVICES.find(s => s.port === 8765);
+  const p8765 = MONITORED_SERVICES.find((s) => s.port === 8765);
   assert.ok(p8765, 'Gateway port 8765 must be listed');
   assert.equal(p8765.essential, true);
 });

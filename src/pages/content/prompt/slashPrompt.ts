@@ -169,7 +169,12 @@ function inputFromTarget(target: EventTarget | null): HTMLElement | null {
   const input = target.closest<HTMLElement>(CHAT_INPUT_SELECTOR);
   if (!input) return null;
   const activeInput = findChatInput({ requireVisible: false });
-  if (activeInput && activeInput !== input && !activeInput.contains(input) && !input.contains(activeInput)) {
+  if (
+    activeInput &&
+    activeInput !== input &&
+    !activeInput.contains(input) &&
+    !input.contains(activeInput)
+  ) {
     return null;
   }
   if (input instanceof HTMLTextAreaElement) return input;

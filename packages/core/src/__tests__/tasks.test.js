@@ -6,7 +6,6 @@ const {
   validateTransition,
   createTaskEntity,
   AGENT_STATUS,
-  DEFAULT_ROSTER,
   AgentRoster,
   TaskDispatcher,
   ApprovalGate,
@@ -179,7 +178,7 @@ describe('Task Control Plane - Task Dispatcher & Heartbeat Lease Lock', () => {
     assert.strictEqual(dispatcher.getTask(task.id).data.status, TASK_STATUS.IN_PROGRESS);
 
     // Wait 25ms for lease expiration
-    await new Promise(r => setTimeout(r, 25));
+    await new Promise((r) => setTimeout(r, 25));
 
     const reclaimed = dispatcher.checkExpiredLeases();
     assert.ok(reclaimed.includes(task.id));
@@ -243,7 +242,7 @@ describe('Task Control Plane - Human-in-the-Loop Approval Gate', () => {
     assert.strictEqual(rejectRes.success, true);
     assert.strictEqual(rejectRes.data.status, TASK_STATUS.IN_PROGRESS);
     assert.strictEqual(rejectRes.data.reviewGate.status, 'rejected');
-    assert.ok(rejectRes.data.logs.some(l => l.message.includes('Missing rate-limiter')));
+    assert.ok(rejectRes.data.logs.some((l) => l.message.includes('Missing rate-limiter')));
   });
 });
 
@@ -258,7 +257,7 @@ describe('Task Control Plane - Task Runner Execution Engine', () => {
     }).data;
 
     const runRes = await runner.dispatchAndRun(task.id, 'agent-claude', {
-      runnerFn: async (t, a) => {
+      runnerFn: async (_t, _a) => {
         return {
           summary: 'Identified 2 unclosed timers',
           content: '# Performance Audit Report\nNo memory leaks detected.',
@@ -350,7 +349,9 @@ describe('Task Control Plane - P0 Disk Persistence & P1 Real-time Events', () =>
     assert.strictEqual(restoredT2.status, TASK_STATUS.BLOCKED);
 
     // Clean up temporary test file
-    try { fs.unlinkSync(testStorageFile); } catch {}
+    try {
+      fs.unlinkSync(testStorageFile);
+    } catch {}
   });
 
   it('reconciles expired leases upon loading from disk', async () => {
@@ -362,7 +363,7 @@ describe('Task Control Plane - P0 Disk Persistence & P1 Real-time Events', () =>
     await dispatcher1.saveToDisk();
 
     // Sleep 15ms so lease expires
-    await new Promise(r => setTimeout(r, 15));
+    await new Promise((r) => setTimeout(r, 15));
 
     // Reload from disk
     const dispatcher2 = new TaskDispatcher({ storagePath: expiredStorageFile });
@@ -374,7 +375,9 @@ describe('Task Control Plane - P0 Disk Persistence & P1 Real-time Events', () =>
     assert.strictEqual(reloaded.status, TASK_STATUS.TODO);
     assert.strictEqual(reloaded.lease, null);
 
-    try { fs.unlinkSync(expiredStorageFile); } catch {}
+    try {
+      fs.unlinkSync(expiredStorageFile);
+    } catch {}
   });
 
   it('emits real-time task events for SSE broadcasting on every state change', () => {
@@ -382,20 +385,20 @@ describe('Task Control Plane - P0 Disk Persistence & P1 Real-time Events', () =>
     const dispatcher = new TaskDispatcher({
       onTaskEvent: (eventType, task) => {
         events.push({ eventType, taskId: task.id, status: task.status });
-      }
+      },
     });
 
     const task = dispatcher.createTask({ title: 'Event Test Task' }).data;
-    assert.ok(events.some(e => e.eventType === 'task:created'));
+    assert.ok(events.some((e) => e.eventType === 'task:created'));
 
     dispatcher.claimTask(task.id, 'agent-claude');
-    assert.ok(events.some(e => e.eventType === 'task:claimed'));
+    assert.ok(events.some((e) => e.eventType === 'task:claimed'));
 
     ApprovalGate.submitForReview(dispatcher, task.id, 'agent-claude', { proposal: 'Ready' });
-    assert.ok(events.some(e => e.eventType === 'task:review'));
+    assert.ok(events.some((e) => e.eventType === 'task:review'));
 
     ApprovalGate.decideApproval(dispatcher, task.id, { decision: 'approve', reviewer: 'tester' });
-    assert.ok(events.some(e => e.eventType === 'task:approved'));
+    assert.ok(events.some((e) => e.eventType === 'task:approved'));
 
     assert.ok(events.length >= 4);
   });

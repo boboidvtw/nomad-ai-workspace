@@ -166,8 +166,9 @@ export default function FloatBall() {
   }, [loadedPosition, setPosition]);
 
   const panelSide = useMemo<PanelSide>(() => {
-    const size = getSize();
-    const centerX = position.x + size.width / 2;
+    // Measuring the DOM here would read a ref during render; the fallback size is
+    // close enough to decide which half of the viewport the ball sits in.
+    const centerX = position.x + BALL_WRAPPER_FALLBACK_PX / 2;
     return centerX >= window.innerWidth / 2 ? 'left' : 'right';
   }, [position]);
 

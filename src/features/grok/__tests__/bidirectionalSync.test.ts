@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { Folder } from '@/types/folder';
+
 import { SUPPORTED_PLATFORMS } from '@/core/platform/registry';
-import { DEFAULT_SYNC_STATE, type SyncState } from '@/core/types/sync';
 import type { CrossPlatformFolder } from '@/core/platform/types';
+import { DEFAULT_SYNC_STATE, type SyncState } from '@/core/types/sync';
+import type { Folder } from '@/types/folder';
 
 // Grok bidirectional merge function (mirrors handleSyncToDrive logic in GrokFolderManager)
 function mergeGrokRemoteFolders(localFolders: Folder[], cloudFolders: Folder[]): Folder[] {

@@ -139,8 +139,16 @@ describe('Universal FloatBall (Flagship Super Orb)', () => {
   });
 
   it('anchors to the right side of the chat composer when present', async () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1440 });
-    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 900 });
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1440,
+    });
+    Object.defineProperty(window, 'innerHeight', {
+      writable: true,
+      configurable: true,
+      value: 900,
+    });
     const composer = document.createElement('form');
     composer.id = 'thread-bottom-container';
     composer.innerHTML = '<div id="prompt-textarea" contenteditable="true"></div>';
@@ -186,7 +194,11 @@ describe('Universal FloatBall (Flagship Super Orb)', () => {
 
   it('anchors to Grok chat composer and adapts under narrow viewport', async () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 800 });
-    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 600 });
+    Object.defineProperty(window, 'innerHeight', {
+      writable: true,
+      configurable: true,
+      value: 600,
+    });
 
     const grokComposer = document.createElement('form');
     grokComposer.innerHTML = '<textarea placeholder="Ask Grok something..."></textarea>';
@@ -216,5 +228,4 @@ describe('Universal FloatBall (Flagship Super Orb)', () => {
 
     grokComposer.remove();
   });
-
 });

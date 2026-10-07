@@ -17,13 +17,13 @@ test('VectorMemoryLite: indexes documents and retrieves top BM25 matches', () =>
   mem.addDocument({
     id: 'doc-1',
     title: 'PostgreSQL 效能調優指南',
-    content: '針對高併發資料庫查詢進行索引優化與連線池管理。'
+    content: '針對高併發資料庫查詢進行索引優化與連線池管理。',
   });
 
   mem.addDocument({
     id: 'doc-2',
     title: 'React 前端元件最佳實踐',
-    content: '使用 React Hooks 與 Virtual DOM 降低重新渲染開銷。'
+    content: '使用 React Hooks 與 Virtual DOM 降低重新渲染開銷。',
   });
 
   const queryRes = mem.search('資料庫 索引優化');

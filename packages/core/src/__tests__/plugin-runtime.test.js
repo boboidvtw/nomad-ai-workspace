@@ -10,13 +10,13 @@ test('PluginRuntime: registers plugin and executes lifecycle hooks', async () =>
       id: 'custom-prompter',
       name: 'Custom Prompt Enhancer',
       version: '1.0.0',
-      description: 'Enhances prompt with prefix'
+      description: 'Enhances prompt with prefix',
     },
     hooks: {
       onPromptBeforeDispatch: async (ctx) => {
         return { prompt: `[Enhanced] ${ctx.prompt}` };
-      }
-    }
+      },
+    },
   };
 
   const regRes = runtime.register(mockPlugin);

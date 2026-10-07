@@ -7,7 +7,7 @@ const {
   PipelineManager,
   isOk,
   isErr,
-  ErrorCodes
+  ErrorCodes,
 } = require('../../index');
 
 test('Headroom: estimateTokens correctly weights Western vs CJK characters', () => {
@@ -21,7 +21,8 @@ test('Headroom: estimateTokens correctly weights Western vs CJK characters', () 
 });
 
 test('Headroom: compress eliminates conversational fluff and normalizes newlines', () => {
-  const fluffPrompt = '你好！我是AI助理，很高興為您服務。\n\n\n\n請問有什麼我可以幫忙的？\n\n請分析以下程式碼：\nconst a = 1;   \n';
+  const fluffPrompt =
+    '你好！我是AI助理，很高興為您服務。\n\n\n\n請問有什麼我可以幫忙的？\n\n請分析以下程式碼：\nconst a = 1;   \n';
   const res = compress(fluffPrompt, { level: 'balanced' });
 
   assert.strictEqual(isOk(res), true);
@@ -76,7 +77,7 @@ test('PipelineManager: executes end-to-end compression, decision, and collects t
   const pm = new PipelineManager({
     headroomEnabled: true,
     layaEnabled: true,
-    autoEnhance: true
+    autoEnhance: true,
   });
 
   const prompt = '好的，馬上為您處理。\n\n\n請優化此 React 元件的效能，收斂複雜度並消除壞味道。';

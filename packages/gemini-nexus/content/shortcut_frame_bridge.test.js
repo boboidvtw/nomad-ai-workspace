@@ -52,6 +52,8 @@ describe('shortcut frame bridge', () => {
 
     it('routes quick ask from the top document through the early shortcut bridge', async () => {
         window.chrome = globalThis.chrome;
+        // Run the bridge in the page realm, the way the browser injects a content script.
+        // oxlint-disable-next-line no-eval
         window.eval(await bridgeSourcePromise);
 
         const event = createKeyboardEvent(window, 'œ', { altKey: true, code: 'KeyQ' });

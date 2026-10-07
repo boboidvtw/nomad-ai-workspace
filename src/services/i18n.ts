@@ -2,9 +2,11 @@
  * Initializes i18next/react-i18next and provides storage-backed language switching helpers.
  */
 
-import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
+
 import type { Language } from '@src/types/settings';
+import i18next from 'i18next';
+
 import enTranslation from '@/features/claude/locales/en.json';
 import zhTranslation from '@/features/claude/locales/zh.json';
 import zhTWTranslation from '@/features/claude/locales/zh_TW.json';

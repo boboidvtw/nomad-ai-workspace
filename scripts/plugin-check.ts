@@ -2,7 +2,7 @@
 /**
  * Contributor-facing checker for one plugin directory (plan §8).
  *
- * `bun run plugin:check` answers "will this plugin be accepted?" before a PR is
+ * `npm run plugin:check` answers "will this plugin be accepted?" before a PR is
  * opened, with the same rules the publisher applies in
  * `scripts/build-plugin-catalog.ts` — both import them from
  * `scripts/lib/pluginChecks.ts`. The publisher aborts on the first violation

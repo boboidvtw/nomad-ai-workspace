@@ -63,7 +63,10 @@ const mount = async () => {
     void startPromptManager();
     void startSlashPromptFeature();
   } catch (e) {
-    console.error('[Nomad Workspace] Failed to start Prompt Manager / Slash Commands on ChatGPT:', e);
+    console.error(
+      '[Nomad Workspace] Failed to start Prompt Manager / Slash Commands on ChatGPT:',
+      e,
+    );
   }
 };
 

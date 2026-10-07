@@ -5,8 +5,15 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+
 import type { Folder } from '@src/types/folder';
-import { getFolders, parseFoldersFromStorageValue, saveFolders, STORAGE_KEY } from '@/features/claude/services/storage';
+
+import {
+  getFolders,
+  parseFoldersFromStorageValue,
+  saveFolders,
+  STORAGE_KEY,
+} from '@/features/claude/services/storage';
 
 const generateId = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
@@ -29,7 +36,10 @@ export const useFolders = () => {
       setFolders(loaded);
     })();
 
-    const handleChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (changes, area) => {
+    const handleChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (
+      changes,
+      area,
+    ) => {
       if (area !== 'local') return;
       if (!changes?.[STORAGE_KEY]) return;
       const next = parseFoldersFromStorageValue(changes[STORAGE_KEY].newValue);
@@ -67,7 +77,9 @@ export const useFolders = () => {
     const sanitized = sanitizeFolderName(name);
     if (!sanitized) return;
 
-    const nextFolders = foldersRef.current.map((f) => (f.id === folderId ? { ...f, name: sanitized } : f));
+    const nextFolders = foldersRef.current.map((f) =>
+      f.id === folderId ? { ...f, name: sanitized } : f,
+    );
     await persist(nextFolders);
   };
 
@@ -77,7 +89,9 @@ export const useFolders = () => {
   };
 
   const toggleExpanded = async (folderId: string) => {
-    const nextFolders = foldersRef.current.map((f) => (f.id === folderId ? { ...f, isExpanded: !f.isExpanded } : f));
+    const nextFolders = foldersRef.current.map((f) =>
+      f.id === folderId ? { ...f, isExpanded: !f.isExpanded } : f,
+    );
     await persist(nextFolders);
   };
 
@@ -94,7 +108,10 @@ export const useFolders = () => {
         ? foldersWithout
         : foldersWithout.map((f) =>
             f.id === folderId
-              ? { ...f, conversationIds: Array.from(new Set([...f.conversationIds, conversationId])) }
+              ? {
+                  ...f,
+                  conversationIds: Array.from(new Set([...f.conversationIds, conversationId])),
+                }
               : f,
           );
 
@@ -111,4 +128,3 @@ export const useFolders = () => {
     moveConversationToFolder,
   };
 };
-

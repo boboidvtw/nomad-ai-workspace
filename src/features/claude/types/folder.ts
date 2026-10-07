@@ -14,4 +14,3 @@ export type Folder = {
 export type FolderStore = {
   folders: Folder[];
 };
-

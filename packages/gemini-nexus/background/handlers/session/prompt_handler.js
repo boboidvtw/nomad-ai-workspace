@@ -27,7 +27,6 @@ export { hasInlinePageSnapshot } from './prompt/tool_loop.js';
 const MAX_NARRATION_NUDGES = 1;
 
 // Spaces out looped requests to avoid rate-limit bursts.
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function cancellableDelay(ms, run, handler) {
     return new Promise((resolve) => {

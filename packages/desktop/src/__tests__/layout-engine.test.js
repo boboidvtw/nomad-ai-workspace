@@ -111,11 +111,21 @@ test('Layout Engine: Quad mode tiles 4 views in 2x2 grid', () => {
 });
 
 test('Layout Engine: Custom mode adapts dynamically based on number of active platforms', () => {
-  const one = calculateLayoutBounds({ winWidth: 1000, winHeight: 500, layout: 'custom', activePlatforms: ['grok'] });
+  const one = calculateLayoutBounds({
+    winWidth: 1000,
+    winHeight: 500,
+    layout: 'custom',
+    activePlatforms: ['grok'],
+  });
   assert.strictEqual(one.grok.visible, true);
   assert.strictEqual(one.grok.width, 1000);
 
-  const three = calculateLayoutBounds({ winWidth: 900, winHeight: 500, layout: 'custom', activePlatforms: ['claude', 'gemini', 'grok'] });
+  const three = calculateLayoutBounds({
+    winWidth: 900,
+    winHeight: 500,
+    layout: 'custom',
+    activePlatforms: ['claude', 'gemini', 'grok'],
+  });
   assert.strictEqual(three.claude.visible, true);
   assert.strictEqual(three.gemini.visible, true);
   assert.strictEqual(three.grok.visible, true);
@@ -134,7 +144,6 @@ test('Layout Engine: Subtracts drawerWidth when drawer is open', () => {
   assert.strictEqual(boundsWithDrawer.claude.visible, true);
   assert.strictEqual(boundsWithDrawer.claude.width, 1020); // 1440 - 420
 });
-
 
 test('Layout Engine: Hexa mode tiles 6 views in 3x2 grid', () => {
   const bounds = calculateLayoutBounds({

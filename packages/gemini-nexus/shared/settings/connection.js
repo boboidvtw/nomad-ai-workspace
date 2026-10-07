@@ -11,7 +11,7 @@ import {
     DEFAULT_THINKING_LEVEL,
 } from '../config/constants.js';
 import { createPrefixedId } from '../utils/index.js';
-import { DEFAULT_WEB_THINKING_LEVEL, normalizeWebThinkingLevel } from '../models/web_thinking.js';
+import { normalizeWebThinkingLevel } from '../models/web_thinking.js';
 import { normalizeOpenAIWebSearchSettings } from './openai.js';
 import {
     DEDICATED_API_STORAGE_KEYS,

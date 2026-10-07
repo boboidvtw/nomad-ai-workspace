@@ -3,6 +3,7 @@
  */
 
 import React, { useState } from 'react';
+
 import {
   ChevronDown,
   ChevronRight,
@@ -14,7 +15,9 @@ import {
   X,
   MessageSquare,
 } from 'lucide-react';
+
 import type { Folder } from '@/types/folder';
+
 import type { ConversationTitleCache } from '../../services/storage';
 
 interface Props {
@@ -80,65 +83,79 @@ export const FolderItem: React.FC<Props> = ({
     >
       {/* Folder Header */}
       <div
-        className={`group flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer ${bgHover} transition-colors`}
+        className={`group flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 ${bgHover} transition-colors`}
         onClick={() => onToggleExpanded(folder.id)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={folder.isExpanded}
+        onKeyDown={(e) => {
+          // Ignore keys bubbling up from the nested menu button.
+          if (e.target !== e.currentTarget) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onToggleExpanded(folder.id);
+          }
+        }}
       >
-        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
           {folder.isExpanded ? (
-            <ChevronDown className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+            <ChevronDown className="h-3.5 w-3.5 flex-shrink-0 text-sky-400" />
           ) : (
-            <ChevronRight className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+            <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-sky-400" />
           )}
           {folder.isExpanded ? (
-            <FolderOpen className="w-4 h-4 text-sky-400 flex-shrink-0" />
+            <FolderOpen className="h-4 w-4 flex-shrink-0 text-sky-400" />
           ) : (
-            <FolderIcon className="w-4 h-4 text-sky-400 flex-shrink-0" />
+            <FolderIcon className="h-4 w-4 flex-shrink-0 text-sky-400" />
           )}
-          <span className={`text-xs font-medium truncate ${textPrimary}`} title={folder.name}>
+          <span className={`truncate text-xs font-medium ${textPrimary}`} title={folder.name}>
             {folder.name}
           </span>
-          <span className="text-[10px] text-zinc-500 font-mono">({folder.conversationIds.length})</span>
+          <span className="font-mono text-[10px] text-zinc-500">
+            ({folder.conversationIds.length})
+          </span>
         </div>
 
         {/* Action Menu Trigger */}
         <div className="relative">
           <button
             type="button"
-            className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 text-zinc-400 hover:text-white transition-opacity"
+            className="rounded p-1 text-zinc-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white/10 hover:text-white"
             onClick={(e) => {
               e.stopPropagation();
               setMenuOpen(!menuOpen);
             }}
             title="資料夾選單"
           >
-            <MoreVertical className="w-3.5 h-3.5" />
+            <MoreVertical className="h-3.5 w-3.5" />
           </button>
 
           {menuOpen && (
             <div
-              className={`absolute right-0 top-full mt-1 w-28 rounded-md shadow-lg border py-1 z-30 ${menuBg}`}
+              className={`absolute top-full right-0 z-30 mt-1 w-28 rounded-md border py-1 shadow-lg ${menuBg}`}
+              role="presentation"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
-                className={`flex items-center gap-1.5 w-full px-2.5 py-1.5 text-xs text-left ${bgHover} ${textPrimary}`}
+                className={`flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left text-xs ${bgHover} ${textPrimary}`}
                 onClick={() => {
                   setMenuOpen(false);
                   onRename(folder);
                 }}
               >
-                <Pencil className="w-3 h-3 text-zinc-400" />
+                <Pencil className="h-3 w-3 text-zinc-400" />
                 重新命名
               </button>
               <button
                 type="button"
-                className={`flex items-center gap-1.5 w-full px-2.5 py-1.5 text-xs text-left text-red-400 ${bgHover}`}
+                className={`flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left text-xs text-red-400 ${bgHover}`}
                 onClick={() => {
                   setMenuOpen(false);
                   onDelete(folder);
                 }}
               >
-                <Trash2 className="w-3 h-3 text-red-400" />
+                <Trash2 className="h-3 w-3 text-red-400" />
                 刪除資料夾
               </button>
             </div>
@@ -148,17 +165,17 @@ export const FolderItem: React.FC<Props> = ({
 
       {/* Filed Conversations */}
       {folder.isExpanded && folder.conversationIds.length > 0 && (
-        <div className="pl-6 pr-1 py-0.5 space-y-0.5">
+        <div className="space-y-0.5 py-0.5 pr-1 pl-6">
           {folder.conversationIds.map((id) => {
             const title = titleCache[id] || `對話 (${id.slice(0, 8)})`;
             return (
               <div
                 key={id}
-                className={`group/item flex items-center justify-between px-2 py-1 rounded text-xs truncate ${bgHover} transition-colors`}
+                className={`group/item flex items-center justify-between truncate rounded px-2 py-1 text-xs ${bgHover} transition-colors`}
               >
                 <a
                   href={`/chat/${id}`}
-                  className={`flex items-center gap-1.5 truncate flex-1 no-underline ${textMuted} hover:text-sky-400`}
+                  className={`flex flex-1 items-center gap-1.5 truncate no-underline ${textMuted} hover:text-sky-400`}
                   title={title}
                   onClick={(e) => {
                     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
@@ -168,9 +185,15 @@ export const FolderItem: React.FC<Props> = ({
                       document.querySelector<HTMLAnchorElement>(`a[href*="/chat/${id}"]`) ||
                       document.querySelector<HTMLAnchorElement>(`a[href*="/c/${id}"]`);
                     if (nativeLink) {
-                      nativeLink.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
-                      nativeLink.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-                      nativeLink.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                      nativeLink.dispatchEvent(
+                        new MouseEvent('pointerdown', { bubbles: true, cancelable: true }),
+                      );
+                      nativeLink.dispatchEvent(
+                        new MouseEvent('mousedown', { bubbles: true, cancelable: true }),
+                      );
+                      nativeLink.dispatchEvent(
+                        new MouseEvent('mouseup', { bubbles: true, cancelable: true }),
+                      );
                       nativeLink.click();
                       return;
                     }
@@ -179,23 +202,23 @@ export const FolderItem: React.FC<Props> = ({
                       window.dispatchEvent(
                         typeof PopStateEvent === 'function'
                           ? new PopStateEvent('popstate', { state: window.history.state })
-                          : new Event('popstate')
+                          : new Event('popstate'),
                       );
                     } catch {
                       window.location.href = `/chat/${id}`;
                     }
                   }}
                 >
-                  <MessageSquare className="w-3 h-3 opacity-60 flex-shrink-0" />
+                  <MessageSquare className="h-3 w-3 flex-shrink-0 opacity-60" />
                   <span className="truncate">{title}</span>
                 </a>
                 <button
                   type="button"
-                  className="opacity-0 group-hover/item:opacity-100 p-0.5 rounded text-zinc-500 hover:text-red-400 transition-opacity flex-shrink-0"
+                  className="flex-shrink-0 rounded p-0.5 text-zinc-500 opacity-0 transition-opacity group-hover/item:opacity-100 hover:text-red-400"
                   title="從此資料夾移除"
                   onClick={() => onRemoveConversation(id, folder.id)}
                 >
-                  <X className="w-3 h-3" />
+                  <X className="h-3 w-3" />
                 </button>
               </div>
             );

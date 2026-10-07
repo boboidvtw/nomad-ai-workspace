@@ -81,9 +81,18 @@ test('Bridge: Layout, Zoom and Window control endpoints', async () => {
   const bridge = new LocalSyncBridge({
     port: 19878,
     host: '127.0.0.1',
-    onSetLayout: (data) => { layoutSet = data; return { layout: data.layout }; },
-    onSetZoom: (data) => { zoomSet = data; return { zoom: data.factor }; },
-    onToggleWindow: (action) => { windowAction = action; return { action, visible: true }; },
+    onSetLayout: (data) => {
+      layoutSet = data;
+      return { layout: data.layout };
+    },
+    onSetZoom: (data) => {
+      zoomSet = data;
+      return { zoom: data.factor };
+    },
+    onToggleWindow: (action) => {
+      windowAction = action;
+      return { action, visible: true };
+    },
   });
 
   const { url } = await bridge.start();
@@ -127,7 +136,10 @@ test('Bridge: Orchestration endpoints (status, start, pause, resume, stop)', asy
   let startedWith = null;
   const mockOrch = {
     getStatus: () => ({ status: 'idle', round: 1 }),
-    start: async (opts) => { startedWith = opts; return { success: true, data: { started: true } }; },
+    start: async (opts) => {
+      startedWith = opts;
+      return { success: true, data: { started: true } };
+    },
     pause: () => ({ success: true, status: 'paused' }),
     resume: () => ({ success: true, status: 'running' }),
     stop: () => ({ success: true, status: 'stopped' }),
@@ -172,33 +184,40 @@ test('Bridge: Orchestration endpoints (status, start, pause, resume, stop)', asy
   }
 });
 
-
-test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () => {
-  const { SessionManager } = require("../session-manager");
+test('Bridge: Workspaces and Orchestration Export/Import endpoints', async () => {
+  const { SessionManager } = require('../session-manager');
   const mockStoreData = { workspaces: [] };
   const sessionManager = new SessionManager({
     store: {
       get: (k) => mockStoreData[k],
-      set: (k, v) => { mockStoreData[k] = v; return v; },
-    }
+      set: (k, v) => {
+        mockStoreData[k] = v;
+        return v;
+      },
+    },
   });
 
-  const ws = sessionManager.createWorkspace({
-    prompt: "設計全端分散式系統",
-    sequence: ["claude", "chatgpt"],
+  sessionManager.createWorkspace({
+    prompt: '設計全端分散式系統',
+    sequence: ['claude', 'chatgpt'],
   });
 
   const mockOrch = {
-    getStatus: () => ({ status: "completed", canonicalTitle: "1003 | 設計 | 全端分散式", mode: "relay", sequence: ["claude", "chatgpt"] }),
+    getStatus: () => ({
+      status: 'completed',
+      canonicalTitle: '1003 | 設計 | 全端分散式',
+      mode: 'relay',
+      sequence: ['claude', 'chatgpt'],
+    }),
     history: [
-      { type: "user-prompt", speaker: "user", content: "請架構系統" },
-      { type: "turn-complete", speaker: "claude", round: 1, content: "Claude 方案 v1" },
-    ]
+      { type: 'user-prompt', speaker: 'user', content: '請架構系統' },
+      { type: 'turn-complete', speaker: 'claude', round: 1, content: 'Claude 方案 v1' },
+    ],
   };
 
   const bridge = new LocalSyncBridge({
     port: 19880,
-    host: "127.0.0.1",
+    host: '127.0.0.1',
     sessionManager,
     orchestrator: mockOrch,
   });
@@ -218,13 +237,17 @@ test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () =>
     assert.strictEqual(mdRes.status, 200);
     const mdJson = await mdRes.json();
     assert.strictEqual(mdJson.success, true);
-    assert.ok(mdJson.data.markdown.includes("Claude 方案 v1"));
+    assert.ok(mdJson.data.markdown.includes('Claude 方案 v1'));
 
     // 3. Export to file
     const fileRes = await fetch(`${url}/api/export-to-file`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...AUTH },
-      body: JSON.stringify({ type: "markdown", content: mdJson.data.markdown, filename: "test_report" })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...AUTH },
+      body: JSON.stringify({
+        type: 'markdown',
+        content: mdJson.data.markdown,
+        filename: 'test_report',
+      }),
     });
     assert.strictEqual(fileRes.status, 200);
     const fileJson = await fileRes.json();
@@ -235,11 +258,13 @@ test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () =>
 
     // 4. Import workspaces
     const impRes = await fetch(`${url}/api/workspaces/import`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...AUTH },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...AUTH },
       body: JSON.stringify({
-        data: [{ id: "ws-import-test", title: "1003 | 功能 | 匯入測試", promptSnippet: "匯入測試" }]
-      })
+        data: [
+          { id: 'ws-import-test', title: '1003 | 功能 | 匯入測試', promptSnippet: '匯入測試' },
+        ],
+      }),
     });
     assert.strictEqual(impRes.status, 200);
     const impJson = await impRes.json();
@@ -247,17 +272,19 @@ test("Bridge: Workspaces and Orchestration Export/Import endpoints", async () =>
     assert.strictEqual(impJson.importedCount, 1);
 
     // 5. Search workspaces via GET & POST
-    const searchGetRes = await fetch(`${url}/api/workspaces/search?q=匯入測試&type=功能`, { headers: AUTH });
+    const searchGetRes = await fetch(`${url}/api/workspaces/search?q=匯入測試&type=功能`, {
+      headers: AUTH,
+    });
     assert.strictEqual(searchGetRes.status, 200);
     const searchGetJson = await searchGetRes.json();
     assert.strictEqual(searchGetJson.success, true);
     assert.strictEqual(searchGetJson.matchCount, 1);
-    assert.strictEqual(searchGetJson.results[0].workspaceId, "ws-import-test");
+    assert.strictEqual(searchGetJson.results[0].workspaceId, 'ws-import-test');
 
     const searchPostRes = await fetch(`${url}/api/workspaces/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...AUTH },
-      body: JSON.stringify({ query: "匯入測試", type: "all" })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...AUTH },
+      body: JSON.stringify({ query: '匯入測試', type: 'all' }),
     });
     assert.strictEqual(searchPostRes.status, 200);
     const searchPostJson = await searchPostRes.json();
@@ -302,14 +329,16 @@ test('Bridge: Rejects missing tokens and foreign origins', async () => {
     const noToken = await fetch(`${url}/api/status`);
     assert.strictEqual(noToken.status, 401);
 
-    const evil = await fetch(`${url}/api/status`, { headers: { ...AUTH, Origin: 'https://evil.example.com' } });
+    const evil = await fetch(`${url}/api/status`, {
+      headers: { ...AUTH, Origin: 'https://evil.example.com' },
+    });
     assert.strictEqual(evil.status, 403);
     assert.strictEqual(evil.headers.get('access-control-allow-origin'), null);
 
     const evalAttempt = await fetch(`${url}/api/debug/eval`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ platform: 'claude', script: 'document.cookie' })
+      body: JSON.stringify({ platform: 'claude', script: 'document.cookie' }),
     });
     assert.strictEqual(evalAttempt.status, 401);
 

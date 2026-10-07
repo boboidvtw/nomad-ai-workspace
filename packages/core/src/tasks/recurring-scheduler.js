@@ -3,13 +3,13 @@
  * Governed by AGENTS.md Section 6: Atomic Contract & Isolate Coding Protocol
  */
 
-const fs = require("node:fs");
-const path = require("node:path");
-const os = require("node:os");
-const { ok, err } = require("../result");
-const { ErrorCodes } = require("../error-codes");
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { ok, err } = require('../result');
+const { ErrorCodes } = require('../error-codes');
 
-const DEFAULT_SCHEDULES_PATH = path.join(os.homedir(), ".nomad", "recurring-tasks.json");
+const DEFAULT_SCHEDULES_PATH = path.join(os.homedir(), '.nomad', 'recurring-tasks.json');
 
 /**
  * Default preset recurring jobs
@@ -42,14 +42,14 @@ const DEFAULT_SCHEDULES_PATH = path.join(os.homedir(), ".nomad", "recurring-task
 /** @type {Schedule[]} */
 const DEFAULT_PRESET_SCHEDULES = [
   {
-    id: "schedule-sys-health",
-    name: "服務定時健康巡檢",
+    id: 'schedule-sys-health',
+    name: '服務定時健康巡檢',
     intervalMs: 300000, // 5 min
     taskTemplate: {
-      title: "Nomad 系統服務健康度常態巡檢",
-      description: "定時檢查 Docker、LM Studio、Bridge 及周邊 Microservices 端口與可用性",
-      priority: "low",
-      assignee: "agent-local",
+      title: 'Nomad 系統服務健康度常態巡檢',
+      description: '定時檢查 Docker、LM Studio、Bridge 及周邊 Microservices 端口與可用性',
+      priority: 'low',
+      assignee: 'agent-local',
       requireApproval: false,
     },
     enabled: true,
@@ -59,14 +59,14 @@ const DEFAULT_PRESET_SCHEDULES = [
     nextRunAt: new Date(Date.now() + 300000).toISOString(),
   },
   {
-    id: "schedule-drive-sync",
-    name: "工作區定時雲端同步備份",
+    id: 'schedule-drive-sync',
+    name: '工作區定時雲端同步備份',
     intervalMs: 1800000, // 30 min
     taskTemplate: {
-      title: "Universal Drive 工作區自動備份",
-      description: "導出最新會話工作區並同步備份至雲端硬碟資料夾",
-      priority: "medium",
-      assignee: "agent-claude",
+      title: 'Universal Drive 工作區自動備份',
+      description: '導出最新會話工作區並同步備份至雲端硬碟資料夾',
+      priority: 'medium',
+      assignee: 'agent-claude',
       requireApproval: false,
     },
     enabled: false,
@@ -74,7 +74,7 @@ const DEFAULT_PRESET_SCHEDULES = [
     runCount: 0,
     createdAt: new Date().toISOString(),
     nextRunAt: new Date(Date.now() + 1800000).toISOString(),
-  }
+  },
 ];
 
 class RecurringScheduler {
@@ -92,9 +92,10 @@ class RecurringScheduler {
     this.taskRunner = options.taskRunner || null;
     this.storagePath = options.storagePath || DEFAULT_SCHEDULES_PATH;
     this.autoPersist = options.autoPersist !== false;
-    this.onScheduleEvent = typeof options.onScheduleEvent === "function" ? options.onScheduleEvent : null;
+    this.onScheduleEvent =
+      typeof options.onScheduleEvent === 'function' ? options.onScheduleEvent : null;
     this.pollIntervalMs = options.pollIntervalMs || 5000;
-    
+
     /** @type {Map<string, Schedule>} */
     this.schedules = new Map();
     this.timer = null;
@@ -110,7 +111,10 @@ class RecurringScheduler {
       try {
         this.onScheduleEvent(eventType, data);
       } catch (e) {
-        console.warn("[RecurringScheduler] onScheduleEvent callback failed:", (e instanceof Error ? e.message : String(e)));
+        console.warn(
+          '[RecurringScheduler] onScheduleEvent callback failed:',
+          e instanceof Error ? e.message : String(e),
+        );
       }
     }
   }
@@ -129,11 +133,15 @@ class RecurringScheduler {
       }
       const data = JSON.stringify(Array.from(this.schedules.values()), null, 2);
       const tmpPath = `${customPath}.${Date.now()}.${Math.random().toString(36).substring(2, 6)}.tmp`;
-      fs.writeFileSync(tmpPath, data, "utf8");
+      fs.writeFileSync(tmpPath, data, 'utf8');
       fs.renameSync(tmpPath, customPath);
       return ok({ persisted: true, path: customPath, count: this.schedules.size });
     } catch (e) {
-      return err(ErrorCodes.TASK_STORAGE_SAVE_FAILED_008, `Failed to save recurring schedules: ${(e instanceof Error ? e.message : String(e))}`, { error: e });
+      return err(
+        ErrorCodes.TASK_STORAGE_SAVE_FAILED_008,
+        `Failed to save recurring schedules: ${e instanceof Error ? e.message : String(e)}`,
+        { error: e },
+      );
     }
   }
 
@@ -147,16 +155,24 @@ class RecurringScheduler {
       for (const s of DEFAULT_PRESET_SCHEDULES) {
         this.schedules.set(s.id, { ...s });
       }
-      return ok({ loaded: true, path: customPath, count: this.schedules.size, seededDefaults: true });
+      return ok({
+        loaded: true,
+        path: customPath,
+        count: this.schedules.size,
+        seededDefaults: true,
+      });
     }
     try {
-      const raw = fs.readFileSync(customPath, "utf8");
+      const raw = fs.readFileSync(customPath, 'utf8');
       if (!raw.trim()) {
         return ok({ loaded: true, count: 0 });
       }
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) {
-        return err(ErrorCodes.TASK_STORAGE_LOAD_FAILED_009, "Stored recurring schedules invalid: expected an array");
+        return err(
+          ErrorCodes.TASK_STORAGE_LOAD_FAILED_009,
+          'Stored recurring schedules invalid: expected an array',
+        );
       }
 
       this.schedules.clear();
@@ -168,7 +184,11 @@ class RecurringScheduler {
 
       return ok({ loaded: true, path: customPath, count: this.schedules.size });
     } catch (e) {
-      return err(ErrorCodes.TASK_STORAGE_LOAD_FAILED_009, `Failed to load recurring schedules: ${(e instanceof Error ? e.message : String(e))}`, { error: e });
+      return err(
+        ErrorCodes.TASK_STORAGE_LOAD_FAILED_009,
+        `Failed to load recurring schedules: ${e instanceof Error ? e.message : String(e)}`,
+        { error: e },
+      );
     }
   }
 
@@ -179,12 +199,18 @@ class RecurringScheduler {
    */
   addSchedule(config) {
     if (!config || !config.name || !config.taskTemplate || !config.taskTemplate.title) {
-      return err(ErrorCodes.TASK_SCHEDULE_INVALID_010, "Schedule name and taskTemplate.title are required");
+      return err(
+        ErrorCodes.TASK_SCHEDULE_INVALID_010,
+        'Schedule name and taskTemplate.title are required',
+      );
     }
 
     const intervalMs = Number(config.intervalMs) || 300000;
     if (intervalMs < 1000) {
-      return err(ErrorCodes.TASK_SCHEDULE_INVALID_010, "Schedule intervalMs must be at least 1000ms");
+      return err(
+        ErrorCodes.TASK_SCHEDULE_INVALID_010,
+        'Schedule intervalMs must be at least 1000ms',
+      );
     }
 
     const id = config.id || `schedule-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
@@ -198,9 +224,9 @@ class RecurringScheduler {
       cronExpr: config.cronExpr || null,
       taskTemplate: {
         title: config.taskTemplate.title.trim(),
-        description: config.taskTemplate.description || "",
-        priority: config.taskTemplate.priority || "medium",
-        assignee: config.taskTemplate.assignee || "agent-claude",
+        description: config.taskTemplate.description || '',
+        priority: config.taskTemplate.priority || 'medium',
+        assignee: config.taskTemplate.assignee || 'agent-claude',
         requireApproval: config.taskTemplate.requireApproval !== false,
         metadata: config.taskTemplate.metadata || {},
       },
@@ -216,7 +242,7 @@ class RecurringScheduler {
     if (this.autoPersist) {
       this.saveToDisk();
     }
-    this._notify("schedule:added", schedule);
+    this._notify('schedule:added', schedule);
     return ok(schedule);
   }
 
@@ -224,7 +250,7 @@ class RecurringScheduler {
    * Lists all schedules
    */
   listSchedules() {
-    return Array.from(this.schedules.values()).map(s => ({ ...s }));
+    return Array.from(this.schedules.values()).map((s) => ({ ...s }));
   }
 
   /**
@@ -248,7 +274,7 @@ class RecurringScheduler {
     if (this.autoPersist) {
       this.saveToDisk();
     }
-    this._notify("schedule:removed", removed);
+    this._notify('schedule:removed', removed);
     return ok(true);
   }
 
@@ -263,14 +289,14 @@ class RecurringScheduler {
       return err(ErrorCodes.TASK_SCHEDULE_NOT_FOUND_011, `Schedule "${id}" not found`);
     }
 
-    schedule.enabled = typeof enabled === "boolean" ? enabled : !schedule.enabled;
+    schedule.enabled = typeof enabled === 'boolean' ? enabled : !schedule.enabled;
     if (schedule.enabled) {
       schedule.nextRunAt = new Date(Date.now() + schedule.intervalMs).toISOString();
     }
     if (this.autoPersist) {
       this.saveToDisk();
     }
-    this._notify("schedule:updated", schedule);
+    this._notify('schedule:updated', schedule);
     return ok(schedule);
   }
 
@@ -285,16 +311,19 @@ class RecurringScheduler {
     }
 
     if (!this.dispatcher) {
-      return err(ErrorCodes.TASK_EXECUTION_FAILED_007, "TaskDispatcher is not attached to scheduler");
+      return err(
+        ErrorCodes.TASK_EXECUTION_FAILED_007,
+        'TaskDispatcher is not attached to scheduler',
+      );
     }
 
     const taskResult = this.dispatcher.createTask({
       ...schedule.taskTemplate,
       metadata: {
-        ...(schedule.taskTemplate.metadata || {}),
+        ...schedule.taskTemplate.metadata,
         triggeredByScheduleId: schedule.id,
         scheduledName: schedule.name,
-      }
+      },
     });
 
     if (!taskResult.success) {
@@ -313,25 +342,31 @@ class RecurringScheduler {
     let runExecution = null;
     if (schedule.autoRun && this.taskRunner) {
       try {
-        const runRes = await this.taskRunner.dispatchAndRun(createdTask.id, schedule.taskTemplate.assignee || 'agent-claude');
+        const runRes = await this.taskRunner.dispatchAndRun(
+          createdTask.id,
+          schedule.taskTemplate.assignee || 'agent-claude',
+        );
         if (runRes.success) {
           runExecution = runRes.data;
         }
       } catch (e) {
-        console.warn(`[RecurringScheduler] Auto-run failed for task "${createdTask.id}":`, (e instanceof Error ? e.message : String(e)));
+        console.warn(
+          `[RecurringScheduler] Auto-run failed for task "${createdTask.id}":`,
+          e instanceof Error ? e.message : String(e),
+        );
       }
     }
 
-    this._notify("schedule:triggered", {
+    this._notify('schedule:triggered', {
       schedule,
       task: createdTask,
-      execution: runExecution
+      execution: runExecution,
     });
 
     return ok({
       schedule,
       task: createdTask,
-      execution: runExecution
+      execution: runExecution,
     });
   }
 
@@ -349,7 +384,10 @@ class RecurringScheduler {
           try {
             await this.triggerSchedule(schedule.id);
           } catch (e) {
-            console.warn(`[RecurringScheduler] Trigger error for schedule "${schedule.id}":`, (e instanceof Error ? e.message : String(e)));
+            console.warn(
+              `[RecurringScheduler] Trigger error for schedule "${schedule.id}":`,
+              e instanceof Error ? e.message : String(e),
+            );
           }
         }
       }
@@ -374,5 +412,5 @@ class RecurringScheduler {
 module.exports = {
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
-  DEFAULT_SCHEDULES_PATH
+  DEFAULT_SCHEDULES_PATH,
 };

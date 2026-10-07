@@ -20,4 +20,3 @@ export type ExportExtractionResult = {
   messages: ExportMessage[];
   failedMessages: number;
 };
-

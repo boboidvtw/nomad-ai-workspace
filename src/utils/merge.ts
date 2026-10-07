@@ -433,7 +433,6 @@ export function mergeTimelineHierarchy(
   return { conversations };
 }
 
-
 export type FlatSyncFolder = {
   id: string;
   name: string;
@@ -458,7 +457,7 @@ export function mergeFlatFolders<T extends FlatSyncFolder>(local: T[], cloud: T[
     if (!existing) {
       result.push({
         ...cloudFolder,
-        name: cloudFolder.name || "未命名資料夾",
+        name: cloudFolder.name || '未命名資料夾',
         conversationIds: Array.isArray(cloudFolder.conversationIds)
           ? [...cloudFolder.conversationIds]
           : [],

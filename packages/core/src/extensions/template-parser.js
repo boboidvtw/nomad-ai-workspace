@@ -15,7 +15,7 @@ const VARIABLE_REGEX = /\{\{\s*([a-zA-Z0-9_\u4e00-\u9fa5]+)(?:\s*:\s*([^}]*))?\s
 
 /**
  * Extracts all unique variable names and defaults from a prompt template.
- * @param {string} template 
+ * @param {string} template
  * @returns {import('../result').UnitResult<TemplateVariable[]>}
  */
 function extractVariables(template) {
@@ -42,8 +42,8 @@ function extractVariables(template) {
 
 /**
  * Interpolates values into the template safely.
- * @param {string} template 
- * @param {Record<string, string>} values 
+ * @param {string} template
+ * @param {Record<string, string>} values
  * @returns {import('../result').UnitResult<{ rendered: string, unreplaced: string[] }>}
  */
 function interpolate(template, values = {}) {
@@ -53,22 +53,29 @@ function interpolate(template, values = {}) {
 
   /** @type {string[]} */
   const unreplaced = [];
-  const rendered = template.replace(new RegExp(VARIABLE_REGEX.source, 'g'), (fullMatch, varName, defaultVal) => {
-    const key = varName.trim();
-    if (Object.prototype.hasOwnProperty.call(values, key) && values[key] !== undefined && values[key] !== '') {
-      return String(values[key]);
-    }
-    if (defaultVal !== undefined && defaultVal !== '') {
-      return defaultVal.trim();
-    }
-    unreplaced.push(key);
-    return fullMatch;
-  });
+  const rendered = template.replace(
+    new RegExp(VARIABLE_REGEX.source, 'g'),
+    (fullMatch, varName, defaultVal) => {
+      const key = varName.trim();
+      if (
+        Object.prototype.hasOwnProperty.call(values, key) &&
+        values[key] !== undefined &&
+        values[key] !== ''
+      ) {
+        return String(values[key]);
+      }
+      if (defaultVal !== undefined && defaultVal !== '') {
+        return defaultVal.trim();
+      }
+      unreplaced.push(key);
+      return fullMatch;
+    },
+  );
 
   return ok({ rendered, unreplaced });
 }
 
 module.exports = {
   extractVariables,
-  interpolate
+  interpolate,
 };

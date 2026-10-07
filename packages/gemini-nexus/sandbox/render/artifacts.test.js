@@ -328,7 +328,7 @@ describe('Live Artifact previews', () => {
     });
 
     it('can use an injected Graphviz loader for the default renderer', async () => {
-        const renderSVGElement = vi.fn((source) => {
+        const renderSVGElement = vi.fn((_source) => {
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.innerHTML = '<text>Loaded</text>';
             return svg;

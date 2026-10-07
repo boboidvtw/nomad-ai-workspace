@@ -8,7 +8,8 @@ test('KnowledgeBase: chunks document and retrieves context for prompt', () => {
   const doc = {
     id: 'nomad-architecture-doc',
     title: 'Nomad 架構規格書',
-    content: 'Nomad 採用 Monorepo 組織體系。包含核心庫 Core、背景 Daemon 守護進程、本機決策儀表板 Dashboard 與 Nomad AI Studio 桌面工作站。系統支援六分欄與圓桌協作機制。'
+    content:
+      'Nomad 採用 Monorepo 組織體系。包含核心庫 Core、背景 Daemon 守護進程、本機決策儀表板 Dashboard 與 Nomad AI Studio 桌面工作站。系統支援六分欄與圓桌協作機制。',
   };
 
   const addRes = kb.addDocument(doc);

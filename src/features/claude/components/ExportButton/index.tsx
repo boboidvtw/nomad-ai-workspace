@@ -4,14 +4,15 @@
  * Created: 2026-03-10
  */
 
-import { createRoot } from 'react-dom/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, FileText, X } from 'lucide-react';
+import { createRoot } from 'react-dom/client';
 import { useTranslation } from 'react-i18next';
-import { useExport } from '../../hooks/useExport';
-import type { ExportFormat } from '../../services/exportFormatters';
-import { EXPORT_SELECTORS } from '../../services/exportExtractors';
+
 import { EXPORT_BUTTON_ROOT_ID, EXPORT_BUTTON_ROOT_SELECTOR } from '@src/constants/selectors';
+import { Download, FileText, X } from 'lucide-react';
+
+import { useExport } from '../../hooks/useExport';
+import { EXPORT_SELECTORS } from '../../services/exportExtractors';
 
 const INIT_FLAG = '__claudeNexusExportInit__';
 const HISTORY_PATCH_FLAG = '__claudeNexusHistoryPatch__';
@@ -38,7 +39,7 @@ const ExportPopover = ({ open, onClose }: ExportPopoverProps) => {
   if (!open) return null;
 
   return (
-    <div className="absolute right-0 top-full z-50 mt-2 w-[16rem] rounded-xl border border-[#e5e0d8] bg-white p-3 text-[#374151] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+    <div className="absolute top-full right-0 z-50 mt-2 w-[16rem] rounded-xl border border-[#e5e0d8] bg-white p-3 text-[#374151] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
       <div className="mb-2 flex items-center justify-between">
         <div className="text-[12px] font-medium">{t('export.title')}</div>
         <button
@@ -88,7 +89,9 @@ const ExportPopover = ({ open, onClose }: ExportPopoverProps) => {
       </button>
 
       {statusText ? <div className="mt-2 text-[12px] text-[#6b7280]">{statusText}</div> : null}
-      {status === 'error' && error ? <div className="mt-1 text-[12px] text-red-600">{error}</div> : null}
+      {status === 'error' && error ? (
+        <div className="mt-1 text-[12px] text-red-600">{error}</div>
+      ) : null}
     </div>
   );
 };
@@ -118,7 +121,7 @@ const ExportButton = () => {
     <div ref={wrapperRef} className="relative">
       <button
         type="button"
-        className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-lg border border-[#d9d2c6] bg-[#f6f2ea] px-3 text-[12px] font-medium text-[#374151] hover:bg-[#efe9de] active:scale-[0.98]"
+        className="inline-flex h-8 items-center gap-2 rounded-lg border border-[#d9d2c6] bg-[#f6f2ea] px-3 text-[12px] font-medium whitespace-nowrap text-[#374151] hover:bg-[#efe9de] active:scale-[0.98]"
         aria-label={t('export.buttonAria')}
         onClick={() => setOpen((v) => !v)}
       >

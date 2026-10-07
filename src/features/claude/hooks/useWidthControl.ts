@@ -5,7 +5,9 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { readStoredChatWidth, writeStoredChatWidth } from '@src/services/storage';
+
 import { hasValidExtensionContext } from '@/core/utils/extensionContext';
 
 type WidthControlApi = {
@@ -78,7 +80,11 @@ export const useWidthControl = (): WidthControlApi => {
   useEffect(() => {
     void (async () => {
       const stored = await readStoredChatWidth();
-      const initial = clamp(stored ?? DEFAULT_CHAT_WIDTH_REM, MIN_CHAT_WIDTH_REM, MAX_CHAT_WIDTH_REM);
+      const initial = clamp(
+        stored ?? DEFAULT_CHAT_WIDTH_REM,
+        MIN_CHAT_WIDTH_REM,
+        MAX_CHAT_WIDTH_REM,
+      );
       setChatWidthState(initial);
       chatWidthRef.current = initial;
       refresh();
@@ -98,14 +104,17 @@ export const useWidthControl = (): WidthControlApi => {
     return () => window.clearInterval(timer);
   }, [refresh]);
 
-  const setChatWidth = useCallback((widthRem: number) => {
-    const next = clamp(widthRem, MIN_CHAT_WIDTH_REM, MAX_CHAT_WIDTH_REM);
-    setChatWidthState(next);
-    chatWidthRef.current = next;
-    refresh();
-    // Persist for future sessions.
-    void writeStoredChatWidth(next);
-  }, [refresh]);
+  const setChatWidth = useCallback(
+    (widthRem: number) => {
+      const next = clamp(widthRem, MIN_CHAT_WIDTH_REM, MAX_CHAT_WIDTH_REM);
+      setChatWidthState(next);
+      chatWidthRef.current = next;
+      refresh();
+      // Persist for future sessions.
+      void writeStoredChatWidth(next);
+    },
+    [refresh],
+  );
 
   return { chatWidth, setChatWidth };
 };

@@ -33,7 +33,7 @@
     }
 
     globalThis.GeminiNexusWatermarkRemover = {
-        ...(globalThis.GeminiNexusWatermarkRemover || {}),
+        ...globalThis.GeminiNexusWatermarkRemover,
         process: removeWatermark,
         processBlob: removeWatermarkFromBlob,
     };

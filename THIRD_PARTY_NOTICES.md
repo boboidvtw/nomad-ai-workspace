@@ -5,6 +5,7 @@ Nomad AI Workspace incorporates and adapts open-source components under their re
 ---
 
 ## 1. Voyager (voyager-crew/voyager)
+
 - **Author**: Jesse Zhang and contributors
 - **Repository**: https://github.com/voyager-crew/voyager
 - **License**: GNU General Public License v3.0 (GPL-3.0)
@@ -13,6 +14,7 @@ Nomad AI Workspace incorporates and adapts open-source components under their re
 ---
 
 ## 2. Claude Nexus (Qiuner/claude-nexus)
+
 - **Author**: Qiuner and contributors
 - **Repository**: https://github.com/Qiuner/claude-nexus
 - **License**: MIT License
@@ -21,6 +23,7 @@ Nomad AI Workspace incorporates and adapts open-source components under their re
 ---
 
 ## 3. Libraries & Dependencies
+
 - **React**: MIT License (Meta Platforms, Inc.)
 - **Lucide Icons**: ISC License (Lucide Contributors)
 - **Tailwind CSS**: MIT License (Tailwind Labs, Inc.)

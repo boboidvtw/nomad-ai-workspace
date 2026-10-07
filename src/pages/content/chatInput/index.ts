@@ -134,7 +134,9 @@ function insertTextIntoContentEditable(input: HTMLElement, text: string): boolea
   }
 
   try {
-    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+    input.dispatchEvent(
+      new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }),
+    );
   } catch {
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }
@@ -157,7 +159,9 @@ function insertTextIntoTextarea(input: HTMLTextAreaElement, text: string): boole
   }
 
   try {
-    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+    input.dispatchEvent(
+      new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }),
+    );
   } catch {
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }
