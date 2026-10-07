@@ -114,8 +114,9 @@ test('Orchestrator: Pause, resume and stop controls', async () => {
   assert.strictEqual(orch.status, 'stopped');
 });
 
-test("Orchestrator: Settles via adaptive inactivity even if isStreaming remains true", async () => {
-  const longText = "This is a detailed mock AI response containing more than forty characters for testing adaptive settlement.";
+test('Orchestrator: Settles via adaptive inactivity even if isStreaming remains true', async () => {
+  const longText =
+    'This is a detailed mock AI response containing more than forty characters for testing adaptive settlement.';
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
     pollIntervalMs: 5,
@@ -125,17 +126,17 @@ test("Orchestrator: Settles via adaptive inactivity even if isStreaming remains 
   });
 
   const startTime = Date.now();
-  const text = await orch.waitForSettledResponse("chatgpt", 1000, 5);
+  const text = await orch.waitForSettledResponse('chatgpt', 1000, 5);
   const elapsed = Date.now() - startTime;
 
   assert.strictEqual(text, longText);
   // Should settle in ~5 polls * 5ms = ~25-50ms, much faster than 1000ms maxWaitMs
-  assert.ok(elapsed < 400, "Should settle via adaptive inactivity before maxWaitMs");
+  assert.ok(elapsed < 400, 'Should settle via adaptive inactivity before maxWaitMs');
 });
 
-test("Orchestrator: Retains monotonic baseline text if subsequent extract poll glitches", async () => {
+test('Orchestrator: Retains monotonic baseline text if subsequent extract poll glitches', async () => {
   let callCount = 0;
-  const goodText = "Valid captured text before temporary glitch occurred.";
+  const goodText = 'Valid captured text before temporary glitch occurred.';
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
     pollIntervalMs: 5,
@@ -143,11 +144,33 @@ test("Orchestrator: Retains monotonic baseline text if subsequent extract poll g
     extractResponse: async () => {
       callCount++;
       if (callCount === 1) return { ok: true, text: goodText };
-      return { ok: false, error: "Network glitch" }; // Returns empty text on subsequent polls
+      return { ok: false, error: 'Network glitch' }; // Returns empty text on subsequent polls
     },
     checkStreaming: async () => ({ ok: true, isStreaming: false }),
   });
 
-  const text = await orch.waitForSettledResponse("gemini", 50, 5);
+  const text = await orch.waitForSettledResponse('gemini', 50, 5);
   assert.strictEqual(text, goodText);
+});
+
+test('Orchestrator: Falls back to the default turn delay for non-numeric input', async () => {
+  const orch = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    injectPrompt: async () => ({ ok: true }),
+    extractResponse: async () => ({ ok: true, text: 'x' }),
+    checkStreaming: async () => ({ ok: true, isStreaming: false }),
+  });
+
+  // IPC payloads are untyped; a bad value must not collapse the delay to NaN (= no delay).
+  await orch.start({ prompt: 'Goal', sequence: ['claude', 'chatgpt'], turnDelayMs: 'abc' });
+  assert.strictEqual(orch.turnDelayMs, 2500);
+  orch.stop();
+
+  const orch2 = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    injectPrompt: async () => ({ ok: true }),
+  });
+  await orch2.start({ prompt: 'Goal', sequence: ['claude', 'chatgpt'], turnDelayMs: -10 });
+  assert.strictEqual(orch2.turnDelayMs, 0);
+  orch2.stop();
 });
