@@ -43,59 +43,15 @@ import {
   mergeStarredMessages,
   mergeTimelineHierarchy,
 } from '../../../utils/merge';
-
-function isFolderData(value: unknown): value is FolderData {
-  if (typeof value !== 'object' || value === null) return false;
-  const data = value as { folders?: unknown; folderContents?: unknown };
-  return (
-    Array.isArray(data.folders) &&
-    typeof data.folderContents === 'object' &&
-    data.folderContents !== null
-  );
-}
-
-function parseStoredFolderData(value: unknown): FolderData | null {
-  if (isFolderData(value)) return value;
-  if (typeof value !== 'string') return null;
-
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return isFolderData(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function isPromptItemArray(value: unknown): value is PromptItem[] {
-  return (
-    Array.isArray(value) &&
-    value.every((item) => {
-      if (typeof item !== 'object' || item === null) return false;
-      const prompt = item as Record<string, unknown>;
-      return (
-        typeof prompt.id === 'string' &&
-        typeof prompt.text === 'string' &&
-        Array.isArray(prompt.tags) &&
-        prompt.tags.every((tag) => typeof tag === 'string') &&
-        typeof prompt.createdAt === 'number'
-      );
-    })
-  );
-}
-
-function isStarredMessagesData(value: unknown): value is StarredMessagesData {
-  if (typeof value !== 'object' || value === null) return false;
-  if (!('messages' in value)) return false;
-  const messages = (value as { messages: unknown }).messages;
-  return typeof messages === 'object' && messages !== null;
-}
-
-function isTimelineHierarchyData(value: unknown): value is TimelineHierarchyData {
-  if (typeof value !== 'object' || value === null) return false;
-  if (!('conversations' in value)) return false;
-  const conversations = (value as { conversations: unknown }).conversations;
-  return typeof conversations === 'object' && conversations !== null;
-}
+import { MultiPlatformSyncDashboard } from './MultiPlatformSyncDashboard';
+import { SyncPlatformSummary } from './SyncPlatformSummary';
+import {
+  isFolderData,
+  isPromptItemArray,
+  isStarredMessagesData,
+  isTimelineHierarchyData,
+  parseStoredFolderData,
+} from './cloudSyncDataGuards';
 
 type DownloadMode = 'merge' | 'overwrite';
 
@@ -106,12 +62,6 @@ type DownloadMode = 'merge' | 'overwrite';
 interface CloudSyncSettingsProps {
   sourceTabId?: number;
 }
-
-const PLATFORM_LOGO_URLS: Record<SyncPlatform, string> = {
-  gemini: 'https://www.gstatic.com/lamda/images/gemini_sparkle_4g_512_lt_f94943af3be039176192d.png',
-  aistudio:
-    'https://www.gstatic.com/images/branding/productlogos/ai_studio/v1/web-512dp/logo_ai_studio_color_1x_web_512dp.png',
-};
 
 export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) {
   const { t } = useLanguage();
@@ -1034,76 +984,11 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
               </span>
             </Button>
 
-            {/* Multi-AI Cloud Sync Status Overview Dashboard */}
-            <div
-              data-testid="sync-multi-platform-dashboard"
-              className="border-border/60 bg-muted/20 space-y-2 rounded-xl border p-2.5"
-            >
-              <div className="flex items-center justify-between px-0.5">
-                <span className="text-foreground/80 text-[11px] font-semibold tracking-wide uppercase">
-                  {(t as (k: string) => string)('multiPlatformSyncOverview') ||
-                    '多平台雲端同步狀態 (Multi-AI Status)'}
-                </span>
-                <span className="text-muted-foreground flex items-center gap-1 text-[10px]">
-                  <span className="inline-block size-1.5 animate-pulse rounded-full bg-emerald-500" />
-                  Google Drive
-                </span>
-              </div>
-
-              <div className="grid grid-cols-4 gap-1.5">
-                {/* Gemini */}
-                <div className="border-border/50 bg-background/50 rounded-lg border p-2 text-center shadow-xs">
-                  <div className="text-foreground truncate text-[11px] font-medium">Gemini</div>
-                  <div className="text-muted-foreground mt-1 flex flex-col gap-0.5 text-[10px]">
-                    <span title={formatLastUpload(syncState.lastUploadTime)}>
-                      ↑ {formatLastUpload(syncState.lastUploadTime)}
-                    </span>
-                    <span title={formatLastSync(syncState.lastSyncTime)}>
-                      ↓ {formatLastSync(syncState.lastSyncTime)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Claude */}
-                <div className="border-border/50 bg-background/50 rounded-lg border p-2 text-center shadow-xs">
-                  <div className="text-foreground truncate text-[11px] font-medium">Claude</div>
-                  <div className="text-muted-foreground mt-1 flex flex-col gap-0.5 text-[10px]">
-                    <span title={formatLastUpload(syncState.lastUploadTimeClaude ?? null)}>
-                      ↑ {formatLastUpload(syncState.lastUploadTimeClaude ?? null)}
-                    </span>
-                    <span title={formatLastSync(syncState.lastSyncTimeClaude ?? null)}>
-                      ↓ {formatLastSync(syncState.lastSyncTimeClaude ?? null)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* ChatGPT */}
-                <div className="border-border/50 bg-background/50 rounded-lg border p-2 text-center shadow-xs">
-                  <div className="text-foreground truncate text-[11px] font-medium">ChatGPT</div>
-                  <div className="text-muted-foreground mt-1 flex flex-col gap-0.5 text-[10px]">
-                    <span title={formatLastUpload(syncState.lastUploadTimeChatGPT ?? null)}>
-                      ↑ {formatLastUpload(syncState.lastUploadTimeChatGPT ?? null)}
-                    </span>
-                    <span title={formatLastSync(syncState.lastSyncTimeChatGPT ?? null)}>
-                      ↓ {formatLastSync(syncState.lastSyncTimeChatGPT ?? null)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Grok */}
-                <div className="border-border/50 bg-background/50 rounded-lg border p-2 text-center shadow-xs">
-                  <div className="text-foreground truncate text-[11px] font-medium">Grok</div>
-                  <div className="text-muted-foreground mt-1 flex flex-col gap-0.5 text-[10px]">
-                    <span title={formatLastUpload(syncState.lastUploadTimeGrok ?? null)}>
-                      ↑ {formatLastUpload(syncState.lastUploadTimeGrok ?? null)}
-                    </span>
-                    <span title={formatLastSync(syncState.lastSyncTimeGrok ?? null)}>
-                      ↓ {formatLastSync(syncState.lastSyncTimeGrok ?? null)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <MultiPlatformSyncDashboard
+              syncState={syncState}
+              formatLastUpload={formatLastUpload}
+              formatLastSync={formatLastSync}
+            />
 
             {/* Upload/Download Buttons */}
             <div className="grid gap-2">
@@ -1235,65 +1120,19 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
               </div>
             </div>
 
-            {/* Platform context & sync times */}
-            <div
-              data-testid="sync-platform-summary"
-              className="border-border/60 bg-muted/25 relative isolate overflow-hidden rounded-xl border px-3 py-2.5"
-            >
-              <div className="relative z-10 min-w-0 pe-14">
-                <p className="text-foreground/75 mb-1.5 flex min-w-0 items-center gap-1.5 text-xs font-semibold">
-                  <span
-                    aria-hidden="true"
-                    className="bg-primary/70 size-1.5 shrink-0 rounded-full"
-                  />
-                  <span className="sr-only">{t('currentPlatform')}: </span>
-                  <span className="min-w-0 break-words">
-                    {t(platform === 'aistudio' ? 'platformAIStudio' : 'platformGemini')}
-                  </span>
-                </p>
-
-                <div className="text-muted-foreground grid min-w-0 gap-1 text-xs leading-snug">
-                  <p className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-1.5">
-                    <span aria-hidden="true" className="text-foreground/45">
-                      ↑
-                    </span>
-                    <span className="min-w-0 break-words">
-                      {formatLastUpload(
-                        platform === 'aistudio'
-                          ? syncState.lastUploadTimeAIStudio
-                          : syncState.lastUploadTime,
-                      )}
-                    </span>
-                  </p>
-                  <p className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-1.5">
-                    <span aria-hidden="true" className="text-foreground/45">
-                      ↓
-                    </span>
-                    <span className="min-w-0 break-words">
-                      {formatLastSync(
-                        platform === 'aistudio'
-                          ? syncState.lastSyncTimeAIStudio
-                          : syncState.lastSyncTime,
-                      )}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <div
-                aria-hidden="true"
-                data-testid="sync-platform-mark"
-                className="pointer-events-none absolute inset-y-0 end-0 flex w-20 items-center justify-center overflow-hidden"
-              >
-                <div className="bg-primary/10 absolute inset-3 rounded-full blur-xl" />
-                <img
-                  src={PLATFORM_LOGO_URLS[platform]}
-                  alt=""
-                  draggable={false}
-                  className="size-16 object-contain opacity-[0.13] saturate-75 select-none dark:opacity-[0.2] dark:saturate-100"
-                />
-              </div>
-            </div>
+            <SyncPlatformSummary
+              platform={platform}
+              lastUploadTime={
+                platform === 'aistudio'
+                  ? syncState.lastUploadTimeAIStudio
+                  : syncState.lastUploadTime
+              }
+              lastSyncTime={
+                platform === 'aistudio' ? syncState.lastSyncTimeAIStudio : syncState.lastSyncTime
+              }
+              formatLastUpload={formatLastUpload}
+              formatLastSync={formatLastSync}
+            />
 
             {/* Sign Out Button - Only show if authenticated */}
             {syncState.provider === 'googleDrive' && syncState.isAuthenticated && (
