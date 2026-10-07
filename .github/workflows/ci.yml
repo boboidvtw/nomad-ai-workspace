@@ -33,6 +33,46 @@ jobs:
       - name: Run Monorepo Test Suite
         run: npm run test:monorepo
 
+  extension:
+    name: Extension Tests & Quality Gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Format Check (oxfmt)
+        run: npm run format:check
+
+      - name: Lint (oxlint)
+        run: npm run lint:check
+
+      - name: Locale Keys Consistent
+        run: npm run i18n:check
+
+      - name: Regression Notes Valid
+        run: npm run regressions:check
+
+      - name: File-Size Ratchet
+        run: npm run filesize:check
+
+      - name: Plugin Catalog Check
+        run: npm run plugin:check
+
+      - name: Extension Unit Tests (vitest)
+        run: npm test
+
+      - name: gemini-nexus Unit Tests
+        run: npm test --workspace packages/gemini-nexus
+
   typecheck:
     name: TypeScript Static Typecheck
     runs-on: ubuntu-latest
