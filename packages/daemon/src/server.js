@@ -370,9 +370,9 @@ class NomadDaemonServer {
         return this.sendJson(res, 200, ok(this.pipelineManager.getStats()));
       }
 
+      // Drive sync folder is auto-detected only, never taken from the request.
       if (pathname === '/api/sync/drive/status' && req.method === 'GET') {
-        const dir = url.searchParams.get('dir');
-        const resStatus = getSyncStatus(dir ? { targetDir: dir } : {});
+        const resStatus = getSyncStatus();
         return this.sendJson(res, resStatus.success ? 200 : 400, resStatus);
       }
 
@@ -381,7 +381,7 @@ class NomadDaemonServer {
           return this.proxyToStudio(req, res, this.activeStudio.bridgePort);
         }
         const body = await this.readJsonBody(req);
-        const pushRes = exportToDrive(body);
+        const pushRes = exportToDrive({ workspaces: body.workspaces, settings: body.settings });
         return this.sendJson(res, pushRes.success ? 200 : 400, pushRes);
       }
 
@@ -390,7 +390,7 @@ class NomadDaemonServer {
           return this.proxyToStudio(req, res, this.activeStudio.bridgePort);
         }
         const body = await this.readJsonBody(req);
-        const pullRes = importFromDrive(body);
+        const pullRes = importFromDrive({ currentWorkspaces: body.currentWorkspaces, strategy: body.strategy });
         return this.sendJson(res, pullRes.success ? 200 : 400, pullRes);
       }
 
