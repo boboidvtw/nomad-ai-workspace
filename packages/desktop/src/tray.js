@@ -10,8 +10,8 @@ class TrayAndShortcutManager {
   /**
    * @param {Object} options
    * @param {import('electron').BrowserWindow} options.mainWindow
-   * @param {Object} options.store - Settings store
-   * @param {Object} [options.bridge] - Local Sync Bridge instance
+   * @param {import('./store').SettingsStore} options.store - Settings store
+   * @param {import('./bridge').LocalSyncBridge | null} [options.bridge] - Local Sync Bridge instance
    * @param {Function} [options.onLayoutChange] - Callback for layout changes from tray
    * @param {Function} [options.onZoomChange] - Callback for zoom changes from tray
    * @param {Function} [options.onToggleDrawer] - Callback for toggling drawer
@@ -185,6 +185,7 @@ class TrayAndShortcutManager {
       toggleHUD: shortcuts.toggleHUD
     };
 
+    /** @type {Record<string, () => void>} */
     const handlers = {
       toggleWindow: () => this.toggleWindow(),
       toggleFocus: () => this.onLayoutChange('focus'),
@@ -212,6 +213,9 @@ class TrayAndShortcutManager {
   }
 
   // Compatibility method
+  /**
+   * @param {string} [customShortcut]
+   */
   registerGlobalShortcut(customShortcut) {
     this.registerAllShortcuts(customShortcut ? { toggleWindow: customShortcut } : undefined);
   }

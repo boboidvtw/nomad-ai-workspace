@@ -5,6 +5,18 @@ const { createSemanticTitle } = require("./session-manager");
  * Governed by AGENTS.md Atomic Contract & Result Pattern.
  */
 
+/** @typedef {(from: string, to: string, text: string, title?: string | null) => string} TurnTemplate */
+
+/**
+ * @typedef {Object} OrchestrationTurn
+ * @property {string} timestamp
+ * @property {string} speaker
+ * @property {string} type
+ * @property {string} content
+ * @property {number} round
+ */
+
+/** @type {Record<string, TurnTemplate>} */
 const DEFAULT_TEMPLATES = {
   relay: (from, to, text, title) => 
 `${title ? `【協作專案主題】：${title}\n` : ""}【來自 ${from.toUpperCase()} 的階段性輸出與任務交接】：
@@ -58,11 +70,14 @@ class MultiAiOrchestrator {
     this.sequence = ["claude", "chatgpt"];
     this.maxRounds = 2;
     this.turnDelayMs = 2500;
+    /** @type {TurnTemplate | null} */
     this.customTemplate = null;
+    /** @type {string | null} */
     this.canonicalTitle = null;
 
     this.currentRound = 0;
     this.currentSpeakerIndex = 0;
+    /** @type {OrchestrationTurn[]} */
     this.history = [];
     this.isAborted = false;
     this.isPaused = false;
@@ -82,6 +97,16 @@ class MultiAiOrchestrator {
     };
   }
 
+  /**
+   * @param {Object} params
+   * @param {string} params.prompt
+   * @param {string[]} [params.sequence]
+   * @param {string} [params.mode='relay']
+   * @param {number} [params.maxRounds=2]
+   * @param {number} [params.turnDelayMs=2500]
+   * @param {TurnTemplate | null} [params.customTemplate]
+   * @param {string | null} [params.canonicalTitle]
+   */
   async start({
     prompt,
     sequence = ["claude", "chatgpt"],
@@ -183,6 +208,10 @@ class MultiAiOrchestrator {
     return { success: true, status: "stopped" };
   }
 
+  /**
+   * @param {string} type
+   * @param {Record<string, unknown>} data
+   */
   emitStep(type, data) {
     const payload = {
       type,
@@ -201,6 +230,9 @@ class MultiAiOrchestrator {
     }
   }
 
+  /**
+   * @param {string} initialPrompt
+   */
   async runLoop(initialPrompt) {
     let currentInput = this.canonicalTitle ? `【協作專案主題】：${this.canonicalTitle}\n----------------------------------------\n${initialPrompt}` : initialPrompt;
 
@@ -283,6 +315,11 @@ class MultiAiOrchestrator {
     }
   }
 
+  /**
+   * @param {string} platform
+   * @param {number} [maxWaitMs]
+   * @param {number} [pollIntervalMs]
+   */
   async waitForSettledResponse(platform, maxWaitMs = this.maxWaitMs, pollIntervalMs = this.pollIntervalMs) {
     const startTime = Date.now();
     let lastLength = -1;
@@ -363,6 +400,10 @@ class MultiAiOrchestrator {
     return baselineText || `[${platform} 回應擷取超時或已結束]`;
   }
 
+  /**
+   * @param {number} ms
+   * @returns {Promise<void>}
+   */
   sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }

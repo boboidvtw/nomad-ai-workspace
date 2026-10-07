@@ -45,6 +45,10 @@ function getTaiwanMMDD() {
 /**
  * Infer semantic type from prompt text
  */
+/**
+ * @param {string | undefined} promptText
+ * @returns {string}
+ */
 function inferType(promptText) {
   const lower = (promptText || "").toLowerCase();
   for (const item of TYPE_KEYWORDS) {
@@ -57,6 +61,10 @@ function inferType(promptText) {
 
 /**
  * Extract concise topic (4-15 Chinese chars)
+ */
+/**
+ * @param {string | undefined} promptText
+ * @returns {string}
  */
 function extractTopic(promptText) {
   if (!promptText) return "多AI協作任務";
@@ -86,6 +94,9 @@ function extractTopic(promptText) {
 /**
  * Parse canonical semantic title format: MMDD | 類型 | 主題
  */
+/**
+ * @param {string} title
+ */
 function parseSemanticTitle(title) {
   if (!title || typeof title !== "string") return null;
   const match = title.match(/^(\d{4})\s*\|\s*([^|]+)\s*\|\s*(.+)$/);
@@ -103,6 +114,8 @@ function parseSemanticTitle(title) {
 
 /**
  * Get guaranteed semantic type for a workspace
+ * @param {{ title?: string, promptSnippet?: string } | null | undefined} workspace
+ * @returns {string}
  */
 function getWorkspaceType(workspace) {
   if (!workspace) return "設計";
@@ -119,6 +132,10 @@ function getWorkspaceType(workspace) {
 
 /**
  * Extract context snippet centered around query tokens
+ * @param {string} text
+ * @param {string[]} [tokens]
+ * @param {number} [maxChars]
+ * @returns {string}
  */
 function extractMatchSnippet(text, tokens = [], maxChars = 100) {
   if (!text || typeof text !== "string") return "";
@@ -147,6 +164,12 @@ function extractMatchSnippet(text, tokens = [], maxChars = 100) {
 /**
  * Create full canonical title: MMDD | 類型 | 主題
  */
+/**
+ * @param {string | undefined} promptText
+ * @param {string | null} [customType]
+ * @param {string | null} [customTopic]
+ * @returns {string}
+ */
 function createSemanticTitle(promptText, customType = null, customTopic = null) {
   const date = getTaiwanMMDD();
   const type = customType || inferType(promptText);
@@ -154,17 +177,44 @@ function createSemanticTitle(promptText, customType = null, customTopic = null) 
   return `${date} | ${type} | ${topic}`;
 }
 
+/**
+ * @typedef {Object} WorkspaceTurn
+ * @property {string} speaker
+ * @property {number} round
+ * @property {string} [type]
+ * @property {string} content
+ * @property {string} [response] - Legacy field on older saved turns
+ * @property {string} timestamp
+ */
+
+/**
+ * @typedef {Object} Workspace
+ * @property {string} id
+ * @property {string} title
+ * @property {string} promptSnippet
+ * @property {string} mode
+ * @property {string[]} sequence
+ * @property {string} createdAt
+ * @property {string} updatedAt
+ * @property {boolean} completed
+ * @property {number} turns
+ * @property {WorkspaceTurn[]} history
+ * @property {Record<string, string>} urls - Last known URL per platform
+ */
+
 class SessionManager {
   /**
    * @param {Object} [options]
-   * @param {Object} [options.store] - SettingsStore instance
-   * @param {Function} [options.getViews] - () => views map
+   * @param {import('./store').SettingsStore} [options.store]
+   * @param {() => Record<string, { view: import('electron').WebContentsView }>} [options.getViews]
    */
   constructor(options = {}) {
     this.store = options.store || store;
+    /** @type {() => Record<string, { view: import('electron').WebContentsView }>} */
     this.getViews = options.getViews || (() => ({}));
   }
 
+  /** @returns {Workspace[]} */
   getWorkspaces() {
     return this.store.get("workspaces") || [];
   }
@@ -173,18 +223,31 @@ class SessionManager {
     return this.getWorkspaces();
   }
 
+  /** @returns {string | null} */
   getActiveWorkspaceId() {
     return this.store.get("activeWorkspaceId") || null;
   }
 
+  /** @returns {Workspace | null} */
   getActiveWorkspace() {
     const id = this.getActiveWorkspaceId();
     return this.getWorkspaces().find(w => w.id === id) || null;
   }
 
+  /**
+   * @param {Object} params
+   * @param {string} [params.prompt]
+   * @param {string} [params.mode='relay']
+   * @param {string[]} [params.sequence]
+   * @param {string | null} [params.customTitle]
+   * @param {string | null} [params.title]
+   * @param {Record<string, string> | null} [params.urls]
+   * @returns {Workspace}
+   */
   createWorkspace({ prompt, mode = "relay", sequence = ["claude", "chatgpt"], customTitle = null, title = null, urls = null }) {
     const canonicalTitle = title || customTitle || createSemanticTitle(prompt);
     const id = `ws-${Date.now()}`;
+    /** @type {Workspace} */
     const workspace = {
       id,
       title: canonicalTitle,
@@ -212,6 +275,11 @@ class SessionManager {
     return workspace;
   }
 
+  /**
+   * @param {string} id
+   * @param {Partial<Workspace>} [partial]
+   * @returns {Workspace | null}
+   */
   updateWorkspace(id, partial = {}) {
     const list = [...this.getWorkspaces()];
     const index = list.findIndex(w => w.id === id);
@@ -230,6 +298,9 @@ class SessionManager {
 
   /**
    * Add a completed turn to a workspace's history
+   * @param {string} workspaceId
+   * @param {Partial<WorkspaceTurn> & { responseSnippet?: string }} [turn]
+   * @returns {Workspace | null}
    */
   addTurn(workspaceId, turn = {}) {
     const list = [...this.getWorkspaces()];
@@ -263,6 +334,7 @@ class SessionManager {
 
   /**
    * Deep full-text keyword search and semantic tag filter
+   * @param {{ query?: string, q?: string, type?: string, mode?: string, limit?: number | string }} [options]
    */
   searchWorkspaces(options = {}) {
     const rawQuery = (options.query || options.q || "").trim();
@@ -311,6 +383,7 @@ class SessionManager {
       }
 
       // 3. Keyword matching across title, prompt, urls, and conversation history turns
+      /** @type {Array<{ field: string, value?: string, snippet?: string, platform?: string, round?: number, speaker?: string, timestamp?: string }>} */
       const matches = [];
       let score = 0;
 
@@ -447,8 +520,12 @@ class SessionManager {
     };
   }
 
+  /**
+   * @param {string} workspaceId
+   */
   captureActiveUrls(workspaceId) {
     const views = this.getViews();
+    /** @type {Record<string, string>} */
     const urls = {};
     for (const [platform, item] of Object.entries(views)) {
       try {
@@ -465,12 +542,16 @@ class SessionManager {
     return this.updateWorkspace(workspaceId, { urls });
   }
 
+  /**
+   * @param {string} workspaceId
+   */
   async switchWorkspace(workspaceId) {
     const list = this.getWorkspaces();
     const target = list.find(w => w.id === workspaceId);
     if (!target) return { success: false, message: "Workspace not found" };
 
     const views = this.getViews();
+    /** @type {Record<string, { loaded: boolean, url?: string, error?: string }>} */
     const results = {};
 
     for (const [platform, url] of Object.entries(target.urls || {})) {
@@ -488,6 +569,9 @@ class SessionManager {
     return { success: true, workspace: target, results };
   }
 
+  /**
+   * @param {string} workspaceId
+   */
   deleteWorkspace(workspaceId) {
     let list = this.getWorkspaces();
     list = list.filter(w => w.id !== workspaceId);
@@ -498,6 +582,9 @@ class SessionManager {
     return { success: true };
   }
 
+  /**
+   * @param {string} workspaceId
+   */
   exportWorkspaceAsJson(workspaceId) {
     const list = this.getWorkspaces();
     const ws = list.find(w => w.id === workspaceId);
@@ -515,6 +602,9 @@ class SessionManager {
     }, null, 2);
   }
 
+  /**
+   * @param {string | { workspaces?: Workspace[] } | Workspace[]} jsonStringOrObj
+   */
   importWorkspacesFromJson(jsonStringOrObj) {
     let data;
     try {
@@ -586,8 +676,17 @@ class SessionManager {
     };
   }
 
+  /**
+   * @param {Object} params
+   * @param {string} [params.title]
+   * @param {string} [params.mode='relay']
+   * @param {string[]} [params.sequence]
+   * @param {Array<Partial<WorkspaceTurn> & { responseSnippet?: string }>} [params.history]
+   * @returns {string}
+   */
   exportOrchestrationHistoryAsMarkdown({ title, mode = "relay", sequence = [], history = [] }) {
     const dateStr = new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false });
+    /** @type {Record<string, string>} */
     const modeMap = { relay: "🔄 任務接力 (Relay)", debate: "⚔️ 交叉辯論 (Debate)", master: "👑 主控分工 (Master)" };
     const modeName = modeMap[mode] || mode;
 
@@ -623,6 +722,10 @@ class SessionManager {
     return md;
   }
 
+  /**
+   * @param {string} platform
+   * @param {string} title
+   */
   async applyInPageRenaming(platform, title) {
     const views = this.getViews();
     const item = views[platform];

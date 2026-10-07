@@ -42,17 +42,17 @@ class LocalSyncBridge {
    * @param {number} [options.port=8765] - Port to listen on (127.0.0.1)
    * @param {string} [options.host='127.0.0.1'] - Bind address
    * @param {Function} [options.getStatus] - Callback returning app status
-   * @param {Function} [options.onDispatchPrompt] - Callback for prompt injection
+   * @param {(req: { prompt: string, targets: string[] }) => Promise<unknown>} [options.onDispatchPrompt] - Callback for prompt injection
    * @param {Function} [options.onSetLayout] - Callback for layout changes
    * @param {Function} [options.onSetZoom] - Callback for zoom adjustments
    * @param {Function} [options.onToggleWindow] - Callback for window summon/hide
-   * @param {Object} [options.orchestrator] - MultiAiOrchestrator instance
+   * @param {import('./orchestrator').MultiAiOrchestrator | null} [options.orchestrator]
    * @param {string} [options.authToken] - Shared gateway token (defaults to ~/.nomad/daemon-token)
    * @param {Function} [options.onInspectPlatform] - Debug hook: inspect a platform webview
    * @param {Function} [options.onEvalScript] - Debug hook: run a script in a platform webview
    * @param {boolean} [options.debugEndpoints=false] - Serve /api/debug/* (they run scripts inside logged-in AI sessions); 404 otherwise
    * @param {() => (string | undefined)} [options.getDriveSyncDir] - Configured Drive sync folder; HTTP callers cannot choose it
-   * @param {Object} [options.sessionManager] - SessionManager for workspace/session routes
+   * @param {import('./session-manager').SessionManager | null} [options.sessionManager] - SessionManager for workspace/session routes
    * @param {number} [options.daemonPort=8765] - Daemon port to register with when running on another port
    * @param {import('@nomad/core').McpGateway} [options.mcpGateway] - Shared MCP gateway (defaults to a new one with core's default roots)
    * @param {import('@nomad/core').AgentRoster} [options.roster]
@@ -87,7 +87,7 @@ class LocalSyncBridge {
     this.roster = options.roster || new AgentRoster();
     this.dispatcher = options.dispatcher || new TaskDispatcher({
       roster: this.roster,
-      onTaskEvent: (eventType, task) => {
+      onTaskEvent: (/** @type {string} */ eventType, /** @type {unknown} */ task) => {
         this.broadcast(eventType, task);
       }
     });
@@ -96,14 +96,14 @@ class LocalSyncBridge {
     this.approvalGate = ApprovalGate;
     this.taskRunner = new TaskRunner(this.dispatcher, {
       localModelClient: this.localModelClient,
-      orchestratorDelegate: options.onDispatchPrompt ? async (platform, prompt) => {
-        return this.onDispatchPrompt(platform, prompt);
+      orchestratorDelegate: options.onDispatchPrompt ? async (/** @type {string} */ platform, /** @type {string} */ prompt) => {
+        return this.onDispatchPrompt({ prompt, targets: [platform] });
       } : undefined,
     });
     this.scheduler = options.scheduler || new RecurringScheduler({
       dispatcher: this.dispatcher,
       taskRunner: this.taskRunner,
-      onScheduleEvent: (eventType, data) => {
+      onScheduleEvent: (/** @type {string} */ eventType, /** @type {unknown} */ data) => {
         this.broadcast(eventType, data);
       }
     });
@@ -179,6 +179,9 @@ class LocalSyncBridge {
     } catch {}
   }
 
+  /**
+   * @param {import('./orchestrator').MultiAiOrchestrator} orchestrator
+   */
   setOrchestrator(orchestrator) {
     this.orchestrator = orchestrator;
   }
@@ -231,6 +234,11 @@ class LocalSyncBridge {
     }));
   }
 
+  /**
+   * Sends a Server-Sent Event to every connected client.
+   * @param {string} event
+   * @param {unknown} data
+   */
   broadcast(event, data) {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
     for (const client of this.sseClients) {
@@ -242,6 +250,11 @@ class LocalSyncBridge {
     }
   }
 
+  /**
+   * @param {string | undefined} method
+   * @param {string} pathname
+   * @returns {boolean}
+   */
   isPublicRoute(method, pathname) {
     if (method !== 'GET' && method !== 'HEAD') return false;
     return pathname === '/api/probe' ||
@@ -250,6 +263,10 @@ class LocalSyncBridge {
 
   /**
    * Applies CORS + auth. Returns true when the request has been fully answered.
+   * @param {import('http').IncomingMessage} req
+   * @param {import('http').ServerResponse} res
+   * @param {URL} parsedUrl
+   * @returns {boolean}
    */
   handleCors(req, res, parsedUrl) {
     const publicRoute = this.isPublicRoute(req.method, parsedUrl.pathname);
@@ -274,16 +291,25 @@ class LocalSyncBridge {
     return false;
   }
 
+  /**
+   * @param {import('http').ServerResponse} res
+   * @param {number} statusCode
+   * @param {unknown} body
+   */
   sendJson(res, statusCode, body) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.writeHead(statusCode);
     res.end(JSON.stringify(body));
   }
 
+  /**
+   * @param {import('http').IncomingMessage} req
+   * @returns {Promise<any>} Parsed JSON body ({} when empty)
+   */
   readJsonBody(req) {
     return new Promise((resolve, reject) => {
       let data = '';
-      req.on('data', (chunk) => {
+      req.on('data', (/** @type {Buffer} */ chunk) => {
         data += chunk;
         if (data.length > 2 * 1024 * 1024) { // 2MB limit
           reject(new Error('PAYLOAD_TOO_LARGE'));
@@ -304,8 +330,12 @@ class LocalSyncBridge {
     });
   }
 
+  /**
+   * @param {import('http').IncomingMessage} req
+   * @param {import('http').ServerResponse} res
+   */
   async handleRequest(req, res) {
-    const parsedUrl = new URL(req.url, `http://127.0.0.1:${this.port}`);
+    const parsedUrl = new URL(req.url || '/', `http://127.0.0.1:${this.port}`);
     if (this.handleCors(req, res, parsedUrl)) return;
     const pathname = parsedUrl.pathname;
 
@@ -500,7 +530,7 @@ class LocalSyncBridge {
         let limit = 50;
 
         if (req.method === "GET") {
-          const parsedUrl = new URL(req.url, "http://127.0.0.1");
+          const parsedUrl = new URL(req.url || '/', "http://127.0.0.1");
           query = parsedUrl.searchParams.get("q") || parsedUrl.searchParams.get("query") || "";
           type = parsedUrl.searchParams.get("type") || "all";
           mode = parsedUrl.searchParams.get("mode") || "all";
@@ -568,7 +598,7 @@ class LocalSyncBridge {
         if (!this.sessionManager) {
           return this.sendJson(res, 501, { success: false, message: "SessionManager not configured" });
         }
-        const parsedUrl = new URL(req.url, "http://127.0.0.1");
+        const parsedUrl = new URL(req.url || '/', "http://127.0.0.1");
         const id = parsedUrl.searchParams.get("id");
         if (id) {
           const json = this.sessionManager.exportWorkspaceAsJson(id);
@@ -756,7 +786,7 @@ class LocalSyncBridge {
       }
 
       if (pathname === '/api/local-model/probe' && req.method === 'GET') {
-        const parsedUrl = new URL(req.url, 'http://127.0.0.1');
+        const parsedUrl = new URL(req.url || '/', 'http://127.0.0.1');
         const port = Number(parsedUrl.searchParams.get('port') || 1234);
         const host = parsedUrl.searchParams.get('host') || '127.0.0.1';
         if (!isLoopbackModelTarget({ host })) {
@@ -805,7 +835,7 @@ class LocalSyncBridge {
         let prompt = '';
         let topK = 3;
         if (req.method === 'GET') {
-          const parsedUrl = new URL(req.url, 'http://127.0.0.1');
+          const parsedUrl = new URL(req.url || '/', 'http://127.0.0.1');
           prompt = parsedUrl.searchParams.get('prompt') || parsedUrl.searchParams.get('q') || '';
           topK = Number(parsedUrl.searchParams.get('topK') || 3);
         } else {
