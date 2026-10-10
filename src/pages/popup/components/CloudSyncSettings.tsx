@@ -23,6 +23,13 @@ import { DEFAULT_SYNC_STATE } from '@/core/types/sync';
 import { getVoyagerBuildTarget, isSafari } from '@/core/utils/browser';
 import { getPromptNameConflictIds } from '@/core/utils/promptName';
 import { deleteSafariICloudBackup } from '@/core/utils/safariICloudSync';
+import {
+  isFolderData,
+  isPromptItemArray,
+  isStarredMessagesData,
+  isTimelineHierarchyData,
+  parseStoredFolderData,
+} from '@/core/utils/syncDataGuards';
 import { restorePluginState } from '@/features/plugins/storage/pluginState';
 import {
   getTimelineHierarchyStorageKey,
@@ -45,13 +52,6 @@ import {
 } from '../../../utils/merge';
 import { MultiPlatformSyncDashboard } from './MultiPlatformSyncDashboard';
 import { SyncPlatformSummary } from './SyncPlatformSummary';
-import {
-  isFolderData,
-  isPromptItemArray,
-  isStarredMessagesData,
-  isTimelineHierarchyData,
-  parseStoredFolderData,
-} from './cloudSyncDataGuards';
 
 type DownloadMode = 'merge' | 'overwrite';
 
