@@ -66,6 +66,11 @@ import {
   deliverSafariNativeNotification,
   prepareSafariNativeNotifications,
 } from '@/core/utils/safariNativeNotifications';
+import {
+  isPromptItemArray,
+  isStarredMessagesData,
+  parseStoredFolderData,
+} from '@/core/utils/syncDataGuards';
 import { WATERMARK_STORAGE_KEYS, resolveWatermarkSettings } from '@/core/utils/watermarkSettings';
 import {
   isRemoteAnnouncementRuntimeMessage,
@@ -450,14 +455,6 @@ chrome.notifications?.onClicked?.addListener?.((notificationId) => {
   void openResponseCompleteNotification(notificationId);
 });
 
-function isStarredMessagesData(value: unknown): value is StarredMessagesData {
-  if (typeof value !== 'object' || value === null) return false;
-  const data = value as { messages?: unknown };
-  if (typeof data.messages !== 'object' || data.messages === null) return false;
-  const messages = data.messages as Record<string, unknown>;
-  return Object.values(messages).every((v) => Array.isArray(v));
-}
-
 function isForkNodesData(value: unknown): value is ForkNodesData {
   if (typeof value !== 'object' || value === null) return false;
   const data = value as { nodes?: unknown; groups?: unknown };
@@ -623,49 +620,6 @@ async function resolveAccountScopeForMessage(
     pageUrl: sender.tab?.url ?? null,
   });
   return toSyncAccountScope(resolved);
-}
-
-function parseStoredFolderData(value: unknown): FolderData | null {
-  let parsed = value;
-  if (typeof parsed === 'string') {
-    try {
-      parsed = JSON.parse(parsed) as unknown;
-    } catch {
-      return null;
-    }
-  }
-  if (!parsed || typeof parsed !== 'object') return null;
-  const data = parsed as Record<string, unknown>;
-  if (
-    !Array.isArray(data.folders) ||
-    !data.folderContents ||
-    typeof data.folderContents !== 'object'
-  ) {
-    return null;
-  }
-  if (!Object.values(data.folderContents).every((contents) => Array.isArray(contents))) return null;
-  return parsed as FolderData;
-}
-
-function isPromptItemArray(value: unknown): value is PromptItem[] {
-  return (
-    Array.isArray(value) &&
-    value.every((item) => {
-      if (!item || typeof item !== 'object') return false;
-      const prompt = item as Record<string, unknown>;
-      return (
-        typeof prompt.id === 'string' &&
-        typeof prompt.text === 'string' &&
-        Array.isArray(prompt.tags) &&
-        prompt.tags.every((tag) => typeof tag === 'string') &&
-        typeof prompt.createdAt === 'number' &&
-        Number.isFinite(prompt.createdAt) &&
-        (prompt.updatedAt === undefined ||
-          (typeof prompt.updatedAt === 'number' && Number.isFinite(prompt.updatedAt))) &&
-        (prompt.name === undefined || typeof prompt.name === 'string')
-      );
-    })
-  );
 }
 
 async function loadAuthoritativeSyncPayload(
