@@ -10,7 +10,6 @@ import {
   isUsagePathname,
   mergeAutomaticUsageSnapshots,
   mergeUsageSnapshots,
-  parseResetEpoch,
   parseUsageRpcResponse,
   scrapeUsageFromDocument,
   selectUsageSnapshotForAccount,
@@ -19,6 +18,7 @@ import {
   usagePathForPathname,
   usageUrlForPathname,
 } from '../index';
+import { parseResetEpoch } from '../resetEpoch';
 
 describe('getUsagePillMode', () => {
   it('shows an actionable empty pill before the first usage snapshot arrives', () => {
