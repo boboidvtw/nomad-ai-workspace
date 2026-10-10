@@ -21,18 +21,10 @@ import {
   createMoonIcon,
   createSunIcon,
 } from '@/core/icons/promptManagerIcons';
-import {
-  accountIsolationService,
-  detectAccountContextFromDocument,
-} from '@/core/services/AccountIsolationService';
 import { logger } from '@/core/services/LoggerService';
 import { promptStorageService } from '@/core/services/StorageService';
 import { type StorageKey, StorageKeys } from '@/core/types/common';
-import {
-  type HighlightAccountScope,
-  type HighlightRecordV1,
-  getHighlightColorHex,
-} from '@/core/types/highlight';
+import { type HighlightRecordV1, getHighlightColorHex } from '@/core/types/highlight';
 import type { PromptItem } from '@/core/types/sync';
 import { isSafari, shouldShowSafariUpdateReminder } from '@/core/utils/browser';
 import { isExtensionContextInvalidatedError } from '@/core/utils/extensionContext';
@@ -43,8 +35,6 @@ import { renderPromptHtmlAsText } from '@/features/prompt/model/promptMarkdown';
 import { convertLegacyBraces, isPromptTemplate } from '@/features/prompt/model/promptTemplate';
 import {
   type SavedLibraryFilter,
-  type SavedLibraryItem,
-  buildSavedLibraryItemUrl,
   filterSavedLibraryItems,
   toSavedLibraryItems,
 } from '@/features/savedLibrary/model';
@@ -70,11 +60,18 @@ import {
 } from './PromptTemplateFill';
 import { extractPlainTitle } from './compactTitle';
 import { createEventActionButton } from './eventActionButton';
+import { getLatestVersionCached, normalizeVersionString } from './latestVersion';
 import { activatePromptText } from './promptClickAction';
 import { getPromptNameConflictIds, isPromptNameTaken, normalizePromptName } from './promptName';
 import { isPinned, pinGroupOf, sortPinnedFirst, togglePin } from './promptPinning';
 import { createPromptReorder } from './promptReorder';
 import { createPromptRowSurfaces } from './promptRowConfirm';
+import {
+  loadCurrentAccountHighlightRecords,
+  navigateToSavedLibraryItem,
+  removeStoredHighlight,
+  resolveCurrentHighlightScope,
+} from './savedLibraryActions';
 import { getScrollHintState } from './scrollHint';
 import { formatStarredMessageTime } from './starredLibrary';
 import { sanitizeSelectedTags } from './tagFilterState';
@@ -110,100 +107,11 @@ const ID = {
 /** Exported so surfaces outside the panel (the onboarding guide) can anchor to it. */
 export const PROMPT_TRIGGER_ID = ID.trigger;
 
-const LATEST_VERSION_CACHE_KEY = 'nomadLatestVersionCache';
-const LATEST_VERSION_MAX_AGE = 1000 * 60 * 60 * 6; // 6 hours
 const SPONSOR_HEART_PATH_16 =
   'M7.655 14.916h-.002l-.006-.003l-.018-.01a22 22 0 0 1-3.744-2.584C2.045 10.731 0 8.35 0 5.5C0 2.836 2.086 1 4.25 1C5.797 1 7.153 1.802 8 3.02C8.847 1.802 10.203 1 11.75 1C13.914 1 16 2.836 16 5.5c0 2.85-2.044 5.231-3.886 6.818a22 22 0 0 1-3.433 2.414a7 7 0 0 1-.31.17l-.018.01l-.008.004a.75.75 0 0 1-.69 0';
 
 type PMTheme = 'light' | 'dark';
 type PMViewMode = 'compact' | 'comfortable';
-
-async function resolveCurrentHighlightScope(): Promise<HighlightAccountScope> {
-  try {
-    const context = detectAccountContextFromDocument(window.location.href, document);
-    const resolved = await accountIsolationService.resolveAccountScope({
-      pageUrl: window.location.href,
-      routeUserId: context.routeUserId,
-      email: context.email,
-    });
-    return {
-      platform: window.location.hostname.startsWith('aistudio.') ? 'aistudio' : 'gemini',
-      accountKey: resolved.accountKey,
-      accountId: resolved.accountId,
-      routeUserId: resolved.routeUserId,
-    };
-  } catch {
-    return {
-      platform: 'gemini',
-      accountKey: 'anonymous',
-      accountId: 0,
-      routeUserId: null,
-    };
-  }
-}
-
-async function loadCurrentAccountHighlightRecords(): Promise<HighlightRecordV1[]> {
-  const hostname = window.location.hostname;
-  if (!hostname.includes('gemini.google.') && !hostname.includes('aistudio.google.')) {
-    return [];
-  }
-  try {
-    const scope = await resolveCurrentHighlightScope();
-    const response = (await browser.runtime.sendMessage({
-      type: 'gv.highlight.list',
-      payload: { scope, includeDeleted: false },
-    })) as { ok?: boolean; records?: HighlightRecordV1[]; error?: string } | undefined;
-    if (!response?.ok) return [];
-    return Array.isArray(response.records) ? response.records : [];
-  } catch {
-    return [];
-  }
-}
-
-async function removeStoredHighlight(item: SavedLibraryItem): Promise<boolean> {
-  if (item.kind !== 'highlight' || !item.accountHash || !item.platform) return false;
-  try {
-    const scope = await resolveCurrentHighlightScope();
-    const response = (await browser.runtime.sendMessage({
-      type: 'gv.highlight.delete',
-      payload: {
-        scope,
-        conversationId: item.conversationId,
-        id: item.id,
-      },
-    })) as { ok?: boolean } | undefined;
-    return response?.ok === true;
-  } catch (error) {
-    logger.warn('[PromptManager] Failed to remove highlight', { error: String(error) });
-    return false;
-  }
-}
-
-function navigateToSavedLibraryItem(item: SavedLibraryItem): boolean {
-  let target: URL;
-  try {
-    target = new URL(buildSavedLibraryItemUrl(item), window.location.href);
-  } catch (error) {
-    logger.warn('[PromptManager] Blocked invalid saved item URL', { error: String(error) });
-    return false;
-  }
-  if (target.origin !== window.location.origin) {
-    window.open(target.href, '_blank', 'noopener,noreferrer');
-    return true;
-  }
-
-  window.history.pushState(
-    window.history.state,
-    '',
-    `${target.pathname}${target.search}${target.hash}`,
-  );
-  window.dispatchEvent(
-    typeof PopStateEvent === 'function'
-      ? new PopStateEvent('popstate', { state: window.history.state })
-      : new Event('popstate'),
-  );
-  return true;
-}
 
 function detectPageTheme(): PMTheme {
   if (
@@ -286,12 +194,6 @@ function uid(): string {
  */
 const pmLogger = logger.createChild('PromptManager');
 
-const normalizeVersionString = (version?: string | null): string | null => {
-  if (!version) return null;
-  const trimmed = version.trim();
-  return trimmed ? trimmed.replace(/^v/i, '') : null;
-};
-
 async function readStorage<T>(key: StorageKey, fallback: T): Promise<T> {
   const result = await promptStorageService.get<T>(key);
   if (result.success) {
@@ -309,57 +211,6 @@ async function writeStorage<T>(key: StorageKey, value: T): Promise<void> {
       errorDetails: result.error,
     });
   }
-}
-
-async function getLatestVersionCached(): Promise<string | null> {
-  try {
-    if (!browser.runtime?.id) return null;
-
-    const now = Date.now();
-    const cache = await browser.storage.local.get(LATEST_VERSION_CACHE_KEY);
-    const cached = cache?.[LATEST_VERSION_CACHE_KEY] as
-      | { version?: string; fetchedAt?: number }
-      | undefined;
-    if (
-      cached &&
-      cached.version &&
-      cached.fetchedAt &&
-      now - cached.fetchedAt < LATEST_VERSION_MAX_AGE
-    ) {
-      return cached.version;
-    }
-
-    const resp = await fetch(
-      'https://api.github.com/repos/boboidvtw/nomad-ai-workspace/releases/latest',
-      {
-        headers: { Accept: 'application/vnd.github+json' },
-      },
-    );
-    if (resp.status === 404) {
-      return null;
-    }
-    if (!resp.ok) {
-      throw new Error(`HTTP ${resp.status}`);
-    }
-
-    const data = await resp.json();
-    const candidate =
-      typeof data.tag_name === 'string'
-        ? data.tag_name
-        : typeof data.name === 'string'
-          ? data.name
-          : null;
-
-    if (candidate) {
-      await browser.storage.local.set({
-        [LATEST_VERSION_CACHE_KEY]: { version: candidate, fetchedAt: now },
-      });
-      return candidate;
-    }
-  } catch (error) {
-    pmLogger.debug('Latest version check failed', { error });
-  }
-  return null;
 }
 
 function createEl<K extends keyof HTMLElementTagNameMap>(
