@@ -12,7 +12,7 @@
     "src/features/plugins/builtin/chatgptTemporaryHandoff/handoff.ts": 1050,
     "src/features/plugins/builtin/claudeUsage/index.ts": 1011,
     "src/features/plugins/verbs/turnNavigator/TurnNavigator.ts": 1168,
-    "src/pages/background/index.ts": 2937,
+    "src/pages/background/index.ts": 2659,
     "src/pages/content/chatInput/__tests__/vimMode.test.ts": 1969,
     "src/pages/content/chatInput/vimMode.ts": 2813,
     "src/pages/content/defaultModel/__tests__/modelLocker.test.ts": 2577,

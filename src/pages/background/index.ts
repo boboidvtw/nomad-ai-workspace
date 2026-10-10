@@ -66,11 +66,7 @@ import {
   deliverSafariNativeNotification,
   prepareSafariNativeNotifications,
 } from '@/core/utils/safariNativeNotifications';
-import {
-  isPromptItemArray,
-  isStarredMessagesData,
-  parseStoredFolderData,
-} from '@/core/utils/syncDataGuards';
+import { isPromptItemArray, parseStoredFolderData } from '@/core/utils/syncDataGuards';
 import { WATERMARK_STORAGE_KEYS, resolveWatermarkSettings } from '@/core/utils/watermarkSettings';
 import {
   isRemoteAnnouncementRuntimeMessage,
@@ -113,17 +109,19 @@ import {
   getTimelineHierarchyStorageKeysToRead,
   resolveTimelineHierarchyDataForStorageScope,
 } from '@/pages/content/timeline/hierarchyStorage';
-import type { StarredMessage, StarredMessagesData } from '@/pages/content/timeline/starredTypes';
+import type { StarredMessagesData } from '@/pages/content/timeline/starredTypes';
 import { getTranslation } from '@/utils/i18n';
 import type { TranslationKey } from '@/utils/translations';
 
 import { unregisterRegisteredContentScripts } from './contentScriptRegistration';
+import { ForkNodesManager } from './forkNodesManager';
 import { resolveOptionalHighlightSetting } from './highlightOptionalSetting';
 import { handlePlatformFolderSyncMessage, syncAllPlatformFolders } from './multiPlatformFolderSync';
 import {
   isAllowedSyncContentSender,
   isHandledBackgroundRuntimeMessage,
 } from './runtimeMessageRouting';
+import { StarredMessagesManager } from './starredMessagesManager';
 import { injectWatermarkInterceptorIntoOpenTabs } from './watermarkOpenTabs';
 
 const CUSTOM_CONTENT_SCRIPT_ID = 'gv-custom-content-script';
@@ -454,17 +452,6 @@ chrome.notifications?.onClicked?.addListener?.((notificationId) => {
   if (!notificationId.startsWith(RESPONSE_COMPLETE_NOTIFICATION_ID_PREFIX)) return;
   void openResponseCompleteNotification(notificationId);
 });
-
-function isForkNodesData(value: unknown): value is ForkNodesData {
-  if (typeof value !== 'object' || value === null) return false;
-  const data = value as { nodes?: unknown; groups?: unknown };
-  return (
-    typeof data.nodes === 'object' &&
-    data.nodes !== null &&
-    typeof data.groups === 'object' &&
-    data.groups !== null
-  );
-}
 
 function isSyncAccountScope(value: unknown): value is SyncAccountScope {
   if (typeof value !== 'object' || value === null) return false;
@@ -1446,272 +1433,7 @@ chrome.permissions.onRemoved.addListener(() => {
   void syncPromptNudgeIcon();
 });
 
-/**
- * Centralized starred messages management to prevent race conditions.
- * All read-modify-write operations are serialized through this background script.
- */
-class StarredMessagesManager {
-  private operationQueue: Promise<unknown> = Promise.resolve();
-
-  /**
-   * Serialize all operations to prevent race conditions
-   */
-  private serialize<T>(operation: () => Promise<T>): Promise<T> {
-    const promise = this.operationQueue.then(operation, operation);
-    this.operationQueue = promise.catch(() => {}); // Prevent error propagation
-    return promise;
-  }
-
-  private async getFromStorage(): Promise<StarredMessagesData> {
-    try {
-      const result = await chrome.storage.local.get([StorageKeys.TIMELINE_STARRED_MESSAGES]);
-      const starred = result[StorageKeys.TIMELINE_STARRED_MESSAGES];
-      return isStarredMessagesData(starred) ? starred : { messages: {} };
-    } catch (error) {
-      console.error('[Background] Failed to get starred messages:', error);
-      return { messages: {} };
-    }
-  }
-
-  private async saveToStorage(data: StarredMessagesData): Promise<void> {
-    await chrome.storage.local.set({ [StorageKeys.TIMELINE_STARRED_MESSAGES]: data });
-  }
-
-  async addStarredMessage(message: StarredMessage): Promise<boolean> {
-    return this.serialize(async () => {
-      const data = await this.getFromStorage();
-
-      if (!data.messages[message.conversationId]) {
-        data.messages[message.conversationId] = [];
-      }
-
-      // Check if message already exists
-      const exists = data.messages[message.conversationId].some((m) => m.turnId === message.turnId);
-
-      if (!exists) {
-        // Truncate content to save storage space
-        // Popup is ~360px wide with line-clamp-2, showing ~50-60 chars max
-        const MAX_CONTENT_LENGTH = 60;
-        const truncatedMessage: StarredMessage = {
-          ...message,
-          content:
-            message.content.length > MAX_CONTENT_LENGTH
-              ? message.content.slice(0, MAX_CONTENT_LENGTH) + '...'
-              : message.content,
-        };
-        data.messages[message.conversationId].push(truncatedMessage);
-        await this.saveToStorage(data);
-        return true;
-      }
-      return false;
-    });
-  }
-
-  async removeStarredMessage(conversationId: string, turnId: string): Promise<boolean> {
-    return this.serialize(async () => {
-      const data = await this.getFromStorage();
-
-      if (data.messages[conversationId]) {
-        const initialLength = data.messages[conversationId].length;
-        data.messages[conversationId] = data.messages[conversationId].filter(
-          (m) => m.turnId !== turnId,
-        );
-
-        if (data.messages[conversationId].length < initialLength) {
-          // Remove conversation key if no messages left
-          if (data.messages[conversationId].length === 0) {
-            delete data.messages[conversationId];
-          }
-
-          await this.saveToStorage(data);
-          return true;
-        }
-      }
-      return false;
-    });
-  }
-
-  async getAllStarredMessages(): Promise<StarredMessagesData> {
-    return this.getFromStorage();
-  }
-
-  async getStarredMessagesForConversation(conversationId: string): Promise<StarredMessage[]> {
-    const data = await this.getFromStorage();
-    return data.messages[conversationId] || [];
-  }
-
-  async isMessageStarred(conversationId: string, turnId: string): Promise<boolean> {
-    const messages = await this.getStarredMessagesForConversation(conversationId);
-    return messages.some((m) => m.turnId === turnId);
-  }
-
-  async reconcileConversationIds(
-    targetConversationId: string,
-    sourceConversationIds: string[],
-    conversationUrl?: string,
-  ): Promise<StarredMessage[]> {
-    return this.serialize(async () => {
-      const data = await this.getFromStorage();
-      const uniqueConversationIds = Array.from(
-        new Set([targetConversationId, ...sourceConversationIds]),
-      ).filter(Boolean);
-
-      const mergedMessages = new Map<string, StarredMessage>();
-
-      for (const conversationId of uniqueConversationIds) {
-        const messages = data.messages[conversationId] || [];
-        for (const message of messages) {
-          const normalizedMessage: StarredMessage = {
-            ...message,
-            conversationId: targetConversationId,
-            conversationUrl: conversationUrl || message.conversationUrl,
-          };
-          const existing = mergedMessages.get(message.turnId);
-          if (!existing || normalizedMessage.starredAt >= existing.starredAt) {
-            mergedMessages.set(message.turnId, normalizedMessage);
-          }
-        }
-      }
-
-      if (mergedMessages.size > 0) {
-        data.messages[targetConversationId] = Array.from(mergedMessages.values());
-      } else {
-        delete data.messages[targetConversationId];
-      }
-
-      for (const conversationId of uniqueConversationIds) {
-        if (conversationId !== targetConversationId) {
-          delete data.messages[conversationId];
-        }
-      }
-
-      await this.saveToStorage(data);
-      return data.messages[targetConversationId] || [];
-    });
-  }
-}
-
 const starredMessagesManager = new StarredMessagesManager();
-
-/**
- * Centralized fork nodes management to prevent race conditions.
- * All read-modify-write operations are serialized through this background script.
- */
-class ForkNodesManager {
-  private operationQueue: Promise<unknown> = Promise.resolve();
-
-  private serialize<T>(operation: () => Promise<T>): Promise<T> {
-    const promise = this.operationQueue.then(operation, operation);
-    this.operationQueue = promise.catch(() => {});
-    return promise;
-  }
-
-  private async getFromStorage(): Promise<ForkNodesData> {
-    try {
-      const result = await chrome.storage.local.get([StorageKeys.FORK_NODES]);
-      const forkNodes = result[StorageKeys.FORK_NODES];
-      return isForkNodesData(forkNodes) ? forkNodes : { nodes: {}, groups: {} };
-    } catch (error) {
-      console.error('[Background] Failed to get fork nodes:', error);
-      return { nodes: {}, groups: {} };
-    }
-  }
-
-  private async saveToStorage(data: ForkNodesData): Promise<void> {
-    await chrome.storage.local.set({ [StorageKeys.FORK_NODES]: data });
-  }
-
-  async addForkNode(node: ForkNode): Promise<boolean> {
-    return this.serialize(async () => {
-      const data = await this.getFromStorage();
-
-      if (!data.nodes[node.conversationId]) {
-        data.nodes[node.conversationId] = [];
-      }
-
-      const exists = data.nodes[node.conversationId].some(
-        (n) => n.turnId === node.turnId && n.forkGroupId === node.forkGroupId,
-      );
-
-      if (!exists) {
-        data.nodes[node.conversationId].push(node);
-
-        // Update group index
-        if (!data.groups[node.forkGroupId]) {
-          data.groups[node.forkGroupId] = [];
-        }
-        const groupKey = `${node.conversationId}:${node.turnId}`;
-        if (!data.groups[node.forkGroupId].includes(groupKey)) {
-          data.groups[node.forkGroupId].push(groupKey);
-        }
-
-        await this.saveToStorage(data);
-        return true;
-      }
-      return false;
-    });
-  }
-
-  async removeForkNode(
-    conversationId: string,
-    turnId: string,
-    forkGroupId: string,
-  ): Promise<boolean> {
-    return this.serialize(async () => {
-      const data = await this.getFromStorage();
-
-      if (data.nodes[conversationId]) {
-        const initialLength = data.nodes[conversationId].length;
-        data.nodes[conversationId] = data.nodes[conversationId].filter(
-          (n) => !(n.turnId === turnId && n.forkGroupId === forkGroupId),
-        );
-
-        if (data.nodes[conversationId].length < initialLength) {
-          if (data.nodes[conversationId].length === 0) {
-            delete data.nodes[conversationId];
-          }
-
-          // Update group index
-          if (data.groups[forkGroupId]) {
-            const groupKey = `${conversationId}:${turnId}`;
-            data.groups[forkGroupId] = data.groups[forkGroupId].filter((k) => k !== groupKey);
-            if (data.groups[forkGroupId].length === 0) {
-              delete data.groups[forkGroupId];
-            }
-          }
-
-          await this.saveToStorage(data);
-          return true;
-        }
-      }
-      return false;
-    });
-  }
-
-  async getAllForkNodes(): Promise<ForkNodesData> {
-    return this.getFromStorage();
-  }
-
-  async getForConversation(conversationId: string): Promise<ForkNode[]> {
-    const data = await this.getFromStorage();
-    return data.nodes[conversationId] || [];
-  }
-
-  async getGroup(forkGroupId: string): Promise<ForkNode[]> {
-    const data = await this.getFromStorage();
-    const groupKeys = data.groups[forkGroupId] || [];
-    const nodes: ForkNode[] = [];
-
-    for (const key of groupKeys) {
-      const [convId, turnId] = key.split(':');
-      const convNodes = data.nodes[convId] || [];
-      const match = convNodes.find((n) => n.turnId === turnId && n.forkGroupId === forkGroupId);
-      if (match) nodes.push(match);
-    }
-
-    return nodes.sort((a, b) => a.forkIndex - b.forkIndex);
-  }
-}
 
 const forkNodesManager = new ForkNodesManager();
 
