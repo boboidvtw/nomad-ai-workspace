@@ -40,3 +40,12 @@
 - **Rule:** Match `傳送` alongside the other labels, and cover each UI locale's label with a
   DOM test built from the real page structure.
 - **Guard:** `packages/desktop/src/__tests__/injectors.test.js`
+
+## chrome.permissions crashed the background in Electron
+
+- **Trap:** Electron does not implement `chrome.permissions`. The background registered
+  `chrome.permissions.onAdded.addListener` at the top level, so the service worker threw
+  at startup and every top-level registration after it never ran in Studio.
+- **Rule:** Register extension events that Electron may lack through a guard that skips
+  missing APIs (`addPermissionChangeListeners`), never by bare top-level access.
+- **Guard:** `src/pages/background/__tests__/permissionEvents.test.ts`
