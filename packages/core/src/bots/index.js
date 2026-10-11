@@ -11,6 +11,12 @@ const {
 } = require('./bot-roster');
 const { handleBotRequest } = require('./bot-routes');
 const {
+  BotLoopGuard,
+  BotMessageRouter,
+  parseMentions,
+  registerMessageAgentTool,
+} = require('./message-router');
+const {
   NEW_CHAT_URLS,
   normalizeChatUrl,
   isConversationUrl,
@@ -25,6 +31,10 @@ module.exports = {
   BotRoster,
   toBotHandle,
   handleBotRequest,
+  BotLoopGuard,
+  BotMessageRouter,
+  parseMentions,
+  registerMessageAgentTool,
   NEW_CHAT_URLS,
   normalizeChatUrl,
   isConversationUrl,

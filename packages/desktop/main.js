@@ -17,9 +17,8 @@ const { PLATFORM_INJECTORS } = require('./src/injectors');
 const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
-const { createWebviewTaskRunner } = require('./src/webview-task-runner');
+const { createStudioBots } = require('./src/studio-bots');
 
-const TASK_REPLY_TIMEOUT_MS = 180000;
 const CHAT_READY_DELAY_MS = 2500;
 const { TrayAndShortcutManager } = require('./src/tray');
 const { resolveMcpAllowedPaths } = require('./src/mcp-workspace');
@@ -33,8 +32,6 @@ const {
   LocalModelClient,
   McpGateway,
   KnowledgeBase,
-  BotRoster,
-  DEFAULT_ROSTER_PATH,
   NEW_CHAT_URLS,
   buildStateSnapshotScript,
   detectBlocked,
@@ -73,6 +70,8 @@ let trayManager = null;
 let bridge = null;
 /** @type {import('./src/orchestrator').MultiAiOrchestrator | null} */
 let orchestrator = null;
+/** @type {ReturnType<typeof createStudioBots> | null} */
+let studioBots = null;
 /** @type {import('./src/session-manager').SessionManager | null} */
 let sessionManager = null;
 let isDrawerOpen = false;
@@ -380,12 +379,22 @@ async function createMainWindow() {
     },
   });
 
-  // 5. Initialize Local Sync Bridge. The Studio owns ~/.nomad/roster.json (bots persist here).
-  const botRoster = new BotRoster({ storagePath: DEFAULT_ROSTER_PATH });
-  const rosterLoad = botRoster.loadFromDisk();
-  if (!rosterLoad.success) console.warn('[Nomad Desktop] Bot roster:', rosterLoad.message);
+  // 5. Initialize bots and the Local Sync Bridge. The Studio owns ~/.nomad/roster.json.
+  studioBots = createStudioBots({
+    inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
+    awaitSettled: (platform, options) =>
+      orchestrator
+        ? orchestrator.awaitSettled(platform, options)
+        : Promise.resolve({ settled: false, text: '' }),
+    openChat: openPlatformChat,
+    currentUrl: async (platform) => views[platform]?.view.webContents.getURL() || null,
+    notify: notifyBotBlocked,
+    localModelClient,
+    mcpGateway,
+    warn: (message) => console.warn(`[Nomad Desktop] ${message}`),
+  });
   bridge = new LocalSyncBridge({
-    roster: botRoster,
+    roster: studioBots.roster,
     port: store.get('bridgePort') || 8765,
     host: '127.0.0.1',
     orchestrator,
@@ -402,25 +411,7 @@ async function createMainWindow() {
       windowVisible: mainWindow ? mainWindow.isVisible() : false,
       isDrawerOpen,
     }),
-    runWebviewTask: (() => {
-      // Tasks can run far longer than a relay turn, so allow up to 3 minutes per reply.
-      const runner = createWebviewTaskRunner({
-        roster: botRoster,
-        inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
-        awaitSettled: (platform) =>
-          orchestrator
-            ? orchestrator.awaitSettled(platform, { maxWaitMs: TASK_REPLY_TIMEOUT_MS })
-            : Promise.resolve({ settled: false, text: '' }),
-        openChat: openPlatformChat,
-        notify: notifyBotBlocked,
-        currentUrl: async (platform) => views[platform]?.view.webContents.getURL() || null,
-      });
-      return (
-        /** @type {string} */ platform,
-        /** @type {string} */ prompt,
-        /** @type {any} */ context,
-      ) => runner.run(platform, prompt, context);
-    })(),
+    runWebviewTask: studioBots.runWebviewTask,
     onDispatchPrompt: async ({ prompt, targets }) => {
       const results = await dispatchPromptToTargets(prompt, targets);
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -520,6 +511,7 @@ async function createMainWindow() {
   });
 
   try {
+    studioBots?.attach(bridge);
     await bridge.start();
 
     try {

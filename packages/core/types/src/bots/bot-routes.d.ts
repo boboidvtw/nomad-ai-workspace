@@ -3,9 +3,7 @@ export type BotServices = {
     /**
      * - M5 mention/message router
      */
-    router?: {
-        send: (input: any) => Promise<any>;
-    } | null | undefined;
+    router?: import("./message-router").BotMessageRouter | null | undefined;
     /**
      * - M6 group rooms
      */

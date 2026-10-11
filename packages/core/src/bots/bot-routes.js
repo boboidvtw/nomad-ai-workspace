@@ -23,7 +23,7 @@ const STATUS_BY_CODE = {
 /**
  * @typedef {Object} BotServices
  * @property {import('./bot-roster').BotRoster} roster
- * @property {{ send: (input: any) => Promise<any> } | null} [router] - M5 mention/message router
+ * @property {import('./message-router').BotMessageRouter | null} [router] - M5 mention/message router
  * @property {{ create: Function, list: Function, get: Function, post: Function, stop: Function } | null} [rooms] - M6 group rooms
  * @property {import('../tasks/recurring-scheduler').RecurringScheduler | null} [scheduler] - M4 routines
  *
@@ -82,6 +82,11 @@ async function handleBotRequest(req) {
     if (method === 'GET') return respond(ok(roster.toSyncPayload()));
     if (method === 'POST') return respond(roster.applySyncPayload(await readBody()));
     return null;
+  }
+  if (head === 'mentions' && method === 'POST') {
+    if (!services.router) return unavailable('Bot messaging');
+    const body = (await readBody()) || {};
+    return respond(await services.router.dispatchMentions(String(body.text || '')));
   }
   if (head === 'messages' && method === 'POST') {
     if (!services.router) return unavailable('Bot messaging');

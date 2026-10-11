@@ -1,0 +1,38 @@
+const test = require('node:test');
+const assert = require('node:assert');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { McpGateway } = require('@nomad/core');
+const { createStudioBots } = require('../studio-bots.js');
+
+function build() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nomad-studio-bots-'));
+  const mcpGateway = new McpGateway({ allowedPaths: [] });
+  const bots = createStudioBots({
+    rosterPath: path.join(dir, 'roster.json'),
+    inject: async (platform) => ({ [platform]: { ok: true } }),
+    awaitSettled: async () => ({ settled: true, text: 'studio reply' }),
+    openChat: async () => ({ ok: true }),
+    currentUrl: async () => 'https://claude.ai/chat/s1',
+    notify: () => {},
+    mcpGateway,
+  });
+  return { bots, mcpGateway };
+}
+
+test('wires the router into the bridge and the message_agent tool into MCP', async () => {
+  const { bots, mcpGateway } = build();
+  const bridge = { botServices: /** @type {any} */ ({ roster: bots.roster, router: null }) };
+
+  bots.attach(bridge);
+  const res = await mcpGateway.callTool('message_agent', { target: 'claude', message: 'hi' });
+
+  assert.strictEqual(bridge.botServices.router, bots.router);
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.data.reply, 'studio reply');
+  assert.strictEqual(
+    bots.roster.getAgent('agent-claude').data.canonicalChat.url,
+    'https://claude.ai/chat/s1',
+  );
+});

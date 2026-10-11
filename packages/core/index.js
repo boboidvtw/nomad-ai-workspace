@@ -116,6 +116,7 @@ const {
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
   routineLabel,
+  WEBVIEW_PLATFORMS,
 } = require('./src/tasks/index');
 
 // Bots (SPEC-AGENT-BOTS)
@@ -125,6 +126,10 @@ const {
   BotRoster,
   toBotHandle,
   handleBotRequest,
+  BotLoopGuard,
+  BotMessageRouter,
+  parseMentions,
+  registerMessageAgentTool,
   NEW_CHAT_URLS,
   normalizeChatUrl,
   isConversationUrl,
@@ -211,12 +216,17 @@ module.exports = {
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
   routineLabel,
+  WEBVIEW_PLATFORMS,
   // Bots
   BOT_STATE,
   DEFAULT_ROSTER_PATH,
   BotRoster,
   toBotHandle,
   handleBotRequest,
+  BotLoopGuard,
+  BotMessageRouter,
+  parseMentions,
+  registerMessageAgentTool,
   NEW_CHAT_URLS,
   normalizeChatUrl,
   isConversationUrl,
