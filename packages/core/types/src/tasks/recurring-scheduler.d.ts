@@ -19,6 +19,21 @@ export type Schedule = {
     lastRunAt?: string | null | undefined;
     nextRunAt: string;
 };
+/**
+ * Hermes-style routine label: `[bot:<handle>] <name>`. Falls back to the assignee id.
+ * @param {{ name: string, taskTemplate: { assignee?: string } }} schedule
+ * @param {{ getAgent: (id: string) => import('../result').UnitResult<any> } | null | undefined} roster
+ * @returns {string}
+ */
+export function routineLabel(schedule: {
+    name: string;
+    taskTemplate: {
+        assignee?: string;
+    };
+}, roster: {
+    getAgent: (id: string) => import("../result").UnitResult<any>;
+} | null | undefined): string;
+export const WEBVIEW_PLATFORMS: readonly string[];
 export class RecurringScheduler {
     /**
      * @param {Object} [options]
@@ -83,7 +98,12 @@ export class RecurringScheduler {
     /**
      * Lists all schedules
      */
-    listSchedules(): {
+    /**
+     * @param {{ assignee?: string }} [filter]
+     */
+    listSchedules(filter?: {
+        assignee?: string;
+    }): {
         id: string;
         name: string;
         intervalMs: number;

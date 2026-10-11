@@ -115,6 +115,7 @@ const {
   TaskRunner,
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
+  routineLabel,
 } = require('./src/tasks/index');
 
 // Bots (SPEC-AGENT-BOTS)
@@ -209,6 +210,7 @@ module.exports = {
   TaskRunner,
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
+  routineLabel,
   // Bots
   BOT_STATE,
   DEFAULT_ROSTER_PATH,

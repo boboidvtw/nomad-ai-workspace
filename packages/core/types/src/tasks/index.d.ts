@@ -11,4 +11,5 @@ import { TaskRunner } from "./task-runner";
 import { RecurringScheduler } from "./recurring-scheduler";
 import { DEFAULT_PRESET_SCHEDULES } from "./recurring-scheduler";
 import { DEFAULT_SCHEDULES_PATH } from "./recurring-scheduler";
-export { TASK_STATUS, TASK_PRIORITY, validateTransition, createTaskEntity, AGENT_STATUS, DEFAULT_ROSTER, AgentRoster, TaskDispatcher, ApprovalGate, TaskRunner, RecurringScheduler, DEFAULT_PRESET_SCHEDULES, DEFAULT_SCHEDULES_PATH };
+import { routineLabel } from "./recurring-scheduler";
+export { TASK_STATUS, TASK_PRIORITY, validateTransition, createTaskEntity, AGENT_STATUS, DEFAULT_ROSTER, AgentRoster, TaskDispatcher, ApprovalGate, TaskRunner, RecurringScheduler, DEFAULT_PRESET_SCHEDULES, DEFAULT_SCHEDULES_PATH, routineLabel };

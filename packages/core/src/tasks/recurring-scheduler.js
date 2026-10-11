@@ -77,6 +77,21 @@ const DEFAULT_PRESET_SCHEDULES = [
   },
 ];
 
+const WEBVIEW_PLATFORMS = Object.freeze(['claude', 'chatgpt', 'gemini', 'grok']);
+
+/**
+ * Hermes-style routine label: `[bot:<handle>] <name>`. Falls back to the assignee id.
+ * @param {{ name: string, taskTemplate: { assignee?: string } }} schedule
+ * @param {{ getAgent: (id: string) => import('../result').UnitResult<any> } | null | undefined} roster
+ * @returns {string}
+ */
+function routineLabel(schedule, roster) {
+  const assignee = schedule.taskTemplate.assignee || 'agent-claude';
+  const res = roster ? roster.getAgent(assignee) : null;
+  const handle = res && res.success && res.data.handle ? res.data.handle : assignee;
+  return `[bot:${handle}] ${schedule.name}`;
+}
+
 class RecurringScheduler {
   /**
    * @param {Object} [options]
@@ -213,6 +228,22 @@ class RecurringScheduler {
       );
     }
 
+    const assignee = config.taskTemplate.assignee || 'agent-claude';
+    const roster = this.dispatcher?.roster;
+    const assigneeRes = roster ? roster.getAgent(assignee) : null;
+    if (assigneeRes && !assigneeRes.success) {
+      return err(
+        ErrorCodes.TASK_SCHEDULE_INVALID_010,
+        `Schedule assignee "${assignee}" is not in the roster`,
+      );
+    }
+    // Routines that drive a logged-in AI website stay off until the user enables them
+    // (SPEC-AGENT-BOTS D4: platform ToS and cost risk).
+    const drivesWebview = Boolean(
+      assigneeRes?.success && WEBVIEW_PLATFORMS.includes(assigneeRes.data.platform),
+    );
+    const enabled = config.enabled === undefined ? !drivesWebview : config.enabled !== false;
+
     const id = config.id || `schedule-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const now = Date.now();
 
@@ -226,11 +257,11 @@ class RecurringScheduler {
         title: config.taskTemplate.title.trim(),
         description: config.taskTemplate.description || '',
         priority: config.taskTemplate.priority || 'medium',
-        assignee: config.taskTemplate.assignee || 'agent-claude',
+        assignee,
         requireApproval: config.taskTemplate.requireApproval !== false,
         metadata: config.taskTemplate.metadata || {},
       },
-      enabled: config.enabled !== false,
+      enabled,
       autoRun: config.autoRun !== false,
       runCount: 0,
       createdAt: new Date(now).toISOString(),
@@ -249,8 +280,13 @@ class RecurringScheduler {
   /**
    * Lists all schedules
    */
-  listSchedules() {
-    return Array.from(this.schedules.values()).map((s) => ({ ...s }));
+  /**
+   * @param {{ assignee?: string }} [filter]
+   */
+  listSchedules(filter = {}) {
+    return Array.from(this.schedules.values())
+      .filter((s) => !filter.assignee || s.taskTemplate.assignee === filter.assignee)
+      .map((s) => ({ ...s }));
   }
 
   /**
@@ -357,6 +393,18 @@ class RecurringScheduler {
       }
     }
 
+    const assigneeId = schedule.taskTemplate.assignee || 'agent-claude';
+    const roster = /** @type {any} */ (this.dispatcher.roster);
+    if (typeof roster?.appendTimeline === 'function') {
+      const outcome = runExecution ? `ran (${runExecution.status})` : 'created a task';
+      roster.appendTimeline(assigneeId, {
+        type: 'routine',
+        scheduleId: schedule.id,
+        taskId: createdTask.id,
+        summary: `${routineLabel(schedule, roster)} ${outcome}`,
+      });
+    }
+
     this._notify('schedule:triggered', {
       schedule,
       task: createdTask,
@@ -410,6 +458,8 @@ class RecurringScheduler {
 }
 
 module.exports = {
+  routineLabel,
+  WEBVIEW_PLATFORMS,
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
   DEFAULT_SCHEDULES_PATH,

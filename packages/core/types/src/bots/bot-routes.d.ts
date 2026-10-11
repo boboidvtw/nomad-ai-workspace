@@ -16,6 +16,10 @@ export type BotServices = {
         post: Function;
         stop: Function;
     } | null | undefined;
+    /**
+     * - M4 routines
+     */
+    scheduler?: import("../tasks/recurring-scheduler").RecurringScheduler | null | undefined;
 };
 export type BotRequest = {
     method: string;

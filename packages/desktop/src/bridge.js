@@ -91,7 +91,7 @@ class LocalSyncBridge {
     this.pluginRuntime = new PluginRuntime();
     this.roster = options.roster || new BotRoster();
     /** @type {import('@nomad/core').BotServices} */
-    this.botServices = { roster: this.roster, router: null, rooms: null };
+    this.botServices = { roster: this.roster, router: null, rooms: null, scheduler: null };
     this.dispatcher =
       options.dispatcher ||
       new TaskDispatcher({
@@ -123,6 +123,7 @@ class LocalSyncBridge {
         },
       });
     this.scheduler.loadFromDisk();
+    this.botServices.scheduler = this.scheduler;
   }
 
   registerWithDaemon(daemonPort = this.daemonPort) {

@@ -16,6 +16,7 @@ const {
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
   DEFAULT_SCHEDULES_PATH,
+  routineLabel,
 } = require('./recurring-scheduler');
 
 module.exports = {
@@ -32,4 +33,5 @@ module.exports = {
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
   DEFAULT_SCHEDULES_PATH,
+  routineLabel,
 };

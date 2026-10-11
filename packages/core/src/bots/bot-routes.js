@@ -6,6 +6,7 @@
 
 const { ok, err } = require('../result');
 const { ErrorCodes } = require('../error-codes');
+const { routineLabel } = require('../tasks/recurring-scheduler');
 
 /** @type {Record<string, number>} */
 const STATUS_BY_CODE = {
@@ -24,6 +25,7 @@ const STATUS_BY_CODE = {
  * @property {import('./bot-roster').BotRoster} roster
  * @property {{ send: (input: any) => Promise<any> } | null} [router] - M5 mention/message router
  * @property {{ create: Function, list: Function, get: Function, post: Function, stop: Function } | null} [rooms] - M6 group rooms
+ * @property {import('../tasks/recurring-scheduler').RecurringScheduler | null} [scheduler] - M4 routines
  *
  * @typedef {Object} BotRequest
  * @property {string} method
@@ -100,6 +102,15 @@ async function handleBotRequest(req) {
     return null;
   }
   if (action === 'seen' && method === 'POST') return respond(roster.markSeen(id));
+  if (action === 'routines' && method === 'GET') {
+    if (!services.scheduler) return unavailable('Routines');
+    const bot = roster.getAgent(id);
+    if (!bot.success) return respond(bot);
+    const routines = services.scheduler
+      .listSchedules({ assignee: id })
+      .map((schedule) => ({ ...schedule, label: routineLabel(schedule, roster) }));
+    return respond(ok(routines));
+  }
   return null;
 }
 

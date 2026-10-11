@@ -100,7 +100,7 @@ class NomadDaemonServer {
       this.roster.loadFromDisk(options.rosterPath || DEFAULT_ROSTER_PATH, { quarantine: false });
     }
     /** @type {import('@nomad/core').BotServices} */
-    this.botServices = { roster: this.roster, router: null, rooms: null };
+    this.botServices = { roster: this.roster, router: null, rooms: null, scheduler: null };
     this.dispatcher =
       options.dispatcher ||
       new TaskDispatcher({
@@ -125,6 +125,7 @@ class NomadDaemonServer {
         },
       });
     this.scheduler.loadFromDisk();
+    this.botServices.scheduler = this.scheduler;
   }
 
   start() {
