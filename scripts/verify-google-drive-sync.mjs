@@ -4,14 +4,17 @@
  */
 
 import { spawn } from 'child_process';
-import { writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import http from 'http';
+import { tmpdir } from 'os';
 import { resolve } from 'path';
 
 const BRAVE_PATH = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
 const EXT_PATH = resolve(process.cwd(), 'dist_chrome');
+// Screenshots and browser profiles; override with NOMAD_VERIFY_ARTIFACT_DIR.
 const ARTIFACT_DIR =
-  '/Users/liyungchih-macstudio/.gemini/antigravity-ide/brain/fab1e8a4-4953-4c8e-ae8e-a635b27cc988';
+  process.env.NOMAD_VERIFY_ARTIFACT_DIR || resolve(tmpdir(), 'nomad-verify-drive-sync');
+mkdirSync(ARTIFACT_DIR, { recursive: true });
 const DEBUG_PORT = 9334;
 const USER_DATA_DIR = resolve(ARTIFACT_DIR, 'scratch/chrome_profile_sync_test');
 

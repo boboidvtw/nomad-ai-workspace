@@ -5,13 +5,16 @@
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 
 const BROWSER_PATH = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
 const EXTENSION_PATH = resolve(process.cwd(), 'dist_chrome');
 const PROFILE_PATH = resolve('/tmp/nomad-brave-nav-verify-' + Date.now());
+// Screenshots and browser profiles; override with NOMAD_VERIFY_ARTIFACT_DIR.
 const ARTIFACT_DIR =
-  '/Users/liyungchih-macstudio/.gemini/antigravity-ide/brain/fab1e8a4-4953-4c8e-ae8e-a635b27cc988';
+  process.env.NOMAD_VERIFY_ARTIFACT_DIR || resolve(tmpdir(), 'nomad-verify-navigation');
+mkdirSync(ARTIFACT_DIR, { recursive: true });
 const DEBUG_PORT = 9333;
 
 if (!existsSync(PROFILE_PATH)) {
