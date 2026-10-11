@@ -16,6 +16,9 @@ export type PlatformConfig = {
  * Nomad Shared Core - System Constants & Topologies
  */
 export const DEFAULT_DAEMON_PORT: 8765;
+/** ~/.nomad holds chat URLs, transcripts and prompts: owner-only, like daemon-token. */
+export const PRIVATE_FILE_MODE: 384;
+export const PRIVATE_DIR_MODE: 448;
 export const DEFAULT_DAEMON_HOST: "127.0.0.1";
 /**
  * @typedef {Object} MonitoredService

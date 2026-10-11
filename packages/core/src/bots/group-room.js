@@ -13,6 +13,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { ok, err } = require('../result');
+const { PRIVATE_DIR_MODE, PRIVATE_FILE_MODE } = require('../constants');
 const { ErrorCodes } = require('../error-codes');
 const { parseMentions } = require('./message-router');
 
@@ -309,9 +310,12 @@ class GroupRoomManager {
   persist() {
     if (!this.storagePath) return;
     try {
-      fs.mkdirSync(path.dirname(this.storagePath), { recursive: true });
+      fs.mkdirSync(path.dirname(this.storagePath), { recursive: true, mode: PRIVATE_DIR_MODE });
       const tmp = `${this.storagePath}.${Date.now()}.${Math.random().toString(36).slice(2, 6)}.tmp`;
-      fs.writeFileSync(tmp, JSON.stringify({ version: 1, rooms: this.list() }, null, 2), 'utf8');
+      fs.writeFileSync(tmp, JSON.stringify({ version: 1, rooms: this.list() }, null, 2), {
+        encoding: 'utf8',
+        mode: PRIVATE_FILE_MODE,
+      });
       fs.renameSync(tmp, this.storagePath);
     } catch (e) {
       console.warn('[GroupRoomManager] Failed to save rooms:', e instanceof Error ? e.message : e);

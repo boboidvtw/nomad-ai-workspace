@@ -143,6 +143,7 @@ describe('Bots - group rooms', () => {
     const { rooms, room } = setup({ storagePath: file });
     rooms.post(room.id, { text: 'remember me' });
     await rooms.whenIdle(room.id);
+    assert.strictEqual(fs.statSync(file).mode & 0o777, 0o600);
 
     const restored = new GroupRoomManager({
       roster: new BotRoster(),

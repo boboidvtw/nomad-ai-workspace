@@ -327,6 +327,7 @@ describe('Task Control Plane - P0 Disk Persistence & P1 Real-time Events', () =>
     const saveRes = await dispatcher1.saveToDisk();
     assert.strictEqual(saveRes.success, true);
     assert.strictEqual(fs.existsSync(testStorageFile), true);
+    assert.strictEqual(fs.statSync(testStorageFile).mode & 0o777, 0o600);
 
     // 2. Create brand-new dispatcher instance (simulating daemon restart)
     const dispatcher2 = new TaskDispatcher({

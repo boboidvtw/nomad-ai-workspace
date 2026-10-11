@@ -112,8 +112,14 @@ const SEMANTIC_TYPES = Object.freeze([
   '發布',
 ]);
 
+/** ~/.nomad holds chat URLs, transcripts and prompts: owner-only, like daemon-token. */
+const PRIVATE_FILE_MODE = 0o600;
+const PRIVATE_DIR_MODE = 0o700;
+
 module.exports = {
   DEFAULT_DAEMON_PORT,
+  PRIVATE_FILE_MODE,
+  PRIVATE_DIR_MODE,
   DEFAULT_DAEMON_HOST,
   MONITORED_SERVICES,
   PLATFORMS,
