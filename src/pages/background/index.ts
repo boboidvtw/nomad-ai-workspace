@@ -117,6 +117,7 @@ import { unregisterRegisteredContentScripts } from './contentScriptRegistration'
 import { ForkNodesManager } from './forkNodesManager';
 import { resolveOptionalHighlightSetting } from './highlightOptionalSetting';
 import { handlePlatformFolderSyncMessage, syncAllPlatformFolders } from './multiPlatformFolderSync';
+import { addPermissionChangeListeners } from './permissionEvents';
 import {
   isAllowedSyncContentSender,
   isHandledBackgroundRuntimeMessage,
@@ -1389,8 +1390,8 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 });
 
-chrome.permissions.onAdded.addListener(({ origins }) => {
-  void (async () => {
+addPermissionChangeListeners({
+  onAdded: async ({ origins }) => {
     // Refresh the plugin-site set FIRST so a freshly-granted plugin origin
     // (e.g. claude.ai / chatgpt.com) is reliably excluded from the Prompt-Manager
     // custom-website list. Otherwise onAdded can fire before the initial async
@@ -1420,17 +1421,16 @@ chrome.permissions.onAdded.addListener(({ origins }) => {
     await syncPluginContentScripts();
     // The freshly-granted site is now enabled, so it should no longer be nudged.
     await syncPromptNudgeIcon();
-  })();
-});
-
-chrome.permissions.onRemoved.addListener(() => {
-  void syncCustomContentScripts();
-  // Keep plugin content-script registrations in sync when a site's host
-  // permission is revoked from the browser UI — filterGrantedOrigins will now
-  // drop the revoked origin, so the stale plugin registration is removed.
-  void syncPluginContentScripts();
-  // A revoked plugin site becomes eligible for the nudge dot again.
-  void syncPromptNudgeIcon();
+  },
+  onRemoved: () => {
+    void syncCustomContentScripts();
+    // Keep plugin content-script registrations in sync when a site's host
+    // permission is revoked from the browser UI — filterGrantedOrigins will now
+    // drop the revoked origin, so the stale plugin registration is removed.
+    void syncPluginContentScripts();
+    // A revoked plugin site becomes eligible for the nudge dot again.
+    void syncPromptNudgeIcon();
+  },
 });
 
 const starredMessagesManager = new StarredMessagesManager();
