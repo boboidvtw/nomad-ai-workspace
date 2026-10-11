@@ -201,3 +201,73 @@ test('M2: runs on a platform the bot is not bound to do not touch its binding', 
 
   assert.strictEqual(h.bot().canonicalChat.url, 'https://chatgpt.com/c/keep');
 });
+
+// --- M3: blocked state ------------------------------------------------------
+
+/**
+ * @param {Array<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>} replies
+ * @param {Partial<import('../webview-task-runner').WebviewTaskRunnerDeps>} [extra]
+ */
+function blockedHarness(replies, extra = {}) {
+  const roster = new BotRoster();
+  /** @type {any[]} */
+  const notices = [];
+  /** @type {string[]} */
+  const states = [];
+  const queue = [...replies];
+  const origSet = roster.setBotState.bind(roster);
+  roster.setBotState = (id, state) => {
+    states.push(state);
+    return origSet(id, state);
+  };
+  const runner = createWebviewTaskRunner({
+    roster,
+    inject: okInject,
+    awaitSettled: async () => queue.shift() || { settled: false, text: '' },
+    openChat: async () => ({ ok: true }),
+    currentUrl: async () => 'https://claude.ai/chat/x',
+    notify: (n) => notices.push(n),
+    sleep: async () => {},
+    blockedPollMs: 1,
+    ...extra,
+  });
+  const run = () =>
+    runner.run('claude', 'go', {
+      agent: roster.getAgent('agent-claude').data,
+      task: { id: 't1', title: 'go' },
+    });
+  return { roster, notices, states, run };
+}
+
+test('M3: a blocked bot is marked blocked, the user is notified once, and the run resumes', async () => {
+  const blocked = { settled: false, text: '', blocked: true, reason: 'Claude usage limit reached' };
+  const h = blockedHarness([blocked, blocked, { settled: true, text: 'after limit' }]);
+
+  const res = await h.run();
+
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.data.text, 'after limit');
+  assert.deepStrictEqual(h.states, ['working', 'blocked', 'working', 'done']);
+  assert.strictEqual(h.notices.length, 1);
+  assert.match(h.notices[0].reason, /usage limit/);
+  assert.ok(h.roster.getAgent('agent-claude').data.timeline.some((e) => e.type === 'state'));
+});
+
+test('M3: a bot that stays blocked past the budget fails and stays blocked', async () => {
+  const blocked = { settled: false, text: '', blocked: true, reason: 'Signed out' };
+  let now = 0;
+  const h = blockedHarness(Array(50).fill(blocked), {
+    maxBlockedMs: 10,
+    sleep: async () => {
+      now += 5;
+    },
+    now: () => now,
+  });
+
+  const res = await h.run();
+
+  assert.strictEqual(res.success, false);
+  assert.strictEqual(res.errorCode, 'BOT_RESPONSE_TIMEOUT_005');
+  assert.match(res.message, /Signed out/);
+  assert.strictEqual(h.roster.getAgent('agent-claude').data.state, 'blocked');
+});

@@ -16,6 +16,7 @@ const {
   isConversationUrl,
   isSameConversation,
 } = require('./chat-urls');
+const { BLOCKED_MANIFESTS, detectBlocked, buildStateSnapshotScript } = require('./state-manifests');
 
 module.exports = {
   BOT_STATE,
@@ -28,4 +29,7 @@ module.exports = {
   normalizeChatUrl,
   isConversationUrl,
   isSameConversation,
+  BLOCKED_MANIFESTS,
+  detectBlocked,
+  buildStateSnapshotScript,
 };

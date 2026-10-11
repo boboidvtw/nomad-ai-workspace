@@ -52,6 +52,7 @@ class MultiAiOrchestrator {
    * @param {number} [options.initialWaitMs=2000] - Initial delay before polling
    * @param {number} [options.pollIntervalMs=800] - Polling interval
    * @param {number} [options.maxWaitMs=45000] - Max wait time per AI turn in ms
+   * @param {(platform: string) => Promise<{ blocked: boolean, reason?: string }>} [options.checkBlocked] - Task runs only: stops waiting when the page needs a human
    * @param {Function} [options.onStep] - (event) => void
    * @param {Function} [options.onComplete] - (summary) => void
    */
@@ -63,6 +64,7 @@ class MultiAiOrchestrator {
     this.initialWaitMs = options.initialWaitMs ?? 2000;
     this.pollIntervalMs = options.pollIntervalMs ?? 800;
     this.maxWaitMs = options.maxWaitMs ?? 45000;
+    this.checkBlocked = options.checkBlocked || null;
     this.onStep = options.onStep || (() => {});
     this.onComplete = options.onComplete || (() => {});
 
@@ -356,7 +358,7 @@ class MultiAiOrchestrator {
    * and ignores relay pause/stop state.
    * @param {string} platform
    * @param {{ maxWaitMs?: number, pollIntervalMs?: number }} [options]
-   * @returns {Promise<{ settled: boolean, text: string }>}
+   * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>}
    */
   awaitSettled(platform, options = {}) {
     return this.pollUntilSettled(platform, {
@@ -369,9 +371,10 @@ class MultiAiOrchestrator {
   /**
    * @param {string} platform
    * @param {{ maxWaitMs: number, pollIntervalMs: number, honorRelayControls: boolean }} options
-   * @returns {Promise<{ settled: boolean, text: string }>}
+   * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>}
    */
   async pollUntilSettled(platform, { maxWaitMs, pollIntervalMs, honorRelayControls }) {
+    const checkBlocked = honorRelayControls ? null : this.checkBlocked;
     const isAborted = () => honorRelayControls && this.isAborted;
     const isPaused = () => honorRelayControls && this.isPaused;
     const startTime = Date.now();
@@ -396,6 +399,13 @@ class MultiAiOrchestrator {
           this.checkStreaming(platform),
           this.extractResponse(platform),
         ]);
+
+        if (checkBlocked) {
+          const verdict = await checkBlocked(platform);
+          if (verdict?.blocked) {
+            return { settled: false, text: baselineText, blocked: true, reason: verdict.reason };
+          }
+        }
 
         const isStreaming = statusRes?.isStreaming ?? false;
         const text = (responseRes?.text || '').trim();

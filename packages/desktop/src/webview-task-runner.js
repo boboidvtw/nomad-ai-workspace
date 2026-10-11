@@ -19,15 +19,26 @@ const {
   isSameConversation,
 } = require('@nomad/core');
 
+const DEFAULT_BLOCKED_POLL_MS = 5000;
+const DEFAULT_MAX_BLOCKED_MS = 15 * 60 * 1000;
+
 /**
  * @typedef {Object} WebviewTaskRunnerDeps
  * @property {(platform: string, text: string) => Promise<Record<string, any>>} inject
  *   Same shape as main.js dispatchPromptToTargets: `{ [platform]: { ok, error? } }`.
- * @property {(platform: string) => Promise<{ settled: boolean, text: string }>} awaitSettled
+ * @property {(platform: string) => Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>} awaitSettled
  * @property {import('@nomad/core').BotRoster} [roster]
  * @property {(platform: string, url: string | null) => Promise<{ ok: boolean, error?: string }>} [openChat]
  *   Loads `url`, or a new conversation when null, and resolves once the page is ready.
  * @property {(platform: string) => Promise<string | null>} [currentUrl]
+ * @property {(notice: BlockedNotice) => void} [notify] - called once when a run becomes blocked
+ * @property {number} [blockedPollMs=5000] - how often to re-check a blocked page
+ * @property {number} [maxBlockedMs=900000] - give up after the page stays blocked this long
+ * @property {(ms: number) => Promise<void>} [sleep]
+ * @property {() => number} [now]
+ *
+ * @typedef {{ botId: string | null, botName: string | null, platform: string, reason: string }} BlockedNotice
+ * @typedef {{ onBlocked?: (reason: string) => void, onUnblocked?: () => void }} WaitHooks
  *
  * @typedef {{ agent?: { id: string } | null, task?: { id: string, title?: string } | null }} RunContext
  */
@@ -39,6 +50,10 @@ function createWebviewTaskRunner(deps) {
   /** @type {Map<string, Promise<unknown>>} */
   const queues = new Map();
   const botAware = Boolean(deps.roster && deps.openChat && deps.currentUrl);
+  const blockedPollMs = deps.blockedPollMs ?? DEFAULT_BLOCKED_POLL_MS;
+  const maxBlockedMs = deps.maxBlockedMs ?? DEFAULT_MAX_BLOCKED_MS;
+  const sleep = deps.sleep || ((/** @type {number} */ ms) => new Promise((r) => setTimeout(r, ms)));
+  const now = deps.now || Date.now;
 
   /**
    * Chains work per platform: one webview can only hold one conversation turn at a time.
@@ -58,10 +73,47 @@ function createWebviewTaskRunner(deps) {
   }
 
   /**
+   * Waits for the reply. A blocked page (usage limit, signed out) does not fail the run:
+   * the user is told once and the wait continues until the page recovers or the budget ends.
+   * @param {string} platform
+   * @param {WaitHooks} hooks
+   */
+  async function waitForReply(platform, hooks) {
+    /** @type {number | null} */
+    let blockedSince = null;
+    for (;;) {
+      const reply = await deps.awaitSettled(platform);
+      if (!reply.blocked && blockedSince !== null) {
+        blockedSince = null;
+        hooks.onUnblocked?.();
+      }
+      if (reply.settled) return ok({ text: reply.text });
+      if (!reply.blocked) {
+        return err(ErrorCodes.BOT_RESPONSE_TIMEOUT_005, `${platform} did not finish replying`, {
+          partialText: reply.text,
+        });
+      }
+      const reason = reply.reason || 'needs attention';
+      if (blockedSince === null) {
+        blockedSince = now();
+        hooks.onBlocked?.(reason);
+      }
+      if (now() - blockedSince >= maxBlockedMs) {
+        return err(ErrorCodes.BOT_RESPONSE_TIMEOUT_005, `${platform} stayed blocked: ${reason}`, {
+          blocked: true,
+          reason,
+        });
+      }
+      await sleep(blockedPollMs);
+    }
+  }
+
+  /**
    * @param {string} platform
    * @param {string} prompt
+   * @param {WaitHooks} [hooks]
    */
-  async function injectAndWait(platform, prompt) {
+  async function injectAndWait(platform, prompt, hooks = {}) {
     let injected;
     try {
       injected = await deps.inject(platform, prompt);
@@ -79,13 +131,12 @@ function createWebviewTaskRunner(deps) {
       );
     }
 
-    const reply = await deps.awaitSettled(platform);
-    if (!reply.settled) {
-      return err(ErrorCodes.BOT_RESPONSE_TIMEOUT_005, `${platform} did not finish replying`, {
-        partialText: reply.text,
-      });
-    }
-    return ok({ text: reply.text });
+    return waitForReply(platform, {
+      onBlocked: (reason) => {
+        deps.notify?.({ botId: null, botName: null, platform, reason });
+      },
+      ...hooks,
+    });
   }
 
   /**
@@ -145,7 +196,16 @@ function createWebviewTaskRunner(deps) {
       return chat;
     }
     const text = chat.data.freshChat && bot.persona ? `${bot.persona}\n\n---\n\n${prompt}` : prompt;
-    const res = await injectAndWait(platform, text);
+    const res = await injectAndWait(platform, text, {
+      onBlocked: (reason) => {
+        roster.setBotState(bot.id, BOT_STATE.BLOCKED);
+        roster.appendTimeline(bot.id, { type: 'state', summary: `Blocked: ${reason}` });
+        deps.notify?.({ botId: bot.id, botName: bot.displayName || bot.name, platform, reason });
+      },
+      onUnblocked: () => {
+        roster.setBotState(bot.id, BOT_STATE.WORKING);
+      },
+    });
 
     if (chat.data.freshChat) {
       const landed =
@@ -156,7 +216,12 @@ function createWebviewTaskRunner(deps) {
         roster.bindCanonicalChat(bot.id, { platform, url: landed });
       }
     }
-    roster.setBotState(bot.id, res.success ? BOT_STATE.DONE : BOT_STATE.UNKNOWN);
+    const stillBlocked =
+      !res.success &&
+      Boolean(/** @type {{ blocked?: boolean } | undefined} */ (res.details)?.blocked);
+    if (!stillBlocked) {
+      roster.setBotState(bot.id, res.success ? BOT_STATE.DONE : BOT_STATE.UNKNOWN);
+    }
     if (context.task) {
       roster.appendTimeline(bot.id, {
         type: 'task',

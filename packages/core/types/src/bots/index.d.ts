@@ -8,4 +8,7 @@ import { NEW_CHAT_URLS } from "./chat-urls";
 import { normalizeChatUrl } from "./chat-urls";
 import { isConversationUrl } from "./chat-urls";
 import { isSameConversation } from "./chat-urls";
-export { BOT_STATE, DEFAULT_ROSTER_PATH, MAX_TIMELINE_ENTRIES, BotRoster, toBotHandle, handleBotRequest, NEW_CHAT_URLS, normalizeChatUrl, isConversationUrl, isSameConversation };
+import { BLOCKED_MANIFESTS } from "./state-manifests";
+import { detectBlocked } from "./state-manifests";
+import { buildStateSnapshotScript } from "./state-manifests";
+export { BOT_STATE, DEFAULT_ROSTER_PATH, MAX_TIMELINE_ENTRIES, BotRoster, toBotHandle, handleBotRequest, NEW_CHAT_URLS, normalizeChatUrl, isConversationUrl, isSameConversation, BLOCKED_MANIFESTS, detectBlocked, buildStateSnapshotScript };

@@ -6,6 +6,7 @@ const {
   ipcMain,
   shell,
   globalShortcut,
+  Notification,
 } = require('electron');
 const fs = require('fs');
 const os = require('os');
@@ -35,6 +36,8 @@ const {
   BotRoster,
   DEFAULT_ROSTER_PATH,
   NEW_CHAT_URLS,
+  buildStateSnapshotScript,
+  detectBlocked,
 } = require('@nomad/core');
 
 const localModelClient = new LocalModelClient();
@@ -96,6 +99,25 @@ function ensurePlatformLoaded(key) {
         e instanceof Error ? e.message : String(e),
       );
     }
+  }
+}
+
+/**
+ * Tells the user a bot needs a human (usage limit, signed out) via a system notification
+ * and the renderer, so the HUD can badge the bot.
+ * @param {{ botId: string | null, botName: string | null, platform: string, reason: string }} notice
+ */
+function notifyBotBlocked(notice) {
+  const who = notice.botName || notice.platform;
+  try {
+    if (Notification.isSupported()) {
+      new Notification({ title: `${who} needs you`, body: notice.reason }).show();
+    }
+  } catch (e) {
+    console.warn('[Nomad Desktop] Notification failed:', e instanceof Error ? e.message : e);
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('nomad:bot-blocked', notice);
   }
 }
 
@@ -295,6 +317,18 @@ async function createMainWindow() {
         };
       }
     },
+    checkBlocked: async (/** @type {string} */ platform) => {
+      const item = views[platform];
+      if (!item) return { blocked: false };
+      try {
+        const snapshot = await item.view.webContents.executeJavaScript(
+          buildStateSnapshotScript(platform),
+        );
+        return detectBlocked(platform, snapshot);
+      } catch {
+        return { blocked: false };
+      }
+    },
     onStep: async (/** @type {Record<string, any>} */ event) => {
       if (event.type === 'turn-complete' && event.speaker && event.canonicalTitle) {
         try {
@@ -378,6 +412,7 @@ async function createMainWindow() {
             ? orchestrator.awaitSettled(platform, { maxWaitMs: TASK_REPLY_TIMEOUT_MS })
             : Promise.resolve({ settled: false, text: '' }),
         openChat: openPlatformChat,
+        notify: notifyBotBlocked,
         currentUrl: async (platform) => views[platform]?.view.webContents.getURL() || null,
       });
       return (

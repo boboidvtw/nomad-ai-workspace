@@ -128,6 +128,9 @@ const {
   normalizeChatUrl,
   isConversationUrl,
   isSameConversation,
+  BLOCKED_MANIFESTS,
+  detectBlocked,
+  buildStateSnapshotScript,
 } = require('./src/bots/index');
 
 // P3: Nomad Plugin Runtime
@@ -216,6 +219,9 @@ module.exports = {
   normalizeChatUrl,
   isConversationUrl,
   isSameConversation,
+  BLOCKED_MANIFESTS,
+  detectBlocked,
+  buildStateSnapshotScript,
   // Microservice health probe
   probePort,
   probeAllServices,

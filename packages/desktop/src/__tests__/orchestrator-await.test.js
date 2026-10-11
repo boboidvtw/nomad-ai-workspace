@@ -51,3 +51,22 @@ test('waitForSettledResponse keeps its placeholder on timeout', async () => {
 
   assert.match(text, /grok 回應擷取超時/);
 });
+
+test('awaitSettled stops early and reports why when the page is blocked', async () => {
+  const orch = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    pollIntervalMs: 2,
+    maxWaitMs: 1000,
+    extractResponse: async () => ({ ok: true, text: '' }),
+    checkStreaming: async () => ({ ok: true, isStreaming: true }),
+    checkBlocked: async () => ({ blocked: true, reason: 'Claude usage limit reached' }),
+  });
+
+  const started = Date.now();
+  const res = await orch.awaitSettled('claude');
+
+  assert.strictEqual(res.settled, false);
+  assert.strictEqual(res.blocked, true);
+  assert.strictEqual(res.reason, 'Claude usage limit reached');
+  assert.ok(Date.now() - started < 500);
+});
