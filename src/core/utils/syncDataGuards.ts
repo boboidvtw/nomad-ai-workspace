@@ -45,6 +45,7 @@ function isPromptItem(value: unknown): value is PromptItem {
     typeof value.createdAt === 'number' &&
     Number.isFinite(value.createdAt) &&
     isOptionalFiniteNumber(value.updatedAt) &&
+    isOptionalFiniteNumber(value.pinnedAt) &&
     (value.name === undefined || typeof value.name === 'string')
   );
 }
