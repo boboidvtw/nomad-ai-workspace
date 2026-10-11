@@ -42,6 +42,7 @@ class LocalSyncBridge {
    * @param {string} [options.host='127.0.0.1'] - Bind address
    * @param {Function} [options.getStatus] - Callback returning app status
    * @param {(req: { prompt: string, targets: string[] }) => Promise<unknown>} [options.onDispatchPrompt] - Callback for prompt injection
+   * @param {(platform: string, prompt: string, context: { agent: any, task: any }) => Promise<unknown>} [options.runWebviewTask] - Runs a task prompt in a webview and resolves with the settled reply (Result); preferred over onDispatchPrompt for tasks
    * @param {Function} [options.onSetLayout] - Callback for layout changes
    * @param {Function} [options.onSetZoom] - Callback for zoom adjustments
    * @param {Function} [options.onToggleWindow] - Callback for window summon/hide
@@ -101,11 +102,13 @@ class LocalSyncBridge {
     this.approvalGate = ApprovalGate;
     this.taskRunner = new TaskRunner(this.dispatcher, {
       localModelClient: this.localModelClient,
-      orchestratorDelegate: options.onDispatchPrompt
-        ? async (/** @type {string} */ platform, /** @type {string} */ prompt) => {
-            return this.onDispatchPrompt({ prompt, targets: [platform] });
-          }
-        : undefined,
+      orchestratorDelegate: options.runWebviewTask
+        ? options.runWebviewTask
+        : options.onDispatchPrompt
+          ? async (/** @type {string} */ platform, /** @type {string} */ prompt) => {
+              return this.onDispatchPrompt({ prompt, targets: [platform] });
+            }
+          : undefined,
     });
     this.scheduler =
       options.scheduler ||

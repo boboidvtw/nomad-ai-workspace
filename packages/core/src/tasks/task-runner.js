@@ -8,12 +8,39 @@ const { ok, err, wrapAsync } = require('../result');
 const { ErrorCodes } = require('../error-codes');
 const { ApprovalGate } = require('./approval-gate');
 
+/**
+ * Reads the AI reply out of an orchestrator delegate's return value.
+ * Result-shaped returns are authoritative: a failure or an empty reply throws so the
+ * task fails instead of completing with a made-up deliverable. A legacy `{ text }`
+ * return is still accepted; anything else was fire-and-forget and is labelled as such.
+ * @param {unknown} orchRes
+ * @param {string} platform
+ * @returns {string}
+ */
+function readDelegateReply(orchRes, platform) {
+  const res = /** @type {Record<string, any> | null | undefined} */ (orchRes);
+  if (res && typeof res.success === 'boolean') {
+    if (!res.success) {
+      throw new Error(res.message || `Webview run on ${platform} failed`);
+    }
+    const text = typeof res.data?.text === 'string' ? res.data.text.trim() : '';
+    if (!text) {
+      throw new Error(`Webview run on ${platform} returned an empty reply`);
+    }
+    return text;
+  }
+  if (res && typeof res.text === 'string' && res.text.trim()) {
+    return res.text;
+  }
+  return `Prompt delivered to ${platform}; the response was not captured.`;
+}
+
 class TaskRunner {
   /**
    * @param {import('./dispatcher').TaskDispatcher} dispatcher
    * @param {Object} [options]
    * @param {import('../client/local-model-client').LocalModelClient} [options.localModelClient]
-   * @param {Function} [options.orchestratorDelegate]
+   * @param {(platform: string, prompt: string, context: { agent: any, task: any }) => Promise<unknown>} [options.orchestratorDelegate]
    */
   constructor(dispatcher, options = {}) {
     this.dispatcher = dispatcher;
@@ -83,8 +110,11 @@ class TaskRunner {
             const prompt =
               options.customPrompt ||
               `【任務】：${task.title}\n【說明】：${task.description || ''}\n【驗收標準】：${(task.acceptanceCriteria || []).join('; ')}`;
-            const orchRes = await this.orchestratorDelegate(agent.platform, prompt);
-            outputContent = orchRes?.text || 'Delegated to webview';
+            const orchRes = await this.orchestratorDelegate(agent.platform, prompt, {
+              agent,
+              task,
+            });
+            outputContent = readDelegateReply(orchRes, agent.platform);
             outputSummary = `Webview orchestrated on platform: ${agent.platform}`;
           } else {
             // Default automated mock execution

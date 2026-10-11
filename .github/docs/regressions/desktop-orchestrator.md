@@ -9,3 +9,15 @@
   only guards `null` and `undefined`.
 - **Guard:** `packages/desktop/src/__tests__/orchestrator.test.js` (run by
   `npm run test:monorepo`).
+
+## Webview tasks completed with a fake deliverable
+
+- **Trap:** `TaskRunner` read `orchRes?.text` from the webview delegate, but the desktop
+  delegate forwarded `dispatchPromptToTargets()`, which returns a per-platform delivery
+  map (`{ claude: { ok, data } }`) and never waits for the reply. Every webview task
+  completed with the artifact `"Delegated to webview"`. The bridge test mocked the
+  delegate as `{ text }`, so the mismatch never failed.
+- **Rule:** Run webview tasks through `createWebviewTaskRunner` (inject, then
+  `orchestrator.awaitSettled`) and return a Result. A failed or empty Result fails the
+  task; mocks must mirror the real `dispatchPromptToTargets` shape.
+- **Guard:** `packages/core/src/__tests__/task-runner-webview.test.js`

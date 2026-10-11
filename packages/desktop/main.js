@@ -16,6 +16,9 @@ const { PLATFORM_INJECTORS } = require('./src/injectors');
 const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
+const { createWebviewTaskRunner } = require('./src/webview-task-runner');
+
+const TASK_REPLY_TIMEOUT_MS = 180000;
 const { TrayAndShortcutManager } = require('./src/tray');
 const { resolveMcpAllowedPaths } = require('./src/mcp-workspace');
 const {
@@ -335,6 +338,18 @@ async function createMainWindow() {
       windowVisible: mainWindow ? mainWindow.isVisible() : false,
       isDrawerOpen,
     }),
+    runWebviewTask: (() => {
+      // Tasks can run far longer than a relay turn, so allow up to 3 minutes per reply.
+      const runner = createWebviewTaskRunner({
+        inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
+        awaitSettled: (platform) =>
+          orchestrator
+            ? orchestrator.awaitSettled(platform, { maxWaitMs: TASK_REPLY_TIMEOUT_MS })
+            : Promise.resolve({ settled: false, text: '' }),
+      });
+      return (/** @type {string} */ platform, /** @type {string} */ prompt) =>
+        runner.run(platform, prompt);
+    })(),
     onDispatchPrompt: async ({ prompt, targets }) => {
       const results = await dispatchPromptToTargets(prompt, targets);
       if (mainWindow && !mainWindow.isDestroyed()) {
