@@ -12,6 +12,8 @@ function isLoopbackSyncUrl(rawUrl: string): boolean {
   }
 }
 /* Background service worker - handles cross-origin image fetch, popup opening, and sync */
+// Must stay first: patches chrome.storage.sync before any other module uses it.
+import '@/core/utils/storageSyncFallback';
 import browser from 'webextension-polyfill';
 
 import {

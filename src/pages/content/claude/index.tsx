@@ -1,3 +1,5 @@
+// Must stay first: patches chrome.storage.sync before any other module uses it.
+import '@/core/utils/storageSyncFallback';
 import { createRoot } from 'react-dom/client';
 
 import { APP_ROOT_ID, APP_ROOT_SELECTOR } from '@src/constants/selectors';

@@ -1,3 +1,5 @@
+// Must stay first: patches chrome.storage.sync before any other module uses it.
+import '@/core/utils/storageSyncFallback';
 import { CleanupPositions } from '@/core/types/cleanupPositions';
 import { StorageKeys } from '@/core/types/common';
 import { isHighlightColor, normalizeHighlightColorPalette } from '@/core/types/highlight';
@@ -8,6 +10,7 @@ import {
   isExtensionContextInvalidatedError,
 } from '@/core/utils/extensionContext';
 import { isGeminiEnterpriseEnvironment } from '@/core/utils/gemini';
+import { readSyncWithDefaults } from '@/core/utils/readSyncWithDefaults';
 import { WATERMARK_STORAGE_KEYS } from '@/core/utils/watermarkSettings';
 import { startPluginHost } from '@/features/plugins';
 import { resolvePluginPlatformId } from '@/features/plugins/sites/registry';
@@ -315,19 +318,12 @@ async function initializeFeatures(): Promise<void> {
       await delay(LIGHT_FEATURE_INIT_DELAY);
 
       // Quote Reply - conditionally start based on storage setting
-      const quoteReplyResult = await new Promise<Record<string, unknown>>((resolve) => {
-        const defaults = {
-          [StorageKeys.QUOTE_REPLY_ENABLED]: true,
-          [StorageKeys.HIGHLIGHT_ENABLED]: false,
-          [StorageKeys.HIGHLIGHT_DEFAULT_COLOR]: 'yellow',
-          [StorageKeys.HIGHLIGHT_COLOR_PALETTE]: null,
-          [StorageKeys.HIGHLIGHT_TIMELINE_MARKERS_ENABLED]: true,
-        };
-        try {
-          chrome.storage?.sync?.get(defaults, resolve);
-        } catch {
-          resolve(defaults);
-        }
+      const quoteReplyResult = await readSyncWithDefaults({
+        [StorageKeys.QUOTE_REPLY_ENABLED]: true,
+        [StorageKeys.HIGHLIGHT_ENABLED]: false,
+        [StorageKeys.HIGHLIGHT_DEFAULT_COLOR]: 'yellow',
+        [StorageKeys.HIGHLIGHT_COLOR_PALETTE]: null,
+        [StorageKeys.HIGHLIGHT_TIMELINE_MARKERS_ENABLED]: true,
       });
       const storedHighlightColor = quoteReplyResult[StorageKeys.HIGHLIGHT_DEFAULT_COLOR];
       // Highlight shares Quote Reply's single selection toolbar/listener. Keep
