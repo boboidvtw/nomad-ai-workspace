@@ -1035,6 +1035,7 @@ class LocalSyncBridge {
           workspaces,
           settings: body.settings,
           targetDir: this.getDriveSyncDir(),
+          bots: this.roster.toSyncPayload(),
         });
         return this.sendJson(res, pushRes.success ? 200 : 400, pushRes);
       }
@@ -1049,6 +1050,9 @@ class LocalSyncBridge {
         });
         if (pullRes.success && this.sessionManager) {
           this.sessionManager.store.set('workspaces', pullRes.data.reconciledWorkspaces);
+        }
+        if (pullRes.success && pullRes.data.bots) {
+          this.roster.applySyncPayload(pullRes.data.bots);
         }
         return this.sendJson(res, pullRes.success ? 200 : 400, pullRes);
       }

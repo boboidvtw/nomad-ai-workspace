@@ -15,6 +15,7 @@ const DRIVE_FOLDER_NAME = 'Nomad Workspace Data';
 const WORKSPACES_FILE_NAME = 'nomad-workspaces.json';
 const SETTINGS_FILE_NAME = 'nomad-settings.json';
 const MANIFEST_FILE_NAME = 'nomad-sync-manifest.json';
+const BOTS_FILE_NAME = 'nomad-bots.json';
 
 /**
  * Detect local Google Drive mounted paths on macOS / Linux / Windows
@@ -74,6 +75,7 @@ function computeChecksum(content) {
  * @param {SyncWorkspace[]} [options.workspaces] - List of workspaces (required; validated at runtime)
  * @param {Record<string, unknown>} [options.settings] - App settings
  * @param {string} [options.targetDir] - Custom Drive directory override
+ * @param {{ version: number, bots: unknown[] }} [options.bots] - BotRoster.toSyncPayload() (no chat URLs)
  * @returns {import('../result').UnitResult<{ targetDir: string, syncedCount: number, checksum: string, timestamp: string }>}
  */
 function exportToDrive(options = {}) {
@@ -115,14 +117,26 @@ function exportToDrive(options = {}) {
       fs.writeFileSync(settingsPath, JSON.stringify(options.settings, null, 2), 'utf8');
     }
 
-    // 3. Write Sync Manifest
+    // 3. Serialize bot personas and settings if provided
+    const hasBots = Boolean(options.bots && Array.isArray(options.bots.bots));
+    if (hasBots) {
+      fs.writeFileSync(
+        path.join(targetDir, BOTS_FILE_NAME),
+        JSON.stringify(options.bots, null, 2),
+        'utf8',
+      );
+    }
+
+    // 4. Write Sync Manifest
     const checksum = computeChecksum(workspacesJson);
     const manifest = {
       schemaVersion: '1.0.0',
       lastSyncedAt: new Date().toISOString(),
       workspaceCount: workspaces.length,
       checksum,
-      files: [WORKSPACES_FILE_NAME, SETTINGS_FILE_NAME],
+      files: hasBots
+        ? [WORKSPACES_FILE_NAME, SETTINGS_FILE_NAME, BOTS_FILE_NAME]
+        : [WORKSPACES_FILE_NAME, SETTINGS_FILE_NAME],
     };
     fs.writeFileSync(
       path.join(targetDir, MANIFEST_FILE_NAME),
@@ -145,12 +159,29 @@ function exportToDrive(options = {}) {
 }
 
 /**
+ * Reads nomad-bots.json from a Drive folder. Missing or unreadable files yield null so a
+ * workspace pull never fails because of bots.
+ * @param {string} sourceDir
+ * @returns {{ version?: number, bots?: unknown[] } | null}
+ */
+function readBotsPayload(sourceDir) {
+  const botsPath = path.join(sourceDir, BOTS_FILE_NAME);
+  if (!fs.existsSync(botsPath)) return null;
+  try {
+    const parsed = JSON.parse(fs.readFileSync(botsPath, 'utf8'));
+    return parsed && Array.isArray(parsed.bots) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Import workspaces from Google Drive folder (Pull) with reconciliation strategy
  * @param {Object} [options]
  * @param {SyncWorkspace[]} [options.currentWorkspaces=[]] - Existing local workspaces
  * @param {string} [options.sourceDir] - Custom Drive directory override
  * @param {'merge'|'overwrite'|'keep_local'} [options.strategy='merge']
- * @returns {import('../result').UnitResult<{ reconciledWorkspaces: SyncWorkspace[], importedCount: number, strategy: string, timestamp: string }>}
+ * @returns {import('../result').UnitResult<{ reconciledWorkspaces: SyncWorkspace[], importedCount: number, strategy: string, timestamp: string, bots: { version?: number, bots?: unknown[] } | null }>}
  */
 function importFromDrive(options = {}) {
   try {
@@ -226,6 +257,7 @@ function importFromDrive(options = {}) {
     return ok({
       reconciledWorkspaces: reconciled,
       importedCount: driveWorkspaces.length,
+      bots: readBotsPayload(sourceDir),
       strategy,
       timestamp: new Date().toISOString(),
     });
@@ -290,6 +322,7 @@ module.exports = {
   WORKSPACES_FILE_NAME,
   SETTINGS_FILE_NAME,
   MANIFEST_FILE_NAME,
+  BOTS_FILE_NAME,
   detectLocalDriveFolder,
   computeChecksum,
   exportToDrive,

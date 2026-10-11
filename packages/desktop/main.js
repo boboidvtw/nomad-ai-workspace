@@ -913,7 +913,8 @@ ipcMain.handle('nomad:drive-sync-push', async (event, customOpts = {}) => {
   const workspaces = sessionManager.getWorkspaces();
   const settings = store.getAll();
   const targetDir = customOpts.targetDir || store.get('driveSync')?.customPath || undefined;
-  const result = exportToDrive({ workspaces, settings, targetDir });
+  const bots = studioBots ? studioBots.roster.toSyncPayload() : undefined;
+  const result = exportToDrive({ workspaces, settings, targetDir, bots });
   if (result.success) {
     const driveSync = store.get('driveSync') || {};
     driveSync.lastSyncedAt = result.data.timestamp;
@@ -934,6 +935,7 @@ ipcMain.handle('nomad:drive-sync-pull', async (event, customOpts = {}) => {
   });
   if (result.success) {
     sm.store.set('workspaces', result.data.reconciledWorkspaces);
+    if (result.data.bots && studioBots) studioBots.roster.applySyncPayload(result.data.bots);
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('nomad:workspaces-updated', result.data.reconciledWorkspaces);
     }
