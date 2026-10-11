@@ -17,6 +17,7 @@ const {
   registerMessageAgentTool,
 } = require('./message-router');
 const { DEFAULT_ROOMS_PATH, GroupRoomManager } = require('./group-room');
+const { createHerdrRunner } = require('./herdr-runner');
 const {
   NEW_CHAT_URLS,
   normalizeChatUrl,
@@ -38,6 +39,7 @@ module.exports = {
   registerMessageAgentTool,
   DEFAULT_ROOMS_PATH,
   GroupRoomManager,
+  createHerdrRunner,
   NEW_CHAT_URLS,
   normalizeChatUrl,
   isConversationUrl,

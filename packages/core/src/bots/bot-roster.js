@@ -106,7 +106,7 @@ function compact(value) {
 function defaultHandle(agent) {
   return (
     toBotHandle(agent.displayName || '') ||
-    toBotHandle(String(agent.id).replace(/^agent-/, '')) ||
+    toBotHandle(String(agent.id).replace(/^(agent|bot)-/, '')) ||
     toBotHandle(agent.name || '') ||
     'bot'
   );

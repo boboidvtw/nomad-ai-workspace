@@ -26,6 +26,7 @@ const STATUS_BY_CODE = {
  * @property {import('./message-router').BotMessageRouter | null} [router] - M5 mention/message router
  * @property {import('./group-room').GroupRoomManager | null} [rooms] - M6 group rooms
  * @property {import('../tasks/recurring-scheduler').RecurringScheduler | null} [scheduler] - M4 routines
+ * @property {(() => Promise<Record<string, boolean>>) | null} [capabilities] - optional runners present on this host
  *
  * @typedef {Object} BotRequest
  * @property {string} method
@@ -77,6 +78,9 @@ async function handleBotRequest(req) {
   const [head, action] = parts;
   if (head === 'resolve' && method === 'GET') {
     return respond(roster.resolveMention(searchParams.get('mention') || ''));
+  }
+  if (head === 'capabilities' && method === 'GET') {
+    return respond(ok(services.capabilities ? await services.capabilities() : { herdr: false }));
   }
   if (head === 'sync' && parts.length === 1) {
     if (method === 'GET') return respond(ok(roster.toSyncPayload()));

@@ -12,6 +12,7 @@ const {
   DEFAULT_ROSTER_PATH,
   DEFAULT_ROOMS_PATH,
   GroupRoomManager,
+  BOT_STATE,
 } = require('@nomad/core');
 const { createWebviewTaskRunner } = require('./webview-task-runner');
 const { createBotDeliver } = require('./bot-delivery');
@@ -29,6 +30,7 @@ const TASK_REPLY_TIMEOUT_MS = 180000;
  * @property {{ chatCompletion: (req: any) => Promise<any> }} [localModelClient]
  * @property {import('@nomad/core').McpGateway} [mcpGateway]
  * @property {Record<string, import('./bot-delivery').BotRunner>} [runners]
+ * @property {{ run: import('./bot-delivery').BotRunner, isAvailable: () => Promise<boolean> }} [herdrRunner]
  * @property {string} [rosterPath]
  * @property {string} [roomsPath]
  * @property {(message: string) => void} [warn]
@@ -59,11 +61,32 @@ function createStudioBots(deps) {
   const runWebviewTask = (platform, prompt, context) =>
     webviewRunner.run(platform, prompt, context);
 
+  /** @type {Record<string, import('./bot-delivery').BotRunner>} */
+  const runners = {};
+  for (const [platform, runner] of Object.entries({
+    ...deps.runners,
+    ...(deps.herdrRunner ? { herdr: deps.herdrRunner.run } : {}),
+  })) {
+    runners[platform] = withBotState(roster, runner);
+  }
+
   const deliver = createBotDeliver({
     runWebviewTask,
     localModelClient: deps.localModelClient,
-    runners: deps.runners,
+    runners,
   });
+
+  /**
+   * TaskRunner delegate: CLI-agent bots (herdr) use their runner, everything else a webview.
+   * @param {string} platform
+   * @param {string} prompt
+   * @param {any} [context]
+   */
+  const runTask = (platform, prompt, context) => {
+    const runner = runners[platform];
+    if (runner && context?.agent) return runner(context.agent, prompt);
+    return runWebviewTask(platform, prompt, context);
+  };
   const router = new BotMessageRouter({ roster, deliver });
   if (deps.mcpGateway) registerMessageAgentTool(deps.mcpGateway, router);
 
@@ -84,6 +107,7 @@ function createStudioBots(deps) {
     rooms,
     deliver,
     runWebviewTask,
+    runTask,
     /**
      * Exposes routing and rooms on the bridge's /api/bots/* routes and room events on SSE.
      * @param {{ botServices: import('@nomad/core').BotServices, broadcast?: (type: string, data: unknown) => void }} bridge
@@ -91,10 +115,32 @@ function createStudioBots(deps) {
     attach(bridge) {
       bridge.botServices.router = router;
       bridge.botServices.rooms = rooms;
+      bridge.botServices.capabilities = async () => ({
+        herdr: deps.herdrRunner ? await deps.herdrRunner.isAvailable() : false,
+      });
       if (typeof bridge.broadcast === 'function') {
         broadcast = (type, data) => bridge.broadcast?.(type, data);
       }
     },
+  };
+}
+
+/**
+ * Tracks working / done / blocked / unknown for runners that do not track it themselves.
+ * @param {import('@nomad/core').BotRoster} roster
+ * @param {import('./bot-delivery').BotRunner} runner
+ * @returns {import('./bot-delivery').BotRunner}
+ */
+function withBotState(roster, runner) {
+  return async (bot, text) => {
+    roster.setBotState(bot.id, BOT_STATE.WORKING);
+    const res = await runner(bot, text);
+    const blocked = !res.success && Boolean(/** @type {any} */ (res).details?.blocked);
+    roster.setBotState(
+      bot.id,
+      res.success ? BOT_STATE.DONE : blocked ? BOT_STATE.BLOCKED : BOT_STATE.UNKNOWN,
+    );
+    return res;
   };
 }
 

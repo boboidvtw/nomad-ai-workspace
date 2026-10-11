@@ -55,3 +55,30 @@ test('runs group rooms and streams room events through the bridge', async () => 
   assert.strictEqual(bridge.botServices.rooms, bots.rooms);
   assert.ok(events.includes('room:message'));
 });
+
+test('routes herdr bots to the herdr runner and tracks their state', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nomad-studio-herdr-'));
+  const bots = createStudioBots({
+    rosterPath: path.join(dir, 'roster.json'),
+    roomsPath: path.join(dir, 'rooms.json'),
+    inject: async () => ({}),
+    awaitSettled: async () => ({ settled: false, text: '' }),
+    openChat: async () => ({ ok: true }),
+    currentUrl: async () => null,
+    notify: () => {},
+    herdrRunner: {
+      run: async (bot) => ({ success: true, data: { text: `cli ${bot.handle}` } }),
+      isAvailable: async () => true,
+    },
+  });
+  bots.roster.registerAgent({ id: 'bot-reviewer', name: 'Reviewer', platform: 'herdr' });
+  const reviewer = bots.roster.getAgent('bot-reviewer').data;
+
+  const res = await bots.runTask('herdr', 'review', { agent: reviewer });
+  const bridge = { botServices: /** @type {any} */ ({ roster: bots.roster }) };
+  bots.attach(bridge);
+
+  assert.strictEqual(res.data.text, 'cli reviewer');
+  assert.strictEqual(bots.roster.getAgent('bot-reviewer').data.state, 'done');
+  assert.deepStrictEqual(await bridge.botServices.capabilities(), { herdr: true });
+});

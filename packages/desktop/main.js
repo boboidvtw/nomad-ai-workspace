@@ -33,6 +33,7 @@ const {
   McpGateway,
   KnowledgeBase,
   NEW_CHAT_URLS,
+  createHerdrRunner,
   buildStateSnapshotScript,
   detectBlocked,
 } = require('@nomad/core');
@@ -391,6 +392,7 @@ async function createMainWindow() {
     notify: notifyBotBlocked,
     localModelClient,
     mcpGateway,
+    herdrRunner: createHerdrRunner(),
     warn: (message) => console.warn(`[Nomad Desktop] ${message}`),
   });
   bridge = new LocalSyncBridge({
@@ -411,7 +413,7 @@ async function createMainWindow() {
       windowVisible: mainWindow ? mainWindow.isVisible() : false,
       isDrawerOpen,
     }),
-    runWebviewTask: studioBots.runWebviewTask,
+    runWebviewTask: studioBots.runTask,
     onDispatchPrompt: async ({ prompt, targets }) => {
       const results = await dispatchPromptToTargets(prompt, targets);
       if (mainWindow && !mainWindow.isDestroyed()) {
