@@ -17,6 +17,8 @@
  * - ~160 particles total — negligible GPU/CPU overhead
  */
 
+import { resolveVisualEffect } from './effectSetting';
+
 const CANVAS_ID = 'gv-snow-effect-canvas';
 const STORAGE_KEY = 'gvVisualEffect';
 const LEGACY_KEY = 'gvSnowEffect';
@@ -248,13 +250,6 @@ function forceDisable(): void {
   finalizeDrain();
 }
 
-function resolveEffect(res: Record<string, unknown>): string {
-  if (typeof res[STORAGE_KEY] === 'string') return res[STORAGE_KEY] as string;
-  // Backward compat: old boolean snow key -> 'snow'
-  if (res[LEGACY_KEY] === true) return 'snow';
-  return 'off';
-}
-
 /**
  * Initialize and start the snow effect feature
  */
@@ -262,7 +257,7 @@ export function startSnowEffect(): void {
   // 1) Read initial setting
   try {
     chrome.storage?.sync?.get({ [STORAGE_KEY]: null, [LEGACY_KEY]: false }, (res) => {
-      if (resolveEffect(res) === EFFECT_VALUE) {
+      if (resolveVisualEffect(res) === EFFECT_VALUE) {
         enable();
       }
     });

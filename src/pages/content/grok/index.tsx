@@ -7,6 +7,8 @@
  * - startSlashPromptFeature (Slash / command quick completion & dynamic variable fill)
  */
 
+// Must stay first: patches chrome.storage.sync before any other module uses it.
+import '@/core/utils/storageSyncFallback';
 import React from 'react';
 import { type Root, createRoot } from 'react-dom/client';
 

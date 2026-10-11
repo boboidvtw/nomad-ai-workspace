@@ -41,6 +41,18 @@
   DOM test built from the real page structure.
 - **Guard:** `packages/desktop/src/__tests__/injectors.test.js`
 
+## Studio kept running the previous background bundle after a rebuild
+
+- **Trap:** Electron keeps an unpacked extension's service-worker registration across
+  launches and only re-registers it when the manifest version changes. Rebuilding
+  `dist_chrome` at the same version left Studio on the old background bundle, so fixes
+  such as the `storage.sync` fallback never reached it.
+- **Rule:** Call `refreshStaleExtensionServiceWorker` before `loadExtension`; it clears the
+  extension's service-worker registration whenever the background entry's fingerprint
+  changes. When checking a background fix in Studio, confirm the logged
+  `assets/index.ts-*.js` name matches the one in `dist_chrome/assets`.
+- **Guard:** `packages/desktop/src/__tests__/extension-sw-refresh.test.js`
+
 ## chrome.permissions crashed the background in Electron
 
 - **Trap:** Electron does not implement `chrome.permissions`. The background registered
