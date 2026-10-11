@@ -158,3 +158,30 @@ test('Daemon Security: local-model endpoints refuse non-loopback targets (SSRF)'
     await daemon.stop();
   }
 });
+
+test('Daemon Security: foreign websites cannot read the token-bearing dashboard', async () => {
+  const port = 19782;
+  const daemon = new NomadDaemonServer({ port });
+  await daemon.start();
+
+  try {
+    const dash = await rawRequest(port, {
+      path: '/dashboard',
+      headers: { Origin: 'https://evil.example.com' },
+    });
+    assert.equal(dash.status, 200);
+    assert.ok(dash.body.includes(process.env.NOMAD_DAEMON_TOKEN));
+    assert.equal(dash.headers['access-control-allow-origin'], undefined);
+    assert.equal(dash.headers['cross-origin-resource-policy'], 'same-origin');
+    assert.equal(dash.headers['x-frame-options'], 'DENY');
+
+    // The token-free health probe stays readable from anywhere
+    const probe = await rawRequest(port, {
+      path: '/api/probe?timeout=100',
+      headers: { Origin: 'https://evil.example.com' },
+    });
+    assert.equal(probe.headers['access-control-allow-origin'], '*');
+  } finally {
+    await daemon.stop();
+  }
+});

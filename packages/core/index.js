@@ -33,6 +33,8 @@ const { ErrorCodes } = require('./src/error-codes');
 const {
   DEFAULT_DAEMON_PORT,
   DEFAULT_DAEMON_HOST,
+  PRIVATE_FILE_MODE,
+  PRIVATE_DIR_MODE,
   MONITORED_SERVICES,
   PLATFORMS,
   LAYOUTS,
@@ -78,6 +80,7 @@ const { probePort, probeAllServices } = require('./src/probe/prober');
 const {
   resolveAuthToken,
   getTokenFilePath,
+  isDashboardPath,
   isLoopbackHostname,
   isLoopbackModelTarget,
   applyCorsHeaders,
@@ -166,6 +169,8 @@ module.exports = {
   ErrorCodes,
   DEFAULT_DAEMON_PORT,
   DEFAULT_DAEMON_HOST,
+  PRIVATE_FILE_MODE,
+  PRIVATE_DIR_MODE,
   MONITORED_SERVICES,
   PLATFORMS,
   LAYOUTS,
@@ -248,6 +253,7 @@ module.exports = {
   // Local gateway auth
   resolveAuthToken,
   getTokenFilePath,
+  isDashboardPath,
   isLoopbackHostname,
   isLoopbackModelTarget,
   applyCorsHeaders,

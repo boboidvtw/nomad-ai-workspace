@@ -9,6 +9,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { ok, err } = require('../result');
+const { PRIVATE_DIR_MODE, PRIVATE_FILE_MODE } = require('../constants');
 const { ErrorCodes } = require('../error-codes');
 const { AgentRoster, DEFAULT_ROSTER, AGENT_STATUS } = require('../tasks/roster');
 const { isConversationUrl, normalizeChatUrl, CONVERSATION_PATTERNS } = require('./chat-urls');
@@ -458,11 +459,11 @@ class BotRoster extends AgentRoster {
   saveToDiskSync(customPath = this.storagePath) {
     if (!customPath) return ok({ persisted: false, count: 0 });
     try {
-      fs.mkdirSync(path.dirname(customPath), { recursive: true });
+      fs.mkdirSync(path.dirname(customPath), { recursive: true, mode: PRIVATE_DIR_MODE });
       const bots = this.listBots().map(toStoredBot);
       const data = JSON.stringify({ version: ROSTER_FILE_VERSION, bots }, null, 2);
       const tmpPath = `${customPath}.${Date.now()}.${Math.random().toString(36).slice(2, 6)}.tmp`;
-      fs.writeFileSync(tmpPath, data, 'utf8');
+      fs.writeFileSync(tmpPath, data, { encoding: 'utf8', mode: PRIVATE_FILE_MODE });
       fs.renameSync(tmpPath, customPath);
       return ok({ persisted: true, path: customPath, count: bots.length });
     } catch (e) {

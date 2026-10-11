@@ -7,7 +7,15 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { spawn } = require('child_process');
-const { ok, err, ErrorCodes, DEFAULT_DAEMON_PORT, probePort } = require('@nomad/core');
+const {
+  ok,
+  err,
+  ErrorCodes,
+  DEFAULT_DAEMON_PORT,
+  PRIVATE_DIR_MODE,
+  PRIVATE_FILE_MODE,
+  probePort,
+} = require('@nomad/core');
 
 const NOMAD_DIR = path.join(os.homedir(), '.nomad');
 const PID_FILE = path.join(NOMAD_DIR, 'daemon.pid');
@@ -15,7 +23,7 @@ const LOG_FILE = path.join(NOMAD_DIR, 'daemon.log');
 
 function ensureNomadDir() {
   if (!fs.existsSync(NOMAD_DIR)) {
-    fs.mkdirSync(NOMAD_DIR, { recursive: true });
+    fs.mkdirSync(NOMAD_DIR, { recursive: true, mode: PRIVATE_DIR_MODE });
   }
 }
 
@@ -35,7 +43,7 @@ function readPid() {
  */
 function writePid(pid) {
   ensureNomadDir();
-  fs.writeFileSync(PID_FILE, String(pid), 'utf-8');
+  fs.writeFileSync(PID_FILE, String(pid), { encoding: 'utf-8', mode: PRIVATE_FILE_MODE });
 }
 
 function removePid() {
@@ -105,8 +113,8 @@ async function startDaemon(daemonScriptPath, port = DEFAULT_DAEMON_PORT) {
   }
 
   ensureNomadDir();
-  const out = fs.openSync(LOG_FILE, 'a');
-  const errOut = fs.openSync(LOG_FILE, 'a');
+  const out = fs.openSync(LOG_FILE, 'a', PRIVATE_FILE_MODE);
+  const errOut = fs.openSync(LOG_FILE, 'a', PRIVATE_FILE_MODE);
 
   const child = spawn(process.execPath, [daemonScriptPath, 'run'], {
     detached: true,

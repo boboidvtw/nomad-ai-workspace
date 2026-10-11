@@ -9,12 +9,15 @@
 import { spawn } from 'child_process';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import http from 'http';
+import { tmpdir } from 'os';
 import { resolve } from 'path';
 
 const BRAVE_PATH = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
-const EXT_PATH = resolve('/Users/liyungchih-macstudio/Developer/nomad-ai-workspace', 'dist_chrome');
+const EXT_PATH = resolve(process.cwd(), 'dist_chrome');
+// Screenshots and browser profiles; override with NOMAD_VERIFY_ARTIFACT_DIR.
 const ARTIFACT_DIR =
-  '/Users/liyungchih-macstudio/.gemini/antigravity-ide/brain/8883b7cc-2294-4d24-9e96-501cca1971c5';
+  process.env.NOMAD_VERIFY_ARTIFACT_DIR || resolve(tmpdir(), 'nomad-verify-sync-and-orb');
+mkdirSync(ARTIFACT_DIR, { recursive: true });
 const DEBUG_PORT = 9335;
 const USER_DATA_DIR = resolve(ARTIFACT_DIR, 'scratch/chrome_profile_full_test_' + Date.now());
 
@@ -65,22 +68,20 @@ class CDPClient {
 
   async connect() {
     return new Promise((res, rej) => {
-      import('/Users/liyungchih-macstudio/Developer/nomad-ai-workspace/node_modules/ws/index.js').then(
-        ({ default: WebSocket }) => {
-          this.ws = new WebSocket(this.wsUrl);
-          this.ws.on('open', res);
-          this.ws.on('error', rej);
-          this.ws.on('message', (raw) => {
-            const msg = JSON.parse(raw.toString());
-            if (msg.id && this.pending.has(msg.id)) {
-              const { resolve: rResolve, reject: rReject } = this.pending.get(msg.id);
-              this.pending.delete(msg.id);
-              if (msg.error) rReject(new Error(JSON.stringify(msg.error)));
-              else rResolve(msg.result);
-            }
-          });
-        },
-      );
+      import('ws').then(({ default: WebSocket }) => {
+        this.ws = new WebSocket(this.wsUrl);
+        this.ws.on('open', res);
+        this.ws.on('error', rej);
+        this.ws.on('message', (raw) => {
+          const msg = JSON.parse(raw.toString());
+          if (msg.id && this.pending.has(msg.id)) {
+            const { resolve: rResolve, reject: rReject } = this.pending.get(msg.id);
+            this.pending.delete(msg.id);
+            if (msg.error) rReject(new Error(JSON.stringify(msg.error)));
+            else rResolve(msg.result);
+          }
+        });
+      });
     });
   }
 

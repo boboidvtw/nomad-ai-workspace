@@ -7,6 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { ok, err } = require('../result');
+const { PRIVATE_DIR_MODE, PRIVATE_FILE_MODE } = require('../constants');
 const { ErrorCodes } = require('../error-codes');
 
 const DEFAULT_SCHEDULES_PATH = path.join(os.homedir(), '.nomad', 'recurring-tasks.json');
@@ -144,11 +145,11 @@ class RecurringScheduler {
     try {
       const dir = path.dirname(customPath);
       if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+        fs.mkdirSync(dir, { recursive: true, mode: PRIVATE_DIR_MODE });
       }
       const data = JSON.stringify(Array.from(this.schedules.values()), null, 2);
       const tmpPath = `${customPath}.${Date.now()}.${Math.random().toString(36).substring(2, 6)}.tmp`;
-      fs.writeFileSync(tmpPath, data, 'utf8');
+      fs.writeFileSync(tmpPath, data, { encoding: 'utf8', mode: PRIVATE_FILE_MODE });
       fs.renameSync(tmpPath, customPath);
       return ok({ persisted: true, path: customPath, count: this.schedules.size });
     } catch (e) {

@@ -32,6 +32,7 @@ const {
   applyCorsHeaders,
   authorizeRequest,
   injectDashboardAuth,
+  isDashboardPath,
   probeAllServices,
 } = require('@nomad/core');
 const { serveDashboard } = require('./static-handler');
@@ -210,13 +211,7 @@ class NomadDaemonServer {
    */
   isPublicRoute(method, pathname) {
     if (method !== 'GET' && method !== 'HEAD') return false;
-    return (
-      pathname === '/' ||
-      pathname === '/api/probe' ||
-      pathname === '/dashboard' ||
-      pathname === '/dashboard/' ||
-      pathname === '/dashboard/index.html'
-    );
+    return pathname === '/' || pathname === '/api/probe' || isDashboardPath(pathname);
   }
 
   /**
@@ -316,7 +311,8 @@ class NomadDaemonServer {
     const url = new URL(req.url || '/', 'http://127.0.0.1:' + this.port);
     const pathname = url.pathname;
     const publicRoute = this.isPublicRoute(req.method, pathname);
-    applyCorsHeaders(req, res, publicRoute);
+    // Dashboard HTML carries the token: public to load, never readable cross-origin.
+    applyCorsHeaders(req, res, publicRoute && !isDashboardPath(pathname));
 
     const auth = authorizeRequest(req, url, {
       token: this.authToken,
@@ -337,11 +333,7 @@ class NomadDaemonServer {
 
     try {
       // 1. Dashboard static routes
-      if (
-        pathname === '/dashboard' ||
-        pathname === '/dashboard/' ||
-        pathname === '/dashboard/index.html'
-      ) {
+      if (isDashboardPath(pathname)) {
         serveDashboard(req, res, (html) =>
           injectDashboardAuth(html, this.authToken, [this.port, DEFAULT_DAEMON_PORT]),
         );

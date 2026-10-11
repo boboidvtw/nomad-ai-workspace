@@ -8,6 +8,12 @@ export function getTokenFilePath(): string;
  */
 export function resolveAuthToken(explicitToken?: string): string;
 /**
+ * Dashboard routes serve HTML with the auth token inlined, so they must never get a CORS grant.
+ * @param {string} pathname
+ * @returns {boolean}
+ */
+export function isDashboardPath(pathname: string): boolean;
+/**
  * @param {unknown} hostname
  * @returns {boolean}
  */

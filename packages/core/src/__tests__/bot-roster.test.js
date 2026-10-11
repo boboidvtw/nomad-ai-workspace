@@ -102,6 +102,8 @@ describe('Bots - BotRoster', () => {
     roster.agents.get('bot-scribe').currentTaskIds.push('t-stale');
     const saved = await roster.saveToDisk();
     assert.strictEqual(saved.success, true);
+    // Chat URLs are private: owner-only file
+    assert.strictEqual(fs.statSync(file).mode & 0o777, 0o600);
 
     const restored = new BotRoster({ storagePath: file });
     const loaded = restored.loadFromDisk();

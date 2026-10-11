@@ -31,6 +31,7 @@ const {
   applyCorsHeaders,
   authorizeRequest,
   injectDashboardAuth,
+  isDashboardPath,
   probeAllServices,
   BotRoster,
   handleBotRequest,
@@ -290,12 +291,7 @@ class LocalSyncBridge {
    */
   isPublicRoute(method, pathname) {
     if (method !== 'GET' && method !== 'HEAD') return false;
-    return (
-      pathname === '/api/probe' ||
-      pathname === '/dashboard' ||
-      pathname === '/dashboard/' ||
-      pathname === '/dashboard/index.html'
-    );
+    return pathname === '/api/probe' || isDashboardPath(pathname);
   }
 
   /**
@@ -307,7 +303,8 @@ class LocalSyncBridge {
    */
   handleCors(req, res, parsedUrl) {
     const publicRoute = this.isPublicRoute(req.method, parsedUrl.pathname);
-    applyCorsHeaders(req, res, publicRoute);
+    // Dashboard HTML carries the token: public to load, never readable cross-origin.
+    applyCorsHeaders(req, res, publicRoute && !isDashboardPath(parsedUrl.pathname));
 
     const auth = authorizeRequest(req, parsedUrl, {
       token: this.authToken,
@@ -380,11 +377,7 @@ class LocalSyncBridge {
 
     try {
       // 0. Dashboard static hosting
-      if (
-        pathname === '/dashboard' ||
-        pathname === '/dashboard/' ||
-        pathname === '/dashboard/index.html'
-      ) {
+      if (isDashboardPath(pathname)) {
         serveDashboard(req, res, (html) =>
           injectDashboardAuth(html, this.authToken, [this.port, DEFAULT_DAEMON_PORT]),
         );

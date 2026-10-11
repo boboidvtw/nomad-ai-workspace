@@ -58,6 +58,9 @@ function serveDashboard(req, res, transform) {
       'Content-Type': 'text/html; charset=utf-8',
       'Content-Length': Buffer.byteLength(content),
       'Cache-Control': 'no-cache',
+      // The page can carry the auth token: keep it out of other sites' frames and no-cors reads.
+      'Cross-Origin-Resource-Policy': 'same-origin',
+      'X-Frame-Options': 'DENY',
     });
     res.end(content);
   } catch (error) {

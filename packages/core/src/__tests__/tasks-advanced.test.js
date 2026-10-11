@@ -89,6 +89,7 @@ describe('Task Control Plane: Recurring & Scheduled Tasks Engine', () => {
       },
     });
     assert.strictEqual(addRes.success, true);
+    assert.strictEqual(fs.statSync(tempScheduleFile).mode & 0o777, 0o600);
     const scheduleId = addRes.data.id;
 
     // Toggle
