@@ -20,6 +20,8 @@
  * @typedef {import('./src/result').UnitResult<T, E>} UnitResult
  */
 /** @typedef {import('./src/error-codes').ErrorCode} ErrorCode */
+/** @typedef {import('./src/bots/bot-roster').Bot} Bot */
+/** @typedef {import('./src/bots/bot-routes').BotServices} BotServices */
 /** @typedef {import('./src/constants').MonitoredService} MonitoredService */
 /** @typedef {import('./src/constants').PlatformConfig} PlatformConfig */
 /** @typedef {import('./src/extensions/template-parser').TemplateVariable} TemplateVariable */
@@ -115,6 +117,15 @@ const {
   DEFAULT_PRESET_SCHEDULES,
 } = require('./src/tasks/index');
 
+// Bots (SPEC-AGENT-BOTS)
+const {
+  BOT_STATE,
+  DEFAULT_ROSTER_PATH,
+  BotRoster,
+  toBotHandle,
+  handleBotRequest,
+} = require('./src/bots/index');
+
 // P3: Nomad Plugin Runtime
 const { PluginRuntime } = require('./src/plugins/plugin-runtime');
 
@@ -191,6 +202,12 @@ module.exports = {
   TaskRunner,
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
+  // Bots
+  BOT_STATE,
+  DEFAULT_ROSTER_PATH,
+  BotRoster,
+  toBotHandle,
+  handleBotRequest,
   // Microservice health probe
   probePort,
   probeAllServices,

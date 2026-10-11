@@ -88,6 +88,9 @@ const DEFAULT_ROSTER = [
 ];
 
 class AgentRoster {
+  /**
+   * @param {Agent[]} [initialAgents]
+   */
   constructor(initialAgents = DEFAULT_ROSTER) {
     /** @type {Map<string, import('./roster').Agent>} */
     this.agents = new Map();

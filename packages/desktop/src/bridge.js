@@ -21,7 +21,6 @@ const {
   McpGateway,
   KnowledgeBase,
   PluginRuntime,
-  AgentRoster,
   TaskDispatcher,
   ApprovalGate,
   RecurringScheduler,
@@ -33,6 +32,8 @@ const {
   authorizeRequest,
   injectDashboardAuth,
   probeAllServices,
+  BotRoster,
+  handleBotRequest,
 } = require('@nomad/core');
 
 class LocalSyncBridge {
@@ -55,7 +56,7 @@ class LocalSyncBridge {
    * @param {import('./session-manager').SessionManager | null} [options.sessionManager] - SessionManager for workspace/session routes
    * @param {number} [options.daemonPort=8765] - Daemon port to register with when running on another port
    * @param {import('@nomad/core').McpGateway} [options.mcpGateway] - Shared MCP gateway (defaults to a new one with core's default roots)
-   * @param {import('@nomad/core').AgentRoster} [options.roster]
+   * @param {import('@nomad/core').BotRoster} [options.roster]
    * @param {import('@nomad/core').TaskDispatcher} [options.dispatcher]
    * @param {import('@nomad/core').RecurringScheduler} [options.scheduler]
    */
@@ -88,7 +89,9 @@ class LocalSyncBridge {
     this.knowledgeBase = new KnowledgeBase();
     this.localModelClient = new LocalModelClient();
     this.pluginRuntime = new PluginRuntime();
-    this.roster = options.roster || new AgentRoster();
+    this.roster = options.roster || new BotRoster();
+    /** @type {import('@nomad/core').BotServices} */
+    this.botServices = { roster: this.roster, router: null, rooms: null };
     this.dispatcher =
       options.dispatcher ||
       new TaskDispatcher({
@@ -765,6 +768,16 @@ class LocalSyncBridge {
         );
         return this.sendJson(res, 200, { success: true, filePath, exportDir });
       }
+
+      // Bots (SPEC-AGENT-BOTS): /api/bots/*
+      const botRes = await handleBotRequest({
+        method: req.method || 'GET',
+        pathname,
+        searchParams: parsedUrl.searchParams,
+        readBody: () => this.readJsonBody(req),
+        services: this.botServices,
+      });
+      if (botRes) return this.sendJson(res, botRes.status, botRes.payload);
 
       // Task Control Plane & Agent Dispatcher Endpoints (Paperclip Native Integration)
       if (pathname === '/api/roster' && req.method === 'GET') {

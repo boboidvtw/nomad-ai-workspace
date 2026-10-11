@@ -267,4 +267,27 @@ describe('Bridge: Task Control Plane & Multi-Agent Dispatcher', () => {
       await bridge.stop();
     }
   });
+
+  it('serves /api/bots through the shared bot route handler', async () => {
+    const bridge = new LocalSyncBridge({ port: 19976 });
+    const { port: actualPort } = await bridge.start();
+    try {
+      const list = await makeRequest(actualPort, 'GET', '/api/bots');
+      assert.strictEqual(list.status, 200);
+      assert.ok(list.data.data.some((b) => b.handle === 'claude'));
+
+      const patched = await makeRequest(actualPort, 'PATCH', '/api/bots/agent-claude', {
+        persona: 'Lead architect',
+      });
+      assert.strictEqual(patched.status, 200);
+      assert.strictEqual(patched.data.data.persona, 'Lead architect');
+
+      const conflict = await makeRequest(actualPort, 'PATCH', '/api/bots/agent-grok', {
+        displayName: 'Claude',
+      });
+      assert.strictEqual(conflict.status, 409);
+    } finally {
+      await bridge.stop();
+    }
+  });
 });

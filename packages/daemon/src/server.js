@@ -20,7 +20,9 @@ const {
   McpGateway,
   KnowledgeBase,
   PluginRuntime,
-  AgentRoster,
+  BotRoster,
+  DEFAULT_ROSTER_PATH,
+  handleBotRequest,
   TaskDispatcher,
   ApprovalGate,
   RecurringScheduler,
@@ -59,8 +61,9 @@ class NomadDaemonServer {
    * @param {Function} [options.onSetZoom]
    * @param {Function} [options.onToggleWindow]
    * @param {{ getStatus(): unknown } | null} [options.orchestrator]
+   * @param {import('@nomad/core').BotRoster} [options.roster]
+   * @param {string} [options.rosterPath] - roster.json to read (defaults to ~/.nomad/roster.json)
    * @param {Object | null} [options.sessionManager]
-   * @param {import('@nomad/core').AgentRoster} [options.roster]
    * @param {import('@nomad/core').TaskDispatcher} [options.dispatcher]
    * @param {import('@nomad/core').RecurringScheduler} [options.scheduler]
    */
@@ -91,7 +94,13 @@ class NomadDaemonServer {
     this.knowledgeBase = new KnowledgeBase();
     this.localModelClient = new LocalModelClient();
     this.pluginRuntime = new PluginRuntime();
-    this.roster = options.roster || new AgentRoster();
+    // The Studio owns roster.json; the daemon reads it but never writes it.
+    this.roster = options.roster || new BotRoster();
+    if (!options.roster) {
+      this.roster.loadFromDisk(options.rosterPath || DEFAULT_ROSTER_PATH, { quarantine: false });
+    }
+    /** @type {import('@nomad/core').BotServices} */
+    this.botServices = { roster: this.roster, router: null, rooms: null };
     this.dispatcher =
       options.dispatcher ||
       new TaskDispatcher({
@@ -559,6 +568,16 @@ class NomadDaemonServer {
         const retRes = this.knowledgeBase.retrieveContext(prompt, topK);
         return this.sendJson(res, 200, retRes);
       }
+
+      // Bots (SPEC-AGENT-BOTS): /api/bots/*
+      const botRes = await handleBotRequest({
+        method: req.method || 'GET',
+        pathname,
+        searchParams: url.searchParams,
+        readBody: () => this.readJsonBody(req),
+        services: this.botServices,
+      });
+      if (botRes) return this.sendJson(res, botRes.status, botRes.payload);
 
       // 3.9. Task Control Plane & Agent Dispatcher Endpoints (Paperclip Native Integration)
       if (pathname === '/api/roster' && req.method === 'GET') {

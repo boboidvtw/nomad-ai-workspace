@@ -31,6 +31,8 @@ const {
   LocalModelClient,
   McpGateway,
   KnowledgeBase,
+  BotRoster,
+  DEFAULT_ROSTER_PATH,
 } = require('@nomad/core');
 
 const localModelClient = new LocalModelClient();
@@ -320,8 +322,12 @@ async function createMainWindow() {
     },
   });
 
-  // 5. Initialize Local Sync Bridge
+  // 5. Initialize Local Sync Bridge. The Studio owns ~/.nomad/roster.json (bots persist here).
+  const botRoster = new BotRoster({ storagePath: DEFAULT_ROSTER_PATH });
+  const rosterLoad = botRoster.loadFromDisk();
+  if (!rosterLoad.success) console.warn('[Nomad Desktop] Bot roster:', rosterLoad.message);
   bridge = new LocalSyncBridge({
+    roster: botRoster,
     port: store.get('bridgePort') || 8765,
     host: '127.0.0.1',
     orchestrator,
