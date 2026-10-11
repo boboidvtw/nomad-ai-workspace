@@ -76,6 +76,7 @@ const RAW_PLATFORM_INJECTORS = {
       
       setTimeout(() => {
         const btn = document.querySelector('button[aria-label*="Send"]') ||
+                    document.querySelector('button[aria-label*="傳送"]') ||
                     document.querySelector('button[aria-label*="發送"]') ||
                     document.querySelector('button[aria-label*="发送"]') ||
                     document.querySelector('button:has(svg.lucide-arrow-up)');
@@ -101,7 +102,7 @@ const RAW_PLATFORM_INJECTORS = {
                     document.querySelector('div[contenteditable="true"]');
       if (!input) return { ok: false, error: 'ChatGPT input not found' };
       input.focus();
-      
+
       const sel = window.getSelection();
       const range = document.createRange();
       range.selectNodeContents(input);
@@ -508,7 +509,22 @@ const PLATFORM_INJECTORS = /** @type {Record<string, PlatformInjector>} */ (
   )
 );
 
+/**
+ * Maps an injector script's return value to a delivery result. Injectors report failure by
+ * returning `{ ok: false, error }` rather than throwing, so that must stay a failure.
+ * @param {unknown} res
+ * @returns {{ ok: true, data: unknown } | { ok: false, error: string }}
+ */
+function toDeliveryResult(res) {
+  const r = /** @type {{ ok?: unknown, error?: unknown } | null | undefined} */ (res);
+  if (r && typeof r === 'object' && r.ok === false) {
+    return { ok: false, error: String(r.error || 'Injector reported failure') };
+  }
+  return { ok: true, data: res };
+}
+
 module.exports = {
+  toDeliveryResult,
   PLATFORM_INJECTORS,
   formatPromptWithAttachments,
 };

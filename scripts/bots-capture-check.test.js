@@ -1,9 +1,14 @@
+import { mkdtempSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import {
   buildProbe,
   classifyResult,
   compareChats,
+  isEntryPoint,
   parseArgs,
   summarize,
 } from './bots-capture-check.mjs';
@@ -82,5 +87,18 @@ describe('bots-capture-check', () => {
       target: 0.9,
     });
     expect(() => parseArgs(['--nope', '1'])).toThrow('Unknown option --nope');
+  });
+
+  it('detects the entry point through symlinked paths such as /tmp -> /private/tmp', () => {
+    const dir = realpathSync(mkdtempSync(path.join(tmpdir(), 'nomad-entry-')));
+    const real = path.join(dir, 'script.mjs');
+    writeFileSync(real, '');
+    const link = path.join(dir, 'link.mjs');
+    symlinkSync(real, link);
+    const metaUrl = pathToFileURL(real).href;
+    expect(isEntryPoint(metaUrl, link)).toBe(true);
+    expect(isEntryPoint(metaUrl, real)).toBe(true);
+    expect(isEntryPoint(metaUrl, path.join(dir, 'other.mjs'))).toBe(false);
+    expect(isEntryPoint(metaUrl, undefined)).toBe(false);
   });
 });

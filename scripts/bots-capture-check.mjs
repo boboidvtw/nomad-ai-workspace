@@ -17,10 +17,10 @@
 /* oxlint-disable no-console -- local CLI check; printing progress and the summary is its job */
 
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 const WEBVIEW_PLATFORMS = ['claude', 'chatgpt', 'gemini', 'grok', 'deepseek', 'perplexity'];
 const REPORT_DIR = path.join(homedir(), '.nomad', 'capture-checks');
@@ -102,6 +102,21 @@ export function parseArgs(argv) {
     else throw new Error(`Unknown option ${flag}`);
   }
   return opts;
+}
+
+/**
+ * True when this module is the script node was started with. Compares real paths, because
+ * `process.argv[1]` keeps symlinks (macOS `/tmp`, `/var`) while `import.meta.url` resolves them.
+ * @param {string} metaUrl
+ * @param {string | undefined} argvPath
+ */
+export function isEntryPoint(metaUrl, argvPath) {
+  if (!argvPath) return false;
+  try {
+    return realpathSync(argvPath) === realpathSync(fileURLToPath(metaUrl));
+  } catch {
+    return false;
+  }
 }
 
 function readToken() {
@@ -199,7 +214,7 @@ async function main() {
   process.exitCode = Object.values(summary).every((s) => s.pass) ? 0 : 1;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
+if (isEntryPoint(import.meta.url, process.argv[1])) {
   main().catch((error) => {
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 2;

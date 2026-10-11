@@ -44,3 +44,43 @@ test('Injectors: Formats attachments into prompt payload properly', () => {
   assert.ok(script.includes('server.py'));
   assert.ok(script.includes('architecture.png'));
 });
+
+/**
+ * Runs an injector inside a jsdom page and resolves after its delayed send step.
+ * @param {string} html
+ * @param {string} script
+ */
+async function runInjector(html, script) {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(`<!doctype html><body>${html}</body>`, { runScripts: 'outside-only' });
+  /** @type {string[]} */
+  const clicks = [];
+  for (const btn of dom.window.document.querySelectorAll('button')) {
+    btn.addEventListener('click', () => clicks.push(btn.getAttribute('aria-label') || ''));
+  }
+  const result = dom.window.eval(script);
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  return { result, clicks, document: dom.window.document };
+}
+
+test('Injectors: Claude clicks the zh-Hant send button (傳送訊息)', async () => {
+  const { result, clicks } = await runInjector(
+    '<div class="ProseMirror" contenteditable="true"></div><button aria-label="傳送訊息">↑</button>',
+    PLATFORM_INJECTORS.claude('hello'),
+  );
+  assert.strictEqual(result.ok, true);
+  assert.deepStrictEqual(clicks, ['傳送訊息']);
+});
+
+test('Injectors: toDeliveryResult keeps a failed injector result failed', () => {
+  const { toDeliveryResult } = require('../injectors.js');
+  assert.deepStrictEqual(toDeliveryResult({ ok: false, error: 'ChatGPT input not found' }), {
+    ok: false,
+    error: 'ChatGPT input not found',
+  });
+  assert.deepStrictEqual(toDeliveryResult({ ok: true, input: 'DIV' }), {
+    ok: true,
+    data: { ok: true, input: 'DIV' },
+  });
+  assert.deepStrictEqual(toDeliveryResult(undefined), { ok: true, data: undefined });
+});

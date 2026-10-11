@@ -38,6 +38,9 @@
 
 ### 🐛 修復 (Fixed)
 
+- **網頁版注入失敗不再空等**：注入腳本回傳 `{ ok: false }`（例如找不到輸入框）時，任務會立刻失敗並附上原因，不再等滿 180 秒。
+- **Claude 繁中介面送出**：辨識「傳送訊息」按鈕；先前只認 Send／發送／发送，繁中介面下文字填入後不會送出。
+- **`bots-capture-check.mjs` 經 symlink 路徑執行時沒有任何動作**：改用實際路徑判斷是否為進入點。
 - **派給網頁版 AI 的任務一律以假產出完成**：`TaskRunner` 讀 `orchRes?.text`，但 Studio 回傳的是各平台的送達結果，而且不會等 AI 回覆，所以任務產出永遠是 `"Delegated to webview"`；bridge 測試的 mock 格式也與實際不符。現改為「送出 → `orchestrator.awaitSettled` 等待回覆」，拿到 AI 的實際回覆；等不到或回覆為空時，任務判為失敗。回歸紀錄見 `.github/docs/regressions/desktop-orchestrator.md`。
 
 - **Dashboard 任務看板整段腳本無法執行**：43 行 HTML 字串遺失跳脫字元（`\'` / `\"`）導致 SyntaxError，任務卡片、詳情 Modal 與排程清單全部失效；新增 inline script 語法回歸測試。

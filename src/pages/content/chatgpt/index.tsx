@@ -11,6 +11,7 @@ import { createRoot } from 'react-dom/client';
 
 import FloatBall from '@/components/FloatBall';
 import ChatGPTFolderManager from '@/features/chatgpt/components/FolderManager';
+import { waitForChatGPTHydration } from '@/pages/content/chatgpt/hydration';
 import { startBrandTheme } from '@/pages/content/platformTheme';
 import { startPromptManager } from '@/pages/content/prompt';
 import { startSlashPromptFeature } from '@/pages/content/prompt/slashPromptFeature';
@@ -19,8 +20,13 @@ import { i18n, initI18n, LANGUAGE_CHANGE_MESSAGE_TYPE } from '@/services/i18n';
 import './style.css';
 
 const NOMAD_CHATGPT_ROOT_ID = 'nomad-chatgpt-root';
+/** Upper bound on waiting for ChatGPT to hydrate before mounting anyway. */
+const HYDRATION_TIMEOUT_MS = 20000;
 
 const mount = async () => {
+  // Every DOM change below must wait for hydration, or ChatGPT's own UI never goes live.
+  await waitForChatGPTHydration(document, HYDRATION_TIMEOUT_MS);
+
   document.body.classList.add('nomad-chatgpt-page');
   document.body.setAttribute('data-nomad-orb-active', 'true');
 
