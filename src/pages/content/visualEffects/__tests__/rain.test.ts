@@ -88,6 +88,21 @@ describe('rainEffect', () => {
     expect(document.getElementById('gv-rain-effect-canvas')).toBeNull();
   });
 
+  it('does not throw when the sync read yields no result', async () => {
+    (chrome.storage.sync.get as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (_defaults: Record<string, unknown>, callback: (result: Record<string, unknown>) => void) => {
+        // Chrome runs the callback later, outside the caller's try/catch.
+        setTimeout(() => callback(undefined as unknown as Record<string, unknown>));
+      },
+    );
+
+    const { startRainEffect } = await import('../rain');
+    startRainEffect();
+    expect(() => vi.runOnlyPendingTimers()).not.toThrow();
+
+    expect(document.getElementById('gv-rain-effect-canvas')).toBeNull();
+  });
+
   it('begins graceful drain when disabled via storage change (canvas persists)', async () => {
     let storageListener: ((changes: Record<string, unknown>, area: string) => void) | null = null;
 

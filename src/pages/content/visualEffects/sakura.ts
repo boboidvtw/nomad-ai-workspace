@@ -9,6 +9,7 @@
  */
 import { isFirefox } from '@/core/utils/browser';
 
+import { resolveVisualEffect } from './effectSetting';
 import { SAKURA_BASE_FRAME_MS, SAKURA_MAX_DPR, SakuraScene } from './sakuraScene';
 import {
   SAKURA_RENDERER_CONNECT_MESSAGE,
@@ -424,16 +425,10 @@ function forceDisable(): void {
   finalizeDrain();
 }
 
-function resolveEffect(result: Record<string, unknown>): string {
-  if (typeof result[STORAGE_KEY] === 'string') return result[STORAGE_KEY] as string;
-  if (result[LEGACY_KEY] === true) return 'snow';
-  return 'off';
-}
-
 export function startSakuraEffect(): void {
   try {
     chrome.storage?.sync?.get({ [STORAGE_KEY]: null, [LEGACY_KEY]: false }, (result) => {
-      if (resolveEffect(result) === EFFECT_VALUE) enable();
+      if (resolveVisualEffect(result) === EFFECT_VALUE) enable();
     });
   } catch (error) {
     console.error('[Gemini Voyager] Failed to get sakura effect setting:', error);

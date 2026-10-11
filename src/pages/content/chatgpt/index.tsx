@@ -6,6 +6,8 @@
  * - startPromptManager (Underlying Prompt Vault overlays & slash command trigger)
  */
 
+// Must stay first: patches chrome.storage.sync before any other module uses it.
+import '@/core/utils/storageSyncFallback';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
