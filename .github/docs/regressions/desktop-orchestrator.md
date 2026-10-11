@@ -21,3 +21,22 @@
   `orchestrator.awaitSettled`) and return a Result. A failed or empty Result fails the
   task; mocks must mirror the real `dispatchPromptToTargets` shape.
 - **Guard:** `packages/core/src/__tests__/task-runner-webview.test.js`
+
+## A failed inject looked like a successful one
+
+- **Trap:** Injector scripts report failure by returning `{ ok: false, error }` (for example
+  `ChatGPT input not found`), but `dispatchPromptToTargets` wrapped every resolved
+  `executeJavaScript` as `{ ok: true, data }`. The webview runner then waited the full
+  180-second reply budget for a message that was never sent.
+- **Rule:** Map injector results with `toDeliveryResult`; only a thrown error or an explicit
+  `ok: false` is a failure, and it must reach the runner as one.
+- **Guard:** `packages/desktop/src/__tests__/injectors.test.js`
+
+## Claude's zh-Hant send button was not recognised
+
+- **Trap:** The Claude injector looked for send buttons labelled `Send`, `發送` or `发送`. The
+  zh-Hant UI labels it `傳送訊息`, so the injector fell back to a synthetic Enter key that
+  ProseMirror ignores: the text sat in the box and the run timed out.
+- **Rule:** Match `傳送` alongside the other labels, and cover each UI locale's label with a
+  DOM test built from the real page structure.
+- **Guard:** `packages/desktop/src/__tests__/injectors.test.js`

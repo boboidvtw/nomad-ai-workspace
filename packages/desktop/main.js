@@ -13,7 +13,7 @@ const os = require('os');
 const path = require('path');
 const { store } = require('./src/store');
 const { calculateLayoutBounds, ALL_PLATFORMS } = require('./src/layout-engine');
-const { PLATFORM_INJECTORS } = require('./src/injectors');
+const { PLATFORM_INJECTORS, toDeliveryResult } = require('./src/injectors');
 const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
@@ -643,7 +643,7 @@ async function dispatchPromptToTargets(prompt, targets, attachments = []) {
 
     try {
       const res = await wc.executeJavaScript(injector({ text: promptText, attachments }));
-      results[target] = { ok: true, data: res };
+      results[target] = toDeliveryResult(res);
       console.log(`[Nomad Desktop] Inject result for ${target}:`, res);
     } catch (e) {
       results[target] = { ok: false, error: e instanceof Error ? e.message : String(e) };
