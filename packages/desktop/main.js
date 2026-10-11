@@ -22,6 +22,7 @@ const { createStudioBots } = require('./src/studio-bots');
 const CHAT_READY_DELAY_MS = 2500;
 const { TrayAndShortcutManager } = require('./src/tray');
 const { resolveMcpAllowedPaths } = require('./src/mcp-workspace');
+const { refreshStaleExtensionServiceWorker } = require('./src/extension-sw-refresh');
 const {
   PipelineManager,
   getSyncStatus,
@@ -213,6 +214,12 @@ async function loadNomadExtension() {
           session.defaultSession.extensions.loadExtension(p, opts)
       : (/** @type {string} */ p, /** @type {Electron.LoadExtensionOptions} */ opts) =>
           session.defaultSession.loadExtension(p, opts);
+    const refreshed = await refreshStaleExtensionServiceWorker({
+      session: session.defaultSession,
+      extPath: EXTENSION_PATH,
+      stateFile: path.join(app.getPath('userData'), 'extension-sw-fingerprint'),
+    });
+    if (refreshed) console.log('[Nomad Desktop] Extension background changed; re-registering it');
     const ext = await extLoader(EXTENSION_PATH, { allowFileAccess: true });
     console.log(`[Nomad Desktop] Loaded Extension: ${ext.name} (v${ext.version})`);
   } catch (err) {
