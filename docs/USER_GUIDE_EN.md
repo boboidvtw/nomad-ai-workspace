@@ -265,7 +265,7 @@ The workspace includes a high-performance historical conversation retrieval and 
 
 ### 7.8 Zero-Trust Security & Session Persistence
 
-- **Local Isolated Storage**: All cookies and authentication credentials are saved locally in `~/Library/Application Support/nomad-desktop`.
+- **Local Isolated Storage**: All cookies and authentication credentials are saved locally in `~/Library/Application Support/Nomad AI Studio` (older builds used `nomad-desktop`).
 - **Persistent Logins**: Log in once to each AI service; sessions persist across application restarts.
 - **Direct Official Connection**: All traffic routes directly to official AI endpoints via TLS with zero proxy or intermediary telemetry servers.
 
