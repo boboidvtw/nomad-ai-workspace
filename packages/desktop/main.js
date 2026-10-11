@@ -198,11 +198,15 @@ function applyAllZooms() {
   }
 }
 
-async function createMainWindow() {
-  // 1. Initialize persistent store in user data
-  store.init(path.join(app.getPath('userData'), 'nomad-studio-settings.json'));
-
-  // 2. Load unpacked extension if available
+/**
+ * Loads the unpacked Nomad extension into the shared session. NOMAD_DISABLE_EXTENSION=1 skips
+ * it, to tell page breakage caused by the extension apart from problems with the site itself.
+ */
+async function loadNomadExtension() {
+  if (process.env.NOMAD_DISABLE_EXTENSION === '1') {
+    console.log('[Nomad Desktop] Extension disabled by NOMAD_DISABLE_EXTENSION=1');
+    return;
+  }
   try {
     const extLoader = session.defaultSession.extensions?.loadExtension
       ? (/** @type {string} */ p, /** @type {Electron.LoadExtensionOptions} */ opts) =>
@@ -217,6 +221,14 @@ async function createMainWindow() {
       err instanceof Error ? err.message : String(err),
     );
   }
+}
+
+async function createMainWindow() {
+  // 1. Initialize persistent store in user data
+  store.init(path.join(app.getPath('userData'), 'nomad-studio-settings.json'));
+
+  // 2. Load unpacked extension if available
+  await loadNomadExtension();
 
   const isMac = process.platform === 'darwin';
   const iconPath = isMac
