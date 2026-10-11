@@ -31,6 +31,7 @@ However, existing multi-AI workflows face two critical pain points:
 - **Universal Prompt Manager & Nomad Super Orb**: Craft a prompt once and recall it anywhere with `/` slash commands, interactive variable modal fill-ins, and a flagship floating orb equipped with Apple Watch-style dual-track activity usage rings.
 - **🖥️ Nomad AI Studio Standalone Desktop Workstation**: Brand new Electron 40 desktop client (`packages/desktop`) aggregating 4 frontier AIs with Quad (4-panel grid), Dual (split-screen), and Focus (single-view) layouts.
 - **⚡ Concurrent Prompt Injection**: Broadcast questions to Claude, ChatGPT, Gemini, and Grok simultaneously from a unified input bar with automatic prompt submission and instant side-by-side benchmark comparison.
+- **🤖 Bots: AI teammates with identity, memory and a permanent chat**: each Bot has an `@handle`, a persona and one bound AI conversation. Bots run routines, take `@mention` assignments, message each other and debate in group rooms, and they tell you when they hit a usage limit or a sign-in page. herdr-managed CLI agents (Claude Code, Codex) can be Bots too. See [SPEC-AGENT-BOTS](SPEC-AGENT-BOTS.md).
 - **📦 Multi-Platform Native Package Support**: Available for macOS (`.dmg` / `.zip`), Windows (`.exe`), and Linux (`.AppImage` / `.deb`), downloadable directly from [GitHub Releases](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest).
 - **100% Client-Side Zero Server Architecture**: No intermediary backend servers exist. All data synchronizes directly between the local browser sandbox and your personal Google Drive via client-side OAuth 2.0.
 
@@ -125,6 +126,17 @@ graph TD
 - **Comprehensive Diagrams & Math**: Built-in rendering support for KaTeX/LaTeX math equations, Mermaid sequence/flow charts, WaveDrom digital logic timing diagrams, and ECharts interactive charts.
 - **Lossless Clean Export**: Export conversations to clean Markdown (`.md`), high-resolution PNG images, or formatted PDF documents with syntax-highlighted code and rendered math formulas intact.
 
+### 6. 🤖 Bots: Persistent Identity, Canonical Chats & Multi-Bot Collaboration
+
+Inspired by [Hermes Agent](https://github.com/NousResearch/hermes-agent) Bot Mode and the [herdr](https://github.com/herdrdev/herdr) agent state model, the Agent Roster becomes a roster of teammates who remember you:
+
+- **Canonical chat**: the first task opens a new conversation, sends the persona and binds it; every later task returns to that conversation.
+- **Five states**: `idle / working / blocked / done / unknown`. A usage limit, sign-out or rate limit marks the Bot as blocked and notifies you; the run resumes once you fix it.
+- **Routines, @mentions, bot-to-bot messages and group rooms** live in the Dashboard **🤖 Bots** tab. Bot-to-bot messaging is bounded by a hop limit and a loop guard.
+- **Local first**: settings stay in `~/.nomad/roster.json` and `rooms.json`; Drive sync carries personas only, never conversation URLs.
+
+See [User Guide §7.10](docs/USER_GUIDE_EN.md#710-bots-persistent-identity-canonical-chats--multi-bot-collaboration).
+
 ---
 
 ## 📱 Supported Platform Matrix
@@ -149,6 +161,7 @@ graph TD
 | 📦 [Installation & Build Guide](docs/INSTALLATION.md)     | Step-by-step instructions for building and loading unpacked extensions on Chrome, Edge, Firefox, and Safari.       |
 | 🚀 [Release & Packaging Guide](docs/RELEASE_PACKAGING.md) | Chrome Web Store review descriptions, single-purpose declarations, permission justifications, and GitHub Releases. |
 | 🏛️ [Architecture Specification](docs/ARCHITECTURE.md)     | Multi-layer architecture, dynamic adapters, data models, and zero-trust security design.                           |
+| 🤖 [Bots Spec (SPEC-AGENT-BOTS)](SPEC-AGENT-BOTS.md)      | Bots design, data model, API, milestones and implementation notes (Traditional Chinese).                           |
 | 📝 [Changelog](CHANGELOG.md)                              | Version history following the Keep a Changelog standard.                                                           |
 
 ---

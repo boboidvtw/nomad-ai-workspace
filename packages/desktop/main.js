@@ -6,6 +6,7 @@ const {
   ipcMain,
   shell,
   globalShortcut,
+  Notification,
 } = require('electron');
 const fs = require('fs');
 const os = require('os');
@@ -16,6 +17,9 @@ const { PLATFORM_INJECTORS } = require('./src/injectors');
 const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
+const { createStudioBots } = require('./src/studio-bots');
+
+const CHAT_READY_DELAY_MS = 2500;
 const { TrayAndShortcutManager } = require('./src/tray');
 const { resolveMcpAllowedPaths } = require('./src/mcp-workspace');
 const {
@@ -28,6 +32,10 @@ const {
   LocalModelClient,
   McpGateway,
   KnowledgeBase,
+  NEW_CHAT_URLS,
+  createHerdrRunner,
+  buildStateSnapshotScript,
+  detectBlocked,
 } = require('@nomad/core');
 
 const localModelClient = new LocalModelClient();
@@ -63,6 +71,8 @@ let trayManager = null;
 let bridge = null;
 /** @type {import('./src/orchestrator').MultiAiOrchestrator | null} */
 let orchestrator = null;
+/** @type {ReturnType<typeof createStudioBots> | null} */
+let studioBots = null;
 /** @type {import('./src/session-manager').SessionManager | null} */
 let sessionManager = null;
 let isDrawerOpen = false;
@@ -90,6 +100,47 @@ function ensurePlatformLoaded(key) {
       );
     }
   }
+}
+
+/**
+ * Tells the user a bot needs a human (usage limit, signed out) via a system notification
+ * and the renderer, so the HUD can badge the bot.
+ * @param {{ botId: string | null, botName: string | null, platform: string, reason: string }} notice
+ */
+function notifyBotBlocked(notice) {
+  const who = notice.botName || notice.platform;
+  try {
+    if (Notification.isSupported()) {
+      new Notification({ title: `${who} needs you`, body: notice.reason }).show();
+    }
+  } catch (e) {
+    console.warn('[Nomad Desktop] Notification failed:', e instanceof Error ? e.message : e);
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('nomad:bot-blocked', notice);
+  }
+}
+
+/**
+ * Loads a bot's canonical conversation, or a new chat when url is null, and waits for the
+ * composer to mount. SPA redirects abort the load (ERR_ABORTED) without being a failure.
+ * @param {string} platform
+ * @param {string | null} url
+ * @returns {Promise<{ ok: boolean, error?: string }>}
+ */
+async function openPlatformChat(platform, url) {
+  ensurePlatformLoaded(platform);
+  const item = views[platform];
+  const target = url || NEW_CHAT_URLS[platform];
+  if (!item || !target) return { ok: false, error: `No webview or chat URL for ${platform}` };
+  try {
+    await item.view.webContents.loadURL(target);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    if (!message.includes('ERR_ABORTED')) return { ok: false, error: message };
+  }
+  await new Promise((resolve) => setTimeout(resolve, CHAT_READY_DELAY_MS));
+  return { ok: true };
 }
 
 function updateViewBounds() {
@@ -266,6 +317,18 @@ async function createMainWindow() {
         };
       }
     },
+    checkBlocked: async (/** @type {string} */ platform) => {
+      const item = views[platform];
+      if (!item) return { blocked: false };
+      try {
+        const snapshot = await item.view.webContents.executeJavaScript(
+          buildStateSnapshotScript(platform),
+        );
+        return detectBlocked(platform, snapshot);
+      } catch {
+        return { blocked: false };
+      }
+    },
     onStep: async (/** @type {Record<string, any>} */ event) => {
       if (event.type === 'turn-complete' && event.speaker && event.canonicalTitle) {
         try {
@@ -317,8 +380,24 @@ async function createMainWindow() {
     },
   });
 
-  // 5. Initialize Local Sync Bridge
+  // 5. Initialize bots and the Local Sync Bridge. The Studio owns ~/.nomad/roster.json.
+  studioBots = createStudioBots({
+    enabled: store.get('bots')?.enabled !== false,
+    inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
+    awaitSettled: (platform, options) =>
+      orchestrator
+        ? orchestrator.awaitSettled(platform, options)
+        : Promise.resolve({ settled: false, text: '' }),
+    openChat: openPlatformChat,
+    currentUrl: async (platform) => views[platform]?.view.webContents.getURL() || null,
+    notify: notifyBotBlocked,
+    localModelClient,
+    mcpGateway,
+    herdrRunner: createHerdrRunner(),
+    warn: (message) => console.warn(`[Nomad Desktop] ${message}`),
+  });
   bridge = new LocalSyncBridge({
+    roster: studioBots.roster,
     port: store.get('bridgePort') || 8765,
     host: '127.0.0.1',
     orchestrator,
@@ -335,6 +414,7 @@ async function createMainWindow() {
       windowVisible: mainWindow ? mainWindow.isVisible() : false,
       isDrawerOpen,
     }),
+    runWebviewTask: studioBots.runTask,
     onDispatchPrompt: async ({ prompt, targets }) => {
       const results = await dispatchPromptToTargets(prompt, targets);
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -434,6 +514,7 @@ async function createMainWindow() {
   });
 
   try {
+    studioBots?.attach(bridge);
     await bridge.start();
 
     try {
@@ -758,13 +839,7 @@ ipcMain.handle('nomad:open-export-folder', async () => {
 
 ipcMain.handle('nomad:new-session', async () => {
   if (!sessionManager) return { success: false };
-  const newUrls = {
-    claude: 'https://claude.ai/new',
-    chatgpt: 'https://chatgpt.com/',
-    gemini: 'https://gemini.google.com/app',
-    grok: 'https://grok.com/',
-  };
-  for (const [key, url] of Object.entries(newUrls)) {
+  for (const [key, url] of Object.entries(NEW_CHAT_URLS)) {
     if (views[key]?.view) {
       try {
         views[key].view.webContents.loadURL(url);
@@ -775,7 +850,7 @@ ipcMain.handle('nomad:new-session', async () => {
   }
   const ws = sessionManager.createWorkspace({
     title: '新協作對話',
-    urls: newUrls,
+    urls: { ...NEW_CHAT_URLS },
   });
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
@@ -839,7 +914,8 @@ ipcMain.handle('nomad:drive-sync-push', async (event, customOpts = {}) => {
   const workspaces = sessionManager.getWorkspaces();
   const settings = store.getAll();
   const targetDir = customOpts.targetDir || store.get('driveSync')?.customPath || undefined;
-  const result = exportToDrive({ workspaces, settings, targetDir });
+  const bots = studioBots ? studioBots.roster.toSyncPayload() : undefined;
+  const result = exportToDrive({ workspaces, settings, targetDir, bots });
   if (result.success) {
     const driveSync = store.get('driveSync') || {};
     driveSync.lastSyncedAt = result.data.timestamp;
@@ -860,6 +936,7 @@ ipcMain.handle('nomad:drive-sync-pull', async (event, customOpts = {}) => {
   });
   if (result.success) {
     sm.store.set('workspaces', result.data.reconciledWorkspaces);
+    if (result.data.bots && studioBots) studioBots.roster.applySyncPayload(result.data.bots);
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('nomad:workspaces-updated', result.data.reconciledWorkspaces);
     }

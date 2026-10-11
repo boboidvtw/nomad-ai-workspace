@@ -168,7 +168,7 @@ function applyCorsHeaders(req, res, publicRoute = false) {
   } else if (origin && isAllowedOrigin(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader(
     'Access-Control-Allow-Headers',
     'Content-Type, Authorization, X-Nomad-Token, X-Requested-With',

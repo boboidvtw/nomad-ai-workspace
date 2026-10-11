@@ -20,6 +20,8 @@
  * @typedef {import('./src/result').UnitResult<T, E>} UnitResult
  */
 /** @typedef {import('./src/error-codes').ErrorCode} ErrorCode */
+/** @typedef {import('./src/bots/bot-roster').Bot} Bot */
+/** @typedef {import('./src/bots/bot-routes').BotServices} BotServices */
 /** @typedef {import('./src/constants').MonitoredService} MonitoredService */
 /** @typedef {import('./src/constants').PlatformConfig} PlatformConfig */
 /** @typedef {import('./src/extensions/template-parser').TemplateVariable} TemplateVariable */
@@ -51,6 +53,7 @@ const {
   WORKSPACES_FILE_NAME,
   SETTINGS_FILE_NAME,
   MANIFEST_FILE_NAME,
+  BOTS_FILE_NAME,
   detectLocalDriveFolder,
   computeChecksum,
   exportToDrive,
@@ -113,7 +116,32 @@ const {
   TaskRunner,
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
+  routineLabel,
+  WEBVIEW_PLATFORMS,
 } = require('./src/tasks/index');
+
+// Bots (SPEC-AGENT-BOTS)
+const {
+  BOT_STATE,
+  DEFAULT_ROSTER_PATH,
+  BotRoster,
+  toBotHandle,
+  handleBotRequest,
+  BotLoopGuard,
+  BotMessageRouter,
+  parseMentions,
+  registerMessageAgentTool,
+  DEFAULT_ROOMS_PATH,
+  GroupRoomManager,
+  createHerdrRunner,
+  NEW_CHAT_URLS,
+  normalizeChatUrl,
+  isConversationUrl,
+  isSameConversation,
+  BLOCKED_MANIFESTS,
+  detectBlocked,
+  buildStateSnapshotScript,
+} = require('./src/bots/index');
 
 // P3: Nomad Plugin Runtime
 const { PluginRuntime } = require('./src/plugins/plugin-runtime');
@@ -155,6 +183,7 @@ module.exports = {
   WORKSPACES_FILE_NAME,
   SETTINGS_FILE_NAME,
   MANIFEST_FILE_NAME,
+  BOTS_FILE_NAME,
   detectLocalDriveFolder,
   computeChecksum,
   exportToDrive,
@@ -191,6 +220,28 @@ module.exports = {
   TaskRunner,
   RecurringScheduler,
   DEFAULT_PRESET_SCHEDULES,
+  routineLabel,
+  WEBVIEW_PLATFORMS,
+  // Bots
+  BOT_STATE,
+  DEFAULT_ROSTER_PATH,
+  BotRoster,
+  toBotHandle,
+  handleBotRequest,
+  BotLoopGuard,
+  BotMessageRouter,
+  parseMentions,
+  registerMessageAgentTool,
+  DEFAULT_ROOMS_PATH,
+  GroupRoomManager,
+  createHerdrRunner,
+  NEW_CHAT_URLS,
+  normalizeChatUrl,
+  isConversationUrl,
+  isSameConversation,
+  BLOCKED_MANIFESTS,
+  detectBlocked,
+  buildStateSnapshotScript,
   // Microservice health probe
   probePort,
   probeAllServices,

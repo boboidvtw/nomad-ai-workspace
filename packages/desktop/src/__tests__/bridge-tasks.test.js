@@ -46,7 +46,8 @@ describe('Bridge: Task Control Plane & Multi-Agent Dispatcher', () => {
   it('allows creating, claiming, reviewing, and completing tasks through Local Sync Bridge', async () => {
     const bridge = new LocalSyncBridge({
       port: 19950,
-      onDispatchPrompt: async (platform, _prompt) => ({ text: `Mock dispatched to ${platform}` }),
+      // Mirrors main.js dispatchPromptToTargets: a per-platform delivery map, no reply text.
+      onDispatchPrompt: async ({ targets }) => ({ [targets[0]]: { ok: true } }),
     });
     await bridge.start();
     const actualPort = bridge.port;
@@ -238,6 +239,53 @@ describe('Bridge: Task Control Plane & Multi-Agent Dispatcher', () => {
         typeof calls[0].prompt === 'string' &&
           calls[0].prompt.includes('Summarise the release notes'),
       );
+    } finally {
+      await bridge.stop();
+    }
+  });
+
+  it('stores the settled webview reply when runWebviewTask is provided', async () => {
+    const bridge = new LocalSyncBridge({
+      port: 19975,
+      runWebviewTask: async (platform, prompt) => ({
+        success: true,
+        data: { text: `${platform} answered: ${prompt.length > 0}` },
+      }),
+    });
+    const { port: actualPort } = await bridge.start();
+    try {
+      const created = await makeRequest(actualPort, 'POST', '/api/tasks', {
+        title: 'Draft the changelog',
+      });
+      const run = await makeRequest(actualPort, 'POST', '/api/tasks/run', {
+        taskId: created.data.data.id,
+        agentId: 'agent-claude',
+      });
+      assert.strictEqual(run.status, 200, JSON.stringify(run.data));
+      assert.strictEqual(run.data.data.artifacts[0].content, 'claude answered: true');
+    } finally {
+      await bridge.stop();
+    }
+  });
+
+  it('serves /api/bots through the shared bot route handler', async () => {
+    const bridge = new LocalSyncBridge({ port: 19976 });
+    const { port: actualPort } = await bridge.start();
+    try {
+      const list = await makeRequest(actualPort, 'GET', '/api/bots');
+      assert.strictEqual(list.status, 200);
+      assert.ok(list.data.data.some((b) => b.handle === 'claude'));
+
+      const patched = await makeRequest(actualPort, 'PATCH', '/api/bots/agent-claude', {
+        persona: 'Lead architect',
+      });
+      assert.strictEqual(patched.status, 200);
+      assert.strictEqual(patched.data.data.persona, 'Lead architect');
+
+      const conflict = await makeRequest(actualPort, 'PATCH', '/api/bots/agent-grok', {
+        displayName: 'Claude',
+      });
+      assert.strictEqual(conflict.status, 409);
     } finally {
       await bridge.stop();
     }

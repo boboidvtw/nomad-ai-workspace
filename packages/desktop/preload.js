@@ -104,4 +104,7 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
   onLocalModelResponse: (/** @type {IpcListener} */ callback) => {
     ipcRenderer.on('nomad:local-model-response', (event, data) => callback(data));
   },
+  onBotBlocked: (/** @type {IpcListener} */ callback) => {
+    ipcRenderer.on('nomad:bot-blocked', (event, data) => callback(data));
+  },
 });

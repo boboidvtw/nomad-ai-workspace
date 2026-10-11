@@ -44,17 +44,10 @@ export const DEFAULT_ROSTER: {
     currentTaskIds: never[];
 }[];
 export class AgentRoster {
-    constructor(initialAgents?: {
-        id: string;
-        name: string;
-        role: string;
-        platform: string;
-        skills: string[];
-        status: "idle";
-        maxConcurrency: number;
-        budgetTokenLimit: number;
-        currentTaskIds: never[];
-    }[]);
+    /**
+     * @param {Agent[]} [initialAgents]
+     */
+    constructor(initialAgents?: Agent[]);
     /** @type {Map<string, import('./roster').Agent>} */
     agents: Map<string, import("./roster").Agent>;
     /**

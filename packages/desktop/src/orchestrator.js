@@ -52,6 +52,7 @@ class MultiAiOrchestrator {
    * @param {number} [options.initialWaitMs=2000] - Initial delay before polling
    * @param {number} [options.pollIntervalMs=800] - Polling interval
    * @param {number} [options.maxWaitMs=45000] - Max wait time per AI turn in ms
+   * @param {(platform: string) => Promise<{ blocked: boolean, reason?: string }>} [options.checkBlocked] - Task runs only: stops waiting when the page needs a human
    * @param {Function} [options.onStep] - (event) => void
    * @param {Function} [options.onComplete] - (summary) => void
    */
@@ -63,6 +64,7 @@ class MultiAiOrchestrator {
     this.initialWaitMs = options.initialWaitMs ?? 2000;
     this.pollIntervalMs = options.pollIntervalMs ?? 800;
     this.maxWaitMs = options.maxWaitMs ?? 45000;
+    this.checkBlocked = options.checkBlocked || null;
     this.onStep = options.onStep || (() => {});
     this.onComplete = options.onComplete || (() => {});
 
@@ -342,6 +344,39 @@ class MultiAiOrchestrator {
     maxWaitMs = this.maxWaitMs,
     pollIntervalMs = this.pollIntervalMs,
   ) {
+    const { text } = await this.pollUntilSettled(platform, {
+      maxWaitMs,
+      pollIntervalMs,
+      honorRelayControls: true,
+    });
+    return text || `[${platform} 回應擷取超時或已結束]`;
+  }
+
+  /**
+   * Waits for one platform's reply outside of a relay run (used by task runners).
+   * Unlike waitForSettledResponse it reports a timeout instead of placeholder text,
+   * and ignores relay pause/stop state.
+   * @param {string} platform
+   * @param {{ maxWaitMs?: number, pollIntervalMs?: number }} [options]
+   * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>}
+   */
+  awaitSettled(platform, options = {}) {
+    return this.pollUntilSettled(platform, {
+      maxWaitMs: options.maxWaitMs ?? this.maxWaitMs,
+      pollIntervalMs: options.pollIntervalMs ?? this.pollIntervalMs,
+      honorRelayControls: false,
+    });
+  }
+
+  /**
+   * @param {string} platform
+   * @param {{ maxWaitMs: number, pollIntervalMs: number, honorRelayControls: boolean }} options
+   * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>}
+   */
+  async pollUntilSettled(platform, { maxWaitMs, pollIntervalMs, honorRelayControls }) {
+    const checkBlocked = honorRelayControls ? null : this.checkBlocked;
+    const isAborted = () => honorRelayControls && this.isAborted;
+    const isPaused = () => honorRelayControls && this.isPaused;
     const startTime = Date.now();
     let lastLength = -1;
     let stableCount = 0;
@@ -353,8 +388,8 @@ class MultiAiOrchestrator {
       await this.sleep(this.initialWaitMs);
     }
 
-    while (Date.now() - startTime < maxWaitMs && !this.isAborted) {
-      if (this.isPaused) {
+    while (Date.now() - startTime < maxWaitMs && !isAborted()) {
+      if (isPaused()) {
         await this.sleep(100);
         continue;
       }
@@ -364,6 +399,13 @@ class MultiAiOrchestrator {
           this.checkStreaming(platform),
           this.extractResponse(platform),
         ]);
+
+        if (checkBlocked) {
+          const verdict = await checkBlocked(platform);
+          if (verdict?.blocked) {
+            return { settled: false, text: baselineText, blocked: true, reason: verdict.reason };
+          }
+        }
 
         const isStreaming = statusRes?.isStreaming ?? false;
         const text = (responseRes?.text || '').trim();
@@ -389,7 +431,7 @@ class MultiAiOrchestrator {
               console.log(
                 `[Nomad Orchestrator] [${platform}] Settled cleanly: length=${text.length}`,
               );
-              return text;
+              return { settled: true, text };
             }
           } else {
             stableCount = 0;
@@ -407,7 +449,7 @@ class MultiAiOrchestrator {
             console.log(
               `[Nomad Orchestrator] [${platform}] Settled via adaptive inactivity: length=${text.length}`,
             );
-            return text;
+            return { settled: true, text };
           }
         } else {
           streamingStableCount = 0;
@@ -427,7 +469,7 @@ class MultiAiOrchestrator {
     console.log(
       `[Nomad Orchestrator] [${platform}] Exited wait loop with text length=${baselineText.length}`,
     );
-    return baselineText || `[${platform} 回應擷取超時或已結束]`;
+    return { settled: false, text: baselineText };
   }
 
   /**

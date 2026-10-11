@@ -1,0 +1,35 @@
+export type BotServices = {
+    roster: import("./bot-roster").BotRoster;
+    /**
+     * - M5 mention/message router
+     */
+    router?: import("./message-router").BotMessageRouter | null | undefined;
+    /**
+     * - M6 group rooms
+     */
+    rooms?: import("./group-room").GroupRoomManager | null | undefined;
+    /**
+     * - M4 routines
+     */
+    scheduler?: import("../tasks/recurring-scheduler").RecurringScheduler | null | undefined;
+    /**
+     * - optional runners present on this host
+     */
+    capabilities?: (() => Promise<Record<string, boolean>>) | null | undefined;
+};
+export type BotRequest = {
+    method: string;
+    pathname: string;
+    searchParams: URLSearchParams;
+    readBody: () => Promise<any>;
+    services: BotServices;
+};
+export type BotResponse = {
+    status: number;
+    payload: any;
+};
+/**
+ * @param {BotRequest} req
+ * @returns {Promise<BotResponse | null>} null when the path is not a bot route
+ */
+export function handleBotRequest(req: BotRequest): Promise<BotResponse | null>;

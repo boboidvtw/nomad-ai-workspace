@@ -1728,6 +1728,9 @@
           <button class="tab-btn" onclick="filterCategory('tasks')" data-category="tasks">
             📋 任務派遣中心 <span class="tab-count" id="count-tasks">0</span>
           </button>
+          <button class="tab-btn" onclick="filterCategory('bots')" data-category="bots">
+            🤖 Bots
+          </button>
           <button class="tab-btn" onclick="filterCategory('ai')" data-category="ai">
             🧠 AI 決策與推論 <span class="tab-count">3</span>
           </button>
@@ -1750,6 +1753,8 @@
       <!-- ========================================================
          SERVICES GRID
          ======================================================== -->
+      <!-- @nomad:bots-panel -->
+
       <!-- ========================================================
          TASK CONTROL PLANE & KANBAN SECTION (Paperclip Native)
          ======================================================== -->
@@ -3828,6 +3833,15 @@
 
         const taskPlane = document.getElementById('task-control-plane-section');
         const servicesContainer = document.getElementById('services-container');
+        const botsSection = document.getElementById('bots-section');
+        if (botsSection) botsSection.style.display = cat === 'bots' ? 'block' : 'none';
+
+        if (cat === 'bots') {
+          if (taskPlane) taskPlane.style.display = 'none';
+          if (servicesContainer) servicesContainer.style.display = 'none';
+          if (window.NomadBots) window.NomadBots.show();
+          return;
+        }
 
         if (cat === 'tasks') {
           if (taskPlane) taskPlane.style.display = 'block';
@@ -5171,6 +5185,8 @@
       setInterval(checkAllServicesHealth, 6000);
       loadTaskPlaneData();
       setupTaskSseEvents();
+      // Studio links here as /dashboard#bots (e.g. from a "bot needs you" notice).
+      if (window.location.hash === '#bots') filterCategory('bots');
     </script>
   </body>
 </html>

@@ -67,7 +67,7 @@ export const TASK_PRIORITY: Readonly<{
     URGENT: "urgent";
 }>;
 export namespace VALID_TRANSITIONS {
-    let todo: ("in_progress" | "blocked" | "cancelled")[];
+    let todo: ("blocked" | "in_progress" | "cancelled")[];
     let blocked: ("todo" | "cancelled")[];
     let in_progress: ("review" | "completed" | "failed" | "cancelled")[];
     let review: ("in_progress" | "completed" | "failed" | "cancelled")[];

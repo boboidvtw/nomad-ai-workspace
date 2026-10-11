@@ -3,15 +3,21 @@ export class TaskRunner {
      * @param {import('./dispatcher').TaskDispatcher} dispatcher
      * @param {Object} [options]
      * @param {import('../client/local-model-client').LocalModelClient} [options.localModelClient]
-     * @param {Function} [options.orchestratorDelegate]
+     * @param {(platform: string, prompt: string, context: { agent: any, task: any }) => Promise<unknown>} [options.orchestratorDelegate]
      */
     constructor(dispatcher: import("./dispatcher").TaskDispatcher, options?: {
         localModelClient?: import("../client/local-model-client").LocalModelClient | undefined;
-        orchestratorDelegate?: Function | undefined;
+        orchestratorDelegate?: ((platform: string, prompt: string, context: {
+            agent: any;
+            task: any;
+        }) => Promise<unknown>) | undefined;
     });
     dispatcher: import("./dispatcher").TaskDispatcher;
     localModelClient: import("../client/local-model-client").LocalModelClient | null;
-    orchestratorDelegate: Function | null;
+    orchestratorDelegate: ((platform: string, prompt: string, context: {
+        agent: any;
+        task: any;
+    }) => Promise<unknown>) | null;
     /**
      * Dispatches and executes a task end-to-end
      * @param {string} taskId

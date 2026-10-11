@@ -1,0 +1,817 @@
+<!--
+  Nomad Dashboard - Bots panel (SPEC-AGENT-BOTS M8)
+  Inlined into index.html at the bots-panel marker by composeDashboard().
+  Every string that comes from the API (names, personas, AI replies) is rendered with
+  textContent or escapeHtml(): AI output is untrusted data.
+-->
+<style>
+  .bots-layout {
+    display: grid;
+    grid-template-columns: minmax(220px, 300px) 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 860px) {
+    .bots-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+  .bots-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 0.9rem;
+  }
+  .bots-roster-group {
+    font-size: 0.7rem;
+    color: var(--text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0.6rem 0 0.3rem;
+  }
+  .bot-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+  }
+  .bot-row:hover,
+  .bot-row:focus-visible {
+    background: var(--card-hover);
+    outline: none;
+    border-color: var(--card-border-hover);
+  }
+  .bot-row.active {
+    border-color: var(--primary);
+  }
+  .bot-row.dimmed {
+    opacity: 0.5;
+  }
+  .bot-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: var(--bg-surface);
+    display: grid;
+    place-items: center;
+    font-size: 1rem;
+    flex: none;
+  }
+  .bot-meta {
+    min-width: 0;
+    flex: 1;
+  }
+  .bot-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .bot-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bot-state {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+    flex: none;
+  }
+  .bot-state[data-state='working'] {
+    color: var(--cyan);
+    border-color: var(--cyan);
+  }
+  .bot-state[data-state='blocked'] {
+    color: var(--warning);
+    border-color: var(--warning);
+  }
+  .bot-state[data-state='done'] {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .bot-state[data-state='unknown'] {
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+  .bots-form {
+    display: grid;
+    gap: 0.6rem;
+  }
+  .bots-form label {
+    display: grid;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .bots-form input,
+  .bots-form textarea,
+  .bots-form select,
+  .bots-composer textarea {
+    background: var(--bg-surface);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem;
+    font: inherit;
+    font-size: 0.82rem;
+    width: 100%;
+  }
+  .bots-form input[type='checkbox'] {
+    width: auto;
+    padding: 0;
+  }
+  .bots-form label.bots-inline,
+  .bots-members label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .bots-form textarea,
+  .bots-composer textarea {
+    min-height: 72px;
+    resize: vertical;
+  }
+  .bots-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .bots-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.9rem;
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .bots-btn.ghost {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+  }
+  .bots-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .bots-list {
+    list-style: none;
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    max-height: 260px;
+    overflow: auto;
+  }
+  .bots-list li {
+    border-left: 2px solid var(--card-border);
+    padding-left: 0.6rem;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .bots-list li strong {
+    color: var(--text);
+  }
+  .bots-list li.error {
+    border-left-color: var(--danger);
+  }
+  .bots-h4 {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 1rem 0 0.5rem;
+  }
+  .bots-note {
+    font-size: 0.75rem;
+    color: var(--text-subtle);
+  }
+  .bots-members {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+  }
+</style>
+
+<section
+  class="task-plane-section"
+  id="bots-section"
+  style="display: none"
+  aria-labelledby="bots-title"
+>
+  <div class="task-header">
+    <div>
+      <h2 id="bots-title">🤖 Bots</h2>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px">
+        每個 Bot 有固定身分、persona 與永久對話；可排程、互相交辦、在會議室討論
+      </div>
+    </div>
+    <div class="task-header-actions bots-actions">
+      <label class="bots-note"><input type="checkbox" id="bots-show-hidden" /> 顯示已隱藏</label>
+      <button class="btn-refresh-task" type="button" id="bots-refresh">🔄 重新整理</button>
+      <button class="btn-create-task" type="button" id="bots-new">➕ 新增 Bot</button>
+    </div>
+  </div>
+
+  <div class="bots-layout">
+    <div class="bots-card">
+      <input
+        id="bots-search"
+        class="bots-search"
+        placeholder="搜尋 Bot…"
+        aria-label="搜尋 Bot"
+        style="
+          width: 100%;
+          background: var(--bg-surface);
+          color: var(--text);
+          border: 1px solid var(--card-border);
+          border-radius: var(--radius-sm);
+          padding: 0.45rem;
+        "
+      />
+      <div id="bots-roster" role="list" aria-label="Bot 名單"></div>
+    </div>
+
+    <div class="bots-card" id="bots-detail">
+      <p class="bots-note">從左側選一個 Bot。</p>
+    </div>
+  </div>
+
+  <div class="bots-card bots-composer" style="margin-top: 1rem">
+    <h3 class="bots-h4" style="margin-top: 0">📣 用 @handle 指派</h3>
+    <textarea
+      id="bots-mention-text"
+      placeholder="@claude @gemini 比較這兩個方案…"
+      aria-label="指派內容"
+    ></textarea>
+    <div class="bots-actions" style="margin-top: 0.5rem">
+      <button class="bots-btn" type="button" id="bots-mention-send">送出</button>
+      <span class="bots-note" id="bots-mention-status"></span>
+    </div>
+    <ul class="bots-list" id="bots-mention-results" style="margin-top: 0.6rem"></ul>
+  </div>
+
+  <div class="bots-card" style="margin-top: 1rem">
+    <h3 class="bots-h4" style="margin-top: 0">🗣️ 會議室（Group Rooms）</h3>
+    <div class="bots-layout" style="margin-top: 0">
+      <div>
+        <div id="bots-rooms" role="list" aria-label="會議室"></div>
+        <div class="bots-form" style="margin-top: 0.8rem">
+          <label>會議室名稱<input id="bots-room-name" placeholder="Design review" /></label>
+          <div class="bots-members" id="bots-room-members" aria-label="成員"></div>
+          <label
+            >輪替方式
+            <select id="bots-room-strategy">
+              <option value="round-robin">依序發言</option>
+              <option value="debate">交叉審查（debate）</option>
+            </select>
+          </label>
+          <button class="bots-btn ghost" type="button" id="bots-room-create">建立會議室</button>
+        </div>
+      </div>
+      <div>
+        <ul class="bots-list" id="bots-room-log" style="max-height: 360px"></ul>
+        <textarea
+          id="bots-room-text"
+          placeholder="對會議室說話；@member 只叫一位，@all 解除暫停"
+          aria-label="會議室訊息"
+          style="
+            margin-top: 0.6rem;
+            width: 100%;
+            min-height: 60px;
+            background: var(--bg-surface);
+            color: var(--text);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem;
+          "
+        ></textarea>
+        <div class="bots-actions" style="margin-top: 0.5rem">
+          <button class="bots-btn" type="button" id="bots-room-post" disabled>送出</button>
+          <button class="bots-btn ghost" type="button" id="bots-room-stop" disabled>⏸ Stop</button>
+          <span class="bots-note" id="bots-room-status"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    'use strict';
+    var STATE_LABEL = {
+      idle: '待命',
+      working: '工作中',
+      blocked: '需要你',
+      done: '完成',
+      unknown: '未知',
+    };
+    var state = {
+      bots: [],
+      rooms: [],
+      selectedId: null,
+      roomId: null,
+      events: null,
+      loaded: false,
+    };
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+    function el(tag, props, children) {
+      var node = document.createElement(tag);
+      Object.keys(props || {}).forEach(function (key) {
+        if (key === 'text') node.textContent = props[key];
+        else if (key === 'className') node.className = props[key];
+        else if (key.indexOf('on') === 0) node.addEventListener(key.slice(2), props[key]);
+        else node.setAttribute(key, props[key]);
+      });
+      (children || []).forEach(function (child) {
+        if (child) node.appendChild(child);
+      });
+      return node;
+    }
+    async function api(method, path, body) {
+      var base = typeof getApiBase === 'function' ? await getApiBase() : '';
+      var res = await fetch(base + path, {
+        method: method,
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      var json = await res.json().catch(function () {
+        return { success: false, message: 'Invalid response' };
+      });
+      json.httpStatus = res.status;
+      return json;
+    }
+    function nameOf(bot) {
+      return bot.displayName || bot.name;
+    }
+    function botById(id) {
+      return state.bots.find(function (b) {
+        return b.id === id;
+      });
+    }
+
+    function renderRoster() {
+      var container = $('bots-roster');
+      var query = ($('bots-search').value || '').toLowerCase();
+      var showHidden = $('bots-show-hidden').checked;
+      container.replaceChildren();
+      var groups = {};
+      state.bots
+        .filter(function (b) {
+          return (
+            (showHidden || !b.hidden) &&
+            (nameOf(b) + ' ' + b.handle).toLowerCase().indexOf(query) !== -1
+          );
+        })
+        .forEach(function (b) {
+          var key = (b.sections && b.sections[0]) || '未分組';
+          (groups[key] = groups[key] || []).push(b);
+        });
+      Object.keys(groups).forEach(function (group) {
+        container.appendChild(el('div', { className: 'bots-roster-group', text: group }));
+        groups[group].forEach(function (b) {
+          var last =
+            b.timeline && b.timeline.length ? b.timeline[b.timeline.length - 1].summary : b.role;
+          var row = el(
+            'button',
+            {
+              type: 'button',
+              role: 'listitem',
+              className:
+                'bot-row' +
+                (b.id === state.selectedId ? ' active' : '') +
+                (b.hidden ? ' dimmed' : ''),
+              onclick: function () {
+                selectBot(b.id);
+              },
+            },
+            [
+              el('span', {
+                className: 'bot-avatar',
+                text: b.avatar || '🤖',
+                'aria-hidden': 'true',
+              }),
+              el('span', { className: 'bot-meta' }, [
+                el('div', { className: 'bot-name', text: nameOf(b) }),
+                el('div', { className: 'bot-sub', text: '@' + b.handle + ' · ' + (last || '') }),
+              ]),
+              el('span', {
+                className: 'bot-state',
+                'data-state': b.state,
+                text: STATE_LABEL[b.state] || b.state,
+              }),
+            ],
+          );
+          container.appendChild(row);
+        });
+      });
+      if (!container.childElementCount)
+        container.appendChild(el('p', { className: 'bots-note', text: '沒有符合的 Bot' }));
+      renderRoomMembers();
+    }
+
+    async function selectBot(id) {
+      state.selectedId = id;
+      renderRoster();
+      var bot = botById(id);
+      if (!bot) return;
+      if (bot.state === 'done') api('POST', '/api/bots/' + encodeURIComponent(id) + '/seen');
+      renderDetail(bot, []);
+      var routines = await api('GET', '/api/bots/' + encodeURIComponent(id) + '/routines');
+      if (state.selectedId === id) renderDetail(bot, routines.success ? routines.data : null);
+    }
+
+    function field(label, input) {
+      return el('label', { text: label }, [input]);
+    }
+
+    function renderDetail(bot, routines) {
+      var detail = $('bots-detail');
+      detail.replaceChildren();
+      var chat = bot.canonicalChat && bot.canonicalChat.url;
+      var header = el('div', { className: 'bots-actions' }, [
+        el('span', { className: 'bot-avatar', text: bot.avatar || '🤖', 'aria-hidden': 'true' }),
+        el('strong', { text: nameOf(bot) + '  @' + bot.handle }),
+        el('span', {
+          className: 'bot-state',
+          'data-state': bot.state,
+          text: STATE_LABEL[bot.state] || bot.state,
+        }),
+        el('span', { className: 'bots-note', text: bot.platform }),
+      ]);
+      detail.appendChild(header);
+      if (chat && /^https:\/\//.test(chat)) {
+        detail.appendChild(
+          el('p', { className: 'bots-note' }, [
+            el('span', { text: '永久對話：' }),
+            el('a', { href: chat, target: '_blank', rel: 'noopener noreferrer', text: chat }),
+          ]),
+        );
+      } else if (bot.platform !== 'local-model') {
+        detail.appendChild(
+          el('p', {
+            className: 'bots-note',
+            text: '尚未綁定對話：第一次派工時會自動開一個新對話並綁定。',
+          }),
+        );
+      }
+
+      var inputs = {
+        displayName: el('input', { value: bot.displayName || '' }),
+        avatar: el('input', { value: bot.avatar || '', maxlength: '8' }),
+        sections: el('input', { value: (bot.sections || []).join(', ') }),
+        persona: el('textarea', {}),
+        hidden: el('input', { type: 'checkbox' }),
+      };
+      inputs.persona.value = bot.persona || '';
+      inputs.hidden.checked = Boolean(bot.hidden);
+      var status = el('span', { className: 'bots-note' });
+      var form = el('div', { className: 'bots-form', style: 'margin-top: 0.8rem' }, [
+        field('顯示名稱（決定 @handle）', inputs.displayName),
+        field('頭像（emoji）', inputs.avatar),
+        field('分組（逗號分隔）', inputs.sections),
+        field('Persona（新對話第一輪送出）', inputs.persona),
+        el('label', { className: 'bots-note bots-inline' }, [
+          inputs.hidden,
+          el('span', { text: '從名單隱藏（@mention 與排程照常）' }),
+        ]),
+        el('div', { className: 'bots-actions' }, [
+          el('button', {
+            type: 'button',
+            className: 'bots-btn',
+            text: '儲存',
+            onclick: async function () {
+              var res = await api('PATCH', '/api/bots/' + encodeURIComponent(bot.id), {
+                displayName: inputs.displayName.value.trim() || undefined,
+                avatar: inputs.avatar.value.trim(),
+                sections: inputs.sections.value
+                  .split(',')
+                  .map(function (s) {
+                    return s.trim();
+                  })
+                  .filter(Boolean),
+                persona: inputs.persona.value,
+                hidden: inputs.hidden.checked,
+              });
+              status.textContent = res.success
+                ? '已儲存'
+                : '儲存失敗：' + (res.message || res.httpStatus);
+              if (res.success) upsertBot(res.data);
+            },
+          }),
+          status,
+        ]),
+      ]);
+      detail.appendChild(form);
+
+      detail.appendChild(el('h4', { className: 'bots-h4', text: '⏰ Routines' }));
+      if (routines === null)
+        detail.appendChild(el('p', { className: 'bots-note', text: '此主機沒有排程服務' }));
+      else if (!routines.length)
+        detail.appendChild(
+          el('p', { className: 'bots-note', text: '尚無排程（任務看板可新增，指派給此 Bot）' }),
+        );
+      else
+        detail.appendChild(
+          el(
+            'ul',
+            { className: 'bots-list' },
+            routines.map(function (r) {
+              return el('li', {
+                text:
+                  (r.enabled ? '● ' : '○ ') +
+                  r.label +
+                  ' · 每 ' +
+                  Math.round(r.intervalMs / 60000) +
+                  ' 分鐘 · 已執行 ' +
+                  r.runCount +
+                  ' 次',
+              });
+            }),
+          ),
+        );
+
+      detail.appendChild(el('h4', { className: 'bots-h4', text: '🕘 Timeline' }));
+      var timeline = (bot.timeline || []).slice().reverse();
+      detail.appendChild(
+        timeline.length
+          ? el(
+              'ul',
+              { className: 'bots-list' },
+              timeline.map(function (e) {
+                return el('li', {}, [
+                  el('strong', { text: e.type + ' ' }),
+                  el('span', { text: new Date(e.at).toLocaleString() + ' · ' + e.summary }),
+                ]);
+              }),
+            )
+          : el('p', { className: 'bots-note', text: '尚無紀錄' }),
+      );
+    }
+
+    function upsertBot(bot) {
+      var index = state.bots.findIndex(function (b) {
+        return b.id === bot.id;
+      });
+      if (index >= 0) state.bots[index] = bot;
+      else state.bots.push(bot);
+      renderRoster();
+      if (bot.id === state.selectedId) selectBot(bot.id);
+    }
+
+    async function loadBots() {
+      var res = await api('GET', '/api/bots');
+      if (res.success) {
+        state.bots = res.data;
+        renderRoster();
+      }
+    }
+
+    async function createBot() {
+      var name = window.prompt('新 Bot 的名稱（例如 Research Buddy）');
+      if (!name) return;
+      var caps = await api('GET', '/api/bots/capabilities');
+      var platforms = ['claude', 'chatgpt', 'gemini', 'grok', 'local-model'];
+      if (caps.success && caps.data.herdr) platforms.push('herdr');
+      var platform = window.prompt('平台：' + platforms.join(' / '), 'claude');
+      if (!platform || platforms.indexOf(platform) === -1) return;
+      var id = 'bot-' + Date.now().toString(36);
+      var res = await api('POST', '/api/bots', {
+        id: id,
+        name: name.trim(),
+        displayName: name.trim(),
+        platform: platform,
+      });
+      if (res.success) {
+        upsertBot(res.data);
+        selectBot(res.data.id);
+      } else {
+        window.alert('建立失敗：' + (res.message || res.httpStatus));
+      }
+    }
+
+    async function sendMentions() {
+      var text = $('bots-mention-text').value.trim();
+      if (!text) return;
+      var status = $('bots-mention-status');
+      var list = $('bots-mention-results');
+      status.textContent = '派送中…（網頁版 AI 回覆可能需要數分鐘）';
+      list.replaceChildren();
+      var res = await api('POST', '/api/bots/mentions', { text: text });
+      if (!res.success) {
+        status.textContent =
+          res.httpStatus === 503
+            ? '需要在 Nomad Studio 內使用（daemon 無法操作 AI 網頁）'
+            : '失敗：' + res.message;
+        return;
+      }
+      status.textContent = res.data.routed.length ? '' : '沒有找到任何已知的 @handle';
+      if (res.data.unknown.length) status.textContent += ' 未知：@' + res.data.unknown.join(' @');
+      res.data.routed.forEach(function (r) {
+        var bot = botById(r.to);
+        list.appendChild(
+          el('li', { className: r.success ? '' : 'error' }, [
+            el('strong', { text: (bot ? nameOf(bot) : r.to) + '：' }),
+            el('span', { text: r.success ? r.reply : r.message }),
+          ]),
+        );
+      });
+    }
+
+    function renderRoomMembers() {
+      var box = $('bots-room-members');
+      var checked = Array.from(box.querySelectorAll('input:checked')).map(function (i) {
+        return i.value;
+      });
+      box.replaceChildren();
+      state.bots.forEach(function (b) {
+        var input = el('input', { type: 'checkbox', value: b.id });
+        input.checked = checked.indexOf(b.id) !== -1;
+        box.appendChild(el('label', {}, [input, el('span', { text: nameOf(b) })]));
+      });
+    }
+
+    function renderRooms() {
+      var container = $('bots-rooms');
+      container.replaceChildren();
+      if (!state.rooms.length)
+        container.appendChild(el('p', { className: 'bots-note', text: '尚無會議室' }));
+      state.rooms.forEach(function (room) {
+        container.appendChild(
+          el(
+            'button',
+            {
+              type: 'button',
+              role: 'listitem',
+              className: 'bot-row' + (room.id === state.roomId ? ' active' : ''),
+              onclick: function () {
+                state.roomId = room.id;
+                renderRooms();
+              },
+            },
+            [
+              el('span', { className: 'bot-meta' }, [
+                el('div', { className: 'bot-name', text: room.name }),
+                el('div', {
+                  className: 'bot-sub',
+                  text: room.memberIds
+                    .map(function (id) {
+                      var b = botById(id);
+                      return b ? '@' + b.handle : id;
+                    })
+                    .join(' '),
+                }),
+              ]),
+              el('span', { className: 'bot-state', text: room.status }),
+            ],
+          ),
+        );
+      });
+      var room = state.rooms.find(function (r) {
+        return r.id === state.roomId;
+      });
+      $('bots-room-post').disabled = !room;
+      $('bots-room-stop').disabled = !room;
+      var log = $('bots-room-log');
+      log.replaceChildren();
+      (room ? room.log : []).forEach(function (entry) {
+        var bot = botById(entry.speaker);
+        log.appendChild(
+          el('li', { className: entry.error ? 'error' : '' }, [
+            el('strong', {
+              text: (entry.speaker === 'user' ? '你' : bot ? nameOf(bot) : entry.speaker) + '：',
+            }),
+            el('span', { text: entry.text }),
+          ]),
+        );
+      });
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function loadRooms() {
+      var res = await api('GET', '/api/bots/rooms');
+      if (res.success) {
+        state.rooms = res.data;
+        $('bots-room-status').textContent = '';
+      } else if (res.httpStatus === 503) {
+        $('bots-room-status').textContent = '會議室需要在 Nomad Studio 內使用';
+      }
+      renderRooms();
+    }
+
+    async function refreshRoom(roomId) {
+      var res = await api('GET', '/api/bots/rooms/' + encodeURIComponent(roomId));
+      if (!res.success) return;
+      var index = state.rooms.findIndex(function (r) {
+        return r.id === roomId;
+      });
+      if (index >= 0) state.rooms[index] = res.data;
+      else state.rooms.push(res.data);
+      renderRooms();
+    }
+
+    async function createRoom() {
+      var memberIds = Array.from($('bots-room-members').querySelectorAll('input:checked')).map(
+        function (i) {
+          return i.value;
+        },
+      );
+      var res = await api('POST', '/api/bots/rooms', {
+        name: $('bots-room-name').value.trim(),
+        memberIds: memberIds,
+        strategy: $('bots-room-strategy').value,
+      });
+      if (res.success) {
+        state.roomId = res.data.id;
+        await loadRooms();
+      } else {
+        $('bots-room-status').textContent = '建立失敗：' + res.message;
+      }
+    }
+
+    async function postRoom() {
+      var text = $('bots-room-text').value.trim();
+      if (!text || !state.roomId) return;
+      var res = await api(
+        'POST',
+        '/api/bots/rooms/' + encodeURIComponent(state.roomId) + '/messages',
+        { text: text },
+      );
+      $('bots-room-status').textContent = res.success
+        ? res.data.queued
+          ? '已排隊，等目前發言結束'
+          : ''
+        : '失敗：' + res.message;
+      if (res.success) $('bots-room-text').value = '';
+      refreshRoom(state.roomId);
+    }
+
+    async function stopRoom() {
+      if (!state.roomId) return;
+      await api('POST', '/api/bots/rooms/' + encodeURIComponent(state.roomId) + '/stop');
+      $('bots-room-status').textContent = '已暫停全部成員；@member 或 @all 可恢復';
+      refreshRoom(state.roomId);
+    }
+
+    async function listen() {
+      if (state.events || typeof EventSource === 'undefined') return;
+      var base = typeof getApiBase === 'function' ? await getApiBase() : '';
+      state.events = new EventSource(base + '/api/events');
+      state.events.addEventListener('bot:updated', function (event) {
+        try {
+          upsertBot(JSON.parse(event.data));
+        } catch (e) {}
+      });
+      state.events.addEventListener('bot:removed', function () {
+        loadBots();
+      });
+      ['room:message', 'room:status'].forEach(function (type) {
+        state.events.addEventListener(type, function (event) {
+          try {
+            refreshRoom(JSON.parse(event.data).roomId);
+          } catch (e) {}
+        });
+      });
+    }
+
+    function bind() {
+      $('bots-refresh').addEventListener('click', function () {
+        loadBots();
+        loadRooms();
+      });
+      $('bots-new').addEventListener('click', createBot);
+      $('bots-search').addEventListener('input', renderRoster);
+      $('bots-show-hidden').addEventListener('change', renderRoster);
+      $('bots-mention-send').addEventListener('click', sendMentions);
+      $('bots-room-create').addEventListener('click', createRoom);
+      $('bots-room-post').addEventListener('click', postRoom);
+      $('bots-room-stop').addEventListener('click', stopRoom);
+    }
+
+    window.NomadBots = {
+      show: function () {
+        if (!state.loaded) {
+          state.loaded = true;
+          bind();
+        }
+        loadBots().then(loadRooms);
+        listen();
+      },
+    };
+  })();
+</script>

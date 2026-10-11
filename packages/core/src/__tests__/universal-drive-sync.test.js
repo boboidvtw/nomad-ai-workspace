@@ -123,3 +123,37 @@ test('Universal Drive Sync: error handling on missing folder or invalid payload'
   assert.strictEqual(isErr(missingImport), true);
   assert.strictEqual(missingImport.errorCode, ErrorCodes.SYNC_DRIVE_FOLDER_NOT_FOUND_001);
 });
+
+test('Universal Drive Sync: bots travel to Drive without chat URLs and come back merged', () => {
+  const { BotRoster, BOTS_FILE_NAME } = require('../../index');
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nomad-sync-bots-'));
+  const source = new BotRoster();
+  source.updateBot('agent-claude', { persona: 'Lead architect' });
+  source.bindCanonicalChat('agent-claude', {
+    platform: 'claude',
+    url: 'https://claude.ai/chat/secret',
+  });
+
+  const pushed = exportToDrive({
+    workspaces: [],
+    bots: source.toSyncPayload(),
+    targetDir: tempDir,
+  });
+  assert.ok(isOk(pushed));
+  const onDrive = fs.readFileSync(path.join(tempDir, BOTS_FILE_NAME), 'utf8');
+  assert.ok(!onDrive.includes('claude.ai/chat/secret'));
+
+  const pulled = importFromDrive({ sourceDir: tempDir, currentWorkspaces: [] });
+  assert.ok(isOk(pulled));
+  const target = new BotRoster();
+  target.applySyncPayload(pulled.data.bots);
+  assert.strictEqual(target.getAgent('agent-claude').data.persona, 'Lead architect');
+});
+
+test('Universal Drive Sync: pulling from a folder without bots returns bots = null', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nomad-sync-nobots-'));
+  exportToDrive({ workspaces: [], targetDir: tempDir });
+  const pulled = importFromDrive({ sourceDir: tempDir, currentWorkspaces: [] });
+  assert.ok(isOk(pulled));
+  assert.strictEqual(pulled.data.bots, null);
+});

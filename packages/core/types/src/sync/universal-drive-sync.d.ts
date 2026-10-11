@@ -9,6 +9,7 @@ export const DRIVE_FOLDER_NAME: "Nomad Workspace Data";
 export const WORKSPACES_FILE_NAME: "nomad-workspaces.json";
 export const SETTINGS_FILE_NAME: "nomad-settings.json";
 export const MANIFEST_FILE_NAME: "nomad-sync-manifest.json";
+export const BOTS_FILE_NAME: "nomad-bots.json";
 /**
  * Detect local Google Drive mounted paths on macOS / Linux / Windows
  * @returns {string|null} Resolved full path or null
@@ -30,12 +31,17 @@ export function computeChecksum(content: string): string;
  * @param {SyncWorkspace[]} [options.workspaces] - List of workspaces (required; validated at runtime)
  * @param {Record<string, unknown>} [options.settings] - App settings
  * @param {string} [options.targetDir] - Custom Drive directory override
+ * @param {{ version: number, bots: unknown[] }} [options.bots] - BotRoster.toSyncPayload() (no chat URLs)
  * @returns {import('../result').UnitResult<{ targetDir: string, syncedCount: number, checksum: string, timestamp: string }>}
  */
 export function exportToDrive(options?: {
     workspaces?: SyncWorkspace[] | undefined;
     settings?: Record<string, unknown> | undefined;
     targetDir?: string | undefined;
+    bots?: {
+        version: number;
+        bots: unknown[];
+    } | undefined;
 }): import("../result").UnitResult<{
     targetDir: string;
     syncedCount: number;
@@ -48,7 +54,7 @@ export function exportToDrive(options?: {
  * @param {SyncWorkspace[]} [options.currentWorkspaces=[]] - Existing local workspaces
  * @param {string} [options.sourceDir] - Custom Drive directory override
  * @param {'merge'|'overwrite'|'keep_local'} [options.strategy='merge']
- * @returns {import('../result').UnitResult<{ reconciledWorkspaces: SyncWorkspace[], importedCount: number, strategy: string, timestamp: string }>}
+ * @returns {import('../result').UnitResult<{ reconciledWorkspaces: SyncWorkspace[], importedCount: number, strategy: string, timestamp: string, bots: { version?: number, bots?: unknown[] } | null }>}
  */
 export function importFromDrive(options?: {
     currentWorkspaces?: SyncWorkspace[] | undefined;
@@ -59,6 +65,10 @@ export function importFromDrive(options?: {
     importedCount: number;
     strategy: string;
     timestamp: string;
+    bots: {
+        version?: number;
+        bots?: unknown[];
+    } | null;
 }>;
 /**
  * Get Google Drive sync status and health

@@ -8,6 +8,19 @@ const path = require('path');
 const { err, ErrorCodes } = require('@nomad/core');
 
 const DASHBOARD_HTML_PATH = path.join(__dirname, 'index.html');
+const BOTS_PANEL_PATH = path.join(__dirname, 'bots-panel.html');
+const BOTS_PANEL_MARKER = '<!-- @nomad:bots-panel -->';
+
+/**
+ * Inlines the Bots panel (kept in its own file so index.html does not keep growing).
+ * @param {string} html
+ * @returns {string}
+ */
+function composeDashboard(html) {
+  if (!html.includes(BOTS_PANEL_MARKER) || !fs.existsSync(BOTS_PANEL_PATH)) return html;
+  const panel = fs.readFileSync(BOTS_PANEL_PATH, 'utf-8');
+  return html.replace(BOTS_PANEL_MARKER, () => panel);
+}
 
 /**
  * Returns the dashboard index.html path, or null if it is missing from the install.
@@ -39,7 +52,7 @@ function serveDashboard(req, res, transform) {
   }
 
   try {
-    const raw = fs.readFileSync(filePath, 'utf-8');
+    const raw = composeDashboard(fs.readFileSync(filePath, 'utf-8'));
     const content = typeof transform === 'function' ? transform(raw) : raw;
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
@@ -61,6 +74,8 @@ function serveDashboard(req, res, transform) {
 
 module.exports = {
   DASHBOARD_HTML_PATH,
+  BOTS_PANEL_PATH,
+  composeDashboard,
   findDashboardPath,
   serveDashboard,
 };

@@ -21,7 +21,6 @@ const {
   McpGateway,
   KnowledgeBase,
   PluginRuntime,
-  AgentRoster,
   TaskDispatcher,
   ApprovalGate,
   RecurringScheduler,
@@ -33,6 +32,8 @@ const {
   authorizeRequest,
   injectDashboardAuth,
   probeAllServices,
+  BotRoster,
+  handleBotRequest,
 } = require('@nomad/core');
 
 class LocalSyncBridge {
@@ -42,6 +43,7 @@ class LocalSyncBridge {
    * @param {string} [options.host='127.0.0.1'] - Bind address
    * @param {Function} [options.getStatus] - Callback returning app status
    * @param {(req: { prompt: string, targets: string[] }) => Promise<unknown>} [options.onDispatchPrompt] - Callback for prompt injection
+   * @param {(platform: string, prompt: string, context: { agent: any, task: any }) => Promise<unknown>} [options.runWebviewTask] - Runs a task prompt in a webview and resolves with the settled reply (Result); preferred over onDispatchPrompt for tasks
    * @param {Function} [options.onSetLayout] - Callback for layout changes
    * @param {Function} [options.onSetZoom] - Callback for zoom adjustments
    * @param {Function} [options.onToggleWindow] - Callback for window summon/hide
@@ -54,7 +56,7 @@ class LocalSyncBridge {
    * @param {import('./session-manager').SessionManager | null} [options.sessionManager] - SessionManager for workspace/session routes
    * @param {number} [options.daemonPort=8765] - Daemon port to register with when running on another port
    * @param {import('@nomad/core').McpGateway} [options.mcpGateway] - Shared MCP gateway (defaults to a new one with core's default roots)
-   * @param {import('@nomad/core').AgentRoster} [options.roster]
+   * @param {import('@nomad/core').BotRoster} [options.roster]
    * @param {import('@nomad/core').TaskDispatcher} [options.dispatcher]
    * @param {import('@nomad/core').RecurringScheduler} [options.scheduler]
    */
@@ -87,7 +89,9 @@ class LocalSyncBridge {
     this.knowledgeBase = new KnowledgeBase();
     this.localModelClient = new LocalModelClient();
     this.pluginRuntime = new PluginRuntime();
-    this.roster = options.roster || new AgentRoster();
+    this.roster = options.roster || new BotRoster();
+    /** @type {import('@nomad/core').BotServices} */
+    this.botServices = { roster: this.roster, router: null, rooms: null, scheduler: null };
     this.dispatcher =
       options.dispatcher ||
       new TaskDispatcher({
@@ -101,11 +105,13 @@ class LocalSyncBridge {
     this.approvalGate = ApprovalGate;
     this.taskRunner = new TaskRunner(this.dispatcher, {
       localModelClient: this.localModelClient,
-      orchestratorDelegate: options.onDispatchPrompt
-        ? async (/** @type {string} */ platform, /** @type {string} */ prompt) => {
-            return this.onDispatchPrompt({ prompt, targets: [platform] });
-          }
-        : undefined,
+      orchestratorDelegate: options.runWebviewTask
+        ? options.runWebviewTask
+        : options.onDispatchPrompt
+          ? async (/** @type {string} */ platform, /** @type {string} */ prompt) => {
+              return this.onDispatchPrompt({ prompt, targets: [platform] });
+            }
+          : undefined,
     });
     this.scheduler =
       options.scheduler ||
@@ -117,6 +123,7 @@ class LocalSyncBridge {
         },
       });
     this.scheduler.loadFromDisk();
+    this.botServices.scheduler = this.scheduler;
   }
 
   registerWithDaemon(daemonPort = this.daemonPort) {
@@ -763,6 +770,16 @@ class LocalSyncBridge {
         return this.sendJson(res, 200, { success: true, filePath, exportDir });
       }
 
+      // Bots (SPEC-AGENT-BOTS): /api/bots/*
+      const botRes = await handleBotRequest({
+        method: req.method || 'GET',
+        pathname,
+        searchParams: parsedUrl.searchParams,
+        readBody: () => this.readJsonBody(req),
+        services: this.botServices,
+      });
+      if (botRes) return this.sendJson(res, botRes.status, botRes.payload);
+
       // Task Control Plane & Agent Dispatcher Endpoints (Paperclip Native Integration)
       if (pathname === '/api/roster' && req.method === 'GET') {
         return this.sendJson(res, 200, ok(this.roster.listAgents()));
@@ -1018,6 +1035,7 @@ class LocalSyncBridge {
           workspaces,
           settings: body.settings,
           targetDir: this.getDriveSyncDir(),
+          bots: this.roster.toSyncPayload(),
         });
         return this.sendJson(res, pushRes.success ? 200 : 400, pushRes);
       }
@@ -1032,6 +1050,9 @@ class LocalSyncBridge {
         });
         if (pullRes.success && this.sessionManager) {
           this.sessionManager.store.set('workspaces', pullRes.data.reconciledWorkspaces);
+        }
+        if (pullRes.success && pullRes.data.bots) {
+          this.roster.applySyncPayload(pullRes.data.bots);
         }
         return this.sendJson(res, pullRes.success ? 200 : 400, pullRes);
       }

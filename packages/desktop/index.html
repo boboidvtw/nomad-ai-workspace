@@ -2961,9 +2961,9 @@
         }
       }
 
-      function openDashboardInBrowser() {
+      function openDashboardInBrowser(hash = '') {
         const port = state.bridgePort || 8765;
-        const url = `http://127.0.0.1:${port}/dashboard`;
+        const url = `http://127.0.0.1:${port}/dashboard${hash}`;
         if (window.nomadDesktop && window.nomadDesktop.openExternal) {
           window.nomadDesktop.openExternal(url);
         } else {
@@ -4364,6 +4364,30 @@
       if (window.nomadDesktop && window.nomadDesktop.onToggleSpotlightHud) {
         window.nomadDesktop.onToggleSpotlightHud(() => {
           toggleSpotlightHUD();
+        });
+      }
+
+      // A bot hit a usage limit, sign-out or approval prompt: show who and why (text only).
+      if (window.nomadDesktop && window.nomadDesktop.onBotBlocked) {
+        window.nomadDesktop.onBotBlocked((notice) => {
+          let banner = document.getElementById('bot-blocked-banner');
+          if (!banner) {
+            banner = document.createElement('button');
+            banner.id = 'bot-blocked-banner';
+            banner.type = 'button';
+            banner.style.cssText =
+              'position:fixed;right:16px;bottom:16px;z-index:9999;max-width:360px;padding:10px 14px;' +
+              'border-radius:10px;border:1px solid rgba(245,158,11,0.5);background:rgba(30,22,8,0.95);' +
+              'color:#fcd34d;font-size:12px;text-align:left;cursor:pointer;';
+            banner.addEventListener('click', () => {
+              banner.style.display = 'none';
+              openDashboardInBrowser('#bots');
+            });
+            document.body.appendChild(banner);
+          }
+          const who = (notice && (notice.botName || notice.platform)) || 'Bot';
+          banner.textContent = `⚠️ ${who} 需要你：${(notice && notice.reason) || ''}（點擊開啟 Bots）`;
+          banner.style.display = 'block';
         });
       }
 
