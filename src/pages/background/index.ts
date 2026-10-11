@@ -1389,7 +1389,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 });
 
-chrome.permissions.onAdded.addListener(({ origins }) => {
+chrome.permissions?.onAdded?.addListener(({ origins }) => {
   void (async () => {
     // Refresh the plugin-site set FIRST so a freshly-granted plugin origin
     // (e.g. claude.ai / chatgpt.com) is reliably excluded from the Prompt-Manager
@@ -1423,7 +1423,7 @@ chrome.permissions.onAdded.addListener(({ origins }) => {
   })();
 });
 
-chrome.permissions.onRemoved.addListener(() => {
+chrome.permissions?.onRemoved?.addListener(() => {
   void syncCustomContentScripts();
   // Keep plugin content-script registrations in sync when a site's host
   // permission is revoked from the browser UI — filterGrantedOrigins will now

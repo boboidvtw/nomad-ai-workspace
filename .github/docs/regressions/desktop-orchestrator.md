@@ -40,3 +40,12 @@
 - **Rule:** Match `傳送` alongside the other labels, and cover each UI locale's label with a
   DOM test built from the real page structure.
 - **Guard:** `packages/desktop/src/__tests__/injectors.test.js`
+
+## The extension background died halfway inside Studio
+
+- **Trap:** `src/pages/background/index.ts` called `chrome.permissions.onAdded.addListener` at the
+  top level. Electron has no `chrome.permissions`, so module evaluation threw there and every
+  later statement, including the runtime message router, never ran inside Nomad AI Studio.
+- **Rule:** Top-level listeners on APIs Electron lacks (permissions, contextMenus, commands,
+  alarms, notifications, downloads, identity, sidePanel) use optional chaining.
+- **Guard:** `src/pages/background/__tests__/electronApiGuards.test.ts`
