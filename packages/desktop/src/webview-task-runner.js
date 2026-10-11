@@ -2,16 +2,34 @@
  * Nomad AI Studio - Webview Task Runner
  * Runs one task prompt against a platform webview and waits for the settled reply,
  * so TaskRunner gets the AI's actual answer instead of a fire-and-forget receipt.
+ *
+ * When the task targets a bot (SPEC-AGENT-BOTS M2) the run happens inside the bot's
+ * canonical chat: the first run opens a new conversation, sends the persona and binds the
+ * resulting URL; later runs reopen that conversation. A conversation that no longer opens
+ * is rebound to a fresh one and logged on the bot's timeline.
  * Governed by AGENTS.md Atomic Contract & Result Pattern.
  */
 
-const { ok, err, ErrorCodes } = require('@nomad/core');
+const {
+  ok,
+  err,
+  ErrorCodes,
+  BOT_STATE,
+  isConversationUrl,
+  isSameConversation,
+} = require('@nomad/core');
 
 /**
  * @typedef {Object} WebviewTaskRunnerDeps
  * @property {(platform: string, text: string) => Promise<Record<string, any>>} inject
  *   Same shape as main.js dispatchPromptToTargets: `{ [platform]: { ok, error? } }`.
  * @property {(platform: string) => Promise<{ settled: boolean, text: string }>} awaitSettled
+ * @property {import('@nomad/core').BotRoster} [roster]
+ * @property {(platform: string, url: string | null) => Promise<{ ok: boolean, error?: string }>} [openChat]
+ *   Loads `url`, or a new conversation when null, and resolves once the page is ready.
+ * @property {(platform: string) => Promise<string | null>} [currentUrl]
+ *
+ * @typedef {{ agent?: { id: string } | null, task?: { id: string, title?: string } | null }} RunContext
  */
 
 /**
@@ -20,6 +38,7 @@ const { ok, err, ErrorCodes } = require('@nomad/core');
 function createWebviewTaskRunner(deps) {
   /** @type {Map<string, Promise<unknown>>} */
   const queues = new Map();
+  const botAware = Boolean(deps.roster && deps.openChat && deps.currentUrl);
 
   /**
    * Chains work per platform: one webview can only hold one conversation turn at a time.
@@ -42,7 +61,7 @@ function createWebviewTaskRunner(deps) {
    * @param {string} platform
    * @param {string} prompt
    */
-  async function runOnce(platform, prompt) {
+  async function injectAndWait(platform, prompt) {
     let injected;
     try {
       injected = await deps.inject(platform, prompt);
@@ -69,13 +88,97 @@ function createWebviewTaskRunner(deps) {
     return ok({ text: reply.text });
   }
 
+  /**
+   * Opens the bot's conversation. Returns whether the persona must be sent (a new chat).
+   * @param {import('@nomad/core').Bot} bot
+   * @param {string} platform
+   * @returns {Promise<import('@nomad/core').UnitResult<{ freshChat: boolean }>>}
+   */
+  async function openBotChat(bot, platform) {
+    const roster = /** @type {import('@nomad/core').BotRoster} */ (deps.roster);
+    const openChat = /** @type {NonNullable<WebviewTaskRunnerDeps['openChat']>} */ (deps.openChat);
+    const currentUrl = /** @type {NonNullable<WebviewTaskRunnerDeps['currentUrl']>} */ (
+      deps.currentUrl
+    );
+    const boundUrl = bot.canonicalChat?.url || null;
+
+    if (boundUrl) {
+      const opened = await openChat(platform, boundUrl);
+      const landed = opened.ok ? await currentUrl(platform) : null;
+      if (opened.ok && isSameConversation(landed, boundUrl)) {
+        return ok({ freshChat: false });
+      }
+      roster.bindCanonicalChat(bot.id, { platform, url: null });
+      roster.appendTimeline(bot.id, {
+        type: 'chat-rebound',
+        summary: `Conversation ${boundUrl} did not open (landed on ${landed || 'nothing'}); starting a new one`,
+      });
+    }
+
+    const opened = await openChat(platform, null);
+    if (!opened.ok) {
+      return err(
+        ErrorCodes.BOT_INJECT_FAILED_006,
+        `Could not open a new ${platform} chat: ${opened.error || 'unknown error'}`,
+      );
+    }
+    return ok({ freshChat: true });
+  }
+
+  /**
+   * @param {string} platform
+   * @param {string} prompt
+   * @param {RunContext} context
+   */
+  async function runForBot(platform, prompt, context) {
+    const roster = /** @type {import('@nomad/core').BotRoster} */ (deps.roster);
+    const botRes = roster.getAgent(/** @type {{ id: string }} */ (context.agent).id);
+    if (!botRes.success) return injectAndWait(platform, prompt);
+    const bot = /** @type {import('@nomad/core').Bot} */ (botRes.data);
+    const boundElsewhere = bot.canonicalChat && bot.canonicalChat.platform !== platform;
+    if (boundElsewhere) return injectAndWait(platform, prompt);
+
+    roster.setBotState(bot.id, BOT_STATE.WORKING);
+    const chat = await openBotChat(bot, platform);
+    if (!chat.success) {
+      roster.setBotState(bot.id, BOT_STATE.UNKNOWN);
+      return chat;
+    }
+    const text = chat.data.freshChat && bot.persona ? `${bot.persona}\n\n---\n\n${prompt}` : prompt;
+    const res = await injectAndWait(platform, text);
+
+    if (chat.data.freshChat) {
+      const landed =
+        await /** @type {NonNullable<WebviewTaskRunnerDeps['currentUrl']>} */ (deps.currentUrl)(
+          platform,
+        );
+      if (isConversationUrl(platform, landed)) {
+        roster.bindCanonicalChat(bot.id, { platform, url: landed });
+      }
+    }
+    roster.setBotState(bot.id, res.success ? BOT_STATE.DONE : BOT_STATE.UNKNOWN);
+    if (context.task) {
+      roster.appendTimeline(bot.id, {
+        type: 'task',
+        taskId: context.task.id,
+        summary: `${res.success ? 'Finished' : 'Failed'}: ${context.task.title || context.task.id}`,
+      });
+    }
+    return res;
+  }
+
   return {
     /**
      * @param {string} platform
      * @param {string} prompt
+     * @param {RunContext} [context]
      */
-    run(platform, prompt) {
-      return enqueue(platform, () => runOnce(platform, prompt));
+    run(platform, prompt, context = {}) {
+      return enqueue(platform, () =>
+        botAware && context.agent
+          ? runForBot(platform, prompt, context)
+          : injectAndWait(platform, prompt),
+      );
     },
   };
 }

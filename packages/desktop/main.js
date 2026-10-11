@@ -19,6 +19,7 @@ const { LocalSyncBridge } = require('./src/bridge');
 const { createWebviewTaskRunner } = require('./src/webview-task-runner');
 
 const TASK_REPLY_TIMEOUT_MS = 180000;
+const CHAT_READY_DELAY_MS = 2500;
 const { TrayAndShortcutManager } = require('./src/tray');
 const { resolveMcpAllowedPaths } = require('./src/mcp-workspace');
 const {
@@ -33,6 +34,7 @@ const {
   KnowledgeBase,
   BotRoster,
   DEFAULT_ROSTER_PATH,
+  NEW_CHAT_URLS,
 } = require('@nomad/core');
 
 const localModelClient = new LocalModelClient();
@@ -95,6 +97,28 @@ function ensurePlatformLoaded(key) {
       );
     }
   }
+}
+
+/**
+ * Loads a bot's canonical conversation, or a new chat when url is null, and waits for the
+ * composer to mount. SPA redirects abort the load (ERR_ABORTED) without being a failure.
+ * @param {string} platform
+ * @param {string | null} url
+ * @returns {Promise<{ ok: boolean, error?: string }>}
+ */
+async function openPlatformChat(platform, url) {
+  ensurePlatformLoaded(platform);
+  const item = views[platform];
+  const target = url || NEW_CHAT_URLS[platform];
+  if (!item || !target) return { ok: false, error: `No webview or chat URL for ${platform}` };
+  try {
+    await item.view.webContents.loadURL(target);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    if (!message.includes('ERR_ABORTED')) return { ok: false, error: message };
+  }
+  await new Promise((resolve) => setTimeout(resolve, CHAT_READY_DELAY_MS));
+  return { ok: true };
 }
 
 function updateViewBounds() {
@@ -347,14 +371,20 @@ async function createMainWindow() {
     runWebviewTask: (() => {
       // Tasks can run far longer than a relay turn, so allow up to 3 minutes per reply.
       const runner = createWebviewTaskRunner({
+        roster: botRoster,
         inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
         awaitSettled: (platform) =>
           orchestrator
             ? orchestrator.awaitSettled(platform, { maxWaitMs: TASK_REPLY_TIMEOUT_MS })
             : Promise.resolve({ settled: false, text: '' }),
+        openChat: openPlatformChat,
+        currentUrl: async (platform) => views[platform]?.view.webContents.getURL() || null,
       });
-      return (/** @type {string} */ platform, /** @type {string} */ prompt) =>
-        runner.run(platform, prompt);
+      return (
+        /** @type {string} */ platform,
+        /** @type {string} */ prompt,
+        /** @type {any} */ context,
+      ) => runner.run(platform, prompt, context);
     })(),
     onDispatchPrompt: async ({ prompt, targets }) => {
       const results = await dispatchPromptToTargets(prompt, targets);
@@ -779,13 +809,7 @@ ipcMain.handle('nomad:open-export-folder', async () => {
 
 ipcMain.handle('nomad:new-session', async () => {
   if (!sessionManager) return { success: false };
-  const newUrls = {
-    claude: 'https://claude.ai/new',
-    chatgpt: 'https://chatgpt.com/',
-    gemini: 'https://gemini.google.com/app',
-    grok: 'https://grok.com/',
-  };
-  for (const [key, url] of Object.entries(newUrls)) {
+  for (const [key, url] of Object.entries(NEW_CHAT_URLS)) {
     if (views[key]?.view) {
       try {
         views[key].view.webContents.loadURL(url);

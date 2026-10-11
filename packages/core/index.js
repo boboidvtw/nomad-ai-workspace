@@ -124,6 +124,10 @@ const {
   BotRoster,
   toBotHandle,
   handleBotRequest,
+  NEW_CHAT_URLS,
+  normalizeChatUrl,
+  isConversationUrl,
+  isSameConversation,
 } = require('./src/bots/index');
 
 // P3: Nomad Plugin Runtime
@@ -208,6 +212,10 @@ module.exports = {
   BotRoster,
   toBotHandle,
   handleBotRequest,
+  NEW_CHAT_URLS,
+  normalizeChatUrl,
+  isConversationUrl,
+  isSameConversation,
   // Microservice health probe
   probePort,
   probeAllServices,

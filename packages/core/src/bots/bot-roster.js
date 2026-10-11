@@ -11,6 +11,7 @@ const path = require('path');
 const { ok, err } = require('../result');
 const { ErrorCodes } = require('../error-codes');
 const { AgentRoster, DEFAULT_ROSTER, AGENT_STATUS } = require('../tasks/roster');
+const { isConversationUrl, normalizeChatUrl, CONVERSATION_PATTERNS } = require('./chat-urls');
 
 const BOT_STATE = Object.freeze({
   IDLE: 'idle',
@@ -302,10 +303,20 @@ class BotRoster extends AgentRoster {
    * @param {{ platform: string, url: string | null, herdrAgentName?: string | null }} chat
    */
   bindCanonicalChat(id, chat) {
+    const platform = chat.platform;
+    if (chat.url && CONVERSATION_PATTERNS[platform] && !isConversationUrl(platform, chat.url)) {
+      return err(
+        ErrorCodes.ROSTER_INVALID_PROFILE_002,
+        `Refusing to bind ${id} to a URL that is not a ${platform} conversation`,
+      );
+    }
+    if (chat.url && !CONVERSATION_PATTERNS[platform]) {
+      return err(ErrorCodes.ROSTER_INVALID_PROFILE_002, `Platform ${platform} has no chat URLs`);
+    }
     return this.replaceBot(id, (bot) => ({
       canonicalChat: {
         platform: chat.platform || bot.platform,
-        url: chat.url || null,
+        url: chat.url ? normalizeChatUrl(chat.url) : null,
         herdrAgentName: chat.herdrAgentName || null,
         boundAt: new Date().toISOString(),
       },
