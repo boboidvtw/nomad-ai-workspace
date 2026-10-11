@@ -90,9 +90,18 @@ test('LocalAuth: authorizeRequest enforces token, origin and host', () => {
     authorizeRequest(fakeReq({ ...base, 'x-nomad-token': TOKEN }), url, { token: TOKEN }).allowed,
     true,
   );
+  // The query-string token is only for EventSource (it cannot send headers); a token in any
+  // other URL would end up in logs and browser history.
   assert.equal(
-    authorizeRequest(fakeReq(base), new URL(url + '?token=' + TOKEN), { token: TOKEN }).allowed,
-    true,
+    authorizeRequest(fakeReq(base), new URL(url + '?token=' + TOKEN), { token: TOKEN }).status,
+    401,
+  );
+  const sseReq = { method: 'GET', headers: base };
+  const sseUrl = new URL('http://127.0.0.1:8765/api/events?token=' + TOKEN);
+  assert.equal(authorizeRequest(sseReq, sseUrl, { token: TOKEN }).allowed, true);
+  assert.equal(
+    authorizeRequest({ ...sseReq, method: 'POST' }, sseUrl, { token: TOKEN }).status,
+    401,
   );
 
   const evilOrigin = {

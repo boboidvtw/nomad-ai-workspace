@@ -9,7 +9,7 @@
  * Model: a random bearer token is persisted at ~/.nomad/daemon-token (0600) and
  * shared by every Nomad process of the same user. Clients send it via
  * `Authorization: Bearer <token>`, `X-Nomad-Token: <token>` or `?token=<token>`
- * (the query form exists for EventSource, which cannot set headers).
+ * (the query form is accepted only on `GET /api/events`, for EventSource, which cannot set headers).
  */
 
 const crypto = require('node:crypto');
@@ -22,6 +22,8 @@ const TOKEN_ENV_VAR = 'NOMAD_DAEMON_TOKEN';
 const TOKEN_FILE_ENV_VAR = 'NOMAD_DAEMON_TOKEN_FILE';
 const LOOPBACK_HOSTNAMES = Object.freeze(['127.0.0.1', 'localhost', '::1', '[::1]']);
 const DASHBOARD_PATHS = Object.freeze(['/dashboard', '/dashboard/', '/dashboard/index.html']);
+/** EventSource cannot send headers, so only the SSE stream may take the token from the URL. */
+const QUERY_TOKEN_PATHS = Object.freeze(['/api/events']);
 
 function getTokenFilePath() {
   return process.env[TOKEN_FILE_ENV_VAR] || path.join(os.homedir(), '.nomad', 'daemon-token');
@@ -149,7 +151,10 @@ function extractToken(req, url) {
   }
   const headerToken = req.headers['x-nomad-token'];
   if (typeof headerToken === 'string' && headerToken) return headerToken.trim();
-  return url.searchParams.get('token') || '';
+  if (req.method === 'GET' && QUERY_TOKEN_PATHS.includes(url.pathname)) {
+    return url.searchParams.get('token') || '';
+  }
+  return '';
 }
 
 /**
