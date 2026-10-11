@@ -7,13 +7,7 @@ export type BotServices = {
     /**
      * - M6 group rooms
      */
-    rooms?: {
-        create: Function;
-        list: Function;
-        get: Function;
-        post: Function;
-        stop: Function;
-    } | null | undefined;
+    rooms?: import("./group-room").GroupRoomManager | null | undefined;
     /**
      * - M4 routines
      */

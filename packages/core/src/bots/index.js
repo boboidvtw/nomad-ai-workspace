@@ -16,6 +16,7 @@ const {
   parseMentions,
   registerMessageAgentTool,
 } = require('./message-router');
+const { DEFAULT_ROOMS_PATH, GroupRoomManager } = require('./group-room');
 const {
   NEW_CHAT_URLS,
   normalizeChatUrl,
@@ -35,6 +36,8 @@ module.exports = {
   BotMessageRouter,
   parseMentions,
   registerMessageAgentTool,
+  DEFAULT_ROOMS_PATH,
+  GroupRoomManager,
   NEW_CHAT_URLS,
   normalizeChatUrl,
   isConversationUrl,

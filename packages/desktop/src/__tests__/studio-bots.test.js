@@ -11,6 +11,7 @@ function build() {
   const mcpGateway = new McpGateway({ allowedPaths: [] });
   const bots = createStudioBots({
     rosterPath: path.join(dir, 'roster.json'),
+    roomsPath: path.join(dir, 'rooms.json'),
     inject: async (platform) => ({ [platform]: { ok: true } }),
     awaitSettled: async () => ({ settled: true, text: 'studio reply' }),
     openChat: async () => ({ ok: true }),
@@ -35,4 +36,22 @@ test('wires the router into the bridge and the message_agent tool into MCP', asy
     bots.roster.getAgent('agent-claude').data.canonicalChat.url,
     'https://claude.ai/chat/s1',
   );
+});
+
+test('runs group rooms and streams room events through the bridge', async () => {
+  const { bots } = build();
+  /** @type {string[]} */
+  const events = [];
+  const bridge = {
+    botServices: /** @type {any} */ ({ roster: bots.roster }),
+    broadcast: (/** @type {string} */ type) => events.push(type),
+  };
+  bots.attach(bridge);
+
+  const room = bots.rooms.create({ name: 'Standup', memberIds: ['agent-claude'] }).data;
+  bots.rooms.post(room.id, { text: 'status?' });
+  await bots.rooms.whenIdle(room.id);
+
+  assert.strictEqual(bridge.botServices.rooms, bots.rooms);
+  assert.ok(events.includes('room:message'));
 });

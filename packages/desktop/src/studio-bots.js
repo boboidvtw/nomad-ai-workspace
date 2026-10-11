@@ -10,6 +10,8 @@ const {
   BotMessageRouter,
   registerMessageAgentTool,
   DEFAULT_ROSTER_PATH,
+  DEFAULT_ROOMS_PATH,
+  GroupRoomManager,
 } = require('@nomad/core');
 const { createWebviewTaskRunner } = require('./webview-task-runner');
 const { createBotDeliver } = require('./bot-delivery');
@@ -28,6 +30,7 @@ const TASK_REPLY_TIMEOUT_MS = 180000;
  * @property {import('@nomad/core').McpGateway} [mcpGateway]
  * @property {Record<string, import('./bot-delivery').BotRunner>} [runners]
  * @property {string} [rosterPath]
+ * @property {string} [roomsPath]
  * @property {(message: string) => void} [warn]
  */
 
@@ -64,17 +67,33 @@ function createStudioBots(deps) {
   const router = new BotMessageRouter({ roster, deliver });
   if (deps.mcpGateway) registerMessageAgentTool(deps.mcpGateway, router);
 
+  /** @type {(type: string, data: unknown) => void} */
+  let broadcast = () => {};
+  const rooms = new GroupRoomManager({
+    roster,
+    deliver,
+    storagePath: deps.roomsPath || DEFAULT_ROOMS_PATH,
+    onEvent: (type, data) => broadcast(type, data),
+  });
+  const roomsLoaded = rooms.loadFromDisk();
+  if (!roomsLoaded.success) deps.warn?.(`Group rooms: ${roomsLoaded.message}`);
+
   return {
     roster,
     router,
+    rooms,
     deliver,
     runWebviewTask,
     /**
-     * Exposes routing on the bridge's /api/bots/* routes.
-     * @param {{ botServices: import('@nomad/core').BotServices }} bridge
+     * Exposes routing and rooms on the bridge's /api/bots/* routes and room events on SSE.
+     * @param {{ botServices: import('@nomad/core').BotServices, broadcast?: (type: string, data: unknown) => void }} bridge
      */
     attach(bridge) {
       bridge.botServices.router = router;
+      bridge.botServices.rooms = rooms;
+      if (typeof bridge.broadcast === 'function') {
+        broadcast = (type, data) => bridge.broadcast?.(type, data);
+      }
     },
   };
 }

@@ -24,7 +24,7 @@ const STATUS_BY_CODE = {
  * @typedef {Object} BotServices
  * @property {import('./bot-roster').BotRoster} roster
  * @property {import('./message-router').BotMessageRouter | null} [router] - M5 mention/message router
- * @property {{ create: Function, list: Function, get: Function, post: Function, stop: Function } | null} [rooms] - M6 group rooms
+ * @property {import('./group-room').GroupRoomManager | null} [rooms] - M6 group rooms
  * @property {import('../tasks/recurring-scheduler').RecurringScheduler | null} [scheduler] - M4 routines
  *
  * @typedef {Object} BotRequest
