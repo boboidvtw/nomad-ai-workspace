@@ -52,3 +52,12 @@
   changes. When checking a background fix in Studio, confirm the logged
   `assets/index.ts-*.js` name matches the one in `dist_chrome/assets`.
 - **Guard:** `packages/desktop/src/__tests__/extension-sw-refresh.test.js`
+
+## chrome.permissions crashed the background in Electron
+
+- **Trap:** Electron does not implement `chrome.permissions`. The background registered
+  `chrome.permissions.onAdded.addListener` at the top level, so the service worker threw
+  at startup and every top-level registration after it never ran in Studio.
+- **Rule:** Register extension events that Electron may lack through a guard that skips
+  missing APIs (`addPermissionChangeListeners`), never by bare top-level access.
+- **Guard:** `src/pages/background/__tests__/permissionEvents.test.ts`
