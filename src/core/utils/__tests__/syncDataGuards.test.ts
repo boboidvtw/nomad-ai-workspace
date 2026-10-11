@@ -59,6 +59,13 @@ describe('isPromptItemArray', () => {
     expect(isPromptItemArray([{ ...validPrompt, updatedAt: Infinity }])).toBe(false);
   });
 
+  it('accepts a finite pinnedAt and rejects any other pinnedAt value', () => {
+    expect(isPromptItemArray([{ ...validPrompt, pinnedAt: 5 }])).toBe(true);
+    expect(isPromptItemArray([{ ...validPrompt, pinnedAt: Number.NaN }])).toBe(false);
+    expect(isPromptItemArray([{ ...validPrompt, pinnedAt: '5' }])).toBe(false);
+    expect(isPromptItemArray([{ ...validPrompt, pinnedAt: null }])).toBe(false);
+  });
+
   it('rejects wrong optional field types and non-string tags', () => {
     expect(isPromptItemArray([{ ...validPrompt, name: 1 }])).toBe(false);
     expect(isPromptItemArray([{ ...validPrompt, tags: [1] }])).toBe(false);
