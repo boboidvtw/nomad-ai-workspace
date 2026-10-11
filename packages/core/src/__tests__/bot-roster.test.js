@@ -171,4 +171,14 @@ describe('Bots - BotRoster', () => {
     assert.strictEqual(claude.canonicalChat.url, 'https://claude.ai/chat/x');
     assert.ok(roster.getAgent('bot-new').success);
   });
+
+  it('emits bot events for live UIs', () => {
+    /** @type {string[]} */
+    const events = [];
+    const roster = new BotRoster({ onEvent: (type) => events.push(type) });
+    roster.updateBot('agent-claude', { avatar: '🦉' });
+    roster.setBotState('agent-claude', 'working');
+    roster.removeBot('agent-grok');
+    assert.deepStrictEqual(events, ['bot:updated', 'bot:updated', 'bot:removed']);
+  });
 });

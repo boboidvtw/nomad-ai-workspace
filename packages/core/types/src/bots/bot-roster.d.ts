@@ -45,12 +45,16 @@ export class BotRoster extends AgentRoster {
      * @param {string} [options.storagePath] - roster.json path; enables auto-persist when set
      * @param {boolean} [options.autoPersist]
      * @param {import('../tasks/roster').Agent[]} [options.seed]
+     * @param {(type: 'bot:updated' | 'bot:removed', data: unknown) => void} [options.onEvent]
      */
     constructor(options?: {
         storagePath?: string | undefined;
         autoPersist?: boolean | undefined;
         seed?: import("../tasks/roster").Agent[] | undefined;
+        onEvent?: ((type: "bot:updated" | "bot:removed", data: unknown) => void) | undefined;
     });
+    /** @type {((type: 'bot:updated' | 'bot:removed', data: unknown) => void) | null} */
+    onEvent: ((type: "bot:updated" | "bot:removed", data: unknown) => void) | null;
     storagePath: string | null;
     autoPersist: boolean;
     /**
@@ -145,6 +149,11 @@ export class BotRoster extends AgentRoster {
      * @returns {import('../result').UnitResult<Bot>}
      */
     replaceBot(id: string, change: (bot: Bot) => Partial<Bot>, persist?: boolean): import("../result").UnitResult<Bot>;
+    /**
+     * @param {'bot:updated' | 'bot:removed'} type
+     * @param {unknown} data
+     */
+    emit(type: "bot:updated" | "bot:removed", data: unknown): void;
     /** @returns {Bot[]} */
     listBots(): Bot[];
     /**

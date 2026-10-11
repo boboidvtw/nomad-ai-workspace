@@ -13,7 +13,8 @@
   "license": "GPL-3.0",
   "files": [
     "index.js",
-    "index.html"
+    "index.html",
+    "bots-panel.html"
   ],
   "dependencies": {
     "@nomad/core": "*"

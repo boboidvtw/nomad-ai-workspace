@@ -162,9 +162,12 @@ class BotRoster extends AgentRoster {
    * @param {string} [options.storagePath] - roster.json path; enables auto-persist when set
    * @param {boolean} [options.autoPersist]
    * @param {import('../tasks/roster').Agent[]} [options.seed]
+   * @param {(type: 'bot:updated' | 'bot:removed', data: unknown) => void} [options.onEvent]
    */
   constructor(options = {}) {
     super(options.seed || DEFAULT_ROSTER);
+    /** @type {((type: 'bot:updated' | 'bot:removed', data: unknown) => void) | null} */
+    this.onEvent = options.onEvent || null;
     this.storagePath = options.storagePath || null;
     this.autoPersist =
       options.autoPersist !== undefined ? Boolean(options.autoPersist) : Boolean(this.storagePath);
@@ -190,6 +193,7 @@ class BotRoster extends AgentRoster {
     if (!existing) merged.handle = this.uniqueHandle(merged.handle, merged.id);
     this.agents.set(merged.id, merged);
     this.persist();
+    this.emit('bot:updated', merged);
     return ok({ ...merged });
   }
 
@@ -248,6 +252,7 @@ class BotRoster extends AgentRoster {
     }
     this.agents.set(id, next);
     this.persist();
+    this.emit('bot:updated', next);
     return ok({ ...next });
   }
 
@@ -268,6 +273,7 @@ class BotRoster extends AgentRoster {
     }
     this.agents.delete(id);
     this.persist();
+    this.emit('bot:removed', { id });
     return ok({ removed: id });
   }
 
@@ -375,7 +381,19 @@ class BotRoster extends AgentRoster {
     const next = { ...current, ...change(current) };
     this.agents.set(id, next);
     if (persist) this.persist();
+    this.emit('bot:updated', next);
     return ok({ ...next });
+  }
+
+  /**
+   * @param {'bot:updated' | 'bot:removed'} type
+   * @param {unknown} data
+   */
+  emit(type, data) {
+    if (!this.onEvent) return;
+    try {
+      this.onEvent(type, data);
+    } catch {}
   }
 
   /** @returns {Bot[]} */

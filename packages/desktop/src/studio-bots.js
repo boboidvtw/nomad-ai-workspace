@@ -120,6 +120,7 @@ function createStudioBots(deps) {
       });
       if (typeof bridge.broadcast === 'function') {
         broadcast = (type, data) => bridge.broadcast?.(type, data);
+        roster.onEvent = broadcast;
       }
     },
   };
