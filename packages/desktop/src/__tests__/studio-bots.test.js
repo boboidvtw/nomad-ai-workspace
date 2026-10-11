@@ -82,3 +82,35 @@ test('routes herdr bots to the herdr runner and tracks their state', async () =>
   assert.strictEqual(bots.roster.getAgent('bot-reviewer').data.state, 'done');
   assert.deepStrictEqual(await bridge.botServices.capabilities(), { herdr: true });
 });
+
+test('bots.enabled = false falls back to plain webview runs with no routing or persistence', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nomad-studio-off-'));
+  const rosterPath = path.join(dir, 'roster.json');
+  /** @type {any[]} */
+  const opened = [];
+  const bots = createStudioBots({
+    enabled: false,
+    rosterPath,
+    roomsPath: path.join(dir, 'rooms.json'),
+    inject: async (platform) => ({ [platform]: { ok: true } }),
+    awaitSettled: async () => ({ settled: true, text: 'plain reply' }),
+    openChat: async (...args) => {
+      opened.push(args);
+      return { ok: true };
+    },
+    currentUrl: async () => 'https://claude.ai/chat/x',
+    notify: () => {},
+  });
+  const bridge = { botServices: /** @type {any} */ ({ roster: bots.roster, router: null }) };
+  bots.attach(bridge);
+
+  const res = await bots.runTask('claude', 'hi', {
+    agent: bots.roster.getAgent('agent-claude').data,
+  });
+  bots.roster.updateBot('agent-claude', { persona: 'x' });
+
+  assert.strictEqual(res.data.text, 'plain reply');
+  assert.strictEqual(opened.length, 0, 'no canonical chat navigation');
+  assert.strictEqual(bridge.botServices.router, null);
+  assert.ok(!fs.existsSync(rosterPath), 'nothing persisted');
+});

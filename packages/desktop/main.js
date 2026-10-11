@@ -382,6 +382,7 @@ async function createMainWindow() {
 
   // 5. Initialize bots and the Local Sync Bridge. The Studio owns ~/.nomad/roster.json.
   studioBots = createStudioBots({
+    enabled: store.get('bots')?.enabled !== false,
     inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
     awaitSettled: (platform, options) =>
       orchestrator

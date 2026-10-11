@@ -27,6 +27,10 @@ const DEFAULT_SETTINGS = {
     autoEnhance: true,
     compressionLevel: 'balanced',
   },
+  // SPEC-AGENT-BOTS rollback switch: false restores the pre-bots roster and task behaviour.
+  bots: {
+    enabled: true,
+  },
   driveSync: {
     autoSync: false,
     customPath: '',

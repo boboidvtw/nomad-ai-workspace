@@ -31,6 +31,7 @@ const TASK_REPLY_TIMEOUT_MS = 180000;
  * @property {import('@nomad/core').McpGateway} [mcpGateway]
  * @property {Record<string, import('./bot-delivery').BotRunner>} [runners]
  * @property {{ run: import('./bot-delivery').BotRunner, isAvailable: () => Promise<boolean> }} [herdrRunner]
+ * @property {boolean} [enabled=true] - false: in-memory roster, plain webview runs, no routing
  * @property {string} [rosterPath]
  * @property {string} [roomsPath]
  * @property {(message: string) => void} [warn]
@@ -40,16 +41,21 @@ const TASK_REPLY_TIMEOUT_MS = 180000;
  * @param {StudioBotsDeps} deps
  */
 function createStudioBots(deps) {
-  const roster = new BotRoster({ storagePath: deps.rosterPath || DEFAULT_ROSTER_PATH });
-  const loaded = roster.loadFromDisk();
-  if (!loaded.success) deps.warn?.(`Bot roster: ${loaded.message}`);
+  const enabled = deps.enabled !== false;
+  const roster = enabled
+    ? new BotRoster({ storagePath: deps.rosterPath || DEFAULT_ROSTER_PATH })
+    : new BotRoster();
+  if (enabled) {
+    const loaded = roster.loadFromDisk();
+    if (!loaded.success) deps.warn?.(`Bot roster: ${loaded.message}`);
+  }
 
   const webviewRunner = createWebviewTaskRunner({
-    roster,
+    roster: enabled ? roster : undefined,
     inject: deps.inject,
     awaitSettled: (platform) => deps.awaitSettled(platform, { maxWaitMs: TASK_REPLY_TIMEOUT_MS }),
-    openChat: deps.openChat,
-    currentUrl: deps.currentUrl,
+    openChat: enabled ? deps.openChat : undefined,
+    currentUrl: enabled ? deps.currentUrl : undefined,
     notify: deps.notify,
   });
 
@@ -88,20 +94,23 @@ function createStudioBots(deps) {
     return runWebviewTask(platform, prompt, context);
   };
   const router = new BotMessageRouter({ roster, deliver });
-  if (deps.mcpGateway) registerMessageAgentTool(deps.mcpGateway, router);
+  if (enabled && deps.mcpGateway) registerMessageAgentTool(deps.mcpGateway, router);
 
   /** @type {(type: string, data: unknown) => void} */
   let broadcast = () => {};
   const rooms = new GroupRoomManager({
     roster,
     deliver,
-    storagePath: deps.roomsPath || DEFAULT_ROOMS_PATH,
+    storagePath: enabled ? deps.roomsPath || DEFAULT_ROOMS_PATH : undefined,
     onEvent: (type, data) => broadcast(type, data),
   });
-  const roomsLoaded = rooms.loadFromDisk();
-  if (!roomsLoaded.success) deps.warn?.(`Group rooms: ${roomsLoaded.message}`);
+  if (enabled) {
+    const roomsLoaded = rooms.loadFromDisk();
+    if (!roomsLoaded.success) deps.warn?.(`Group rooms: ${roomsLoaded.message}`);
+  }
 
   return {
+    enabled,
     roster,
     router,
     rooms,
@@ -113,6 +122,7 @@ function createStudioBots(deps) {
      * @param {{ botServices: import('@nomad/core').BotServices, broadcast?: (type: string, data: unknown) => void }} bridge
      */
     attach(bridge) {
+      if (!enabled) return;
       bridge.botServices.router = router;
       bridge.botServices.rooms = rooms;
       bridge.botServices.capabilities = async () => ({
