@@ -181,7 +181,7 @@ class BotRoster extends AgentRoster {
     const res = super.registerAgent(profile);
     if (!res.success) return res;
     const merged = withBotDefaults({
-      ...(existing || {}),
+      ...existing,
       ...res.data,
       ...pickEditable(/** @type {Record<string, unknown>} */ (profile)),
       handle: existing ? /** @type {Bot} */ (existing).handle : undefined,
