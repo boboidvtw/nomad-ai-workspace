@@ -270,7 +270,7 @@ Nomad AI Studio 領先業界實現**四大頂級 AI 互相對話、接力推理�
 
 ### 7.8 帳號安全與會話持久化 (Session Persistence)
 
-- **本地獨立存儲**：所有 Cookie 與登入憑證均隔離存放於本機 `~/Library/Application Support/nomad-desktop` 目錄。
+- **本地獨立存儲**：所有 Cookie 與登入憑證均隔離存放於本機 `~/Library/Application Support/Nomad AI Studio` 目錄（舊版名稱為 `nomad-desktop`）。
 - **一次登入，永久記住**：四大 AI 帳號只需在工作站內登入一次，關閉程式或重新開機後仍完整保持登入狀態。
 - **零中繼隱私**：直接與各官方站點建立安全 TLS 連線，無任何代理伺服器或第三方數據庫介入。
 
