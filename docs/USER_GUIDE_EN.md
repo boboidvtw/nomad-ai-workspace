@@ -283,6 +283,40 @@ The workspace includes a high-performance historical conversation retrieval and 
   ```
   For development with DevTools enabled, run `npm run desktop:dev`.
 
+### 7.10 Bots: Persistent Identity, Canonical Chats & Multi-Bot Collaboration
+
+A Bot is an Agent Roster member with an identity (`@handle`, name, avatar, persona) and one bound AI conversation. Design and API details: [SPEC-AGENT-BOTS](../SPEC-AGENT-BOTS.md) (Traditional Chinese).
+
+**Where**: the Dashboard **🤖 Bots** tab (or open `http://127.0.0.1:8765/dashboard#bots`).
+
+| Feature            | How                                                                  | Notes                                                                                                                                                                          |
+| :----------------- | :------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Edit identity      | Pick a Bot → change display name, avatar, sections, persona → Save   | The display name sets the `@handle` (`Research Buddy` → `@research-buddy`); duplicate handles are rejected                                                                     |
+| Canonical chat     | Nothing to set up                                                    | The first task opens a new conversation, sends the persona and binds it; later tasks return to it. A deleted conversation is rebound to a new one and logged on the timeline   |
+| State light        | Right side of each row                                               | `idle / working / blocked / done / unknown`. Blocked means a usage limit, sign-out or rate limit; Studio shows a notice and the run resumes once you fix it (up to 15 minutes) |
+| Routines           | Add a schedule on the task board and assign it to the Bot            | Routines that drive an AI website start **disabled** and must be switched on (platform terms and cost); every run is logged on the Bot timeline                                |
+| @mention           | Type `@claude @research-buddy compare these options` in the composer | Sent to every mentioned Bot in parallel; unknown `@names` are left as they are and listed                                                                                      |
+| Group rooms        | Name the room, tick members, create, then post                       | Members reply in turn and see what the others said; messages sent meanwhile queue. `⏸ Stop` holds everyone, `@member` releases one, `@all` releases all                        |
+| CLI agents (herdr) | Choose platform `herdr` when creating a Bot                          | Requires [herdr](https://github.com/herdrdev/herdr); name the herdr agent the same as the Bot's `@handle`                                                                      |
+
+**API examples** (token in `~/.nomad/daemon-token`):
+
+```bash
+curl -s -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/bots
+```
+
+```bash
+curl -s -X POST http://127.0.0.1:8765/api/bots/mentions -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" -H "Content-Type: application/json" -d '{"text":"@claude summarise today'"'"'s release notes"}'
+```
+
+**Storage & privacy**:
+
+- `~/.nomad/roster.json` (Bot settings) and `~/.nomad/rooms.json` (room transcripts) are written by Studio only.
+- Drive push adds `nomad-bots.json` with personas and settings only, **never** conversation URLs or runtime state.
+- AI replies are treated as data: bot-to-bot messages have a hop limit (4) and a loop guard (20 per 5 minutes), and message text never triggers approvals or other actions.
+
+**Turning Bots off**: set `bots.enabled` to `false` in the Studio settings file (`~/Library/Application Support/Nomad AI Studio/nomad-studio-settings.json` on macOS) and restart to get the pre-bots behaviour back (tasks still wait for the AI reply).
+
 ---
 
 ## 8. 🔄 How to Reload After Updates

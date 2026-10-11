@@ -34,6 +34,7 @@
 - **🔍 對話紀錄全文檢索與 8 大語義標籤**：工作區歷史會話正文與標籤極速模糊搜尋，8 大工程語義標籤一鍵多維度過濾。
 - **🧭 macOS 原生透明選單列圖標**：全新符合 Apple HIG 規範的透明鏤空羅盤圖標與 Retina @2x，自適應深色/淺色外觀。
 - **⚡ 跨 AI 一鍵同步提問**：底部全域統一提問列，一鍵同步派發問題至 Claude、ChatGPT、Gemini、Grok 並自動送出，實時橫向對比解答。
+- **🤖 Bots：有身分、記憶與永久對話的 AI 同事**：每個 Bot 有 `@handle`、persona 與固定綁定的 AI 對話；可以排程、用 `@mention` 指派、互相傳訊，也能在會議室裡多 Bot 討論。卡在用量上限或登入頁時會主動通知你。也能接上 herdr 管理的 CLI agent（Claude Code、Codex）。詳見 [SPEC-AGENT-BOTS](SPEC-AGENT-BOTS.md)。
 - **📦 全平台原生安裝包支援**：支援 macOS（`.dmg` / `.zip`）、Windows（`.exe`）與 Linux（`.AppImage` / `.deb`），可至 [GitHub Releases 最新發布頁](https://github.com/boboidvtw/nomad-ai-workspace/releases/latest) 直接下載安裝。
 - **100% Client-Side 零伺服器**：不存在任何中繼伺服器，所有資料僅在瀏覽器本機快取與個人 Google Drive 之間直連傳輸。
 
@@ -148,6 +149,17 @@ graph TD
 - **全方位符號與圖表**：內建 KaTeX/LaTeX 公式渲染、Mermaid 流程圖、WaveDrom 數位邏輯時序圖與 ECharts 互動圖表。
 - **多元匯出**：一鍵乾淨匯出為純 Markdown (`.md`)、高解析度圖片或 PDF，保留完整代碼高亮與公式排版。
 
+### 6. 🤖 Bots：持久身分、永久對話與多 Bot 協作 (Bots)
+
+借鏡 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 的 Bot Mode 與 [herdr](https://github.com/herdrdev/herdr) 的 agent 狀態模型，把 Agent Roster 升級為「會記得你的同事」：
+
+- **永久對話**：Bot 第一次接到任務時會開一個新對話、送出 persona 並綁定；之後的任務都回到同一個對話。
+- **五態狀態燈**：`待命 / 工作中 / 需要你 / 完成 / 未知`。撞到用量上限、被登出或 rate limit 時會標成「需要你」並發通知，處理完後自動接著跑。
+- **Routines、@mention、互傳訊息、會議室**：都在 Dashboard 的 **🤖 Bots** 分頁操作，Bot 之間的互傳有 hop 上限與 loop guard，不會無限迴圈。
+- **本機優先**：設定存放在 `~/.nomad/roster.json`、`rooms.json`；同步到 Drive 時只帶 persona，不帶對話網址。
+
+使用方式見 [使用者手冊 §7.10](docs/USER_GUIDE.md#710-bots持久身分永久對話與多-bot-協作-bots)。
+
 ---
 
 ## 📱 支援平台矩陣 (Supported Platforms)
@@ -173,6 +185,7 @@ graph TD
 | 📦 [端對端安裝與編譯指南 (Installation Guide)](docs/INSTALLATION.md)            | Chrome、Edge、Firefox 與 Safari 從原始碼編譯與載入擴充功能步驟。           |
 | 🚀 [發布與打包指南 (Release & Packaging)](docs/RELEASE_PACKAGING.md)            | Chrome Web Store 審查文案、單一用途宣告、權限依據與 GitHub Release 流程。  |
 | 🏛️ [深入架構規格文件 (Architecture Overview)](docs/ARCHITECTURE.md)             | 系統分層架構、動態適配器、資料模型與安全性零信任設計原則。                 |
+| 🤖 [Bots 整合規格 (SPEC-AGENT-BOTS)](SPEC-AGENT-BOTS.md)                        | Bots 的設計、資料模型、API、Milestone 與實作紀錄。                         |
 | 📝 [版本變更日誌 (Changelog)](CHANGELOG.md)                                     | 遵循 Keep a Changelog 規範之版本歷程記錄。                                 |
 
 ---

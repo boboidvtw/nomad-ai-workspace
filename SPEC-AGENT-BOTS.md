@@ -1,6 +1,6 @@
 # SPEC-AGENT-BOTS: Nomad Bots 整合方案（借鏡 Hermes Bot Mode 與 herdr）
 
-> 狀態：**已核可，實作中**　｜　日期：2026-10-11　｜　前置文件：[SPEC-TASK-CONTROL-PLANE.md](SPEC-TASK-CONTROL-PLANE.md)
+> 狀態：**M0–M8 已實作（2026-10-11）**，實作紀錄見 §11　｜　日期：2026-10-11　｜　前置文件：[SPEC-TASK-CONTROL-PLANE.md](SPEC-TASK-CONTROL-PLANE.md)
 
 ## 0. 結論
 
@@ -320,3 +320,46 @@ M7 只依賴 M0、M1；M8 依賴 M1–M4
 - Hermes 防迴圈實作：`~/Developer/hermes-agent/gateway/bot_loop_guard.py`
 - herdr：<https://github.com/herdrdev/herdr>（v0.9.3，2026-09-29；`skills/herdr/SKILL.md`）
 - 前置規格：[SPEC-TASK-CONTROL-PLANE.md](SPEC-TASK-CONTROL-PLANE.md)
+
+---
+
+## 11. 實作紀錄（2026-10-11）
+
+### 11.1 Milestone 對照
+
+| Milestone             | Commit                 | 主要檔案                                                                        | 新增測試 |
+| --------------------- | ---------------------- | ------------------------------------------------------------------------------- | -------- |
+| M0 修正網頁版回覆擷取 | `7763f571`             | `webview-task-runner.js`、`orchestrator.js`（`awaitSettled`）、`task-runner.js` | 17       |
+| M1 Bot Roster 持久化  | `be20c4c7`、`fe4b26d4` | `core/src/bots/bot-roster.js`、`bot-routes.js`                                  | 23       |
+| M2 永久對話           | `c8df30f9`、`7734b7ae` | `chat-urls.js`、`webview-task-runner.js`                                        | 12       |
+| M3 五態偵測           | `5a68179a`             | `state-manifests.js`、`orchestrator.js`（`checkBlocked`）                       | 10       |
+| M4 Routines ↔ Bot     | `d95caf84`             | `recurring-scheduler.js`（`routineLabel`、assignee 驗證、預設關閉）             | 6        |
+| M5 @mention 與互傳    | `769ba5ce`             | `message-router.js`、`bot-delivery.js`、`studio-bots.js`                        | 19       |
+| M6 Group Room         | `c6202716`             | `group-room.js`                                                                 | 11       |
+| M7 herdr runner       | `1652ec52`             | `herdr-runner.js`                                                               | 7        |
+| M8 Bots UI            | `005d81d5`             | `dashboard/bots-panel.html`、Studio 提示橫幅                                    | 3        |
+| D3 Drive 同步         | `d06ba4e0`             | `universal-drive-sync.js`（`nomad-bots.json`）                                  | 2        |
+| 回滾開關              | `c6fe5477`             | `store.js`（`bots.enabled`）、`studio-bots.js`                                  | 1        |
+
+測試：`npm run test:monorepo` 從 131 個增加到 **242 個，全部通過**（core 142、daemon 17、desktop 83；新增 111 個）；`typecheck:packages`、`typecheck`、`oxlint`（0 error）、`oxfmt --check`、`regressions:check` 全數通過。
+
+### 11.2 與原計劃不同之處
+
+| 原計劃                                          | 實際做法                                                                                             | 理由                                                                                        |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `PATCH/DELETE /api/roster/:id`                  | 改為 `/api/bots/*`；`/api/roster` 保留原樣                                                           | Bot 的路由集中在一個 handler，Studio bridge 與 daemon 共用，避免兩份實作漂移                |
+| debate / relay 改寫成 GroupRoom 的輪替策略      | `orchestrator.js` 的 relay / debate **維持不變**；GroupRoom 另提供 `round-robin` / `debate` 兩種策略 | 改寫既有 orchestrator 的風險大於收益，而且兩者使用情境不同（即時接力 vs. 有逐字稿的會議室） |
+| blocked manifest 用 JSON 檔                     | 改用 JS 模組 `state-manifests.js`                                                                    | core 的 tsconfig 沒開 `resolveJsonModule`；內容一樣是純資料                                 |
+| herdr agent 名稱另外設定                        | 預設用 Bot 的 `@handle`；必要時才用 `canonicalChat.herdrAgentName` 覆寫                              | 兩者格式規則完全相同（`[a-z][a-z0-9_-]{0,31}`），少一個要設定的欄位                         |
+| Desktop 內建 Bots pane                          | 主要介面放在 Dashboard「🤖 Bots」分頁；Studio 只負責 blocked 提示，點擊開啟 `/dashboard#bots`        | Dashboard 已有任務看板與 SSE；`desktop/index.html` 已超過 4,000 行，不宜再加                |
+| `bots.enabled` 預設 `false`，Phase 1 驗收後再改 | 預設 `true`                                                                                          | 三期在同一輪完成；回滾時改設 `false` 即可                                                   |
+
+### 11.3 尚未驗證（需要實機）
+
+| 項目                                             | 原因                                                                                                                                | 驗證方式                                                               |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| §8 的網頁版回覆擷取成功率（各平台 10 次 ≥ 9 次） | 需要登入各 AI 平台實際操作，自動化測試無法涵蓋                                                                                      | 啟動 Studio，對每個平台各派 10 次任務，檢查任務產出                    |
+| blocked 偵測規則是否命中真實畫面                 | `state-manifests.js` 的文字與 selector 是依各平台常見訊息撰寫的，還沒對照實際 DOM                                                   | 實際觸發用量上限或登出，看 Bot 是否變成「需要你」；沒命中就改 manifest |
+| 永久對話跨重啟（5 次任務加 1 次重啟）            | 需要實機                                                                                                                            | 同上                                                                   |
+| herdr runner 實際執行                            | 本機沒有安裝 herdr；CLI 契約取自 herdr v0.9.3 原始碼（`src/cli/agent.rs`、`src/api/schema/response.rs`），測試使用模擬的 `execFile` | 安裝 herdr，建立名稱與 `@handle` 相同的 agent，從 Bots 分頁派工        |
+| Dashboard Bots 分頁                              | **已用假資料的 bridge 在瀏覽器實測**：名單、詳情編輯、@mention 派送（含 HTML 跳脫）、會議室輪流發言、SSE 更新都正常                 | —                                                                      |

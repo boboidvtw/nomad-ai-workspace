@@ -175,3 +175,32 @@ Nomad AI Workspace establishes and strictly maintains the following structure:
    - OAuth scope is strictly limited to `https://www.googleapis.com/auth/drive.file`. This scope **can only read and write files created by Nomad AI Workspace itself**, with zero access to your existing Google Drive documents or photos.
 3. **Custom Client ID Support**:
    - Users can optionally configure their own Google Cloud OAuth Client ID, retaining total sovereignty over API endpoints.
+
+---
+
+## 🤖 5. Bots Layer (SPEC-AGENT-BOTS)
+
+Bots sit on top of the Task Control Plane rather than replacing it: a Bot is a roster agent with identity fields, and the dispatcher, leases and approvals work as before. Full spec and implementation notes: [SPEC-AGENT-BOTS](../SPEC-AGENT-BOTS.md) (Traditional Chinese).
+
+### 5.1 Modules
+
+| Module                              | Location                                      | Responsibility                                                                                                         |
+| :---------------------------------- | :-------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------- |
+| `BotRoster`                         | `packages/core/src/bots/bot-roster.js`        | Extends `AgentRoster`: handle, persona, canonical chat, five states, timeline; atomic writes to `~/.nomad/roster.json` |
+| `chat-urls`                         | `packages/core/src/bots/chat-urls.js`         | Per-platform conversation-URL allowlist; only matching URLs can be bound                                               |
+| `state-manifests`                   | `packages/core/src/bots/state-manifests.js`   | Blocked-state rules as data; the page returns a snapshot and Node decides                                              |
+| `BotMessageRouter` / `BotLoopGuard` | `packages/core/src/bots/message-router.js`    | `@mention` routing, the `message_agent` MCP tool, hop limit and sliding-window loop guard                              |
+| `GroupRoomManager`                  | `packages/core/src/bots/group-room.js`        | Rooms: turn order, queueing, Stop / `@all`; `~/.nomad/rooms.json`                                                      |
+| `createHerdrRunner`                 | `packages/core/src/bots/herdr-runner.js`      | Drives herdr CLI agents through `execFile`                                                                             |
+| `handleBotRequest`                  | `packages/core/src/bots/bot-routes.js`        | `/api/bots/*`, shared by the Studio bridge and the daemon                                                              |
+| `createWebviewTaskRunner`           | `packages/desktop/src/webview-task-runner.js` | Open canonical chat → inject → `awaitSettled` → bind URL; one queue per platform                                       |
+| `createStudioBots`                  | `packages/desktop/src/studio-bots.js`         | Wires the above in Studio; `bots.enabled` rollback switch                                                              |
+| Bots panel                          | `packages/dashboard/bots-panel.html`          | Dashboard "🤖 Bots" tab, inlined into `index.html` when served                                                         |
+
+### 5.2 Trust boundaries
+
+- **AI replies are data**: bot-to-bot text only becomes a chat message for the next Bot and cannot trigger approvals or system actions; the Dashboard renders it with `textContent`.
+- **Navigation allowlist**: Bots can only bind URLs that match `chat-urls.js`, checked at bind time, so a logged-in webview is never sent to an arbitrary page.
+- **Single writer**: `roster.json` / `rooms.json` are written by Studio only; the daemon reads them and never moves a corrupt file.
+- **Drive sync**: `nomad-bots.json` carries personas and settings, never conversation URLs (they belong to the signed-in account).
+- **herdr**: arguments go through `execFile`, agent names must match `[a-z][a-z0-9_-]{0,31}`, prompts are capped at 8KB.

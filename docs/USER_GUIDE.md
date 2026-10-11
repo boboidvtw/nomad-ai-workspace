@@ -288,6 +288,40 @@ Nomad AI Studio 領先業界實現**四大頂級 AI 互相對話、接力推理�
   ```
   若需調試開發者工具，可執行 `npm run desktop:dev`。
 
+### 7.10 Bots：持久身分、永久對話與多 Bot 協作 (Bots)
+
+Bot 就是 Agent Roster 裡的一位成員，多了身分（`@handle`、名稱、頭像、persona）和一個固定綁定的 AI 對話。設計與 API 細節見 [SPEC-AGENT-BOTS](../SPEC-AGENT-BOTS.md)。
+
+**開啟方式**：Studio 頂部的 Dashboard 連結 →「🤖 Bots」分頁（或直接開 `http://127.0.0.1:8765/dashboard#bots`）。
+
+| 功能               | 怎麼用                                                             | 說明                                                                                                                                                         |
+| :----------------- | :----------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 編輯身分           | 左側選 Bot → 修改顯示名稱、頭像、分組、persona →「儲存」           | 顯示名稱決定 `@handle`（例：`Research Buddy` → `@research-buddy`）；重複的 handle 會被拒絕                                                                   |
+| 永久對話           | 不用設定                                                           | 第一次派工時自動開新對話、送出 persona 並綁定；之後都回到同一個對話。對話被刪掉時會自動改綁新對話，並寫入 timeline                                           |
+| 狀態燈             | 看名單右側                                                         | `待命 / 工作中 / 需要你 / 完成 / 未知`。「需要你」代表撞到用量上限、被登出或 rate limit，Studio 右下角會跳出提示；處理完後工作會自動接著跑（最多等 15 分鐘） |
+| Routines           | 在任務看板新增排程，指派給該 Bot                                   | 指派給網頁版 AI 的排程**預設關閉**，要手動開啟（避免違反平台條款或產生費用）；每次執行都會記在 Bot 的 timeline                                               |
+| @mention 指派      | 在「用 @handle 指派」輸入 `@claude @research-buddy 比較這兩個方案` | 同時派給每個被 @ 的 Bot，各自回覆；不認得的 `@xxx` 會原樣保留並列出                                                                                          |
+| 會議室             | 輸入名稱、勾選成員 →「建立會議室」→ 送出訊息                       | 成員依序發言，後發言者看得到前面的內容；發言中送出的訊息會排隊。`⏸ Stop` 暫停全部成員，`@member` 只叫一位，`@all` 全部恢復                                   |
+| CLI agent（herdr） | 新增 Bot 時平台選 `herdr`                                          | 需先安裝 [herdr](https://github.com/herdrdev/herdr)，並把 herdr 裡的 agent 名稱設成跟 Bot 的 `@handle` 一樣                                                  |
+
+**API 範例**（Token 位於 `~/.nomad/daemon-token`）：
+
+```bash
+curl -s -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/bots
+```
+
+```bash
+curl -s -X POST http://127.0.0.1:8765/api/bots/mentions -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" -H "Content-Type: application/json" -d '{"text":"@claude 幫我摘要今天的 release notes"}'
+```
+
+**存放位置與隱私**：
+
+- `~/.nomad/roster.json`（Bot 設定）、`~/.nomad/rooms.json`（會議室逐字稿），只由 Studio 寫入。
+- 推送到 Google Drive 時會多一個 `nomad-bots.json`，只含 persona 與設定，**不含**對話網址與執行狀態。
+- AI 回覆一律當作資料處理：Bot 之間互傳訊息有 hop 上限（4）與 loop guard（5 分鐘最多 20 則），訊息內容不會觸發審批或其他操作。
+
+**關閉 Bots**：在 Studio 設定檔（macOS 為 `~/Library/Application Support/Nomad AI Studio/nomad-studio-settings.json`）把 `bots.enabled` 設為 `false` 後重新啟動，即回到 Bots 之前的行為（任務仍會等到 AI 回覆才完成）。
+
 ---
 
 ## 8. 🔄 更新後重新載入方式 (How to Reload)

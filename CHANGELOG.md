@@ -6,6 +6,20 @@
 
 ## [Unreleased]
 
+### ✨ 新增 (Added)
+
+- **Bots（[SPEC-AGENT-BOTS](SPEC-AGENT-BOTS.md)，借鏡 Hermes Bot Mode 與 herdr）**：Agent Roster 升級為有身分的 Bot，不另建新的資料單位。
+  - **持久化身分**：`~/.nomad/roster.json` 儲存 `@handle`、顯示名稱、persona、頭像、分組與隱藏狀態；Studio 是唯一寫入者，daemon 只讀。新增 `GET/POST /api/bots`、`GET/PATCH/DELETE /api/bots/:id`、`POST /api/bots/:id/seen`、`GET /api/bots/resolve?mention=`。
+  - **永久對話（Canonical Bot Chat）**：第一次派工時開新對話、送出 persona，並綁定對話 URL；之後都在同一個對話裡執行。對話被刪除時自動改綁新對話並寫入 timeline。只接受各平台真正的對話 URL（`claude.ai/chat/…`、`chatgpt.com/c/…` 等）。
+  - **五態狀態**：`idle / working / blocked / done / unknown`。`blocked` 依 `state-manifests.js` 的規則偵測（用量上限、被登出、rate limit），只看 alert / dialog 區塊，不看 AI 回覆內文。偵測到時發系統通知與 Studio 提示，並持續等待最多 15 分鐘，lease 不會過期。
+  - **Routines 綁定 Bot**：排程指派對象必須存在於 roster；指派給網頁版 AI 的排程預設關閉，需手動開啟；每次執行都寫入該 Bot 的 timeline，標籤格式為 `[bot:<handle>] <名稱>`；新增 `GET /api/bots/:id/routines`。
+  - **@mention 與 Bot 互傳訊息**：`POST /api/bots/mentions` 會把提問平行派給每個被 @ 的 Bot；`POST /api/bots/messages` 與 MCP tool `message_agent` 讓 Bot 互相傳訊，訊息會附上發送方署名。以 hop 上限（4）加滑動視窗 loop guard（5 分鐘 20 則）防止無限互傳。
+  - **Group Rooms**：多個 Bot 共用一份逐字稿，依序或以 debate 方式發言；發言進行中送出的訊息會排隊；Stop 暫停全部成員，`@member` 恢復單一成員、`@all` 全部恢復；儲存於 `~/.nomad/rooms.json`；API 為 `/api/bots/rooms/*`。
+  - **herdr runner**：`platform: 'herdr'` 的 Bot 透過 `herdr agent prompt --wait` 與 `herdr agent read` 驅動終端機裡的 CLI agent（Claude Code、Codex…），一律以 `execFile` 執行，不經 shell。
+  - **Dashboard Bots 分頁**：名單、狀態燈、persona 編輯、routines、timeline、@mention 指派與會議室，經 SSE（`bot:updated`、`room:*`）即時更新；所有 API 文字都以 `textContent` 呈現。Studio 收到 `nomad:bot-blocked` 時顯示提示，點擊開啟 `/dashboard#bots`。
+  - **Drive 同步**：推送時多寫一個 `nomad-bots.json`，只含 persona 與設定，不含對話 URL 與執行狀態；拉取時合併回來。
+  - **回滾開關**：Studio 設定 `bots.enabled: false` 即回到 bots 之前的行為。
+
 ### 🔒 安全性 (Security)
 
 - **Daemon (:8765) 與 Studio Bridge 本地閘道驗證**：所有 `/api/*` 端點改為需要 Bearer Token（`Authorization: Bearer`、`X-Nomad-Token` 或 SSE 用的 `?token=`）。Token 首次啟動時產生於 `~/.nomad/daemon-token`（權限 0600），可用 `NOMAD_DAEMON_TOKEN` / `NOMAD_DAEMON_TOKEN_FILE` 覆寫。
@@ -20,6 +34,8 @@
 - **MCP 預設白名單收窄**：預設由「工作目錄 + 整個家目錄」改為僅工作目錄（若工作目錄為檔案系統根目錄，例如從 Finder 啟動的打包版 App，則不開放任何路徑）；打包版 Desktop 改用 App 專屬的 `<userData>/workspace/`（自動建立），內建 MCP 自檢因此可正常運作。相對路徑以第一個白名單根目錄為基準解析。可用 `NOMAD_MCP_ALLOWED_PATHS`（以 `:` 分隔，Windows 為 `;`）明確指定並覆寫上述預設。`~/.ssh`、`~/.aws`、`~/.gnupg`、`~/.nomad`（含閘道 Token）即使位於白名單內也一律拒絕。
 
 ### 🐛 修復 (Fixed)
+
+- **派給網頁版 AI 的任務一律以假產出完成**：`TaskRunner` 讀 `orchRes?.text`，但 Studio 回傳的是各平台的送達結果，而且不會等 AI 回覆，所以任務產出永遠是 `"Delegated to webview"`；bridge 測試的 mock 格式也與實際不符。現改為「送出 → `orchestrator.awaitSettled` 等待回覆」，拿到 AI 的實際回覆；等不到或回覆為空時，任務判為失敗。回歸紀錄見 `.github/docs/regressions/desktop-orchestrator.md`。
 
 - **Dashboard 任務看板整段腳本無法執行**：43 行 HTML 字串遺失跳脫字元（`\'` / `\"`）導致 SyntaxError，任務卡片、詳情 Modal 與排程清單全部失效；新增 inline script 語法回歸測試。
 

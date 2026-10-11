@@ -248,3 +248,52 @@ Nomad AI Workspace 嚴格建立並維護以下雲端階層：
    - OAuth 範圍嚴格限定為 `https://www.googleapis.com/auth/drive.file`。此權限**只能讀取與寫入 Nomad AI Workspace 自身建立的檔案與目錄**，完全無法存取使用者雲端硬碟中的私人文件或照片。
 3. **自訂 Client ID 支援**：
    - 使用者可選擇自行在 Google Cloud Platform 建立專屬 OAuth Client ID，將連線所有權完全掌握在個人手中。
+
+---
+
+## 🤖 5. Bots 層 (SPEC-AGENT-BOTS)
+
+Bots 疊加在 Task Control Plane 上，不取代它：Bot 就是多了身分欄位的 roster agent，dispatcher、lease、approval 照舊運作。完整規格與實作紀錄見 [SPEC-AGENT-BOTS](../SPEC-AGENT-BOTS.md)。
+
+### 5.1 模組
+
+| 模組                                | 位置                                          | 職責                                                                                                 |
+| :---------------------------------- | :-------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
+| `BotRoster`                         | `packages/core/src/bots/bot-roster.js`        | 繼承 `AgentRoster`；handle、persona、canonical chat、五態、timeline；原子寫入 `~/.nomad/roster.json` |
+| `chat-urls`                         | `packages/core/src/bots/chat-urls.js`         | 各平台「對話 URL」白名單，只有符合的才能綁定                                                         |
+| `state-manifests`                   | `packages/core/src/bots/state-manifests.js`   | blocked 偵測規則（資料，不是程式碼）；頁面只回傳快照，判斷在 Node 端                                 |
+| `BotMessageRouter` / `BotLoopGuard` | `packages/core/src/bots/message-router.js`    | `@mention` 路由、`message_agent` MCP tool、hop 上限與滑動視窗防迴圈                                  |
+| `GroupRoomManager`                  | `packages/core/src/bots/group-room.js`        | 會議室：輪流發言、排隊、Stop / `@all`；`~/.nomad/rooms.json`                                         |
+| `createHerdrRunner`                 | `packages/core/src/bots/herdr-runner.js`      | 以 `execFile` 驅動 herdr 的 CLI agent                                                                |
+| `handleBotRequest`                  | `packages/core/src/bots/bot-routes.js`        | `/api/bots/*`，Studio bridge 與 daemon 共用                                                          |
+| `createWebviewTaskRunner`           | `packages/desktop/src/webview-task-runner.js` | 開啟 canonical chat → 注入 → `awaitSettled` → 綁定 URL；每個平台一條佇列                             |
+| `createStudioBots`                  | `packages/desktop/src/studio-bots.js`         | 在 Studio 組裝以上元件；`bots.enabled` 回滾開關                                                      |
+| Bots 面板                           | `packages/dashboard/bots-panel.html`          | Dashboard「🤖 Bots」分頁，伺服器輸出時插入 `index.html`                                              |
+
+### 5.2 資料流
+
+```mermaid
+graph LR
+    UI["Dashboard 🤖 Bots"] -->|/api/bots/*| Routes["handleBotRequest"]
+    Routes --> Roster["BotRoster<br/>roster.json"]
+    Routes --> Router["BotMessageRouter<br/>+ LoopGuard"]
+    Routes --> Rooms["GroupRoomManager<br/>rooms.json"]
+    MCP["MCP message_agent"] --> Router
+    Sched["RecurringScheduler"] --> Runner["TaskRunner"]
+    Runner -->|runTask| Studio["createStudioBots"]
+    Router --> Deliver["bot-delivery"]
+    Rooms --> Deliver
+    Deliver --> WV["WebviewTaskRunner<br/>canonical chat"]
+    Deliver --> Local["LM Studio"]
+    Deliver --> Herdr["herdr runner"]
+    WV --> Views["AI webviews"]
+    Views -->|快照| Blocked["detectBlocked"]
+```
+
+### 5.3 信任邊界
+
+- **AI 回覆是資料**：Bot 互傳的內容只會變成下一個 Bot 的一則訊息，不能觸發審批或系統操作；Dashboard 一律以 `textContent` 呈現。
+- **導航白名單**：Bot 只能綁定符合 `chat-urls.js` 的對話 URL，綁定時就會驗證，避免把已登入的 webview 導到任意頁面。
+- **單一寫入者**：`roster.json` / `rooms.json` 只由 Studio 寫入；daemon 只讀，讀到毀損的檔案也不會搬動它。
+- **Drive 同步**：`nomad-bots.json` 只含 persona 與設定，不含對話 URL（URL 跟登入帳號綁在一起）。
+- **herdr**：參數用 `execFile` 傳遞，agent 名稱必須符合 `[a-z][a-z0-9_-]{0,31}`，prompt 上限 8KB。
