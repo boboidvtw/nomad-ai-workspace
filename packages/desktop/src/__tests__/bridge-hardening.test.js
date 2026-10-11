@@ -101,3 +101,25 @@ test('Bridge: Drive sync uses the configured folder, never the request body', as
     await bridge.stop();
   }
 });
+
+test('Bridge: foreign websites cannot read the token-bearing dashboard', async () => {
+  const bridge = new LocalSyncBridge({ port: 19895, host: '127.0.0.1' });
+  const { url } = await bridge.start();
+  try {
+    const dash = await fetch(`${url}/dashboard`, {
+      headers: { Origin: 'https://evil.example' },
+    });
+    assert.strictEqual(dash.status, 200);
+    assert.ok((await dash.text()).includes(process.env.NOMAD_DAEMON_TOKEN || ''));
+    assert.strictEqual(dash.headers.get('access-control-allow-origin'), null);
+    assert.strictEqual(dash.headers.get('cross-origin-resource-policy'), 'same-origin');
+    assert.strictEqual(dash.headers.get('x-frame-options'), 'DENY');
+
+    const probe = await fetch(`${url}/api/probe?timeout=100`, {
+      headers: { Origin: 'https://evil.example' },
+    });
+    assert.strictEqual(probe.headers.get('access-control-allow-origin'), '*');
+  } finally {
+    await bridge.stop();
+  }
+});

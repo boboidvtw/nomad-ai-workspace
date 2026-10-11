@@ -78,6 +78,7 @@ const { probePort, probeAllServices } = require('./src/probe/prober');
 const {
   resolveAuthToken,
   getTokenFilePath,
+  isDashboardPath,
   isLoopbackHostname,
   isLoopbackModelTarget,
   applyCorsHeaders,
@@ -248,6 +249,7 @@ module.exports = {
   // Local gateway auth
   resolveAuthToken,
   getTokenFilePath,
+  isDashboardPath,
   isLoopbackHostname,
   isLoopbackModelTarget,
   applyCorsHeaders,

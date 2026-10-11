@@ -28,6 +28,7 @@
 - **Local Model SSRF 防護**：`/api/local-model/probe|chat` 的 `host` / `endpoint` 參數限制為 loopback 位址。
 - Dashboard 由閘道提供時自動注入 Token，`fetch` / `EventSource` 呼叫無需修改；`/api/probe` 與 `/dashboard` 維持免驗證。
 - 命令列呼叫範例：`curl -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/status`
+- **Dashboard Token 外洩修正**：`/dashboard` 的 HTML 內嵌 Token，但先前仍回 `Access-Control-Allow-Origin: *`，任何網站都能跨站讀取並取得 Token。現在 dashboard 路由不給任何 CORS 授權，並加上 `Cross-Origin-Resource-Policy: same-origin` 與 `X-Frame-Options: DENY`；只有不含 Token 的 `/api/probe` 保留 `*`。
 - **Desktop `/api/debug/eval`、`/api/debug/inspect-platform` 預設關閉**：前者會在已登入的 ChatGPT / Claude / Gemini 等分頁執行任意 JavaScript，持有 Token 者即可讀取對話或冒用登入狀態。現僅在開發模式（`!app.isPackaged`）或設定 `NOMAD_DEBUG_ENDPOINTS=1` 時提供，否則回傳 404。
 - **Drive 同步目錄不再由 HTTP 呼叫端決定**：Daemon 與 Desktop Bridge 的 `/api/sync/drive/push|pull|status` 忽略 `targetDir` / `sourceDir` / `?dir=`，改用自動偵測的 Google Drive 資料夾（Desktop 另可使用設定中的 `driveSync.customPath`），杜絕寫入任意目錄、以任意 JSON 覆寫本機工作區與探測目錄是否存在。App 內的 IPC 呼叫不受影響。
 - **MCP `read_file` / `list_directory` 路徑白名單強制執行**：`McpGateway` 的 `allowedPaths` 先前從未被檢查，任何持有 Token 者可透過 `POST /api/mcp/call` 讀取任意檔案。現以 `fs.realpathSync` 正規化路徑（防 `..` 與 symlink 逃逸，不存在的路徑以最近的既有上層目錄解析），僅允許落在白名單根目錄內的路徑，否則回傳 `MCP_TOOL_EXECUTION_FAILED_002`。

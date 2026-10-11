@@ -10,6 +10,7 @@ const {
   isLoopbackModelTarget,
   authorizeRequest,
   injectDashboardAuth,
+  isDashboardPath,
 } = require('../security/local-auth');
 
 const TOKEN = 'a'.repeat(64);
@@ -124,4 +125,13 @@ test('LocalAuth: injectDashboardAuth embeds token shim right after <head>', () =
 
   const hostile = injectDashboardAuth('<head></head>', '</script><script>alert(1)</script>');
   assert.ok(!hostile.includes('</script><script>alert(1)'));
+});
+
+test('LocalAuth: isDashboardPath matches only the token-bearing dashboard routes', () => {
+  for (const p of ['/dashboard', '/dashboard/', '/dashboard/index.html']) {
+    assert.equal(isDashboardPath(p), true, p);
+  }
+  for (const p of ['/', '/api/probe', '/dashboard/x', '/dashboardx']) {
+    assert.equal(isDashboardPath(p), false, p);
+  }
 });

@@ -21,6 +21,7 @@ const { DEFAULT_DAEMON_PORT } = require('../constants');
 const TOKEN_ENV_VAR = 'NOMAD_DAEMON_TOKEN';
 const TOKEN_FILE_ENV_VAR = 'NOMAD_DAEMON_TOKEN_FILE';
 const LOOPBACK_HOSTNAMES = Object.freeze(['127.0.0.1', 'localhost', '::1', '[::1]']);
+const DASHBOARD_PATHS = Object.freeze(['/dashboard', '/dashboard/', '/dashboard/index.html']);
 
 function getTokenFilePath() {
   return process.env[TOKEN_FILE_ENV_VAR] || path.join(os.homedir(), '.nomad', 'daemon-token');
@@ -45,6 +46,15 @@ function resolveAuthToken(explicitToken) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true, mode: 0o700 });
   fs.writeFileSync(filePath, token + '\n', { mode: 0o600 });
   return token;
+}
+
+/**
+ * Dashboard routes serve HTML with the auth token inlined, so they must never get a CORS grant.
+ * @param {string} pathname
+ * @returns {boolean}
+ */
+function isDashboardPath(pathname) {
+  return DASHBOARD_PATHS.includes(pathname);
 }
 
 /**
@@ -238,6 +248,7 @@ module.exports = {
   TOKEN_FILE_ENV_VAR,
   getTokenFilePath,
   resolveAuthToken,
+  isDashboardPath,
   isLoopbackHostname,
   isLoopbackModelTarget,
   isAllowedHostHeader,
