@@ -16,7 +16,7 @@ const DEFAULT_SETTINGS = {
     toggleHUD: 'CommandOrControl+Shift+H',
   },
   appearance: {
-    theme: 'charcoal', // 'charcoal' | 'oled' | 'cyberpunk' | 'aurora' | 'nordic'
+    theme: 'charcoal', // a THEME_PRESETS key in index.html: dark (charcoal…nordic), light (daylight, peach, mint, lavender), vivid (neon, sunset, ocean)
     accentColor: '#38bdf8',
     glassmorphism: true,
     fontSize: 'normal',

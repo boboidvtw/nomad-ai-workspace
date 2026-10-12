@@ -12,8 +12,8 @@
         user-select: none;
       }
       body {
-        background-color: #0b0f19;
-        color: #e2e8f0;
+        background-color: var(--bg-base);
+        color: var(--text);
         font-family:
           -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         overflow: hidden;
@@ -27,9 +27,9 @@
         height: 52px;
         padding: 0 16px;
         padding-left: 80px; /* Space for macOS traffic light window controls */
-        background: rgba(15, 23, 42, 0.88);
+        background: rgba(var(--panel-rgb), 0.88);
         backdrop-filter: blur(16px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(var(--fg-rgb), 0.08);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -43,15 +43,15 @@
         font-size: 13px;
         font-weight: 700;
         letter-spacing: 0.5px;
-        color: #f8fafc;
+        color: var(--text-strong);
       }
       .badge-super {
         font-size: 10px;
         padding: 2px 7px;
         border-radius: 4px;
-        background: rgba(56, 189, 248, 0.15);
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        color: #38bdf8;
+        background: rgba(var(--accent-rgb), 0.15);
+        border: 1px solid rgba(var(--accent-rgb), 0.3);
+        color: var(--accent-color);
         font-weight: 700;
         letter-spacing: 0.8px;
       }
@@ -64,15 +64,15 @@
 
       .btn-group {
         display: flex;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(var(--fg-rgb), 0.05);
+        border: 1px solid rgba(var(--fg-rgb), 0.1);
         border-radius: 8px;
         padding: 2px;
       }
       .btn-mode {
         background: transparent;
         border: none;
-        color: #94a3b8;
+        color: var(--text-muted);
         padding: 5px 11px;
         font-size: 12px;
         font-weight: 600;
@@ -81,13 +81,13 @@
         transition: all 0.15s ease;
       }
       .btn-mode:hover {
-        color: #f8fafc;
-        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-strong);
+        background: rgba(var(--fg-rgb), 0.05);
       }
       .btn-mode.active {
-        background: rgba(56, 189, 248, 0.2);
-        color: #38bdf8;
-        box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        background: rgba(var(--accent-rgb), 0.2);
+        color: var(--accent-color);
+        box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.2);
       }
 
       /* Platform Chips */
@@ -97,9 +97,9 @@
         align-items: center;
       }
       .chip {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        color: #94a3b8;
+        background: rgba(var(--fg-rgb), 0.04);
+        border: 1px solid rgba(var(--fg-rgb), 0.08);
+        color: var(--text-muted);
         padding: 4px 9px;
         border-radius: 6px;
         font-size: 11px;
@@ -111,12 +111,12 @@
         transition: all 0.15s ease;
       }
       .chip:hover {
-        border-color: rgba(255, 255, 255, 0.2);
-        color: #f8fafc;
+        border-color: rgba(var(--fg-rgb), 0.2);
+        color: var(--text-strong);
       }
       .chip.active {
         border-color: currentColor;
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(var(--fg-rgb), 0.08);
       }
       .chip-claude.active {
         color: #f59e0b;
@@ -128,22 +128,22 @@
         color: #3b82f6;
       }
       .chip-grok.active {
-        color: #38bdf8;
+        color: var(--accent-color);
       }
 
       /* Split Ratio Buttons */
       .ratio-group {
         display: flex;
         gap: 3px;
-        background: rgba(255, 255, 255, 0.04);
+        background: rgba(var(--fg-rgb), 0.04);
         padding: 2px;
         border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(var(--fg-rgb), 0.08);
       }
       .btn-ratio {
         background: transparent;
         border: none;
-        color: #64748b;
+        color: var(--text-dim);
         padding: 3px 6px;
         font-size: 11px;
         font-weight: 600;
@@ -151,11 +151,11 @@
         cursor: pointer;
       }
       .btn-ratio:hover {
-        color: #cbd5e1;
+        color: var(--text-soft);
       }
       .btn-ratio.active {
-        background: rgba(56, 189, 248, 0.2);
-        color: #38bdf8;
+        background: rgba(var(--accent-rgb), 0.2);
+        color: var(--accent-color);
       }
 
       /* Quick Action Pills */
@@ -167,15 +167,15 @@
         font-weight: 600;
         padding: 4px 9px;
         border-radius: 6px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        color: #94a3b8;
+        background: rgba(var(--fg-rgb), 0.04);
+        border: 1px solid rgba(var(--fg-rgb), 0.08);
+        color: var(--text-muted);
         cursor: pointer;
         transition: all 0.15s;
       }
       .pill-info:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: #f8fafc;
+        background: rgba(var(--fg-rgb), 0.08);
+        color: var(--text-strong);
       }
       .btn-roundtable {
         background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(99, 102, 241, 0.25));
@@ -210,14 +210,14 @@
         align-items: center;
         gap: 6px;
         padding: 6px 10px;
-        background: rgba(30, 41, 59, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(var(--panel-rgb), 0.7);
+        border: 1px solid rgba(var(--fg-rgb), 0.12);
         border-radius: 8px;
         transition: all 0.2s;
       }
       .ws-search-box:focus-within {
-        border-color: #38bdf8;
-        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
       }
       .ws-search-input {
         flex: 1;
@@ -229,12 +229,12 @@
         user-select: text;
       }
       .ws-search-input::placeholder {
-        color: #64748b;
+        color: var(--text-dim);
       }
       .btn-search-clear {
         background: transparent;
         border: none;
-        color: #94a3b8;
+        color: var(--text-muted);
         cursor: pointer;
         font-size: 11px;
         padding: 2px 4px;
@@ -243,7 +243,7 @@
       }
       .btn-search-clear:hover {
         color: #fff;
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(var(--fg-rgb), 0.1);
       }
 
       .ws-filter-tags-scroll {
@@ -257,15 +257,15 @@
         height: 4px;
       }
       .ws-filter-tags-scroll::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(var(--fg-rgb), 0.1);
         border-radius: 2px;
       }
       .tag-pill {
         padding: 3px 8px;
         border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.04);
-        color: #94a3b8;
+        border: 1px solid rgba(var(--fg-rgb), 0.08);
+        background: rgba(var(--fg-rgb), 0.04);
+        color: var(--text-muted);
         font-size: 11px;
         font-weight: 600;
         cursor: pointer;
@@ -276,15 +276,15 @@
         gap: 4px;
       }
       .tag-pill:hover {
-        border-color: rgba(255, 255, 255, 0.2);
-        color: #f1f5f9;
-        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(var(--fg-rgb), 0.2);
+        color: var(--text-strong);
+        background: rgba(var(--fg-rgb), 0.08);
       }
       .tag-pill.active {
-        background: rgba(56, 189, 248, 0.2);
-        border-color: #38bdf8;
-        color: #38bdf8;
-        box-shadow: 0 0 8px rgba(56, 189, 248, 0.25);
+        background: rgba(var(--accent-rgb), 0.2);
+        border-color: var(--accent-color);
+        color: var(--accent-color);
+        box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.25);
       }
 
       /* Type badge on cards */
@@ -301,9 +301,9 @@
         flex-shrink: 0;
       }
       .type-badge-功能 {
-        background: rgba(56, 189, 248, 0.15);
-        color: #38bdf8;
-        border-color: rgba(56, 189, 248, 0.3);
+        background: rgba(var(--accent-rgb), 0.15);
+        color: var(--accent-color);
+        border-color: rgba(var(--accent-rgb), 0.3);
       }
       .type-badge-修復 {
         background: rgba(244, 63, 94, 0.15);
@@ -343,17 +343,17 @@
 
       .ws-match-snippet {
         padding: 6px 8px;
-        background: rgba(0, 0, 0, 0.35);
-        border-left: 2px solid #38bdf8;
+        background: rgba(var(--well-rgb), 0.35);
+        border-left: 2px solid var(--accent-color);
         border-radius: 4px;
         font-size: 11px;
-        color: #cbd5e1;
+        color: var(--text-soft);
         line-height: 1.4;
         word-break: break-all;
       }
       .ws-match-snippet mark {
-        background: rgba(56, 189, 248, 0.3);
-        color: #38bdf8;
+        background: rgba(var(--accent-rgb), 0.3);
+        color: var(--accent-color);
         font-weight: 700;
         padding: 0 2px;
         border-radius: 2px;
@@ -369,8 +369,8 @@
       /* Workspace Tab CSS */
       .ws-item-card {
         padding: 10px 12px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.07);
+        background: rgba(var(--fg-rgb), 0.03);
+        border: 1px solid rgba(var(--fg-rgb), 0.07);
         border-radius: 8px;
         display: flex;
         flex-direction: column;
@@ -378,12 +378,12 @@
         transition: all 0.15s ease;
       }
       .ws-item-card:hover {
-        background: rgba(255, 255, 255, 0.06);
-        border-color: rgba(56, 189, 248, 0.3);
+        background: rgba(var(--fg-rgb), 0.06);
+        border-color: rgba(var(--accent-rgb), 0.3);
       }
       .ws-item-card.active {
-        border-color: #38bdf8;
-        background: rgba(56, 189, 248, 0.06);
+        border-color: var(--accent-color);
+        background: rgba(var(--accent-rgb), 0.06);
       }
       .ws-title-row {
         display: flex;
@@ -395,24 +395,24 @@
       .btn-ws-op {
         padding: 3px 8px;
         border-radius: 4px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.05);
-        color: #cbd5e1;
+        border: 1px solid rgba(var(--fg-rgb), 0.1);
+        background: rgba(var(--fg-rgb), 0.05);
+        color: var(--text-soft);
         font-size: 11px;
         cursor: pointer;
         transition: all 0.15s;
       }
       .btn-ws-op:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(var(--fg-rgb), 0.15);
         color: #fff;
       }
       .btn-ws-restore {
-        background: rgba(56, 189, 248, 0.15);
-        color: #38bdf8;
-        border-color: rgba(56, 189, 248, 0.3);
+        background: rgba(var(--accent-rgb), 0.15);
+        color: var(--accent-color);
+        border-color: rgba(var(--accent-rgb), 0.3);
       }
       .btn-ws-restore:hover {
-        background: rgba(56, 189, 248, 0.3);
+        background: rgba(var(--accent-rgb), 0.3);
         color: #fff;
       }
 
@@ -423,9 +423,9 @@
         right: 0;
         width: 420px;
         height: calc(100vh - 52px - 68px);
-        background: rgba(15, 23, 42, 0.96);
+        background: rgba(var(--panel-rgb), 0.96);
         backdrop-filter: blur(24px);
-        border-left: 1px solid rgba(255, 255, 255, 0.12);
+        border-left: 1px solid rgba(var(--fg-rgb), 0.12);
         box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6);
         display: none;
         flex-direction: column;
@@ -433,23 +433,23 @@
       }
       .sidebar-header {
         padding: 12px 16px;
-        background: rgba(30, 41, 59, 0.6);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(var(--panel-rgb), 0.6);
+        border-bottom: 1px solid rgba(var(--fg-rgb), 0.08);
         display: flex;
         align-items: center;
         justify-content: space-between;
       }
       .sidebar-tabs {
         display: flex;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(var(--fg-rgb), 0.05);
+        border: 1px solid rgba(var(--fg-rgb), 0.1);
         border-radius: 8px;
         padding: 2px;
       }
       .btn-tab {
         background: transparent;
         border: none;
-        color: #94a3b8;
+        color: var(--text-muted);
         padding: 4px 10px;
         font-size: 11px;
         font-weight: 600;
@@ -476,7 +476,7 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.8px;
-        color: #94a3b8;
+        color: var(--text-muted);
       }
       .mode-selector {
         display: flex;
@@ -487,10 +487,10 @@
         padding: 6px 8px;
         font-size: 11px;
         font-weight: 600;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(var(--fg-rgb), 0.04);
+        border: 1px solid rgba(var(--fg-rgb), 0.08);
         border-radius: 6px;
-        color: #cbd5e1;
+        color: var(--text-soft);
         cursor: pointer;
         text-align: center;
         transition: all 0.15s;
@@ -504,8 +504,8 @@
       .orch-textarea {
         width: 100%;
         height: 80px;
-        background: rgba(15, 23, 42, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(var(--panel-rgb), 0.7);
+        border: 1px solid rgba(var(--fg-rgb), 0.1);
         border-radius: 8px;
         padding: 10px;
         color: #fff;
@@ -542,8 +542,8 @@
         filter: brightness(1.1);
       }
       .btn-orch-pause {
-        background: rgba(255, 255, 255, 0.08);
-        color: #cbd5e1;
+        background: rgba(var(--fg-rgb), 0.08);
+        color: var(--text-soft);
       }
       .btn-orch-stop {
         background: rgba(239, 68, 68, 0.2);
@@ -563,8 +563,8 @@
       }
       .orch-log-item {
         padding: 10px 12px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(var(--fg-rgb), 0.03);
+        border: 1px solid rgba(var(--fg-rgb), 0.06);
         border-radius: 8px;
         font-size: 11px;
         display: flex;
@@ -584,9 +584,9 @@
         justify-content: space-between;
         font-size: 12px;
         padding: 8px 10px;
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(var(--fg-rgb), 0.03);
         border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(var(--fg-rgb), 0.06);
       }
       .zoom-label {
         display: flex;
@@ -603,9 +603,9 @@
         width: 26px;
         height: 26px;
         border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(255, 255, 255, 0.05);
-        color: #cbd5e1;
+        border: 1px solid rgba(var(--fg-rgb), 0.12);
+        background: rgba(var(--fg-rgb), 0.05);
+        color: var(--text-soft);
         font-size: 13px;
         font-weight: 700;
         cursor: pointer;
@@ -614,29 +614,29 @@
         justify-content: center;
       }
       .btn-step:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(var(--fg-rgb), 0.15);
         color: #fff;
       }
       .zoom-val {
         min-width: 36px;
         text-align: center;
         font-weight: 600;
-        color: #38bdf8;
+        color: var(--accent-color);
       }
 
       /* Content Area */
       .content-area {
         flex: 1;
-        background: #090d16;
+        background: var(--bg-content, var(--bg-deep));
       }
 
       /* Bottom Bar */
       .bottom-bar {
         height: 68px;
         padding: 10px 16px;
-        background: rgba(15, 23, 42, 0.92);
+        background: rgba(var(--panel-rgb), 0.92);
         backdrop-filter: blur(16px);
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid rgba(var(--fg-rgb), 0.08);
         display: flex;
         align-items: center;
         gap: 12px;
@@ -656,15 +656,15 @@
         cursor: pointer;
         padding: 4px 8px;
         border-radius: 6px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(var(--fg-rgb), 0.04);
+        border: 1px solid rgba(var(--fg-rgb), 0.06);
         transition: all 0.15s;
       }
       .target-label:hover {
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(var(--fg-rgb), 0.08);
       }
       .target-label input {
-        accent-color: #38bdf8;
+        accent-color: var(--accent-color);
         cursor: pointer;
       }
       .dot {
@@ -699,8 +699,8 @@
       .input-prompt {
         width: 100%;
         height: 44px;
-        background: rgba(30, 41, 59, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(var(--panel-rgb), 0.7);
+        border: 1px solid rgba(var(--fg-rgb), 0.12);
         border-radius: 10px;
         padding: 10px 14px;
         color: #fff;
@@ -711,16 +711,16 @@
         transition: border-color 0.2s;
       }
       .input-prompt:focus {
-        border-color: #38bdf8;
-        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
       }
       .btn-send {
         height: 44px;
         padding: 0 18px;
-        background: linear-gradient(135deg, #0284c7, #2563eb);
+        background: linear-gradient(135deg, var(--accent-color), var(--accent-2));
         border: none;
         border-radius: 10px;
-        color: white;
+        color: var(--on-accent);
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
@@ -757,12 +757,12 @@
         box-shadow: 0 0 8px #10b981;
       }
       .pulse-gray {
-        background: #64748b;
+        background: var(--text-dim);
         box-shadow: none;
       }
       .hud-card {
-        background: rgba(15, 23, 42, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(var(--panel-rgb), 0.7);
+        border: 1px solid rgba(var(--fg-rgb), 0.08);
         border-radius: 8px;
         padding: 8px 10px;
         display: flex;
@@ -772,7 +772,7 @@
       }
       .hud-card:hover {
         border-color: rgba(99, 102, 241, 0.4);
-        background: rgba(22, 32, 54, 0.85);
+        background: rgba(var(--panel-rgb), 0.85);
       }
       .hud-card-header {
         display: flex;
@@ -786,15 +786,35 @@
         justify-content: space-between;
         align-items: baseline;
         font-size: 10px;
-        color: #94a3b8;
+        color: var(--text-muted);
       }
 
       /* Dynamic Theme Variables */
       :root {
+        /* Theme tokens; applyTheme() overwrites them from THEME_PRESETS. */
+        color-scheme: dark;
         --bg-base: #0b0f19;
+        --bg-image: none;
         --bg-surface: rgba(15, 23, 42, 0.88);
+        --bg-deep: #090d16;
+        --panel-rgb: 30, 41, 59;
+        --fg-rgb: 255, 255, 255;
+        --text-strong: #f8fafc;
+        --text: #e2e8f0;
+        --text-soft: #cbd5e1;
+        --text-muted: #94a3b8;
+        --text-dim: #64748b;
         --accent-color: #38bdf8;
-        --accent-glow: rgba(56, 189, 248, 0.25);
+        --accent-rgb: 56, 189, 248;
+        --accent-2: #2563eb;
+        --accent-glow: rgba(56, 189, 248, 0.28);
+        --on-accent: #ffffff;
+        --well-rgb: 0, 0, 0;
+        --bg-content: var(--bg-deep);
+      }
+      body {
+        background-image: var(--bg-image) !important;
+        background-attachment: fixed;
       }
       body {
         background-color: var(--bg-base) !important;
@@ -810,17 +830,63 @@
       }
 
       /* Shortcuts & Theme UI */
+      .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .theme-group-title {
+        grid-column: 1 / -1;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
       .theme-card {
+        padding: 8px 4px;
+        border-radius: 8px;
+        border: 1px solid rgba(var(--fg-rgb), 0.12);
+        cursor: pointer;
+        text-align: center;
+        font: inherit;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
       }
+      .theme-card-icon {
+        font-size: 16px;
+      }
+      .theme-card-label {
+        font-size: 10px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+      .theme-card-dots {
+        display: flex;
+        justify-content: center;
+        gap: 3px;
+        margin-top: 5px;
+      }
+      .theme-card-dots span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      /* Light themes: ink-coloured swatch ring and softer shadows. */
+      :root[data-theme-mode='light'] .color-swatch.active {
+        border-color: var(--text-strong) !important;
+        box-shadow: 0 0 8px rgba(var(--fg-rgb), 0.35);
+      }
+      :root[data-theme-mode='light'] .theme-card {
+        box-shadow: 0 2px 8px rgba(var(--fg-rgb), 0.12);
+      }
       .theme-card:hover {
         transform: translateY(-2px);
-        border-color: rgba(255, 255, 255, 0.3) !important;
+        border-color: rgba(var(--fg-rgb), 0.35) !important;
       }
       .theme-card.active {
-        border-color: var(--accent-color, #38bdf8) !important;
-        box-shadow: 0 0 12px var(--accent-glow, rgba(56, 189, 248, 0.35)) !important;
+        border-color: var(--accent-color) !important;
+        box-shadow: 0 0 12px var(--accent-glow) !important;
       }
       .color-swatch {
         transition:
@@ -832,7 +898,7 @@
       }
       .color-swatch.active {
         border-color: white !important;
-        box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+        box-shadow: 0 0 8px rgba(var(--fg-rgb), 0.6);
       }
       .shortcut-input.recording {
         border-color: #ef4444 !important;
@@ -854,14 +920,14 @@
         font-size: 11px;
         font-weight: 600;
         border-radius: 4px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #cbd5e1;
+        background: rgba(var(--fg-rgb), 0.08);
+        border: 1px solid rgba(var(--fg-rgb), 0.15);
+        color: var(--text-soft);
         cursor: pointer;
         transition: all 0.15s ease;
       }
       .btn-record-key:hover {
-        background: rgba(255, 255, 255, 0.16);
+        background: rgba(var(--fg-rgb), 0.16);
         color: white;
       }
       .btn-record-key.recording {
@@ -882,15 +948,15 @@
         padding: 3px 8px;
         font-size: 11px;
         border-radius: 4px;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #94a3b8;
+        background: rgba(var(--fg-rgb), 0.06);
+        border: 1px solid rgba(var(--fg-rgb), 0.1);
+        color: var(--text-muted);
         cursor: pointer;
       }
       .canvas-filter-btn.active {
-        background: rgba(56, 189, 248, 0.15);
-        border-color: #38bdf8;
-        color: #38bdf8;
+        background: rgba(var(--accent-rgb), 0.15);
+        border-color: var(--accent-color);
+        color: var(--accent-color);
         font-weight: 600;
       }
       .artifact-list {
@@ -904,9 +970,9 @@
         padding: 4px 10px;
         font-size: 11px;
         border-radius: 6px;
-        background: rgba(30, 41, 59, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #cbd5e1;
+        background: rgba(var(--panel-rgb), 0.6);
+        border: 1px solid rgba(var(--fg-rgb), 0.1);
+        color: var(--text-soft);
         cursor: pointer;
         white-space: nowrap;
         display: flex;
@@ -914,17 +980,17 @@
         gap: 5px;
       }
       .artifact-chip.active {
-        background: rgba(56, 189, 248, 0.2);
-        border-color: #38bdf8;
-        color: #f0f9ff;
+        background: rgba(var(--accent-rgb), 0.2);
+        border-color: var(--accent-color);
+        color: var(--text-strong);
         font-weight: 600;
       }
       .sandbox-preview-box {
         width: 100%;
         height: 380px;
         border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        background: #0f172a;
+        border: 1px solid rgba(var(--fg-rgb), 0.12);
+        background: var(--bg-deep);
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -940,8 +1006,8 @@
         height: 100%;
         margin: 0;
         padding: 12px;
-        background: #0b0f19;
-        color: #38bdf8;
+        background: var(--bg-deep);
+        color: var(--accent-color);
         font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
         font-size: 11px;
         line-height: 1.5;
@@ -961,8 +1027,8 @@
         justify-content: space-between;
         padding: 8px 12px;
         border-radius: 6px;
-        background: rgba(30, 41, 59, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(var(--panel-rgb), 0.6);
+        border: 1px solid rgba(var(--fg-rgb), 0.08);
         margin: 8px 0;
       }
       .diff-line {
@@ -984,7 +1050,7 @@
         border-left: 3px solid #ef4444;
       }
       .diff-equal {
-        color: #94a3b8;
+        color: var(--text-muted);
       }
 
       /* Attachment & Drag-Drop Bar */
@@ -993,7 +1059,7 @@
         align-items: center;
         gap: 8px;
         padding: 4px 12px;
-        background: rgba(15, 23, 42, 0.7);
+        background: rgba(var(--panel-rgb), 0.7);
         border-radius: 6px 6px 0 0;
         overflow-x: auto;
       }
@@ -1001,16 +1067,16 @@
         display: flex;
         align-items: center;
         gap: 5px;
-        background: rgba(56, 189, 248, 0.12);
-        border: 1px solid rgba(56, 189, 248, 0.25);
+        background: rgba(var(--accent-rgb), 0.12);
+        border: 1px solid rgba(var(--accent-rgb), 0.25);
         border-radius: 4px;
         padding: 2px 7px;
         font-size: 11px;
-        color: #38bdf8;
+        color: var(--accent-color);
       }
       .attachment-pill .btn-remove-att {
         cursor: pointer;
-        color: #94a3b8;
+        color: var(--text-muted);
         font-weight: 700;
         margin-left: 4px;
       }
@@ -1036,11 +1102,11 @@
       .spotlight-card {
         width: 620px;
         max-width: 90vw;
-        background: #0f172a;
-        border: 1px solid rgba(56, 189, 248, 0.35);
+        background: var(--bg-deep);
+        border: 1px solid rgba(var(--accent-rgb), 0.35);
         box-shadow:
           0 20px 40px rgba(0, 0, 0, 0.6),
-          0 0 25px rgba(56, 189, 248, 0.2);
+          0 0 25px rgba(var(--accent-rgb), 0.2);
         border-radius: 12px;
         overflow: hidden;
         display: flex;
@@ -1048,7 +1114,7 @@
       }
       .spotlight-header {
         padding: 14px 18px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(var(--fg-rgb), 0.08);
         display: flex;
         align-items: center;
         gap: 12px;
@@ -1058,7 +1124,7 @@
         background: transparent;
         border: none;
         font-size: 15px;
-        color: #f8fafc;
+        color: var(--text-strong);
         outline: none;
       }
       .spotlight-results {
@@ -1080,7 +1146,7 @@
       }
       .spotlight-item:hover,
       .spotlight-item.selected {
-        background: rgba(56, 189, 248, 0.15);
+        background: rgba(var(--accent-rgb), 0.15);
       }
     </style>
   </head>
@@ -1164,7 +1230,7 @@
               overflow: hidden;
               text-overflow: ellipsis;
               white-space: nowrap;
-              color: #38bdf8;
+              color: var(--accent-color);
               font-weight: 700;
             "
             >新協作對話</span
@@ -1245,7 +1311,7 @@
           </button>
         </div>
         <span
-          style="cursor: pointer; color: #94a3b8; font-size: 15px; padding: 2px 6px"
+          style="cursor: pointer; color: var(--text-muted); font-size: 15px; padding: 2px 6px"
           onclick="closeSidebar()"
           >✕</span
         >
@@ -1271,7 +1337,10 @@
         <div style="display: flex; gap: 10px">
           <div style="flex: 2">
             <div class="section-title" style="margin-bottom: 5px">發言接力順序</div>
-            <div style="font-size: 11px; color: #38bdf8; font-weight: 600" id="orch-sequence-text">
+            <div
+              style="font-size: 11px; color: var(--accent-color); font-weight: 600"
+              id="orch-sequence-text"
+            >
               Claude ➔ ChatGPT ➔ Gemini ➔ Grok
             </div>
           </div>
@@ -1281,9 +1350,9 @@
               id="orch-rounds"
               style="
                 width: 100%;
-                background: rgba(255, 255, 255, 0.06);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #cbd5e1;
+                background: rgba(var(--fg-rgb), 0.06);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--text-soft);
                 border-radius: 6px;
                 padding: 4px 6px;
                 font-size: 12px;
@@ -1337,9 +1406,9 @@
         <div class="orch-status-box" id="orch-status-box" style="display: none">
           <div style="display: flex; justify-content: space-between; font-weight: 700">
             <span id="orch-status-label" style="color: #c4b5fd">運行狀態: 協作進行中</span>
-            <span id="orch-round-label" style="color: #94a3b8">第 1/2 輪</span>
+            <span id="orch-round-label" style="color: var(--text-muted)">第 1/2 輪</span>
           </div>
-          <div id="orch-speaker-label" style="color: #38bdf8; font-weight: 600">
+          <div id="orch-speaker-label" style="color: var(--accent-color); font-weight: 600">
             🟢 Claude 發言思考中...
           </div>
         </div>
@@ -1350,7 +1419,7 @@
           <div
             style="
               font-size: 11px;
-              color: #64748b;
+              color: var(--text-dim);
               font-style: italic;
               text-align: center;
               padding: 12px 0;
@@ -1369,8 +1438,8 @@
           class="active-ws-card"
           style="
             padding: 12px;
-            background: rgba(56, 189, 248, 0.08);
-            border: 1px solid rgba(56, 189, 248, 0.25);
+            background: rgba(var(--accent-rgb), 0.08);
+            border: 1px solid rgba(var(--accent-rgb), 0.25);
             border-radius: 8px;
             display: flex;
             flex-direction: column;
@@ -1378,14 +1447,18 @@
           "
         >
           <div style="display: flex; align-items: center; justify-content: space-between">
-            <span style="font-size: 13px; font-weight: 700; color: #38bdf8" id="ws-active-title"
+            <span
+              style="font-size: 13px; font-weight: 700; color: var(--accent-color)"
+              id="ws-active-title"
               >新協作對話</span
             >
             <button class="btn-ws-op" onclick="promptRenameActiveWs()" title="手動微調標題">
               ✏️ 重新命名
             </button>
           </div>
-          <div style="font-size: 11px; color: #94a3b8" id="ws-active-time">建立時間: 剛才</div>
+          <div style="font-size: 11px; color: var(--text-muted)" id="ws-active-time">
+            建立時間: 剛才
+          </div>
           <div style="display: flex; gap: 6px; font-size: 10px" id="ws-active-platforms"></div>
         </div>
 
@@ -1393,7 +1466,11 @@
         <button
           class="btn-orch-action"
           onclick="handleNewSession()"
-          style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white; width: 100%"
+          style="
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-2));
+            color: var(--on-accent);
+            width: 100%;
+          "
         >
           <span>➕ 開啟全新跨平臺協作對話 (New Session)</span>
         </button>
@@ -1437,18 +1514,18 @@
         <div
           style="
             padding: 8px 10px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(var(--fg-rgb), 0.03);
+            border: 1px solid rgba(var(--fg-rgb), 0.06);
             border-radius: 6px;
             font-size: 11px;
-            color: #94a3b8;
+            color: var(--text-muted);
             line-height: 1.5;
           "
         >
-          <div style="color: #cbd5e1; font-weight: 600; margin-bottom: 2px">
+          <div style="color: var(--text-soft); font-weight: 600; margin-bottom: 2px">
             🏷️ 語義對話命名遵循 AGENTS.md 第 7 節
           </div>
-          標準格式：<code style="color: #38bdf8">MMDD | 類型 | 主題</code><br />
+          標準格式：<code style="color: var(--accent-color)">MMDD | 類型 | 主題</code><br />
           8 大維度：功能 / 修復 / 設計 / 優化 / 文件 / 探索 / 研究 /
           發布。啟動圓桌任務時自動推斷並同調至各 AI 頁面！
         </div>
@@ -1513,7 +1590,7 @@
           style="display: flex; justify-content: space-between; align-items: center"
         >
           <span>歷史工作區紀錄</span>
-          <span style="font-size: 10px; color: #64748b" id="ws-count-badge">0 個</span>
+          <span style="font-size: 10px; color: var(--text-dim)" id="ws-count-badge">0 個</span>
         </div>
         <div
           id="ws-list-container"
@@ -1558,7 +1635,7 @@
 
         <!-- Artifact Chips List -->
         <div class="artifact-list" id="canvas-chips-container">
-          <span style="font-size: 11px; color: #64748b; font-style: italic"
+          <span style="font-size: 11px; color: var(--text-dim); font-style: italic"
             >尚未萃取到畫布 Artifact。發送代碼或圖表任務後自動渲染！</span
           >
         </div>
@@ -1571,11 +1648,13 @@
               justify-content: space-between;
               align-items: center;
               padding: 6px 10px;
-              background: rgba(0, 0, 0, 0.4);
-              border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+              background: rgba(var(--well-rgb), 0.4);
+              border-bottom: 1px solid rgba(var(--fg-rgb), 0.08);
             "
           >
-            <span id="canvas-active-title" style="font-size: 11px; font-weight: 600; color: #38bdf8"
+            <span
+              id="canvas-active-title"
+              style="font-size: 11px; font-weight: 600; color: var(--accent-color)"
               >未選取 Artifact</span
             >
             <div style="display: flex; gap: 6px">
@@ -1619,14 +1698,14 @@
         <!-- Selectors -->
         <div class="diff-selectors">
           <div style="flex: 1">
-            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px">觀點 A</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px">觀點 A</div>
             <select
               id="diff-select-a"
               style="
                 width: 100%;
-                background: rgba(255, 255, 255, 0.06);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #cbd5e1;
+                background: rgba(var(--fg-rgb), 0.06);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--text-soft);
                 border-radius: 6px;
                 padding: 4px 6px;
                 font-size: 12px;
@@ -1641,14 +1720,14 @@
             </select>
           </div>
           <div style="flex: 1">
-            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px">觀點 B</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px">觀點 B</div>
             <select
               id="diff-select-b"
               style="
                 width: 100%;
-                background: rgba(255, 255, 255, 0.06);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #cbd5e1;
+                background: rgba(var(--fg-rgb), 0.06);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--text-soft);
                 border-radius: 6px;
                 padding: 4px 6px;
                 font-size: 12px;
@@ -1670,8 +1749,8 @@
           style="
             padding: 8px;
             font-weight: 600;
-            background: linear-gradient(135deg, #0284c7, #2563eb);
-            color: white;
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-2));
+            color: var(--on-accent);
             border: none;
             border-radius: 6px;
             cursor: pointer;
@@ -1682,15 +1761,15 @@
 
         <!-- Diff Stats Meter -->
         <div class="diff-meter" id="diff-meter-box">
-          <span style="font-size: 12px; font-weight: 600; color: #cbd5e1">相似度指標</span>
+          <span style="font-size: 12px; font-weight: 600; color: var(--text-soft)">相似度指標</span>
           <span
             id="diff-similarity-badge"
             style="
               font-size: 11px;
               padding: 2px 8px;
               border-radius: 4px;
-              background: rgba(56, 189, 248, 0.15);
-              color: #38bdf8;
+              background: rgba(var(--accent-rgb), 0.15);
+              color: var(--accent-color);
               font-weight: 700;
             "
             >100.0%</span
@@ -1706,8 +1785,8 @@
             gap: 2px;
             max-height: 380px;
             overflow-y: auto;
-            background: #080c14;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--bg-deep);
+            border: 1px solid rgba(var(--fg-rgb), 0.08);
             border-radius: 8px;
             padding: 8px;
           "
@@ -1715,7 +1794,7 @@
           <span
             style="
               font-size: 11px;
-              color: #64748b;
+              color: var(--text-dim);
               font-style: italic;
               text-align: center;
               padding: 20px 0;
@@ -1797,21 +1876,21 @@
         <div style="display: flex; gap: 8px">
           <button
             class="btn-orch-action"
-            style="background: rgba(255, 255, 255, 0.06); color: #cbd5e1"
+            style="background: rgba(var(--fg-rgb), 0.06); color: var(--text-soft)"
             onclick="setGlobalZoom(0.85)"
           >
             85% 緊湊
           </button>
           <button
             class="btn-orch-action"
-            style="background: rgba(255, 255, 255, 0.06); color: #cbd5e1"
+            style="background: rgba(var(--fg-rgb), 0.06); color: var(--text-soft)"
             onclick="setGlobalZoom(1.0)"
           >
             100% 標準
           </button>
           <button
             class="btn-orch-action"
-            style="background: rgba(255, 255, 255, 0.06); color: #cbd5e1"
+            style="background: rgba(var(--fg-rgb), 0.06); color: var(--text-soft)"
             onclick="setGlobalZoom(1.15)"
           >
             115% 放大
@@ -1822,18 +1901,22 @@
         <div
           style="
             font-size: 11px;
-            color: #94a3b8;
+            color: var(--text-muted);
             line-height: 1.6;
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(var(--fg-rgb), 0.03);
             padding: 10px;
             border-radius: 8px;
           "
         >
           <div>
-            ⚡ <b>全域喚出快捷鍵</b>：<span style="color: #38bdf8">Cmd + Shift + Space</span>
+            ⚡ <b>全域喚出快捷鍵</b>：<span style="color: var(--accent-color)"
+              >Cmd + Shift + Space</span
+            >
           </div>
           <div style="margin-top: 4px">
-            🌐 <b>本地中繼端點</b>：<span style="color: #38bdf8">http://127.0.0.1:8765</span>
+            🌐 <b>本地中繼端點</b>：<span style="color: var(--accent-color)"
+              >http://127.0.0.1:8765</span
+            >
           </div>
           <div style="margin-top: 4px">
             🛡️ <b>零中繼隱私</b>：四大 AI 帳號登入態完全本機持久化保存。
@@ -1845,7 +1928,13 @@
         <div style="display: flex; align-items: center; justify-content: space-between">
           <div class="section-title" style="margin-bottom: 0">微服務健康探針 (Local Services)</div>
           <div
-            style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #94a3b8"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              font-size: 11px;
+              color: var(--text-muted);
+            "
           >
             <span class="pulse-dot" id="hud-pulse-dot"></span>
             <span>心跳探針</span>
@@ -1856,7 +1945,7 @@
           id="hud-services-grid"
           style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px"
         >
-          <div style="font-size: 11px; color: #64748b; text-align: center; padding: 16px 0">
+          <div style="font-size: 11px; color: var(--text-dim); text-align: center; padding: 16px 0">
             載入微服務探針中...
           </div>
         </div>
@@ -1887,8 +1976,8 @@
         <div class="section-title">☁️ Google Drive 雙向雲端備份</div>
         <div
           style="
-            background: rgba(30, 41, 59, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(var(--panel-rgb), 0.45);
+            border: 1px solid rgba(var(--fg-rgb), 0.08);
             border-radius: 8px;
             padding: 12px;
             display: flex;
@@ -1897,7 +1986,9 @@
           "
         >
           <div style="display: flex; align-items: center; justify-content: space-between">
-            <span style="font-size: 12px; font-weight: 600; color: #cbd5e1">備份儲存庫狀態</span>
+            <span style="font-size: 12px; font-weight: 600; color: var(--text-soft)"
+              >備份儲存庫狀態</span
+            >
             <span
               id="drive-sync-badge"
               style="
@@ -1912,7 +2003,10 @@
               >檢測中...</span
             >
           </div>
-          <div style="font-size: 11px; color: #94a3b8; word-break: break-all" id="drive-sync-path">
+          <div
+            style="font-size: 11px; color: var(--text-muted); word-break: break-all"
+            id="drive-sync-path"
+          >
             路徑: 正在偵測本機 Google Drive 目錄...
           </div>
           <div style="display: flex; gap: 8px">
@@ -1924,8 +2018,8 @@
                 flex: 1;
                 padding: 8px;
                 font-weight: 600;
-                background: linear-gradient(135deg, #0284c7, #2563eb);
-                color: white;
+                background: linear-gradient(135deg, var(--accent-color), var(--accent-2));
+                color: var(--on-accent);
                 border: none;
                 border-radius: 6px;
                 cursor: pointer;
@@ -1941,9 +2035,9 @@
                 flex: 1;
                 padding: 8px;
                 font-weight: 600;
-                background: rgba(255, 255, 255, 0.08);
-                color: #cbd5e1;
-                border: 1px solid rgba(255, 255, 255, 0.12);
+                background: rgba(var(--fg-rgb), 0.08);
+                color: var(--text-soft);
+                border: 1px solid rgba(var(--fg-rgb), 0.12);
                 border-radius: 6px;
                 cursor: pointer;
               "
@@ -1952,7 +2046,12 @@
             </button>
           </div>
           <div
-            style="display: flex; justify-content: space-between; font-size: 10px; color: #64748b"
+            style="
+              display: flex;
+              justify-content: space-between;
+              font-size: 10px;
+              color: var(--text-dim);
+            "
             id="drive-sync-meta"
           >
             <span id="drive-sync-time">最後同步: 尚未同步</span>
@@ -1964,8 +2063,8 @@
         <div class="section-title">⌨️ 全域快捷鍵錄製面板 (Global Shortcuts)</div>
         <div
           style="
-            background: rgba(30, 41, 59, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(var(--panel-rgb), 0.45);
+            border: 1px solid rgba(var(--fg-rgb), 0.08);
             border-radius: 8px;
             padding: 12px;
             display: flex;
@@ -1973,9 +2072,9 @@
             gap: 10px;
           "
         >
-          <div style="font-size: 11px; color: #94a3b8">
+          <div style="font-size: 11px; color: var(--text-muted)">
             點擊「錄製」按鈕後按下任意組合鍵（例如
-            <kbd style="background: rgba(255, 255, 255, 0.1); padding: 1px 4px; border-radius: 3px"
+            <kbd style="background: rgba(var(--fg-rgb), 0.1); padding: 1px 4px; border-radius: 3px"
               >Cmd+Shift+K</kbd
             >），放開即自動捕獲。
           </div>
@@ -1984,7 +2083,9 @@
             class="shortcut-row"
             style="display: flex; align-items: center; justify-content: space-between; gap: 8px"
           >
-            <span style="font-size: 11px; color: #cbd5e1; flex: 1.2">喚起 / 隱藏工作台</span>
+            <span style="font-size: 11px; color: var(--text-soft); flex: 1.2"
+              >喚起 / 隱藏工作台</span
+            >
             <input
               type="text"
               id="shortcut-toggleWindow"
@@ -1996,9 +2097,9 @@
                 font-size: 11px;
                 padding: 4px 8px;
                 border-radius: 4px;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #38bdf8;
+                background: rgba(var(--well-rgb), 0.3);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--accent-color);
                 text-align: center;
               "
             />
@@ -2015,7 +2116,7 @@
             class="shortcut-row"
             style="display: flex; align-items: center; justify-content: space-between; gap: 8px"
           >
-            <span style="font-size: 11px; color: #cbd5e1; flex: 1.2">單欄專注模式</span>
+            <span style="font-size: 11px; color: var(--text-soft); flex: 1.2">單欄專注模式</span>
             <input
               type="text"
               id="shortcut-toggleFocus"
@@ -2027,9 +2128,9 @@
                 font-size: 11px;
                 padding: 4px 8px;
                 border-radius: 4px;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #38bdf8;
+                background: rgba(var(--well-rgb), 0.3);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--accent-color);
                 text-align: center;
               "
             />
@@ -2046,7 +2147,7 @@
             class="shortcut-row"
             style="display: flex; align-items: center; justify-content: space-between; gap: 8px"
           >
-            <span style="font-size: 11px; color: #cbd5e1; flex: 1.2">側邊控制抽屜</span>
+            <span style="font-size: 11px; color: var(--text-soft); flex: 1.2">側邊控制抽屜</span>
             <input
               type="text"
               id="shortcut-toggleDrawer"
@@ -2058,9 +2159,9 @@
                 font-size: 11px;
                 padding: 4px 8px;
                 border-radius: 4px;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #38bdf8;
+                background: rgba(var(--well-rgb), 0.3);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--accent-color);
                 text-align: center;
               "
             />
@@ -2077,7 +2178,7 @@
             class="shortcut-row"
             style="display: flex; align-items: center; justify-content: space-between; gap: 8px"
           >
-            <span style="font-size: 11px; color: #cbd5e1; flex: 1.2">新跨平臺會話</span>
+            <span style="font-size: 11px; color: var(--text-soft); flex: 1.2">新跨平臺會話</span>
             <input
               type="text"
               id="shortcut-newSession"
@@ -2089,9 +2190,9 @@
                 font-size: 11px;
                 padding: 4px 8px;
                 border-radius: 4px;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #38bdf8;
+                background: rgba(var(--well-rgb), 0.3);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--accent-color);
                 text-align: center;
               "
             />
@@ -2108,7 +2209,7 @@
             class="shortcut-row"
             style="display: flex; align-items: center; justify-content: space-between; gap: 8px"
           >
-            <span style="font-size: 11px; color: #cbd5e1; flex: 1.2">系統 HUD 開關</span>
+            <span style="font-size: 11px; color: var(--text-soft); flex: 1.2">系統 HUD 開關</span>
             <input
               type="text"
               id="shortcut-toggleHUD"
@@ -2120,9 +2221,9 @@
                 font-size: 11px;
                 padding: 4px 8px;
                 border-radius: 4px;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #38bdf8;
+                background: rgba(var(--well-rgb), 0.3);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--accent-color);
                 text-align: center;
               "
             />
@@ -2143,9 +2244,9 @@
                 flex: 2;
                 padding: 6px;
                 font-weight: 600;
-                background: rgba(56, 189, 248, 0.2);
-                border: 1px solid #38bdf8;
-                color: #38bdf8;
+                background: rgba(var(--accent-rgb), 0.2);
+                border: 1px solid var(--accent-color);
+                color: var(--accent-color);
                 border-radius: 6px;
                 cursor: pointer;
               "
@@ -2159,9 +2260,9 @@
                 flex: 1;
                 padding: 6px;
                 font-weight: 600;
-                background: rgba(255, 255, 255, 0.06);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #94a3b8;
+                background: rgba(var(--fg-rgb), 0.06);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--text-muted);
                 border-radius: 6px;
                 cursor: pointer;
               "
@@ -2187,8 +2288,8 @@
         <div class="section-title">🎨 外觀風格與主題調色盤 (Appearance & Themes)</div>
         <div
           style="
-            background: rgba(30, 41, 59, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(var(--panel-rgb), 0.45);
+            border: 1px solid rgba(var(--fg-rgb), 0.08);
             border-radius: 8px;
             padding: 12px;
             display: flex;
@@ -2196,105 +2297,16 @@
             gap: 10px;
           "
         >
-          <div style="font-size: 11px; color: #94a3b8">
-            5 款精緻工程主題，支援即時切換與自訂全域強調色
+          <div style="font-size: 11px; color: var(--text-muted)">
+            12 款主題：深色、明亮、繽紛三系列，點選即套用；強調色可再自訂
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px">
-            <div
-              class="theme-card active"
-              id="theme-card-charcoal"
-              onclick="selectTheme('charcoal')"
-              style="
-                padding: 8px;
-                border-radius: 6px;
-                background: #0b0f19;
-                border: 1px solid #38bdf8;
-                cursor: pointer;
-                text-align: center;
-              "
-            >
-              <div style="font-size: 16px">🌌</div>
-              <div style="font-size: 10px; font-weight: 600; color: #f8fafc; margin-top: 4px">
-                深夜深灰
-              </div>
-            </div>
-            <div
-              class="theme-card"
-              id="theme-card-oled"
-              onclick="selectTheme('oled')"
-              style="
-                padding: 8px;
-                border-radius: 6px;
-                background: #000000;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                cursor: pointer;
-                text-align: center;
-              "
-            >
-              <div style="font-size: 16px">🖤</div>
-              <div style="font-size: 10px; font-weight: 600; color: #f8fafc; margin-top: 4px">
-                太空純黑
-              </div>
-            </div>
-            <div
-              class="theme-card"
-              id="theme-card-cyberpunk"
-              onclick="selectTheme('cyberpunk')"
-              style="
-                padding: 8px;
-                border-radius: 6px;
-                background: #0a0618;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                cursor: pointer;
-                text-align: center;
-              "
-            >
-              <div style="font-size: 16px">⚡</div>
-              <div style="font-size: 10px; font-weight: 600; color: #f8fafc; margin-top: 4px">
-                賽博藍紫
-              </div>
-            </div>
-            <div
-              class="theme-card"
-              id="theme-card-aurora"
-              onclick="selectTheme('aurora')"
-              style="
-                padding: 8px;
-                border-radius: 6px;
-                background: #041410;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                cursor: pointer;
-                text-align: center;
-              "
-            >
-              <div style="font-size: 16px">🌲</div>
-              <div style="font-size: 10px; font-weight: 600; color: #f8fafc; margin-top: 4px">
-                極光翡翠
-              </div>
-            </div>
-            <div
-              class="theme-card"
-              id="theme-card-nordic"
-              onclick="selectTheme('nordic')"
-              style="
-                padding: 8px;
-                border-radius: 6px;
-                background: #0f172a;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                cursor: pointer;
-                text-align: center;
-              "
-            >
-              <div style="font-size: 16px">❄️</div>
-              <div style="font-size: 10px; font-weight: 600; color: #f8fafc; margin-top: 4px">
-                極簡冷銀
-              </div>
-            </div>
-          </div>
+          <div id="theme-grid" class="theme-grid"></div>
 
           <div style="margin-top: 6px">
-            <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 6px; font-weight: 600">
+            <div
+              style="font-size: 11px; color: var(--text-soft); margin-bottom: 6px; font-weight: 600"
+            >
               自訂主強調色 (Accent Glow)
             </div>
             <div style="display: flex; align-items: center; gap: 8px">
@@ -2398,8 +2410,8 @@
         <div class="section-title">🤖 本機大模型雙軌引擎 (Local AI Model)</div>
         <div
           style="
-            background: rgba(30, 41, 59, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(var(--panel-rgb), 0.45);
+            border: 1px solid rgba(var(--fg-rgb), 0.08);
             border-radius: 8px;
             padding: 12px;
             display: flex;
@@ -2408,7 +2420,9 @@
           "
         >
           <div style="display: flex; align-items: center; justify-content: space-between">
-            <span style="font-size: 12px; font-weight: 600; color: #cbd5e1">本機推論端點</span>
+            <span style="font-size: 12px; font-weight: 600; color: var(--text-soft)"
+              >本機推論端點</span
+            >
             <span
               id="local-model-badge"
               style="
@@ -2416,7 +2430,7 @@
                 padding: 2px 8px;
                 border-radius: 4px;
                 background: rgba(148, 163, 184, 0.15);
-                color: #94a3b8;
+                color: var(--text-muted);
                 font-weight: 600;
               "
               >未探測</span
@@ -2432,9 +2446,9 @@
                 font-size: 11px;
                 padding: 6px 8px;
                 border-radius: 4px;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #f8fafc;
+                background: rgba(var(--well-rgb), 0.3);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--text-strong);
               "
             />
             <input
@@ -2447,9 +2461,9 @@
                 font-size: 11px;
                 padding: 6px 8px;
                 border-radius: 4px;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #f8fafc;
+                background: rgba(var(--well-rgb), 0.3);
+                border: 1px solid rgba(var(--fg-rgb), 0.1);
+                color: var(--text-strong);
               "
             />
             <button
@@ -2466,7 +2480,7 @@
               探測
             </button>
           </div>
-          <div id="local-model-list-text" style="font-size: 11px; color: #94a3b8">
+          <div id="local-model-list-text" style="font-size: 11px; color: var(--text-muted)">
             支援 LM Studio (1234) 與 Ollama (11434)。探測成功後可直接一鍵併行推論。
           </div>
         </div>
@@ -2475,8 +2489,8 @@
         <div class="section-title">🔌 Nomad MCP 宿主網關 (Tools Protocol)</div>
         <div
           style="
-            background: rgba(30, 41, 59, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(var(--panel-rgb), 0.45);
+            border: 1px solid rgba(var(--fg-rgb), 0.08);
             border-radius: 8px;
             padding: 12px;
             display: flex;
@@ -2484,15 +2498,27 @@
             gap: 8px;
           "
         >
-          <div style="font-size: 11px; color: #cbd5e1; font-weight: 600">啟用工具清單</div>
+          <div style="font-size: 11px; color: var(--text-soft); font-weight: 600">啟用工具清單</div>
           <div style="display: flex; flex-direction: column; gap: 6px" id="mcp-tools-list">
             <label
-              style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 6px"
+              style="
+                font-size: 11px;
+                color: var(--text-muted);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              "
               ><input type="checkbox" checked disabled />
               <span>read_file (讀取本機工作區指定文字檔案)</span></label
             >
             <label
-              style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 6px"
+              style="
+                font-size: 11px;
+                color: var(--text-muted);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              "
               ><input type="checkbox" checked disabled />
               <span>list_directory (列出本機指定目錄之檔案清單)</span></label
             >
@@ -2510,8 +2536,8 @@
         <div class="section-title">📚 本機知識庫與 RAG 注入管線</div>
         <div
           style="
-            background: rgba(30, 41, 59, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(var(--panel-rgb), 0.45);
+            border: 1px solid rgba(var(--fg-rgb), 0.08);
             border-radius: 8px;
             padding: 12px;
             display: flex;
@@ -2519,7 +2545,7 @@
             gap: 8px;
           "
         >
-          <div style="font-size: 11px; color: #94a3b8">
+          <div style="font-size: 11px; color: var(--text-muted)">
             將專案架構或規範文件注入本機向量記憶體，自動為 Prompt 補充上下文：
           </div>
           <textarea
@@ -2540,14 +2566,16 @@
               🔍 檢索關聯片段
             </button>
           </div>
-          <div id="rag-status-text" style="font-size: 10px; color: #64748b">已建立本地索引</div>
+          <div id="rag-status-text" style="font-size: 10px; color: var(--text-dim)">
+            已建立本地索引
+          </div>
         </div>
         <!-- Section 4: Headroom & Laya Pipeline Live Box -->
         <div class="section-title">⚡ 底層管線遙測與意圖測試 (Headroom & Laya)</div>
         <div
           style="
-            background: rgba(30, 41, 59, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(var(--panel-rgb), 0.45);
+            border: 1px solid rgba(var(--fg-rgb), 0.08);
             border-radius: 8px;
             padding: 12px;
             display: flex;
@@ -2558,13 +2586,13 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
             <div
               style="
-                background: rgba(0, 0, 0, 0.3);
+                background: rgba(var(--well-rgb), 0.3);
                 padding: 8px;
                 border-radius: 6px;
                 text-align: center;
               "
             >
-              <div style="font-size: 10px; color: #94a3b8">Headroom 累積節省</div>
+              <div style="font-size: 10px; color: var(--text-muted)">Headroom 累積節省</div>
               <div
                 style="font-size: 14px; font-weight: 700; color: #10b981"
                 id="telemetry-saved-tokens"
@@ -2574,15 +2602,15 @@
             </div>
             <div
               style="
-                background: rgba(0, 0, 0, 0.3);
+                background: rgba(var(--well-rgb), 0.3);
                 padding: 8px;
                 border-radius: 6px;
                 text-align: center;
               "
             >
-              <div style="font-size: 10px; color: #94a3b8">Laya 決策平均延遲</div>
+              <div style="font-size: 10px; color: var(--text-muted)">Laya 決策平均延遲</div>
               <div
-                style="font-size: 14px; font-weight: 700; color: #38bdf8"
+                style="font-size: 14px; font-weight: 700; color: var(--accent-color)"
                 id="telemetry-laya-latency"
               >
                 0.45 ms
@@ -2599,10 +2627,10 @@
                   flex: 1;
                   padding: 6px 10px;
                   font-size: 11px;
-                  background: rgba(0, 0, 0, 0.3);
-                  border: 1px solid rgba(255, 255, 255, 0.1);
+                  background: rgba(var(--well-rgb), 0.3);
+                  border: 1px solid rgba(var(--fg-rgb), 0.1);
                   border-radius: 6px;
-                  color: #cbd5e1;
+                  color: var(--text-soft);
                   outline: none;
                 "
               />
@@ -2612,9 +2640,9 @@
                   padding: 6px 12px;
                   font-size: 11px;
                   font-weight: 600;
-                  background: rgba(56, 189, 248, 0.15);
-                  border: 1px solid #38bdf8;
-                  color: #38bdf8;
+                  background: rgba(var(--accent-rgb), 0.15);
+                  border: 1px solid var(--accent-color);
+                  color: var(--accent-color);
                   border-radius: 6px;
                   cursor: pointer;
                 "
@@ -2629,11 +2657,11 @@
                 margin-top: 8px;
                 font-size: 11px;
                 padding: 8px;
-                background: rgba(0, 0, 0, 0.4);
+                background: rgba(var(--well-rgb), 0.4);
                 border-radius: 6px;
-                border: 1px solid rgba(255, 255, 255, 0.06);
+                border: 1px solid rgba(var(--fg-rgb), 0.06);
                 line-height: 1.5;
-                color: #94a3b8;
+                color: var(--text-muted);
               "
             ></div>
           </div>
@@ -2691,7 +2719,7 @@
               border: none;
               font-size: 16px;
               cursor: pointer;
-              color: #94a3b8;
+              color: var(--text-muted);
             "
           >
             📎
@@ -2939,14 +2967,14 @@
               grid.innerHTML = svcs
                 .map(
                   (s) => `
-              <div class="hud-card" style="border-left: 3px solid ${s.online ? '#10b981' : '#64748b'};">
+              <div class="hud-card" style="border-left: 3px solid ${s.online ? '#10b981' : 'var(--text-dim)'};">
                 <div class="hud-card-header">
-                  <span style="color: ${s.online ? '#f8fafc' : '#94a3b8'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${s.name}</span>
+                  <span style="color: ${s.online ? 'var(--text-strong)' : 'var(--text-muted)'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${s.name}</span>
                   <span>${s.online ? '🟢' : '⚪'}</span>
                 </div>
                 <div class="hud-card-body">
                   <span>Port ${s.port}</span>
-                  <span style="color: ${s.online ? '#34d399' : '#64748b'};">${s.online ? s.latencyMs + 'ms' : '離線'}</span>
+                  <span style="color: ${s.online ? '#34d399' : 'var(--text-dim)'};">${s.online ? s.latencyMs + 'ms' : '離線'}</span>
                 </div>
               </div>
             `,
@@ -3217,13 +3245,13 @@
         if (listContainer) {
           if (totalWorkspaces.length === 0) {
             listContainer.innerHTML =
-              '<div style="color: #64748b; font-size: 11px; text-align: center; padding: 20px;">尚無歷史會話紀錄</div>';
+              '<div style="color: var(--text-dim); font-size: 11px; text-align: center; padding: 20px;">尚無歷史會話紀錄</div>';
             return;
           }
 
           if (filtered.length === 0) {
             listContainer.innerHTML = `
-            <div style="color: #64748b; font-size: 11px; text-align: center; padding: 24px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <div style="color: var(--text-dim); font-size: 11px; text-align: center; padding: 24px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
               <span>🔍 沒有找到符合條件的工作區</span>
               <button class="btn-ws-op" onclick="clearWsSearch()" style="margin-top: 4px;">重置搜尋與標籤</button>
             </div>
@@ -3256,7 +3284,7 @@
                   const snippet = extractSnippetClient(rawContent, queryTokens);
                   turnSnippetHtml = `
                 <div class="ws-match-snippet">
-                  <span style="color: #38bdf8; font-weight: 700;">💬 ${speaker} (第 ${matchedTurn.round || 1} 輪):</span>
+                  <span style="color: var(--accent-color); font-weight: 700;">💬 ${speaker} (第 ${matchedTurn.round || 1} 輪):</span>
                   <span>${highlightMatch(escapeHtml(snippet), queryTokens)}</span>
                 </div>
               `;
@@ -3273,7 +3301,7 @@
               <div class="ws-title-row">
                 <div style="display: flex; align-items: center; gap: 6px; overflow: hidden; max-width: 270px;">
                   <span class="type-badge type-badge-${wsType}">${wsType}</span>
-                  <span style="color: ${isActive ? '#38bdf8' : '#e2e8f0'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(ws.title)}">
+                  <span style="color: ${isActive ? 'var(--accent-color)' : 'var(--text)'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(ws.title)}">
                     ${isActive ? '👉 ' : ''}${highlightedTitle}
                   </span>
                 </div>
@@ -3283,7 +3311,7 @@
                 </div>
               </div>
               ${turnSnippetHtml}
-              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #64748b;">
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--text-dim);">
                 <span>${timeStr} · ${ws.mode || 'relay'}</span>
                 <span>${hasUrls ? '🔗 網址已同步' : '未儲存網址'}</span>
               </div>
@@ -3533,10 +3561,10 @@
           card.className = 'orch-log-item';
           card.innerHTML = `
           <div class="orch-log-header">
-            <span style="color: #38bdf8;">【第 ${event.round} 輪】${event.speaker.toUpperCase()}</span>
-            <span style="color: #64748b;">${new Date().toLocaleTimeString()}</span>
+            <span style="color: var(--accent-color);">【第 ${event.round} 輪】${event.speaker.toUpperCase()}</span>
+            <span style="color: var(--text-dim);">${new Date().toLocaleTimeString()}</span>
           </div>
-          <div style="color: #e2e8f0; max-height: 80px; overflow-y: auto; white-space: pre-wrap;">${escapeHtml(event.responseSnippet)}...</div>
+          <div style="color: var(--text); max-height: 80px; overflow-y: auto; white-space: pre-wrap;">${escapeHtml(event.responseSnippet)}...</div>
         `;
           // Clear placeholder if first
           if (
@@ -3607,65 +3635,300 @@
       init();
 
       // --- Appearance & Theme Engine ---
+      const DARK_TEXT = ['#f8fafc', '#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b'];
+      /**
+       * Each theme sets every colour token. `text` runs strongest to dimmest; `fg` is the RGB of
+       * the hairline/overlay tint (white on dark themes, ink on light ones); `accent` is the
+       * accent a theme switches to, which the swatches can still override.
+       */
       const THEME_PRESETS = {
-        charcoal: { bgBase: '#0b0f19', bgSurface: 'rgba(15, 23, 42, 0.88)' },
-        oled: { bgBase: '#000000', bgSurface: 'rgba(10, 10, 10, 0.95)' },
-        cyberpunk: { bgBase: '#0a0618', bgSurface: 'rgba(24, 15, 46, 0.9)' },
-        aurora: { bgBase: '#041410', bgSurface: 'rgba(6, 32, 25, 0.9)' },
-        nordic: { bgBase: '#0f172a', bgSurface: 'rgba(30, 41, 59, 0.9)' },
+        charcoal: {
+          group: 'dark',
+          label: '深夜深灰',
+          icon: '🌌',
+          bgBase: '#0b0f19',
+          bgSurface: 'rgba(15, 23, 42, 0.88)',
+          bgDeep: '#090d16',
+          panel: '30, 41, 59',
+          fg: '255, 255, 255',
+          text: DARK_TEXT,
+          accent: '#38bdf8',
+          accent2: '#2563eb',
+        },
+        oled: {
+          group: 'dark',
+          label: '太空純黑',
+          icon: '🖤',
+          bgBase: '#000000',
+          bgSurface: 'rgba(10, 10, 10, 0.95)',
+          bgDeep: '#000000',
+          panel: '23, 23, 23',
+          fg: '255, 255, 255',
+          text: DARK_TEXT,
+          accent: '#38bdf8',
+          accent2: '#6366f1',
+        },
+        cyberpunk: {
+          group: 'dark',
+          label: '賽博藍紫',
+          icon: '⚡',
+          bgBase: '#0a0618',
+          bgSurface: 'rgba(24, 15, 46, 0.9)',
+          bgDeep: '#07041a',
+          panel: '40, 24, 74',
+          fg: '255, 255, 255',
+          text: DARK_TEXT,
+          accent: '#a855f7',
+          accent2: '#6366f1',
+        },
+        aurora: {
+          group: 'dark',
+          label: '極光翡翠',
+          icon: '🌲',
+          bgBase: '#041410',
+          bgSurface: 'rgba(6, 32, 25, 0.9)',
+          bgDeep: '#03100c',
+          panel: '10, 48, 38',
+          fg: '255, 255, 255',
+          text: DARK_TEXT,
+          accent: '#10b981',
+          accent2: '#0d9488',
+        },
+        nordic: {
+          group: 'dark',
+          label: '極簡冷銀',
+          icon: '❄️',
+          bgBase: '#0f172a',
+          bgSurface: 'rgba(30, 41, 59, 0.9)',
+          bgDeep: '#0b1222',
+          panel: '51, 65, 85',
+          fg: '255, 255, 255',
+          text: DARK_TEXT,
+          accent: '#38bdf8',
+          accent2: '#2563eb',
+        },
+        daylight: {
+          group: 'light',
+          label: '晨光白',
+          icon: '☀️',
+          bgBase: '#f4f7fb',
+          bgImage: 'linear-gradient(135deg, #f8fbff 0%, #eef2ff 100%)',
+          bgSurface: 'rgba(255, 255, 255, 0.82)',
+          bgDeep: '#e8eef6',
+          panel: '255, 255, 255',
+          fg: '15, 23, 42',
+          text: ['#0f172a', '#1e293b', '#334155', '#475569', '#556274'],
+          accent: '#2563eb',
+          accent2: '#7c3aed',
+        },
+        peach: {
+          group: 'light',
+          label: '蜜桃晨曦',
+          icon: '🍑',
+          bgBase: '#fff5f0',
+          bgImage: 'linear-gradient(135deg, #fff7ed 0%, #ffe4e6 100%)',
+          bgSurface: 'rgba(255, 251, 248, 0.84)',
+          bgDeep: '#ffe9df',
+          panel: '255, 255, 255',
+          fg: '67, 20, 7',
+          text: ['#431407', '#4a2318', '#6b3a2c', '#7a4636', '#7f4a3b'],
+          accent: '#e11d48',
+          accent2: '#f97316',
+        },
+        mint: {
+          group: 'light',
+          label: '薄荷蘇打',
+          icon: '🌿',
+          bgBase: '#effcf6',
+          bgImage: 'linear-gradient(135deg, #ecfdf5 0%, #e0f2fe 100%)',
+          bgSurface: 'rgba(255, 255, 255, 0.82)',
+          bgDeep: '#dcf5ea',
+          panel: '255, 255, 255',
+          fg: '2, 44, 34',
+          text: ['#022c22', '#064e3b', '#065f46', '#2f5e51', '#3b6559'],
+          accent: '#047857',
+          accent2: '#0284c7',
+        },
+        lavender: {
+          group: 'light',
+          label: '薰衣草田',
+          icon: '💜',
+          bgBase: '#f6f3ff',
+          bgImage: 'linear-gradient(135deg, #f5f3ff 0%, #fdf2f8 100%)',
+          bgSurface: 'rgba(255, 255, 255, 0.82)',
+          bgDeep: '#ece6fd',
+          panel: '255, 255, 255',
+          fg: '46, 16, 101',
+          text: ['#2e1065', '#3b0764', '#4c1d95', '#5b4a86', '#6d5f96'],
+          accent: '#7c3aed',
+          accent2: '#db2777',
+        },
+        neon: {
+          group: 'vivid',
+          label: '霓虹夜城',
+          icon: '🌆',
+          bgBase: '#1a0b2e',
+          bgImage: 'linear-gradient(135deg, #3b0764 0%, #831843 55%, #1e1b4b 100%)',
+          bgSurface: 'rgba(59, 7, 100, 0.35)',
+          bgDeep: '#1e0a3a',
+          panel: '88, 28, 135',
+          fg: '255, 255, 255',
+          text: ['#ffffff', '#fdf4ff', '#fae8ff', '#f5d0fe', '#f0c4fc'],
+          accent: '#f9a8d4',
+          accent2: '#c084fc',
+          onAccent: '#3b0764',
+        },
+        sunset: {
+          group: 'vivid',
+          label: '熱帶夕陽',
+          icon: '🌅',
+          bgBase: '#4a1530',
+          bgImage: 'linear-gradient(135deg, #9a3412 0%, #be185d 50%, #6b21a8 100%)',
+          bgSurface: 'rgba(88, 14, 50, 0.35)',
+          bgDeep: '#4a1028',
+          panel: '136, 19, 75',
+          fg: '255, 255, 255',
+          text: ['#ffffff', '#fff7ed', '#ffedd5', '#fed7aa', '#fdd0a2'],
+          accent: '#fcd34d',
+          accent2: '#fb923c',
+          onAccent: '#3b0a1e',
+        },
+        ocean: {
+          group: 'vivid',
+          label: '海洋湛藍',
+          icon: '🌊',
+          bgBase: '#0c3a5c',
+          bgImage: 'linear-gradient(135deg, #075985 0%, #1d4ed8 55%, #0e7490 100%)',
+          bgSurface: 'rgba(8, 40, 80, 0.35)',
+          bgDeep: '#0b2f55',
+          panel: '14, 80, 140',
+          fg: '255, 255, 255',
+          text: ['#ffffff', '#f0f9ff', '#e0f2fe', '#bae6fd', '#b3e0fb'],
+          accent: '#67e8f9',
+          accent2: '#60a5fa',
+          onAccent: '#082f49',
+        },
       };
+      const THEME_GROUPS = [
+        ['dark', '深色'],
+        ['light', '明亮'],
+        ['vivid', '繽紛'],
+      ];
+
+      /** @param {string} hex '#rrggbb' -> 'r, g, b' (sky blue when malformed) */
+      function hexToRgb(hex) {
+        const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || ''));
+        if (!m) return '56, 189, 248';
+        return [m[1], m[2], m[3]].map((h) => parseInt(h, 16)).join(', ');
+      }
+
+      function renderThemeCards() {
+        const grid = document.getElementById('theme-grid');
+        if (!grid || grid.childElementCount > 0) return;
+        for (const [group, title] of THEME_GROUPS) {
+          const heading = document.createElement('div');
+          heading.className = 'theme-group-title';
+          heading.textContent = title;
+          grid.appendChild(heading);
+          for (const [name, t] of Object.entries(THEME_PRESETS)) {
+            if (t.group !== group) continue;
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'theme-card';
+            card.id = 'theme-card-' + name;
+            card.title = t.label;
+            card.style.background = t.bgImage ? `${t.bgImage}, ${t.bgBase}` : t.bgBase;
+            card.style.color = t.text[0];
+            card.onclick = () => selectTheme(name);
+            const icon = document.createElement('div');
+            icon.className = 'theme-card-icon';
+            icon.textContent = t.icon;
+            const label = document.createElement('div');
+            label.className = 'theme-card-label';
+            label.textContent = t.label;
+            const dots = document.createElement('div');
+            dots.className = 'theme-card-dots';
+            for (const c of [t.accent, t.accent2]) {
+              const dot = document.createElement('span');
+              dot.style.background = c;
+              dots.appendChild(dot);
+            }
+            card.append(icon, label, dots);
+            grid.appendChild(card);
+          }
+        }
+      }
 
       function applyTheme(themeName, accentColor) {
+        renderThemeCards();
         const preset = THEME_PRESETS[themeName] || THEME_PRESETS.charcoal;
+        const accent = accentColor || preset.accent;
+        const accentRgb = hexToRgb(accent);
         const root = document.documentElement;
-        root.style.setProperty('--bg-base', preset.bgBase);
-        root.style.setProperty('--bg-surface', preset.bgSurface);
+        const tokens = {
+          '--bg-base': preset.bgBase,
+          '--bg-image': preset.bgImage || 'none',
+          '--bg-surface': preset.bgSurface,
+          '--bg-deep': preset.bgDeep,
+          // Vivid themes let the body gradient show behind the panes.
+          '--bg-content': preset.group === 'vivid' ? 'transparent' : preset.bgDeep,
+          '--panel-rgb': preset.panel,
+          '--fg-rgb': preset.fg,
+          '--text-strong': preset.text[0],
+          '--text': preset.text[1],
+          '--text-soft': preset.text[2],
+          '--text-muted': preset.text[3],
+          '--text-dim': preset.text[4],
+          '--accent-color': accent,
+          '--accent-rgb': accentRgb,
+          '--accent-2': preset.accent2,
+          '--accent-glow': `rgba(${accentRgb}, 0.28)`,
+          '--on-accent': preset.onAccent || '#ffffff',
+          // Inset fields: darker than the panel on dark themes, white on light ones.
+          '--well-rgb': preset.group === 'light' ? '255, 255, 255' : '0, 0, 0',
+        };
+        for (const [key, value] of Object.entries(tokens)) root.style.setProperty(key, value);
+        root.dataset.themeMode = preset.group === 'light' ? 'light' : 'dark';
+        root.style.colorScheme = root.dataset.themeMode;
 
-        if (accentColor) {
-          root.style.setProperty('--accent-color', accentColor);
-          // hex to rgba glow
-          const r = parseInt(accentColor.slice(1, 3), 16) || 56;
-          const g = parseInt(accentColor.slice(3, 5), 16) || 189;
-          const b = parseInt(accentColor.slice(5, 7), 16) || 248;
-          root.style.setProperty('--accent-glow', `rgba(${r}, ${g}, ${b}, 0.28)`);
-        }
-
-        // Update active theme card
         document.querySelectorAll('.theme-card').forEach((c) => c.classList.remove('active'));
         const activeCard = document.getElementById('theme-card-' + themeName);
         if (activeCard) activeCard.classList.add('active');
+        markAccentSwatch(accent);
       }
 
-      function selectTheme(themeName) {
-        if (!state.appearance) state.appearance = {};
-        state.appearance.theme = themeName;
-        applyTheme(themeName, state.appearance.accentColor || '#38bdf8');
+      function markAccentSwatch(hexColor) {
+        document.querySelectorAll('.color-swatch').forEach((s) => s.classList.remove('active'));
+        const swatch = document.getElementById('swatch-' + String(hexColor).replace('#', ''));
+        if (swatch) swatch.classList.add('active');
+        const picker = document.getElementById('accent-color-picker');
+        if (picker) picker.value = hexColor;
+      }
+
+      function saveAppearance() {
         if (window.nomadDesktop && window.nomadDesktop.setAppearance) {
           window.nomadDesktop.setAppearance(state.appearance);
         }
+      }
+
+      // Picking a theme also takes its accent; a swatch picked afterwards overrides it.
+      function selectTheme(themeName) {
+        const preset = THEME_PRESETS[themeName] || THEME_PRESETS.charcoal;
+        state.appearance = { ...state.appearance, theme: themeName, accentColor: preset.accent };
+        applyTheme(themeName, preset.accent);
+        saveAppearance();
       }
 
       function selectAccentColor(hexColor) {
-        if (!state.appearance) state.appearance = {};
-        state.appearance.accentColor = hexColor;
+        state.appearance = { ...state.appearance, accentColor: hexColor };
         applyTheme(state.appearance.theme || 'charcoal', hexColor);
-
-        // Update swatch active state
-        document.querySelectorAll('.color-swatch').forEach((s) => s.classList.remove('active'));
-        const swatch = document.getElementById('swatch-' + hexColor.replace('#', ''));
-        if (swatch) swatch.classList.add('active');
-
-        const picker = document.getElementById('accent-color-picker');
-        if (picker) picker.value = hexColor;
-
-        if (window.nomadDesktop && window.nomadDesktop.setAppearance) {
-          window.nomadDesktop.setAppearance(state.appearance);
-        }
+        saveAppearance();
       }
 
       function loadAppearanceUI() {
-        const app = state.appearance || { theme: 'charcoal', accentColor: '#38bdf8' };
-        applyTheme(app.theme || 'charcoal', app.accentColor || '#38bdf8');
+        const app = state.appearance || {};
+        const theme = THEME_PRESETS[app.theme] ? app.theme : 'charcoal';
+        applyTheme(theme, app.accentColor || THEME_PRESETS[theme].accent);
       }
 
       // --- Global Shortcuts Recorder ---
@@ -3808,7 +4071,7 @@
             const d = res.data;
             if (badge) {
               badge.textContent = d.status === 'connected' ? '🟢 目錄就緒' : '⚪ 本機離線模式';
-              badge.style.color = d.status === 'connected' ? '#10b981' : '#94a3b8';
+              badge.style.color = d.status === 'connected' ? '#10b981' : 'var(--text-muted)';
             }
             if (pathEl) {
               pathEl.textContent = '儲存目錄: ' + (d.targetDir || '本機應用目錄');
@@ -3912,10 +4175,10 @@
             if (res && res.success && res.data) {
               const d = res.data;
               resultBox.innerHTML = `
-              <div style="color: #38bdf8; font-weight: 700;">🎯 意圖: ${d.laya.intent} (置信度: ${Math.round(d.laya.confidence * 100)}%)</div>
+              <div style="color: var(--accent-color); font-weight: 700;">🎯 意圖: ${d.laya.intent} (置信度: ${Math.round(d.laya.confidence * 100)}%)</div>
               <div>🤖 建議引擎: <span style="color: #34d399; font-weight: 600;">${d.laya.recommendedPlatform}</span> | 耗時: ${d.laya.latencyMs}ms</div>
               <div>📉 Headroom 節省: ${d.headroom.savedTokens} tokens (${Math.round(d.headroom.savingsRatio * 100)}%)</div>
-              <div style="margin-top: 4px; color: #cbd5e1; font-size: 10px; background: rgba(255,255,255,0.04); padding: 4px 6px; border-radius: 4px;">${d.processedPrompt}</div>
+              <div style="margin-top: 4px; color: var(--text-soft); font-size: 10px; background: rgba(var(--fg-rgb), 0.04); padding: 4px 6px; border-radius: 4px;">${d.processedPrompt}</div>
             `;
               loadPipelineStats();
             } else {
@@ -3972,7 +4235,7 @@
 
         if (filtered.length === 0) {
           container.innerHTML =
-            '<span style="font-size: 11px; color: #64748b; font-style: italic;">無此類別的 Artifact</span>';
+            '<span style="font-size: 11px; color: var(--text-dim); font-style: italic;">無此類別的 Artifact</span>';
           return;
         }
 
@@ -4118,7 +4381,7 @@
 
         if (badge) {
           badge.innerText = '探測中...';
-          badge.style.color = '#38bdf8';
+          badge.style.color = 'var(--accent-color)';
         }
 
         const res = await window.nomadDesktop.probeLocalModel({ host, port });
@@ -4268,14 +4531,14 @@
         });
         promptInputEl.addEventListener('dragover', (e) => {
           e.preventDefault();
-          promptInputEl.style.borderColor = '#38bdf8';
+          promptInputEl.style.borderColor = 'var(--accent-color)';
         });
         promptInputEl.addEventListener('dragleave', (e) => {
-          promptInputEl.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          promptInputEl.style.borderColor = 'rgba(var(--fg-rgb), 0.1)';
         });
         promptInputEl.addEventListener('drop', (e) => {
           e.preventDefault();
-          promptInputEl.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          promptInputEl.style.borderColor = 'rgba(var(--fg-rgb), 0.1)';
           if (e.dataTransfer && e.dataTransfer.files) {
             addAttachmentsFromFiles(Array.from(e.dataTransfer.files));
           }
@@ -4313,17 +4576,17 @@
               (r) => `
           <div class="spotlight-item" onclick="switchToWorkspaceFromSpotlight('${r.workspaceId}')">
             <div>
-              <div style="font-size: 13px; font-weight: 600; color: #f8fafc;">${r.title}</div>
-              <div style="font-size: 11px; color: #64748b;">${r.type} · ${r.mode}</div>
+              <div style="font-size: 13px; font-weight: 600; color: var(--text-strong);">${r.title}</div>
+              <div style="font-size: 11px; color: var(--text-dim);">${r.type} · ${r.mode}</div>
             </div>
-            <span style="font-size: 11px; color: #38bdf8;">切換 ➔</span>
+            <span style="font-size: 11px; color: var(--accent-color);">切換 ➔</span>
           </div>
         `,
             )
             .join('');
         } else {
           container.innerHTML =
-            '<div style="padding: 12px; font-size: 12px; color: #64748b; text-align: center;">查無工作區或按 Enter 即可直接同步廣播</div>';
+            '<div style="padding: 12px; font-size: 12px; color: var(--text-dim); text-align: center;">查無工作區或按 Enter 即可直接同步廣播</div>';
         }
       }
 
@@ -4420,9 +4683,9 @@
             style="
               font-size: 11px;
               padding: 2px 6px;
-              background: rgba(255, 255, 255, 0.08);
+              background: rgba(var(--fg-rgb), 0.08);
               border-radius: 4px;
-              color: #94a3b8;
+              color: var(--text-muted);
             "
             >Esc</span
           >
@@ -4430,34 +4693,58 @@
         <div
           style="
             padding: 8px 18px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(var(--fg-rgb), 0.06);
             display: flex;
             align-items: center;
             justify-content: space-between;
           "
         >
-          <div style="font-size: 11px; color: #94a3b8">快速目標:</div>
+          <div style="font-size: 11px; color: var(--text-muted)">快速目標:</div>
           <div style="display: flex; gap: 8px">
             <label
-              style="font-size: 11px; color: #cbd5e1; display: flex; align-items: center; gap: 4px"
+              style="
+                font-size: 11px;
+                color: var(--text-soft);
+                display: flex;
+                align-items: center;
+                gap: 4px;
+              "
               ><input type="checkbox" id="spot-check-chatgpt" checked /> ChatGPT</label
             >
             <label
-              style="font-size: 11px; color: #cbd5e1; display: flex; align-items: center; gap: 4px"
+              style="
+                font-size: 11px;
+                color: var(--text-soft);
+                display: flex;
+                align-items: center;
+                gap: 4px;
+              "
               ><input type="checkbox" id="spot-check-claude" checked /> Claude</label
             >
             <label
-              style="font-size: 11px; color: #cbd5e1; display: flex; align-items: center; gap: 4px"
+              style="
+                font-size: 11px;
+                color: var(--text-soft);
+                display: flex;
+                align-items: center;
+                gap: 4px;
+              "
               ><input type="checkbox" id="spot-check-gemini" checked /> Gemini</label
             >
             <label
-              style="font-size: 11px; color: #cbd5e1; display: flex; align-items: center; gap: 4px"
+              style="
+                font-size: 11px;
+                color: var(--text-soft);
+                display: flex;
+                align-items: center;
+                gap: 4px;
+              "
               ><input type="checkbox" id="spot-check-local" /> 本機 AI</label
             >
           </div>
         </div>
         <div class="spotlight-results" id="spotlight-results-container">
-          <div style="padding: 12px; font-size: 12px; color: #64748b; text-align: center">
+          <div style="padding: 12px; font-size: 12px; color: var(--text-dim); text-align: center">
             輸入關鍵字即時檢索跨平臺歷史會話
           </div>
         </div>
