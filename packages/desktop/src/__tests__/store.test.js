@@ -51,3 +51,34 @@ test('Store: Zoom factor is clamped safely between 0.5 and 2.0', () => {
 
   if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
 });
+
+test('Store: Settings saved with DeepSeek load with Copilot in its place', () => {
+  const tmpFile = path.join(os.tmpdir(), `nomad-test-store-deepseek-${Date.now()}.json`);
+  fs.writeFileSync(
+    tmpFile,
+    JSON.stringify({
+      layout: 'dual',
+      activePlatforms: ['deepseek', 'claude'],
+      zoomFactors: { chatgpt: 0.95, deepseek: 1.2 },
+    }),
+  );
+
+  const store = new SettingsStore(tmpFile).init();
+
+  assert.deepStrictEqual(store.get('activePlatforms'), ['copilot', 'claude']);
+  assert.strictEqual(store.getZoom('chatgpt'), 0.95);
+  assert.strictEqual(store.getZoom('copilot'), 1.0);
+  assert.strictEqual('deepseek' in store.get('zoomFactors'), false);
+
+  fs.unlinkSync(tmpFile);
+});
+
+test('Store: Replacing DeepSeek never shows Copilot twice', () => {
+  const tmpFile = path.join(os.tmpdir(), `nomad-test-store-dupe-${Date.now()}.json`);
+  fs.writeFileSync(tmpFile, JSON.stringify({ activePlatforms: ['copilot', 'deepseek'] }));
+
+  const store = new SettingsStore(tmpFile).init();
+
+  assert.deepStrictEqual(store.get('activePlatforms'), ['copilot']);
+  fs.unlinkSync(tmpFile);
+});

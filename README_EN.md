@@ -141,13 +141,14 @@ See [User Guide §7.10](docs/USER_GUIDE_EN.md#710-bots-persistent-identity-canon
 
 ## 📱 Supported Platform Matrix
 
-| AI Platform          |     Status      | Supported Domains                             | Hierarchical Sidebar | Universal Prompts | Segregated Drive Backup |
-| :------------------- | :-------------: | :-------------------------------------------- | :------------------: | :---------------: | :---------------------: |
-| **Google Gemini**    | 🟢 Full Support | `gemini.google.com`, `business.gemini.google` |          ✅          |        ✅         |      ✅ `Gemini/`       |
-| **Google AI Studio** | 🟢 Full Support | `aistudio.google.com`, `aistudio.google.cn`   |          ✅          |        ✅         |      ✅ `Gemini/`       |
-| **Anthropic Claude** | 🟢 Full Support | `claude.ai`                                   |          ✅          |        ✅         |      ✅ `Claude/`       |
-| **OpenAI ChatGPT**   | 🟢 Full Support | `chatgpt.com`, `chat.openai.com`              |          ✅          |        ✅         |      ✅ `ChatGPT/`      |
-| **xAI Grok**         | 🟢 Full Support | `grok.com`, `x.com/i/grok`                    |          ✅          |        ✅         |       ✅ `Grok/`        |
+| AI Platform           |     Status      | Supported Domains                             | Hierarchical Sidebar | Universal Prompts | Segregated Drive Backup |
+| :-------------------- | :-------------: | :-------------------------------------------- | :------------------: | :---------------: | :---------------------: |
+| **Google Gemini**     | 🟢 Full Support | `gemini.google.com`, `business.gemini.google` |          ✅          |        ✅         |      ✅ `Gemini/`       |
+| **Google AI Studio**  | 🟢 Full Support | `aistudio.google.com`, `aistudio.google.cn`   |          ✅          |        ✅         |      ✅ `Gemini/`       |
+| **Anthropic Claude**  | 🟢 Full Support | `claude.ai`                                   |          ✅          |        ✅         |      ✅ `Claude/`       |
+| **OpenAI ChatGPT**    | 🟢 Full Support | `chatgpt.com`, `chat.openai.com`              |          ✅          |        ✅         |      ✅ `ChatGPT/`      |
+| **xAI Grok**          | 🟢 Full Support | `grok.com`, `x.com/i/grok`                    |          ✅          |        ✅         |       ✅ `Grok/`        |
+| **Microsoft Copilot** | 🟡 Studio pane  | `m365.cloud.microsoft`                        | ✅ Studio Hexa grid  |         —         |            —            |
 
 ---
 
