@@ -45,3 +45,22 @@ test('Extractors: Copilot reads the last reply without zero-width characters', (
   stop.remove();
   assert.strictEqual(dom.window.eval(PLATFORM_EXTRACTORS.copilot.checkStatus()).isStreaming, false);
 });
+
+test('Extractors: Claude reads only the markdown of the last reply, not its row chrome', () => {
+  const { JSDOM } = require('jsdom');
+  // The current claude.ai row: a screen-reader label and an action bar around the markdown.
+  const row = (/** @type {string} */ body) =>
+    '<div data-testid="assistant-message"><span class="sr-only">Claude 已回覆：</span>' +
+    `<div class="standard-markdown">${body}</div>` +
+    '<div role="group"><button aria-label="複製"></button><span>現在</span></div></div>';
+  const dom = new JSDOM(
+    `<!doctype html><body>${row('<p>old</p>')}${row('<p>CODE-1</p><p>line two</p>')}</body>`,
+    { runScripts: 'outside-only' },
+  );
+
+  const reply = dom.window.eval(PLATFORM_EXTRACTORS.claude.getLatestResponse());
+
+  // jsdom has no innerText, so paragraphs are not separated here; Chromium adds newlines.
+  assert.strictEqual(reply.ok, true);
+  assert.match(reply.text, /^CODE-1\s*line two$/);
+});
