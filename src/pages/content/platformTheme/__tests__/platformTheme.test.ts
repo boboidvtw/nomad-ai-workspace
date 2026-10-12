@@ -74,11 +74,10 @@ describe('resolveBrandColor with a published site override', () => {
 });
 
 describe('resolveBrandColor', () => {
-  it('uses the adapter brandColor for Claude, ChatGPT and DeepSeek', () => {
+  it('uses the adapter brandColor for Claude and ChatGPT', () => {
     expect(resolveBrandColor('https://claude.ai/chat/1')).toBe('#d97757');
     expect(resolveBrandColor('https://chatgpt.com/c/1')).toBe('#10A37F');
     expect(resolveBrandColor('https://chat.openai.com/')).toBe('#10A37F');
-    expect(resolveBrandColor('https://chat.deepseek.com/a/chat/s/1')).toBe('#4d6bfe');
   });
 
   it('returns null for Gemini / AI Studio / unknown sites', () => {
@@ -121,10 +120,6 @@ describe('effectiveAccentForDisplay', () => {
     expect(effectiveAccentForDisplay('https://gemini.google.com/app')).toBe(DEFAULT_ACCENT);
   });
 
-  it('returns the DeepSeek adapter colour for a plugin-platform page', () => {
-    expect(effectiveAccentForDisplay('https://chat.deepseek.com/a/chat/s/1')).toBe('#4d6bfe');
-  });
-
   it('returns the adapter colour for Claude and the override when set', () => {
     expect(effectiveAccentForDisplay('https://claude.ai/x')).toBe('#d97757');
     expect(effectiveAccentForDisplay('https://claude.ai/x', [], { claude: '#0f0f0f' })).toBe(
@@ -165,13 +160,6 @@ describe('applyBrandTheme', () => {
     expect(document.documentElement.style.getPropertyValue('--gv-pm-brand')).toBe('#d97757');
   });
 
-  it('applies the DeepSeek adapter colour to the Voyager UI root', () => {
-    applyBrandTheme('https://chat.deepseek.com/a/chat/s/1', [], document);
-    expect(document.documentElement.classList.contains(PLATFORM_THEME_CLASS)).toBe(true);
-    expect(document.documentElement.style.getPropertyValue('--gv-pm-brand')).toBe('#4d6bfe');
-    expect(document.documentElement.style.getPropertyValue('--gv-pm-brand-fg')).toBe('#ffffff');
-  });
-
   it('adds no accent on Gemini, but still names the platform', () => {
     applyBrandTheme('https://gemini.google.com/app', [], document);
     expect(document.documentElement.className).toBe('');
@@ -183,7 +171,6 @@ describe('applyBrandTheme', () => {
 
   it('names each platform on the root and clears it off an unknown site', () => {
     for (const [url, id] of [
-      ['https://chat.deepseek.com/a/chat/s/1', 'deepseek'],
       ['https://chatgpt.com/c/1', 'chatgpt'],
       ['https://claude.ai/chat/1', 'claude'],
     ] as const) {

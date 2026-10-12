@@ -12,8 +12,8 @@ import { PLATFORM_LOGOS, type PlatformLogo, type PlatformLogoId } from '@/core/i
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const MARK_CLASS = 'gv-changelog-logo';
 /**
- * The marker swallows the space written after it. The note reads `:deepseek:
- * DeepSeek` for the sake of whoever edits it, but the mark carries its own
+ * The marker swallows the space written after it. The note reads `:claude:
+ * Claude` for the sake of whoever edits it, but the mark carries its own
  * gap — leaving the space too puts twice the intended distance between the
  * mark and the name.
  */

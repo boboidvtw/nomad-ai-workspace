@@ -57,13 +57,13 @@ describe('settings save helpers', () => {
         expect(
             buildConnectionSettingsForSave(
                 {
-                    provider: 'deepseek',
+                    provider: 'zhipu',
                     dedicatedApiProviders: {
-                        deepseek: {
-                            baseUrl: 'https://api.deepseek.com',
-                            apiKey: 'deepseek-key',
-                            model: 'deepseek-v4-pro',
-                            selectedModel: 'deepseek-v4-pro',
+                        zhipu: {
+                            baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+                            apiKey: 'zhipu-key',
+                            model: 'glm-5.3',
+                            selectedModel: 'glm-5.3',
                             thinkingLevel: 'high',
                         },
                     },
@@ -71,11 +71,11 @@ describe('settings save helpers', () => {
                 { webThinkingLevel: 'high' }
             )
         ).toMatchObject({
-            provider: 'deepseek',
+            provider: 'zhipu',
             dedicatedApiProviders: expect.objectContaining({
-                deepseek: expect.objectContaining({
-                    apiKey: 'deepseek-key',
-                    selectedModel: 'deepseek-v4-pro',
+                zhipu: expect.objectContaining({
+                    apiKey: 'zhipu-key',
+                    selectedModel: 'glm-5.3',
                     thinkingLevel: 'high',
                 }),
             }),

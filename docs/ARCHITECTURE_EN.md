@@ -107,7 +107,6 @@ graph TD
     - 🟠 **Anthropic Claude** (`#D97757`)
     - 🟢 **OpenAI ChatGPT** (`#10A37F`)
     - ⚪ **xAI Grok** (`#1D9BF0`)
-    - 🟣 **DeepSeek** (`#4D6BFE` — planned)
 - **Zero-Latency Navigation**:
   - In-platform navigation executes via SPA pushState for instantaneous switching.
   - Cross-platform navigation opens or focuses targeted conversations in dedicated tabs (annotated with ↗️).

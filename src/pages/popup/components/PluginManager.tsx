@@ -46,7 +46,7 @@ import type { TranslationKey } from '@/utils/translations';
 import { Card, CardContent, CardTitle } from '../../../components/ui/card';
 import { Switch } from '../../../components/ui/switch';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { IconChatGPT, IconClaude, IconDeepSeek } from './WebsiteLogos';
+import { IconChatGPT, IconClaude } from './WebsiteLogos';
 
 type EnabledMap = Record<string, boolean>;
 type SettingsMap = Record<string, Record<string, PluginSettingValue>>;
@@ -93,7 +93,6 @@ const CHECK_INTERVAL_LABEL_KEYS: Readonly<Record<PluginCatalogCheckInterval, Tra
 const SITE_BADGES: Record<string, { Icon: typeof IconClaude; color: string }> = {
   claude: { Icon: IconClaude, color: '#d97757' },
   chatgpt: { Icon: IconChatGPT, color: '#0ea5e9' },
-  deepseek: { Icon: IconDeepSeek, color: '#4d6bfe' },
 };
 
 /**
@@ -120,14 +119,12 @@ export function platformBadge(
     return { icon: <IconClaude />, color: brand ?? SITE_BADGES.claude.color };
   if (hosts.includes('chatgpt.com') || hosts.includes('chat.openai.com'))
     return { icon: <IconChatGPT />, color: brand ?? SITE_BADGES.chatgpt.color };
-  if (hosts.includes('chat.deepseek.com'))
-    return { icon: <IconDeepSeek />, color: brand ?? SITE_BADGES.deepseek.color };
   return null;
 }
 
 /** Strip a redundant "Claude · " / "ChatGPT · " platform prefix (the logo shows it). */
 function displayName(name: string): string {
-  return name.replace(/^(Claude|ChatGPT|Gemini|AI Studio|DeepSeek)\s*[·:|]\s*/i, '');
+  return name.replace(/^(Claude|ChatGPT|Gemini|AI Studio)\s*[·:|]\s*/i, '');
 }
 
 /**

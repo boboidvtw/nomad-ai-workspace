@@ -40,21 +40,11 @@ describe('connection settings helpers', () => {
                     webSearch: false,
                     providerRouting: '',
                 },
-                deepseek: {
-                    provider: 'deepseek',
-                    baseUrl: 'https://api.deepseek.com',
-                    apiKey: '',
-                    model: 'deepseek-v4-pro, deepseek-v4-flash, deepseek-reasoner, deepseek-chat',
-                    selectedModel: '',
-                    thinkingLevel: 'low',
-                    webSearch: false,
-                    providerRouting: '',
-                },
                 openrouter: {
                     provider: 'openrouter',
                     baseUrl: 'https://openrouter.ai/api/v1',
                     apiKey: '',
-                    model: 'openai/gpt-5.6-terra, anthropic/claude-sonnet-5, google/gemini-3.1-pro, deepseek/deepseek-v4-flash',
+                    model: 'openai/gpt-5.6-terra, anthropic/claude-sonnet-5, google/gemini-3.1-pro',
                     selectedModel: '',
                     thinkingLevel: 'low',
                     webSearch: false,
@@ -118,11 +108,18 @@ describe('connection settings helpers', () => {
         expect(payload.openaiWebSearch).toBe(true);
     });
 
+    it('falls back to the default provider when the stored one no longer exists', () => {
+        // DeepSeek API was removed; a stored selection must not leave the user on a dead provider.
+        expect(getConnectionProvider({ geminiProvider: 'deepseek' })).toBe('web');
+        expect(getConnectionProvider({ geminiProvider: 'openrouter' })).toBe('openrouter');
+        expect(getConnectionProvider({ geminiProvider: 'openai' })).toBe('openai');
+    });
+
     it('normalizes provider and selected model fallback values', () => {
         expect(getConnectionProvider({ geminiUseOfficialApi: true })).toBe('official');
         expect(getConnectionProvider({})).toBe('web');
         expect(getSelectedModelForProvider({}, 'openai')).toBe('openai_custom');
-        expect(getSelectedModelForProvider({}, 'deepseek')).toBe('deepseek-v4-pro');
+        expect(getSelectedModelForProvider({}, 'openrouter')).toBe('openai/gpt-5.6-terra');
         expect(getSelectedModelForProvider({}, 'web')).toBe('56fdd199312815e2');
     });
 
@@ -132,7 +129,7 @@ describe('connection settings helpers', () => {
         expect(CONNECTION_STORAGE_KEYS).toContain('geminiWebThinkingLevel');
         expect(CONNECTION_STORAGE_KEYS).toContain('geminiWebTemporaryChat');
         expect(CONNECTION_STORAGE_KEYS).toContain('geminiOpenaiSelectedModel');
-        expect(CONNECTION_STORAGE_KEYS).toContain('geminiDeepseekApiKey');
+        expect(CONNECTION_STORAGE_KEYS).not.toContain('geminiDeepseekApiKey');
         expect(CONNECTION_STORAGE_KEYS).toContain('geminiOpenrouterProviderRouting');
         expect(CONNECTION_STORAGE_KEYS).toContain('geminiDashscopeSelectedModel');
         expect(CONNECTION_STORAGE_KEYS).toContain('geminiAnthropicSelectedModel');
@@ -151,11 +148,11 @@ describe('connection settings helpers', () => {
                 openaiUseResponsesApi: true,
                 openaiWebSearch: true,
                 dedicatedApiProviders: {
-                    deepseek: {
-                        baseUrl: 'https://api.deepseek.com',
-                        apiKey: 'deepseek-key',
-                        model: 'deepseek-v4-pro',
-                        selectedModel: 'deepseek-v4-pro',
+                    openrouter: {
+                        baseUrl: 'https://openrouter.ai/api/v1',
+                        apiKey: 'openrouter-key',
+                        model: 'openai/gpt-5.6-terra',
+                        selectedModel: 'openai/gpt-5.6-terra',
                         thinkingLevel: 'high',
                     },
                 },
@@ -174,9 +171,9 @@ describe('connection settings helpers', () => {
                 geminiOpenaiModel: 'gpt-5',
                 geminiOpenaiUseResponsesApi: true,
                 geminiOpenaiWebSearch: true,
-                geminiDeepseekApiKey: 'deepseek-key',
-                geminiDeepseekSelectedModel: 'deepseek-v4-pro',
-                geminiDeepseekThinkingLevel: 'high',
+                geminiOpenrouterApiKey: 'openrouter-key',
+                geminiOpenrouterSelectedModel: 'openai/gpt-5.6-terra',
+                geminiOpenrouterThinkingLevel: 'high',
                 geminiMcpEnabled: true,
                 geminiMcpTransport: 'streamable-http',
                 geminiMcpServerUrl: '',

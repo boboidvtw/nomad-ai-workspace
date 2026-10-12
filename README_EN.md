@@ -89,7 +89,7 @@ graph TD
 ### 1. 🗂️ Unified Multi-AI Hierarchical Sidebar
 
 - **Native Interface Injection**: Seamlessly embeds into the native sidebars of Gemini, Claude, and ChatGPT.
-- **Brand Color Badges**: Top-level root nodes clearly distinguish each platform (🔵 **Gemini** / 🟠 **Claude** / 🟢 **ChatGPT** / ⚪ **Grok** / 🟣 **DeepSeek**).
+- **Brand Color Badges**: Top-level root nodes clearly distinguish each platform (🔵 **Gemini** / 🟠 **Claude** / 🟢 **ChatGPT** / ⚪ **Grok**).
 - **Multi-Level Nested Folders**: Create nested subfolders, drag-and-drop conversations to reorganize, and assign custom folder accent colors.
 - **Instant Cross-Platform Navigation**: Click a conversation on the active platform for immediate in-page navigation; click a conversation from another platform (marked with an ↗️ icon) to launch it in a new tab.
 
@@ -148,7 +148,6 @@ See [User Guide §7.10](docs/USER_GUIDE_EN.md#710-bots-persistent-identity-canon
 | **Anthropic Claude** | 🟢 Full Support | `claude.ai`                                   |          ✅          |        ✅         |      ✅ `Claude/`       |
 | **OpenAI ChatGPT**   | 🟢 Full Support | `chatgpt.com`, `chat.openai.com`              |          ✅          |        ✅         |      ✅ `ChatGPT/`      |
 | **xAI Grok**         | 🟢 Full Support | `grok.com`, `x.com/i/grok`                    |          ✅          |        ✅         |       ✅ `Grok/`        |
-| **DeepSeek**         |   🔵 Planned    | `chat.deepseek.com`                           |       Planned        |        ✅         |     ✅ `DeepSeek/`      |
 
 ---
 

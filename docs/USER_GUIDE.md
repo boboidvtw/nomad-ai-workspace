@@ -33,7 +33,6 @@ Nomad AI Workspace 會自動注入至您造訪的各大 AI 平台（Google Gemin
   - 🟠 **Anthropic Claude**（暖赤銅）
   - 🟢 **OpenAI ChatGPT**（翡翠綠）
   - ⚪ **xAI Grok**（晴空藍）
-  - 🟣 **DeepSeek**（靛青色）
 
 ### 1.2 資料夾建立與多層巢狀管理
 

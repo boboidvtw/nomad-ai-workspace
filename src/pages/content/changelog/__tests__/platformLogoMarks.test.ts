@@ -26,13 +26,13 @@ describe('platform logo marks', () => {
 
   it('marks every platform named in one sentence', () => {
     const root = body(
-      '<p>:deepseek: DeepSeek blue, :claude: Claude clay, :gemini: Gemini green.</p>',
+      '<p>:chatgpt: ChatGPT teal, :claude: Claude clay, :gemini: Gemini green.</p>',
     );
 
     renderPlatformLogoMarks(root);
 
     expect([...root.querySelectorAll('svg')].map((s) => s.getAttribute('viewBox'))).toEqual([
-      PLATFORM_LOGOS.deepseek.viewBox,
+      PLATFORM_LOGOS.chatgpt.viewBox,
       PLATFORM_LOGOS.claude.viewBox,
       PLATFORM_LOGOS.gemini.viewBox,
     ]);

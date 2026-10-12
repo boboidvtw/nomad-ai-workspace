@@ -96,14 +96,14 @@ describe('MessageBridge model persistence', () => {
             data: {
                 action: 'SAVE_MODEL',
                 payload: {
-                    provider: 'deepseek',
-                    model: 'deepseek-v4-pro',
+                    provider: 'zhipu',
+                    model: 'glm-5.3',
                 },
             },
         });
 
-        expect(state.save).toHaveBeenCalledWith('geminiDeepseekSelectedModel', 'deepseek-v4-pro');
-        expect(state.save).not.toHaveBeenCalledWith('geminiModel', 'deepseek-v4-pro');
+        expect(state.save).toHaveBeenCalledWith('geminiZhipuSelectedModel', 'glm-5.3');
+        expect(state.save).not.toHaveBeenCalledWith('geminiModel', 'glm-5.3');
     });
 
     it('marks full-page chat launches as standalone tabs', () => {

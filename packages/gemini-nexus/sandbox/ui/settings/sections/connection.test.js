@@ -84,11 +84,11 @@ describe('ConnectionSection provider visibility', () => {
     it('loads dedicated provider defaults into the shared dedicated API form', () => {
         const section = Object.create(ConnectionSection.prototype);
         section.dedicatedApiProviders = {
-            deepseek: {
-                provider: 'deepseek',
-                baseUrl: 'https://api.deepseek.com',
-                apiKey: 'deepseek-key',
-                model: 'deepseek-v4-pro',
+            zhipu: {
+                provider: 'zhipu',
+                baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+                apiKey: 'zhipu-key',
+                model: 'glm-5.3',
                 thinkingLevel: 'high',
             },
         };
@@ -112,11 +112,11 @@ describe('ConnectionSection provider visibility', () => {
         section.elements.dedicatedApiThinkingLevel.innerHTML =
             '<option value="low">Low</option><option value="high">High</option>';
 
-        section.updateVisibility('deepseek');
+        section.updateVisibility('zhipu');
 
         expect(section.elements.dedicatedApiFields.hidden).toBe(false);
-        expect(section.elements.dedicatedApiKey.value).toBe('deepseek-key');
-        expect(section.elements.dedicatedApiModel.value).toBe('deepseek-v4-pro');
+        expect(section.elements.dedicatedApiKey.value).toBe('zhipu-key');
+        expect(section.elements.dedicatedApiModel.value).toBe('glm-5.3');
         expect(section.elements.dedicatedApiThinkingLevel.value).toBe('high');
         expect(section.elements.dedicatedApiRefreshModels.hidden).toBe(true);
         expect(section.elements.dedicatedApiWebSearchRow.hidden).toBe(true);

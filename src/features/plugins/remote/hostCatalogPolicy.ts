@@ -121,7 +121,7 @@ export function patternTargetsHost(pattern: string, host: string): boolean {
 /**
  * Background side of the D4 trigger: the request only names a host, so a
  * plugin qualifies when any of its patterns can apply to that host — a
- * path-scoped match such as `https://chat.deepseek.com/chat/*` must count,
+ * path-scoped match such as `https://claude.ai/chat/*` must count,
  * although it would never match the bare `https://host/`.
  */
 export function hasEnabledPluginForHost(

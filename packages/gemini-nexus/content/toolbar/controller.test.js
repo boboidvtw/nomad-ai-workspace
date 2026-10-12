@@ -75,11 +75,11 @@ describe('GeminiToolbarController model persistence', () => {
         window.GeminiNexusWebThinking = globalThis.GeminiNexusWebThinking;
         globalThis.GeminiNexusConfig = {
             DEDICATED_API_PROVIDERS: {
-                deepseek: {
-                    storagePrefix: 'Deepseek',
-                    defaultBaseUrl: 'https://api.deepseek.com',
-                    defaultModels: 'deepseek-v4-pro',
-                    defaultModel: 'deepseek-v4-pro',
+                zhipu: {
+                    storagePrefix: 'Zhipu',
+                    defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+                    defaultModels: 'glm-5.3',
+                    defaultModel: 'glm-5.3',
                 },
             },
         };
@@ -216,24 +216,24 @@ describe('GeminiToolbarController model persistence', () => {
     });
 
     it('saves dedicated provider toolbar model changes in a provider-specific key', () => {
-        ui.getProvider.mockReturnValue('deepseek');
+        ui.getProvider.mockReturnValue('zhipu');
         const controller = new window.GeminiToolbarController();
 
-        controller.handleModelChange('deepseek-v4-pro');
+        controller.handleModelChange('glm-5.3');
 
         expect(chrome.storage.local.set).toHaveBeenCalledWith({
-            geminiDeepseekSelectedModel: 'deepseek-v4-pro',
+            geminiZhipuSelectedModel: 'glm-5.3',
         });
         expect(chrome.storage.local.set).not.toHaveBeenCalledWith({
-            geminiToolbarModel: 'deepseek-v4-pro',
+            geminiToolbarModel: 'glm-5.3',
         });
     });
 
     it('restores dedicated provider model options from dedicated storage', async () => {
         chrome.storage.local.get.mockResolvedValueOnce({
-            geminiToolbarProvider: 'deepseek',
-            geminiDeepseekModel: 'deepseek-v4-pro, deepseek-chat',
-            geminiDeepseekSelectedModel: 'deepseek-chat',
+            geminiToolbarProvider: 'zhipu',
+            geminiZhipuModel: 'glm-5.3, glm-5.2',
+            geminiZhipuSelectedModel: 'glm-5.2',
         });
 
         new window.GeminiToolbarController();
@@ -241,15 +241,15 @@ describe('GeminiToolbarController model persistence', () => {
 
         expect(ui.updateModelList).toHaveBeenCalledWith(
             expect.objectContaining({
-                provider: 'deepseek',
+                provider: 'zhipu',
                 dedicatedApiProviders: expect.objectContaining({
-                    deepseek: expect.objectContaining({
-                        model: 'deepseek-v4-pro, deepseek-chat',
-                        selectedModel: 'deepseek-chat',
+                    zhipu: expect.objectContaining({
+                        model: 'glm-5.3, glm-5.2',
+                        selectedModel: 'glm-5.2',
                     }),
                 }),
             }),
-            'deepseek-chat'
+            'glm-5.2'
         );
     });
 

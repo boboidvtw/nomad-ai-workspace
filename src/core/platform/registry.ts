@@ -64,19 +64,6 @@ export const SUPPORTED_PLATFORMS: Record<PlatformId, AIPlatformConfig> = {
     homeUrl: 'https://grok.com/',
     description: 'xAI Grok standalone and X web platform',
   },
-  deepseek: {
-    id: 'deepseek',
-    name: 'DeepSeek',
-    shortName: 'DeepSeek',
-    brandColor: '#4D6BFE',
-    badgeBg: 'bg-indigo-500/15',
-    badgeText: 'text-indigo-400',
-    domains: ['chat.deepseek.com'],
-    driveFolder: 'DeepSeek',
-    status: 'planned',
-    homeUrl: 'https://chat.deepseek.com/',
-    description: 'DeepSeek chat reasoning and code assistant',
-  },
 };
 
 /**
