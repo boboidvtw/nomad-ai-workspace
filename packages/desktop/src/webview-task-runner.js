@@ -26,7 +26,9 @@ const DEFAULT_MAX_BLOCKED_MS = 15 * 60 * 1000;
  * @typedef {Object} WebviewTaskRunnerDeps
  * @property {(platform: string, text: string) => Promise<Record<string, any>>} inject
  *   Same shape as main.js dispatchPromptToTargets: `{ [platform]: { ok, error? } }`.
- * @property {(platform: string) => Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>} awaitSettled
+ * @property {(platform: string, options: { previousText: string }) => Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>} awaitSettled
+ *   `previousText` is the reply read before the send; the wait must not return it as the answer.
+ * @property {(platform: string) => Promise<string>} [readReply] - the latest reply on the page
  * @property {import('@nomad/core').BotRoster} [roster]
  * @property {(platform: string, url: string | null) => Promise<{ ok: boolean, error?: string }>} [openChat]
  *   Loads `url`, or a new conversation when null, and resolves once the page is ready.
@@ -76,13 +78,14 @@ function createWebviewTaskRunner(deps) {
    * Waits for the reply. A blocked page (usage limit, signed out) does not fail the run:
    * the user is told once and the wait continues until the page recovers or the budget ends.
    * @param {string} platform
+   * @param {string} previousText
    * @param {WaitHooks} hooks
    */
-  async function waitForReply(platform, hooks) {
+  async function waitForReply(platform, previousText, hooks) {
     /** @type {number | null} */
     let blockedSince = null;
     for (;;) {
-      const reply = await deps.awaitSettled(platform);
+      const reply = await deps.awaitSettled(platform, { previousText });
       if (!reply.blocked && blockedSince !== null) {
         blockedSince = null;
         hooks.onUnblocked?.();
@@ -114,6 +117,7 @@ function createWebviewTaskRunner(deps) {
    * @param {WaitHooks} [hooks]
    */
   async function injectAndWait(platform, prompt, hooks = {}) {
+    const previousText = deps.readReply ? await deps.readReply(platform) : '';
     let injected;
     try {
       injected = await deps.inject(platform, prompt);
@@ -131,7 +135,7 @@ function createWebviewTaskRunner(deps) {
       );
     }
 
-    return waitForReply(platform, {
+    return waitForReply(platform, previousText, {
       onBlocked: (reason) => {
         deps.notify?.({ botId: null, botName: null, platform, reason });
       },

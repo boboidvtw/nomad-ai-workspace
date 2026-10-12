@@ -268,7 +268,8 @@ class MultiAiOrchestrator {
           inputSnippet: currentInput.slice(0, 60),
         });
 
-        // 1. Inject prompt to current speaker
+        // 1. Inject prompt to current speaker, remembering the reply already on the page
+        const previousText = await this.readReply(speaker);
         try {
           await this.injectPrompt(speaker, currentInput);
         } catch (err) {
@@ -281,7 +282,7 @@ class MultiAiOrchestrator {
 
         // 2. Wait for speaker response to generate and settle
         this.emitStep('waiting-response', { speaker });
-        const responseText = await this.waitForSettledResponse(speaker);
+        const responseText = await this.waitForSettledResponse(speaker, { previousText });
 
         if (this.isAborted) break;
 
@@ -335,18 +336,29 @@ class MultiAiOrchestrator {
   }
 
   /**
+   * The latest reply on the platform's page, or '' when it cannot be read. Taken before a send
+   * so the wait that follows can tell the new reply from the one already there.
    * @param {string} platform
-   * @param {number} [maxWaitMs]
-   * @param {number} [pollIntervalMs]
+   * @returns {Promise<string>}
    */
-  async waitForSettledResponse(
-    platform,
-    maxWaitMs = this.maxWaitMs,
-    pollIntervalMs = this.pollIntervalMs,
-  ) {
+  async readReply(platform) {
+    try {
+      const res = await this.extractResponse(platform);
+      return (res?.text || '').trim();
+    } catch {
+      return '';
+    }
+  }
+
+  /**
+   * @param {string} platform
+   * @param {{ previousText?: string, maxWaitMs?: number, pollIntervalMs?: number }} [options]
+   */
+  async waitForSettledResponse(platform, options = {}) {
     const { text } = await this.pollUntilSettled(platform, {
-      maxWaitMs,
-      pollIntervalMs,
+      maxWaitMs: options.maxWaitMs ?? this.maxWaitMs,
+      pollIntervalMs: options.pollIntervalMs ?? this.pollIntervalMs,
+      previousText: options.previousText || '',
       honorRelayControls: true,
     });
     return text || `[${platform} 回應擷取超時或已結束]`;
@@ -357,23 +369,28 @@ class MultiAiOrchestrator {
    * Unlike waitForSettledResponse it reports a timeout instead of placeholder text,
    * and ignores relay pause/stop state.
    * @param {string} platform
-   * @param {{ maxWaitMs?: number, pollIntervalMs?: number }} [options]
+   * @param {{ maxWaitMs?: number, pollIntervalMs?: number, previousText?: string }} [options]
+   *   previousText: the reply read before the send (see readReply); it is not taken as the answer.
    * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>}
    */
   awaitSettled(platform, options = {}) {
     return this.pollUntilSettled(platform, {
       maxWaitMs: options.maxWaitMs ?? this.maxWaitMs,
       pollIntervalMs: options.pollIntervalMs ?? this.pollIntervalMs,
+      previousText: options.previousText || '',
       honorRelayControls: false,
     });
   }
 
   /**
    * @param {string} platform
-   * @param {{ maxWaitMs: number, pollIntervalMs: number, honorRelayControls: boolean }} options
+   * @param {{ maxWaitMs: number, pollIntervalMs: number, previousText?: string, honorRelayControls: boolean }} options
    * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>}
    */
-  async pollUntilSettled(platform, { maxWaitMs, pollIntervalMs, honorRelayControls }) {
+  async pollUntilSettled(
+    platform,
+    { maxWaitMs, pollIntervalMs, previousText = '', honorRelayControls },
+  ) {
     const checkBlocked = honorRelayControls ? null : this.checkBlocked;
     const isAborted = () => honorRelayControls && this.isAborted;
     const isPaused = () => honorRelayControls && this.isPaused;
@@ -383,6 +400,9 @@ class MultiAiOrchestrator {
     let streamingStableCount = 0;
     let baselineText = '';
     let pollCount = 0;
+    // Until the page shows activity (streaming, or text other than the pre-send reply), what
+    // it holds is the old reply: a send that never happened must not hand that back as new.
+    let sawNewReply = !previousText;
 
     if (this.initialWaitMs > 0) {
       await this.sleep(this.initialWaitMs);
@@ -408,8 +428,12 @@ class MultiAiOrchestrator {
         }
 
         const isStreaming = statusRes?.isStreaming ?? false;
-        const text = (responseRes?.text || '').trim();
+        const pageText = (responseRes?.text || '').trim();
         pollCount++;
+        if (!sawNewReply && (isStreaming || pageText !== previousText)) {
+          sawNewReply = true;
+        }
+        const text = sawNewReply ? pageText : '';
 
         // Monotonic text accumulation: never overwrite with shorter/empty text
         if (text && text.length > baselineText.length) {

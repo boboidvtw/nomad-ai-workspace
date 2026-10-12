@@ -271,3 +271,30 @@ test('M3: a bot that stays blocked past the budget fails and stays blocked', asy
   assert.match(res.message, /Signed out/);
   assert.strictEqual(h.roster.getAgent('agent-claude').data.state, 'blocked');
 });
+
+test('reads the reply on the page before the send and hands it to the wait', async () => {
+  /** @type {string[]} */
+  const order = [];
+  /** @type {any[]} */
+  const waits = [];
+  const runner = createWebviewTaskRunner({
+    readReply: async () => {
+      order.push('read');
+      return 'last answer';
+    },
+    inject: async (platform) => {
+      order.push('inject');
+      return { [platform]: { ok: true } };
+    },
+    awaitSettled: async (_platform, options) => {
+      waits.push(options);
+      return { settled: true, text: 'new answer' };
+    },
+  });
+
+  const res = await runner.run('claude', 'hi');
+
+  assert.strictEqual(res.data.text, 'new answer');
+  assert.deepStrictEqual(order, ['read', 'inject']);
+  assert.deepStrictEqual(waits, [{ previousText: 'last answer' }]);
+});

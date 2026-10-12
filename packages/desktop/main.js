@@ -269,6 +269,10 @@ async function createMainWindow() {
       webPreferences: {
         session: session.defaultSession,
         contextIsolation: true,
+        // Bots and relays drive platforms whose pane is hidden. Throttled, a hidden page's
+        // timers drop to about one wake-up a minute, so an injector waiting to confirm a send
+        // (and the page's own send handling) would stall for minutes.
+        backgroundThrottling: false,
       },
     });
 
@@ -403,6 +407,8 @@ async function createMainWindow() {
   studioBots = createStudioBots({
     enabled: store.get('bots')?.enabled !== false,
     inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
+    readReply: (platform) =>
+      orchestrator ? orchestrator.readReply(platform) : Promise.resolve(''),
     awaitSettled: (platform, options) =>
       orchestrator
         ? orchestrator.awaitSettled(platform, options)

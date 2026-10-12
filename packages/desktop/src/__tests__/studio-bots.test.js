@@ -114,3 +114,25 @@ test('bots.enabled = false falls back to plain webview runs with no routing or p
   assert.strictEqual(bridge.botServices.router, null);
   assert.ok(!fs.existsSync(rosterPath), 'nothing persisted');
 });
+
+test('passes the pre-send reply through to awaitSettled', async () => {
+  /** @type {any[]} */
+  const waits = [];
+  const bots = createStudioBots({
+    enabled: false,
+    inject: async (platform) => ({ [platform]: { ok: true } }),
+    readReply: async () => 'old reply',
+    awaitSettled: async (_platform, options) => {
+      waits.push(options);
+      return { settled: true, text: 'fresh reply' };
+    },
+    openChat: async () => ({ ok: true }),
+    currentUrl: async () => null,
+    notify: () => {},
+  });
+
+  const res = await bots.runWebviewTask('claude', 'hi');
+
+  assert.strictEqual(res.data.text, 'fresh reply');
+  assert.deepStrictEqual(waits, [{ maxWaitMs: 180000, previousText: 'old reply' }]);
+});
