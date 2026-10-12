@@ -112,7 +112,7 @@ graph TD
 ### 1. 🗂️ 多 AI 官方側邊欄階層樹狀清單 (Hierarchical Multi-AI Sidebar)
 
 - **統一視覺檢視**：直接注入 Gemini、Claude 等各大 AI 頁面原生側邊欄。
-- **官方色彩徽章**：頂層依平台劃分根節點（🔵 **Gemini** / 🟠 **Claude** / 🟢 **ChatGPT** / ⚪ **Grok** / 🟣 **DeepSeek**）。
+- **官方色彩徽章**：頂層依平台劃分根節點（🔵 **Gemini** / 🟠 **Claude** / 🟢 **ChatGPT** / ⚪ **Grok**）。
 - **多層巢狀分類**：支援建立多層子資料夾、拖曳重組、自訂資料夾代表色。
 - **跨平台一鍵跳轉**：點選當前平台對話即時無刷新導航；點選其他平台對話（項目附帶 ↗️ 圖示）自動開啟新分頁秒級直達。
 
@@ -171,7 +171,6 @@ graph TD
 | **Anthropic Claude**  |  🟢 深度支援   | `claude.ai`                                   |       ✅       |     ✅     |   ✅ `Claude/`   |
 | **OpenAI ChatGPT**    |  🟢 深度支援   | `chatgpt.com`, `chat.openai.com`              |       ✅       |     ✅     |  ✅ `ChatGPT/`   |
 | **xAI Grok**          |  🟢 深度支援   | `grok.com`, `x.com/i/grok`                    |       ✅       |     ✅     |    ✅ `Grok/`    |
-| **DeepSeek**          |  🟢 深度支援   | `chat.deepseek.com`                           | ✅ Hexa 6 分割 |     ✅     |  ✅ `DeepSeek/`  |
 | **Perplexity**        |  🟢 深度支援   | `perplexity.ai`                               | ✅ Hexa 6 分割 |     ✅     | ✅ `Perplexity/` |
 | **Microsoft Copilot** | 🟡 Studio 分頁 | `m365.cloud.microsoft`                        | ✅ Hexa 6 分割 |     —      |        —         |
 

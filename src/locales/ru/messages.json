@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Удобное рабочее пространство для Gemini™, Claude™, ChatGPT™ и DeepSeek™: промпты, чтение, организация, экспорт и многое другое.",
+    "message": "Удобное рабочее пространство для Gemini™, Claude™ и ChatGPT™: промпты, чтение, организация, экспорт и многое другое.",
     "description": "Extension description"
   },
   "timelineStyle": {
@@ -3103,7 +3103,7 @@
     "description": "Welcome page: primary button"
   },
   "welcomeOtherSites": {
-    "message": "Claude, ChatGPT и DeepSeek включаются во всплывающем окне Nomad.",
+    "message": "Claude и ChatGPT включаются во всплывающем окне Nomad.",
     "description": "Welcome page: note under the supported-sites list"
   },
   "welcomeStepDone": {

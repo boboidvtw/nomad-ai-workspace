@@ -84,7 +84,6 @@ describe('PromptManagerSettingsCard', () => {
     expect(quick.map((item) => item.title)).toEqual([
       'ChatGPT',
       'Claude',
-      'DeepSeek',
       'Qwen',
       'Kimi',
       'NotebookLM',

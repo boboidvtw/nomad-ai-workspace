@@ -43,9 +43,9 @@ afterEach(() => {
 describe('plugin:new scaffold', () => {
   it('creates a manifest that validates once its CSS file is inlined', async () => {
     const catalogDir = makeCatalogCopy();
-    const result = scaffoldPlugin({ catalogDir, site: 'deepseek', segment: 'reading-guide' });
+    const result = scaffoldPlugin({ catalogDir, site: 'claude', segment: 'reading-guide' });
 
-    expect(result.id).toBe('voyager.deepseek-reading-guide');
+    expect(result.id).toBe('voyager.claude-reading-guide');
     expect(readdirSync(result.pluginDir).sort()).toEqual(['README.md', 'plugin.json', 'style.css']);
 
     const raw = readManifest(result.pluginDir);
@@ -58,25 +58,25 @@ describe('plugin:new scaffold', () => {
 
   it('copies the site matches, names the site class and pins the current engine', () => {
     const catalogDir = makeCatalogCopy();
-    const result = scaffoldPlugin({ catalogDir, site: 'deepseek', segment: 'reading-guide' });
+    const result = scaffoldPlugin({ catalogDir, site: 'claude', segment: 'reading-guide' });
 
     const manifest = readManifest(result.pluginDir);
     const site = JSON.parse(
-      readFileSync(join(catalogDir, 'sites', 'deepseek', 'site.json'), 'utf8'),
+      readFileSync(join(catalogDir, 'sites', 'claude', 'site.json'), 'utf8'),
     ) as { matches: readonly string[] };
 
     expect(manifest.matches).toEqual(site.matches);
     expect(manifest.engine).toBe(`>=${PLUGIN_ENGINE_VERSION}`);
     expect(manifest.tier).toBe('declarative');
-    expect(JSON.stringify(manifest.contributes)).toContain('gv-plugin-deepseek-reading-guide');
+    expect(JSON.stringify(manifest.contributes)).toContain('gv-plugin-claude-reading-guide');
     expect(readFileSync(join(result.pluginDir, 'style.css'), 'utf8')).toContain(
-      '.gv-plugin-deepseek-reading-guide',
+      '.gv-plugin-claude-reading-guide',
     );
   });
 
   it('writes an i18n entry for every non-English locale', () => {
     const catalogDir = makeCatalogCopy();
-    const result = scaffoldPlugin({ catalogDir, site: 'deepseek', segment: 'reading-guide' });
+    const result = scaffoldPlugin({ catalogDir, site: 'claude', segment: 'reading-guide' });
 
     const manifest = readManifest(result.pluginDir);
     const i18n = manifest.i18n as Record<string, { name: string; description: string }>;
@@ -92,10 +92,10 @@ describe('plugin:new scaffold', () => {
     const before = readFileSync(join(catalogDir, 'marketplace.json'), 'utf8');
     const beforeNames = marketplaceNames(catalogDir);
 
-    const result = scaffoldPlugin({ catalogDir, site: 'deepseek', segment: 'reading-guide' });
+    const result = scaffoldPlugin({ catalogDir, site: 'claude', segment: 'reading-guide' });
 
     expect(result.marketplaceUpdated).toBe(true);
-    expect(marketplaceNames(catalogDir)).toEqual([...beforeNames, 'deepseek-reading-guide']);
+    expect(marketplaceNames(catalogDir)).toEqual([...beforeNames, 'claude-reading-guide']);
 
     const after = readFileSync(join(catalogDir, 'marketplace.json'), 'utf8');
     expect(after.endsWith('\n')).toBe(true);
@@ -104,14 +104,14 @@ describe('plugin:new scaffold', () => {
       .split('\n')
       .filter((line) => !before.split('\n').includes(line))
       .join('\n');
-    expect(added).toContain('"name": "deepseek-reading-guide"');
-    expect(added).toContain('"source": "sites/deepseek/plugins/reading-guide/plugin.json"');
+    expect(added).toContain('"name": "claude-reading-guide"');
+    expect(added).toContain('"source": "sites/claude/plugins/reading-guide/plugin.json"');
     expect(added).not.toContain('"owner"');
   });
 
   it('writes the README with the plugin:check command for the new directory', () => {
     const catalogDir = makeCatalogCopy();
-    const result = scaffoldPlugin({ catalogDir, site: 'deepseek', segment: 'reading-guide' });
+    const result = scaffoldPlugin({ catalogDir, site: 'claude', segment: 'reading-guide' });
 
     const readme = readFileSync(join(result.pluginDir, 'README.md'), 'utf8');
     // The command names the directory that was actually written, so a
@@ -119,7 +119,7 @@ describe('plugin:new scaffold', () => {
     expect(readme).toContain(
       `npm run plugin:check ${relative(process.cwd(), result.pluginDir).split(sep).join('/')}`,
     );
-    expect(readme).toContain('sites/deepseek/plugins/reading-guide');
+    expect(readme).toContain('sites/claude/plugins/reading-guide');
     expect(readme).toContain('Light theme');
     expect(readme).toContain('Dark theme');
     expect(readme).toContain('Target match count');
@@ -127,13 +127,13 @@ describe('plugin:new scaffold', () => {
 
   it('refuses to overwrite an existing plugin directory', () => {
     const catalogDir = makeCatalogCopy();
-    const pluginDir = join(catalogDir, 'sites', 'deepseek', 'plugins', 'reading-width');
+    const pluginDir = join(catalogDir, 'sites', 'claude', 'plugins', 'reading-width');
     const existing = readFileSync(join(pluginDir, 'plugin.json'), 'utf8');
     const before = readFileSync(join(catalogDir, 'marketplace.json'), 'utf8');
 
-    expect(() =>
-      scaffoldPlugin({ catalogDir, site: 'deepseek', segment: 'reading-width' }),
-    ).toThrow(/already exists/);
+    expect(() => scaffoldPlugin({ catalogDir, site: 'claude', segment: 'reading-width' })).toThrow(
+      /already exists/,
+    );
     expect(readFileSync(join(pluginDir, 'plugin.json'), 'utf8')).toBe(existing);
     expect(readFileSync(join(catalogDir, 'marketplace.json'), 'utf8')).toBe(before);
   });
@@ -141,14 +141,14 @@ describe('plugin:new scaffold', () => {
   it('rejects an unknown site and lists the ones that exist', () => {
     const catalogDir = makeCatalogCopy();
     expect(() => scaffoldPlugin({ catalogDir, site: 'gemini', segment: 'reading-guide' })).toThrow(
-      /Unknown site "gemini".*chatgpt, claude, deepseek/s,
+      /Unknown site "gemini".*chatgpt, claude/s,
     );
   });
 
   it('rejects an id segment that is not kebab-case', () => {
     const catalogDir = makeCatalogCopy();
     for (const segment of ['ReadingGuide', 'reading_guide', 'reading--guide', '-guide', '']) {
-      expect(() => scaffoldPlugin({ catalogDir, site: 'deepseek', segment })).toThrow(/kebab-case/);
+      expect(() => scaffoldPlugin({ catalogDir, site: 'claude', segment })).toThrow(/kebab-case/);
     }
   });
 
@@ -158,7 +158,7 @@ describe('plugin:new scaffold', () => {
 
     const result = scaffoldPlugin({
       catalogDir,
-      site: 'deepseek',
+      site: 'claude',
       segment: 'reading-guide',
       dryRun: true,
     });
@@ -172,9 +172,9 @@ describe('plugin:new scaffold', () => {
 
 describe('plugin:new arguments', () => {
   it('reads the segment, the site and the dry-run flag', () => {
-    expect(parseArgs(['demo', '--site', 'deepseek', '--dry-run'], '/catalog')).toEqual({
+    expect(parseArgs(['demo', '--site', 'claude', '--dry-run'], '/catalog')).toEqual({
       segment: 'demo',
-      site: 'deepseek',
+      site: 'claude',
       catalogDir: '/catalog',
       dryRun: true,
     });
@@ -182,7 +182,7 @@ describe('plugin:new arguments', () => {
   });
 
   it('requires both the segment and the site', () => {
-    expect(() => parseArgs(['--site', 'deepseek'], '/catalog')).toThrow(/Missing <id-segment>/);
+    expect(() => parseArgs(['--site', 'claude'], '/catalog')).toThrow(/Missing <id-segment>/);
     expect(() => parseArgs(['demo'], '/catalog')).toThrow(/Missing --site/);
     expect(() => parseArgs(['demo', 'extra', '--site', 'x'], '/catalog')).toThrow(/Unexpected/);
     expect(() => parseArgs(['demo', '--site', 'x', '--nope'], '/catalog')).toThrow(/Unknown/);

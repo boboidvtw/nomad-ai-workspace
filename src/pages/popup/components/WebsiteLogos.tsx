@@ -21,7 +21,6 @@ function logo(id: PlatformLogoId): () => React.JSX.Element {
 
 export const IconChatGPT = logo('chatgpt');
 export const IconClaude = logo('claude');
-export const IconDeepSeek = logo('deepseek');
 export const IconQwen = logo('qwen');
 export const IconKimi = logo('kimi');
 export const IconAIStudio = logo('aistudio');

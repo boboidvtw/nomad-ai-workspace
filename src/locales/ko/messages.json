@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Gemini™, Claude™, ChatGPT™, DeepSeek™을 위한 더 나은 작업 공간 — 프롬프트, 읽기 도구, 정리, 내보내기 등을 제공합니다.",
+    "message": "Gemini™, Claude™, ChatGPT™를 위한 더 나은 작업 공간 — 프롬프트, 읽기 도구, 정리, 내보내기 등을 제공합니다.",
     "description": "Extension description"
   },
   "timelineStyle": {
@@ -3103,7 +3103,7 @@
     "description": "Welcome page: primary button"
   },
   "welcomeOtherSites": {
-    "message": "Claude, ChatGPT, DeepSeek는 Nomad 팝업에서 켭니다.",
+    "message": "Claude, ChatGPT는 Nomad 팝업에서 켭니다.",
     "description": "Welcome page: note under the supported-sites list"
   },
   "welcomeStepDone": {

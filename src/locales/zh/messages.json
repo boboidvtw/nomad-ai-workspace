@@ -3103,7 +3103,7 @@
     "description": "Welcome page: primary button"
   },
   "welcomeOtherSites": {
-    "message": "Claude、ChatGPT 和 DeepSeek 在 Nomad 弹窗里开启。",
+    "message": "Claude 和 ChatGPT 在 Nomad 弹窗里开启。",
     "description": "Welcome page: note under the supported-sites list"
   },
   "welcomeStepDone": {

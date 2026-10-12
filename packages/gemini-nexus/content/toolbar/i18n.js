@@ -139,7 +139,6 @@
             providerOfficialShort: isZh ? 'API' : 'API',
             providerOpenAIShort: isZh ? 'OpenAI' : 'OpenAI',
             providerOpenAIOfficialShort: isZh ? 'OpenAI 官方' : 'OpenAI API',
-            providerDeepSeekShort: 'DeepSeek',
             providerOpenRouterShort: 'OpenRouter',
             providerDashScopeShort: isZh ? '通义' : 'DashScope',
             providerAnthropicShort: 'Anthropic',

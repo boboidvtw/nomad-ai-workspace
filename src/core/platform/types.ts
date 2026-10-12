@@ -3,7 +3,7 @@
  * Defines the pluggable registry for supported AI platforms.
  */
 
-export type PlatformId = 'gemini' | 'claude' | 'chatgpt' | 'grok' | 'deepseek';
+export type PlatformId = 'gemini' | 'claude' | 'chatgpt' | 'grok';
 
 export type PlatformStatus = 'active' | 'ready' | 'planned';
 

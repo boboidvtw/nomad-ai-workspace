@@ -9,7 +9,7 @@ import type { PluginStatus } from '@/features/plugins/runtime/pluginStatus';
 import type { PluginManifest } from '@/features/plugins/types';
 
 import { PluginManager, type PluginManagerProps, platformBadge } from '../PluginManager';
-import { IconDeepSeek } from '../WebsiteLogos';
+import { IconClaude } from '../WebsiteLogos';
 
 // The slider-debounce behaviour under test lives in PluginManager; the storage
 // layer is mocked so we can assert exactly how often (and with what value) the
@@ -513,45 +513,36 @@ describe('platformBadge', () => {
     expect(platformBadge(formulaCopy, 'claude')?.color).toBe('#d97757');
   });
 
-  it('uses the bundled DeepSeek icon and accent for the active platform', () => {
-    const plugin = {
-      ...formulaCopy,
-      matches: [...formulaCopy.matches, 'https://chat.deepseek.com/*'],
-    };
-    const badge = platformBadge(plugin, 'deepseek');
-    expect(badge?.color).toBe('#4d6bfe');
-    expect(React.isValidElement(badge?.icon) && badge.icon.type).toBe(IconDeepSeek);
+  it('uses the bundled Claude icon and accent for the active platform', () => {
+    const badge = platformBadge(formulaCopy, 'claude');
+    expect(badge?.color).toBe('#d97757');
+    expect(React.isValidElement(badge?.icon) && badge.icon.type).toBe(IconClaude);
   });
 
-  it('does not use the active DeepSeek badge for a plugin that excludes DeepSeek', () => {
+  it('does not use the active Claude badge for a plugin that excludes Claude', () => {
     const badge = platformBadge(
-      { ...formulaCopy, matches: ['https://claude.ai/*'] },
-      'deepseek',
-      'https://chat.deepseek.com/a/chat/s/current',
+      { ...formulaCopy, matches: ['https://chatgpt.com/*'] },
+      'claude',
+      'https://claude.ai/chat/current',
     );
     expect(badge).toBeNull();
   });
 
-  it('recognizes a DeepSeek-only plugin before a site adapter is available', () => {
-    const badge = platformBadge({ ...formulaCopy, matches: ['https://chat.deepseek.com/*'] });
-    expect(badge?.color).toBe('#4d6bfe');
-    expect(React.isValidElement(badge?.icon) && badge.icon.type).toBe(IconDeepSeek);
+  it('recognizes a Claude-only plugin before a site adapter is available', () => {
+    const badge = platformBadge({ ...formulaCopy, matches: ['https://claude.ai/*'] });
+    expect(badge?.color).toBe('#d97757');
+    expect(React.isValidElement(badge?.icon) && badge.icon.type).toBe(IconClaude);
   });
 
-  it('preserves a DeepSeek plugin custom accent', () => {
+  it('preserves a single-site plugin custom accent', () => {
     const plugin = {
       ...formulaCopy,
-      matches: ['https://chat.deepseek.com/*'],
+      matches: ['https://claude.ai/*'],
       theme: { brand: '#123456' },
     };
     expect(platformBadge(plugin)?.color).toBe('#123456');
-    expect(platformBadge(plugin, 'deepseek')?.color).toBe('#123456');
+    expect(platformBadge(plugin, 'claude')?.color).toBe('#123456');
   });
-
-  it.each(['https://chat.deepseek.com.example.org/*', 'https://example.org/chat.deepseek.com/*'])(
-    'does not mislabel unrelated matches %s as DeepSeek',
-    (pattern) => expect(platformBadge({ ...formulaCopy, matches: [pattern] })).toBeNull(),
-  );
 
   it('prefers the plugin-declared theme.brand over the site default', () => {
     // Existing platforms retain their own fallback colour.
@@ -566,6 +557,8 @@ describe('platformBadge', () => {
     'https://chat.openai.com.example.org/*',
     'https://api.openai.com/*',
     'https://example.org/claude.ai/*',
+    // DeepSeek was removed: its plugins no longer get a platform badge.
+    'https://chat.deepseek.com/*',
   ])('does not infer an official chat platform from %s', (pattern) => {
     expect(platformBadge({ ...formulaCopy, matches: [pattern] })).toBeNull();
   });
@@ -575,8 +568,8 @@ describe('platformBadge', () => {
     ['https://chatgpt.com/*', '#0ea5e9'],
     ['https://chat.openai.com/*', '#0ea5e9'],
     ['*://chatgpt.com/*', '#0ea5e9'],
-    ['http://chat.deepseek.com/*', '#4d6bfe'],
-    ['*://chat.deepseek.com/*', '#4d6bfe'],
+    ['http://claude.ai/*', '#d97757'],
+    ['*://claude.ai/*', '#d97757'],
   ])('recognizes the exact chat host in %s', (pattern, color) => {
     expect(platformBadge({ ...formulaCopy, matches: [pattern] })?.color).toBe(color);
   });
@@ -588,16 +581,16 @@ describe('platformBadge', () => {
 });
 
 describe('PluginManager platform name display', () => {
-  it('removes the DeepSeek prefix when the platform badge is shown', async () => {
+  it('removes the platform prefix when the platform badge is shown', async () => {
     const plugin: PluginManifest = {
       ...widthPlugin,
-      name: 'DeepSeek · Comfortable Reading Width',
-      matches: ['https://chat.deepseek.com/*'],
+      name: 'Claude · Comfortable Reading Width',
+      matches: ['https://claude.ai/*'],
     };
     await render(plugin);
     const header = container.querySelector<HTMLButtonElement>('button[aria-expanded]');
     expect(header?.textContent).toContain('Comfortable Reading Width');
-    expect(header?.textContent).not.toContain('DeepSeek ·');
+    expect(header?.textContent).not.toContain('Claude ·');
   });
 });
 
