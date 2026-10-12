@@ -164,13 +164,14 @@ function updateViewBounds() {
 
   for (const [key, item] of Object.entries(views)) {
     const b = boundsMap[key];
-    if (b && b.visible) {
-      ensurePlatformLoaded(key);
-      item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
-      item.view.setVisible(true);
-    } else {
+    if (!b) {
       item.view.setVisible(false);
+      continue;
     }
+    if (b.visible) ensurePlatformLoaded(key);
+    // Hidden views are sized too, so a page a bot drives in the background still lays out.
+    item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
+    item.view.setVisible(b.visible);
   }
 }
 
