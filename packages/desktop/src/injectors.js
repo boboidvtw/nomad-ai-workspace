@@ -51,7 +51,9 @@ function formatPromptWithAttachments(text, attachments = []) {
  */
 
 /**
- * Source of `sendAndConfirm(input, findSend, label, fallback?)`, spliced into injector scripts.
+ * Source of `sendAndConfirm(input, findSend, label, fallback?)` and `findButton(input, selectors)`,
+ * spliced into injector scripts. findButton looks in the input's own form before the page and
+ * skips the Voyager extension's controls (`gv-*`), whose save button is also type=submit.
  * It clicks the send button (or presses Enter) and resolves ok only once the page shows the
  * prompt left: the input box emptied or a stop button appeared. A click a page swallows (the
  * Gemini guide did that) must fail here, or the caller reads the previous reply as this one.
@@ -67,6 +69,26 @@ const SEND_CONFIRM_SOURCE = `
         }
       };
       const isEnabled = (btn) => Boolean(btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true');
+      // The extension also tags <body> (gv-claude-page), so only elements below it count.
+      const isExtensionControl = (el) => {
+        for (; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+          if ([...el.classList].some((c) => c.startsWith('gv-'))) return true;
+        }
+        return false;
+      };
+      const findButton = (input, selectors) => {
+        const scopes = [input.closest('form'), document].filter(Boolean);
+        for (const scope of scopes) {
+          for (const sel of selectors) {
+            let found = [];
+            try { found = scope.querySelectorAll(sel); } catch (e) { continue; }
+            for (const b of found) {
+              if (!isExtensionControl(b) && isEnabled(b)) return b;
+            }
+          }
+        }
+        return null;
+      };
       const clickLikeUser = (btn) => {
         btn.focus();
         btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
@@ -120,11 +142,13 @@ const RAW_PLATFORM_INJECTORS = {
       }
       input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
 ${SEND_CONFIRM_SOURCE}
-      const findSend = () => document.querySelector('button[aria-label*="Send"]') ||
-                             document.querySelector('button[aria-label*="傳送"]') ||
-                             document.querySelector('button[aria-label*="發送"]') ||
-                             document.querySelector('button[aria-label*="发送"]') ||
-                             document.querySelector('button:has(svg.lucide-arrow-up)');
+      const findSend = () => findButton(input, [
+        'button[aria-label*="Send"]',
+        'button[aria-label*="傳送"]',
+        'button[aria-label*="發送"]',
+        'button[aria-label*="发送"]',
+        'button:has(svg.lucide-arrow-up)',
+      ]);
       return sendAndConfirm(input, findSend, 'Claude');
     } catch(err) {
       return { ok: false, error: err.message };
@@ -160,10 +184,12 @@ ${SEND_CONFIRM_SOURCE}
       input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
       
 ${SEND_CONFIRM_SOURCE}
-      const findSend = () => document.querySelector('button[data-testid="send-button"]') ||
-                             document.querySelector('button[aria-label*="傳送"]') ||
-                             document.querySelector('button[aria-label*="发送"]') ||
-                             document.querySelector('button[aria-label*="Send"]');
+      const findSend = () => findButton(input, [
+        'button[data-testid="send-button"]',
+        'button[aria-label*="傳送"]',
+        'button[aria-label*="发送"]',
+        'button[aria-label*="Send"]',
+      ]);
       return sendAndConfirm(input, findSend, 'ChatGPT');
     } catch(err) {
       return { ok: false, error: err.message };
@@ -378,6 +404,7 @@ ${SEND_CONFIRM_SOURCE}
       // 3. Submit with the first enabled send button, else submit the form, then confirm.
 ${SEND_CONFIRM_SOURCE}
       const btnSelectors = [
+        'button[aria-label="提交"]',
         'button[type="submit"]',
         'button[aria-label*="Submit"]',
         'button[aria-label*="Send"]',
@@ -389,15 +416,7 @@ ${SEND_CONFIRM_SOURCE}
         'button:has(svg[data-icon="arrow-up"])',
         'form button:last-of-type'
       ];
-      const findSend = () => {
-        for (const s of btnSelectors) {
-          try {
-            const b = document.querySelector(s);
-            if (isEnabled(b)) return b;
-          } catch(e) {}
-        }
-        return null;
-      };
+      const findSend = () => findButton(input, btnSelectors);
       const submitForm = () => {
         const form = input.closest('form');
         if (!form) return false;
@@ -480,7 +499,12 @@ ${SEND_CONFIRM_SOURCE}
       input.dispatchEvent(new Event('change', { bubbles: true }));
 
 ${SEND_CONFIRM_SOURCE}
-      const findSend = () => document.querySelector('button[aria-label*="Submit"], button[aria-label*="Send"], button:has(svg.lucide-arrow-right), button[type="submit"]');
+      const findSend = () => findButton(input, [
+        'button[aria-label*="Submit"]',
+        'button[aria-label*="Send"]',
+        'button:has(svg.lucide-arrow-right)',
+        'button[type="submit"]',
+      ]);
       return sendAndConfirm(input, findSend, 'Perplexity');
     } catch (err) {
       return { ok: false, error: err.message };

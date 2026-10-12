@@ -59,7 +59,10 @@ const SEND_PAGES = {
     input: '#prompt-textarea',
   },
   grok: {
-    html: '<form><textarea placeholder="Ask Grok"></textarea><button type="submit" aria-label="送出">↑</button></form>',
+    // The Voyager prompt manager's save button is also type=submit and comes first.
+    html:
+      '<div class="gv-pm"><button type="submit" class="gv-pm-save">儲存</button></div>' +
+      '<form><textarea placeholder="Ask Grok"></textarea><button type="submit" aria-label="提交">↑</button></form>',
     input: 'textarea',
   },
   perplexity: {
@@ -76,7 +79,10 @@ const SEND_PAGES = {
 async function runConfirmingInjector(platform, opts = {}) {
   const { JSDOM } = require('jsdom');
   const page = SEND_PAGES[platform];
-  const dom = new JSDOM(`<!doctype html><body>${page.html}</body>`, { runScripts: 'outside-only' });
+  // The Voyager extension tags <body> on these sites (gv-claude-page and the like).
+  const dom = new JSDOM(`<!doctype html><body class="gv-${platform}-page">${page.html}</body>`, {
+    runScripts: 'outside-only',
+  });
   const doc = dom.window.document;
   const input = /** @type {HTMLElement & { value?: string }} */ (doc.querySelector(page.input));
   // jsdom has no layout; Grok picks the largest visible input.
@@ -84,7 +90,8 @@ async function runConfirmingInjector(platform, opts = {}) {
   doc.querySelector('form')?.addEventListener('submit', (e) => e.preventDefault());
   /** @type {string[]} */
   const sent = [];
-  doc.querySelector('button')?.addEventListener('click', () => {
+  const send = doc.querySelector('button:not(.gv-pm-save)');
+  send?.addEventListener('click', () => {
     sent.push(String(input.value ?? input.textContent));
     if ('value' in input && input.tagName === 'TEXTAREA') input.value = '';
     else input.innerHTML = '<p></p>';
