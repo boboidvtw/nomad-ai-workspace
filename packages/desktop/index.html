@@ -2860,16 +2860,24 @@
         loadShortcutsUI();
       }
 
-      function togglePlatform(platform) {
-        const idx = state.activePlatforms.indexOf(platform);
-        if (idx >= 0) {
-          if (state.activePlatforms.length <= 1) return;
-          state.activePlatforms.splice(idx, 1);
-        } else {
-          state.activePlatforms.push(platform);
-        }
+      // Layouts whose column count is fixed: a chip swaps a platform in instead of adding a column.
+      const FIXED_COUNT_LAYOUTS = ['focus', 'dual', 'triple', 'quad'];
+      const LAYOUT_BY_COUNT = { 1: 'focus', 2: 'dual', 3: 'triple', 4: 'quad', 6: 'hexa' };
 
-        state.layout = 'custom';
+      function togglePlatform(platform) {
+        const active = state.activePlatforms;
+        if (active.includes(platform)) {
+          // A shown platform is removed, one column fewer.
+          if (active.length <= 1) return;
+          state.activePlatforms = active.filter((p) => p !== platform);
+        } else if (FIXED_COUNT_LAYOUTS.includes(state.layout)) {
+          // Keep the column count: the platform that has been shown longest makes room.
+          state.activePlatforms = [...active.slice(1), platform];
+        } else {
+          state.activePlatforms = [...active, platform];
+        }
+        state.layout = LAYOUT_BY_COUNT[state.activePlatforms.length] || 'custom';
+
         notifyLayout();
         renderUI();
         loadAppearanceUI();
