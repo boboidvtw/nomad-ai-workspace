@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   hasSeenCoachmark,
+  isUserClick,
   markCoachmarkSeen,
   resetCoachmark,
   runCoachmarkSequence,
@@ -338,7 +339,14 @@ describe('showCoachmark', () => {
     expect(await pending).toBe('confirmed');
   });
 
-  it('blocks page clicks while keeping the guide visible', async () => {
+  it('only treats trusted clicks as user clicks', () => {
+    expect(isUserClick({ isTrusted: true })).toBe(true);
+    expect(isUserClick({ isTrusted: false })).toBe(false);
+  });
+
+  it('lets script clicks reach the page while keeping the guide visible', async () => {
+    // jsdom events are untrusted, like the clicks Nomad AI Studio sends to deliver
+    // a bot prompt; an unattended guide used to swallow them all.
     const anchor = document.createElement('div');
     const pageButton = document.createElement('button');
     const onPageClick = vi.fn();
@@ -351,7 +359,7 @@ describe('showCoachmark', () => {
 
     pageButton.click();
 
-    expect(onPageClick).not.toHaveBeenCalled();
+    expect(onPageClick).toHaveBeenCalledTimes(1);
     expect(document.querySelector('.gv-coach')).toBeTruthy();
     expect(await hasSeenCoachmark('page-stays-live')).toBe(false);
 
