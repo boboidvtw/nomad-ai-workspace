@@ -164,6 +164,15 @@ export async function runCoachmarkSequence(
 
 // ── DOM helpers ─────────────────────────────────────────────────────────────
 
+/**
+ * Only a person's click is an accident worth swallowing while a guide is open.
+ * Script clicks (Nomad AI Studio sending a bot prompt) must reach the page, or
+ * an unattended guide would block every automated send.
+ */
+export function isUserClick(ev: Pick<Event, 'isTrusted'>): boolean {
+  return ev.isTrusted;
+}
+
 function buildSwitch(toggle: CoachmarkToggle, onFlip: (on: boolean) => void): HTMLElement {
   const row = document.createElement('label');
   row.className = 'gv-coach-toggle';
@@ -386,6 +395,7 @@ export async function showCoachmark(cfg: CoachmarkConfig): Promise<CoachmarkResu
       // Keep accidental page clicks from dismissing the guide or triggering
       // unrelated controls. Explicit buttons, Escape, and interactive reveals
       // remain available.
+      if (!isUserClick(ev)) return;
       ev.preventDefault();
       ev.stopPropagation();
     };

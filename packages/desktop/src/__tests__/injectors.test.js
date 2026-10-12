@@ -84,3 +84,48 @@ test('Injectors: toDeliveryResult keeps a failed injector result failed', () => 
   });
   assert.deepStrictEqual(toDeliveryResult(undefined), { ok: true, data: undefined });
 });
+
+const GEMINI_PAGE =
+  '<rich-textarea><div class="ql-editor" contenteditable="true"><p></p></div></rich-textarea>' +
+  '<button aria-label="傳送訊息">↑</button>';
+
+test('Injectors: Gemini reports ok once the prompt leaves the input box', async () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(`<!doctype html><body>${GEMINI_PAGE}</body>`, {
+    runScripts: 'outside-only',
+  });
+  const doc = dom.window.document;
+  const editor = /** @type {HTMLElement} */ (doc.querySelector('.ql-editor'));
+  // jsdom has no layout; make the editor count as visible.
+  editor.getBoundingClientRect = () => /** @type {DOMRect} */ ({ height: 20 });
+  doc.querySelector('button')?.addEventListener('click', () => {
+    editor.innerHTML = '<p></p>';
+  });
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.gemini('hello'));
+  assert.deepStrictEqual({ ok: result.ok, via: result.via }, { ok: true, via: 'button' });
+});
+
+test('Injectors: Gemini fails when the send click is swallowed', async () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(`<!doctype html><body>${GEMINI_PAGE}</body>`, {
+    runScripts: 'outside-only',
+  });
+  const doc = dom.window.document;
+  const editor = /** @type {HTMLElement} */ (doc.querySelector('.ql-editor'));
+  editor.getBoundingClientRect = () => /** @type {DOMRect} */ ({ height: 20 });
+  // What the extension guide did: cancel every page click in the capture phase.
+  dom.window.addEventListener(
+    'click',
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    true,
+  );
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.gemini('hello'));
+  assert.strictEqual(result.ok, false);
+  assert.match(result.error, /did not send/);
+  assert.strictEqual(editor.textContent, 'hello');
+});

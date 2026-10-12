@@ -61,3 +61,18 @@
 - **Rule:** Register extension events that Electron may lack through a guard that skips
   missing APIs (`addPermissionChangeListeners`), never by bare top-level access.
 - **Guard:** `src/pages/background/__tests__/permissionEvents.test.ts`
+
+## An open extension guide swallowed every Gemini bot send
+
+- **Trap:** While a coachmark guide is open, the extension cancels page clicks in the capture
+  phase so a stray click cannot trigger unrelated controls. Nobody dismisses a guide in an
+  unattended Studio webview, so the Gemini injector's `click()` on the send button was
+  cancelled every time. The injector still reported `ok`, the text stayed in the input box,
+  and the bot read the previous reply as the new one (capture check: 1/10, the rest
+  `mismatch`).
+- **Rule:** The guide only swallows trusted (person) clicks (`isUserClick`). An injector
+  confirms the prompt left the input box (or a stop button appeared) before reporting
+  `ok`, and returns `{ ok: false }` otherwise, so the run fails fast instead of capturing a
+  stale reply.
+- **Guard:** `src/pages/content/coachmark/__tests__/coachmark.test.ts`,
+  `packages/desktop/src/__tests__/injectors.test.js`

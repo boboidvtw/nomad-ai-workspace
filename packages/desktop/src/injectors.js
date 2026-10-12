@@ -216,51 +216,45 @@ const RAW_PLATFORM_INJECTORS = {
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
       
-      // 6. Submit trigger with retry loop for Angular button activation
-      const clickSend = () => {
-        let btn = document.querySelector('button[aria-label*="傳送"]') ||
-                  document.querySelector('button[aria-label*="發送"]') ||
-                  document.querySelector('button[aria-label*="发送"]') ||
-                  document.querySelector('button[aria-label*="Send"]') ||
-                  document.querySelector('button.send-button') ||
-                  document.querySelector('button.mat-mdc-icon-button[aria-label*="prompt"]');
-                  
-        if (!btn) {
-          const svgs = document.querySelectorAll('button mat-icon, button svg');
-          for (const el of svgs) {
-            btn = el.tagName.toLowerCase() === 'button' ? el : el.closest('button');
-            if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') break;
-          }
+      // 6. Submit, then confirm Gemini took the prompt. A click can be swallowed (an extension
+      // guide left open in an unattended webview did exactly that), and reporting ok anyway
+      // made the caller read the previous reply as this one.
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      const findSend = () => document.querySelector('button[aria-label*="傳送"]') ||
+                             document.querySelector('button[aria-label*="發送"]') ||
+                             document.querySelector('button[aria-label*="发送"]') ||
+                             document.querySelector('button[aria-label*="Send"]') ||
+                             document.querySelector('button.send-button');
+      const isEnabled = (btn) => Boolean(btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true');
+      const wasSent = () => (input.innerText || input.textContent || '').trim().length === 0 ||
+        Boolean(document.querySelector('button[aria-label*="停止"], button[aria-label*="Stop"]'));
+      const waitFor = async (check, timeoutMs) => {
+        const deadline = Date.now() + timeoutMs;
+        for (;;) {
+          if (check()) return true;
+          if (Date.now() >= deadline) return false;
+          await sleep(100);
         }
-        
-        if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') {
+      };
+
+      return (async () => {
+        await waitFor(() => isEnabled(findSend()), 1500);
+        const btn = findSend();
+        if (isEnabled(btn)) {
           btn.focus();
           btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
           btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
           btn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
           btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
           btn.click();
-          return true;
+          if (await waitFor(wasSent, 2500)) return { ok: true, input: input.tagName, via: 'button' };
         }
-        return false;
-      };
-      
-      setTimeout(() => {
-        if (!clickSend()) {
-          setTimeout(() => {
-            if (!clickSend()) {
-              setTimeout(() => {
-                if (!clickSend()) {
-                  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-                  input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-                }
-              }, 300);
-            }
-          }, 250);
-        }
-      }, 150);
-      
-      return { ok: true, input: input.tagName };
+        input.focus();
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
+        input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
+        if (await waitFor(wasSent, 1000)) return { ok: true, input: input.tagName, via: 'enter' };
+        return { ok: false, error: 'Gemini did not send the prompt (it is still in the input box)' };
+      })();
     } catch (err) {
       return { ok: false, error: err.message, stack: err.stack };
     }
