@@ -403,6 +403,8 @@ async function createMainWindow() {
   studioBots = createStudioBots({
     enabled: store.get('bots')?.enabled !== false,
     inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
+    readReply: (platform) =>
+      orchestrator ? orchestrator.readReply(platform) : Promise.resolve(''),
     awaitSettled: (platform, options) =>
       orchestrator
         ? orchestrator.awaitSettled(platform, options)

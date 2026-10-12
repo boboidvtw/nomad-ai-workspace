@@ -70,3 +70,43 @@ test('awaitSettled stops early and reports why when the page is blocked', async 
   assert.strictEqual(res.reason, 'Claude usage limit reached');
   assert.ok(Date.now() - started < 500);
 });
+
+test('awaitSettled does not accept the reply that was on the page before the send', async () => {
+  const orch = makeOrchestrator(async () => ({ ok: true, text: 'Old answer' }));
+
+  const res = await orch.awaitSettled('claude', { previousText: 'Old answer' });
+
+  assert.strictEqual(res.settled, false);
+  assert.strictEqual(res.text, '');
+});
+
+test('awaitSettled accepts a new reply once the page moves past the old one', async () => {
+  const texts = ['Old answer', 'Old answer', 'New', 'New answer', 'New answer', 'New answer'];
+  const orch = makeOrchestrator(async () => ({ ok: true, text: texts.shift() ?? 'New answer' }));
+
+  const res = await orch.awaitSettled('claude', { previousText: 'Old answer' });
+
+  assert.deepStrictEqual(res, { settled: true, text: 'New answer' });
+});
+
+test('awaitSettled accepts a reply identical to the old one after it saw streaming', async () => {
+  let polls = 0;
+  const orch = makeOrchestrator(
+    async () => ({ ok: true, text: 'OK' }),
+    async () => ({ ok: true, isStreaming: polls++ < 2 }),
+  );
+
+  const res = await orch.awaitSettled('claude', { previousText: 'OK' });
+
+  assert.deepStrictEqual(res, { settled: true, text: 'OK' });
+});
+
+test('readReply returns the trimmed latest reply, or empty text when extraction fails', async () => {
+  const orch = makeOrchestrator(async () => ({ ok: true, text: '  hi  ' }));
+  assert.strictEqual(await orch.readReply('claude'), 'hi');
+
+  const broken = makeOrchestrator(async () => {
+    throw new Error('view gone');
+  });
+  assert.strictEqual(await broken.readReply('claude'), '');
+});

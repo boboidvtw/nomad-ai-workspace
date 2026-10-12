@@ -46,31 +46,77 @@ test('Injectors: Formats attachments into prompt payload properly', () => {
 });
 
 /**
- * Runs an injector inside a jsdom page and resolves after its delayed send step.
- * @param {string} html
- * @param {string} script
+ * The pages each confirming injector types into. `send` is the button the page reacts to by
+ * emptying the input box, the way the real sites do once they take the prompt.
  */
-async function runInjector(html, script) {
+const SEND_PAGES = {
+  claude: {
+    html: '<div class="ProseMirror" contenteditable="true"></div><button aria-label="傳送訊息">↑</button>',
+    input: '.ProseMirror',
+  },
+  chatgpt: {
+    html: '<div id="prompt-textarea" contenteditable="true"><p></p></div><button data-testid="send-button" aria-label="傳送提示">↑</button>',
+    input: '#prompt-textarea',
+  },
+  grok: {
+    html: '<form><textarea placeholder="Ask Grok"></textarea><button type="submit" aria-label="送出">↑</button></form>',
+    input: 'textarea',
+  },
+  perplexity: {
+    html: '<textarea placeholder="Ask anything"></textarea><button aria-label="Submit">→</button>',
+    input: 'textarea',
+  },
+};
+
+/**
+ * Runs a confirming injector in jsdom.
+ * @param {keyof typeof SEND_PAGES} platform
+ * @param {{ swallowClicks?: boolean }} [opts]
+ */
+async function runConfirmingInjector(platform, opts = {}) {
   const { JSDOM } = require('jsdom');
-  const dom = new JSDOM(`<!doctype html><body>${html}</body>`, { runScripts: 'outside-only' });
+  const page = SEND_PAGES[platform];
+  const dom = new JSDOM(`<!doctype html><body>${page.html}</body>`, { runScripts: 'outside-only' });
+  const doc = dom.window.document;
+  const input = /** @type {HTMLElement & { value?: string }} */ (doc.querySelector(page.input));
+  // jsdom has no layout; Grok picks the largest visible input.
+  input.getBoundingClientRect = () => /** @type {DOMRect} */ ({ width: 400, height: 40 });
+  doc.querySelector('form')?.addEventListener('submit', (e) => e.preventDefault());
   /** @type {string[]} */
-  const clicks = [];
-  for (const btn of dom.window.document.querySelectorAll('button')) {
-    btn.addEventListener('click', () => clicks.push(btn.getAttribute('aria-label') || ''));
+  const sent = [];
+  doc.querySelector('button')?.addEventListener('click', () => {
+    sent.push(String(input.value ?? input.textContent));
+    if ('value' in input && input.tagName === 'TEXTAREA') input.value = '';
+    else input.innerHTML = '<p></p>';
+  });
+  if (opts.swallowClicks) {
+    dom.window.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      true,
+    );
   }
-  const result = dom.window.eval(script);
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  return { result, clicks, document: dom.window.document };
+  const result = await dom.window.eval(PLATFORM_INJECTORS[platform]('hello'));
+  return { result, sent };
 }
 
-test('Injectors: Claude clicks the zh-Hant send button (傳送訊息)', async () => {
-  const { result, clicks } = await runInjector(
-    '<div class="ProseMirror" contenteditable="true"></div><button aria-label="傳送訊息">↑</button>',
-    PLATFORM_INJECTORS.claude('hello'),
-  );
-  assert.strictEqual(result.ok, true);
-  assert.deepStrictEqual(clicks, ['傳送訊息']);
-});
+for (const platform of /** @type {(keyof typeof SEND_PAGES)[]} */ (Object.keys(SEND_PAGES))) {
+  test(`Injectors: ${platform} reports ok once the prompt leaves the input box`, async () => {
+    const { result, sent } = await runConfirmingInjector(platform);
+    assert.deepStrictEqual({ ok: result.ok, via: result.via }, { ok: true, via: 'button' });
+    assert.deepStrictEqual(sent, ['hello']);
+  });
+
+  test(`Injectors: ${platform} fails when the send click is swallowed`, async () => {
+    const { result, sent } = await runConfirmingInjector(platform, { swallowClicks: true });
+    assert.strictEqual(result.ok, false);
+    assert.match(result.error, /did not send the prompt/);
+    assert.deepStrictEqual(sent, []);
+  });
+}
 
 test('Injectors: toDeliveryResult keeps a failed injector result failed', () => {
   const { toDeliveryResult } = require('../injectors.js');

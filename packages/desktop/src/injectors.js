@@ -50,6 +50,52 @@ function formatPromptWithAttachments(text, attachments = []) {
  * Cross-platform DOM injection scripts for AI chat interfaces.
  */
 
+/**
+ * Source of `sendAndConfirm(input, findSend, label, fallback?)`, spliced into injector scripts.
+ * It clicks the send button (or presses Enter) and resolves ok only once the page shows the
+ * prompt left: the input box emptied or a stop button appeared. A click a page swallows (the
+ * Gemini guide did that) must fail here, or the caller reads the previous reply as this one.
+ */
+const SEND_CONFIRM_SOURCE = `
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      const waitFor = async (check, timeoutMs) => {
+        const deadline = Date.now() + timeoutMs;
+        for (;;) {
+          if (check()) return true;
+          if (Date.now() >= deadline) return false;
+          await sleep(100);
+        }
+      };
+      const isEnabled = (btn) => Boolean(btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true');
+      const clickLikeUser = (btn) => {
+        btn.focus();
+        btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+        btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+        btn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
+        btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+        btn.click();
+      };
+      const sendAndConfirm = async (input, findSend, label, fallback) => {
+        const leftover = () => String(input.value ?? input.innerText ?? input.textContent ?? '').trim();
+        const isStreaming = () => Boolean(document.querySelector(
+          'button[aria-label*="停止"], button[aria-label*="Stop"], button[data-testid="stop-button"]'));
+        const wasSent = () => leftover().length === 0 || isStreaming();
+        await waitFor(() => isEnabled(findSend()), 1500);
+        const btn = findSend();
+        if (isEnabled(btn)) {
+          clickLikeUser(btn);
+          if (await waitFor(wasSent, 2500)) return { ok: true, input: input.tagName, via: 'button' };
+        }
+        if (fallback && fallback() && await waitFor(wasSent, 1500)) {
+          return { ok: true, input: input.tagName, via: 'fallback' };
+        }
+        input.focus();
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
+        input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
+        if (await waitFor(wasSent, 1000)) return { ok: true, input: input.tagName, via: 'enter' };
+        return { ok: false, error: label + ' did not send the prompt (it is still in the input box)' };
+      };`;
+
 /** @type {Record<string, (text: string) => string>} Returns a script to run in the platform webview */
 const RAW_PLATFORM_INJECTORS = {
   claude: (/** @type {string} */ text) => `(function() {
@@ -73,21 +119,13 @@ const RAW_PLATFORM_INJECTORS = {
         input.appendChild(p);
       }
       input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-      
-      setTimeout(() => {
-        const btn = document.querySelector('button[aria-label*="Send"]') ||
-                    document.querySelector('button[aria-label*="傳送"]') ||
-                    document.querySelector('button[aria-label*="發送"]') ||
-                    document.querySelector('button[aria-label*="发送"]') ||
-                    document.querySelector('button:has(svg.lucide-arrow-up)');
-        if (btn && !btn.disabled) {
-          btn.focus();
-          btn.click();
-        } else {
-          input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
-        }
-      }, 300);
-      return { ok: true, input: input.tagName };
+${SEND_CONFIRM_SOURCE}
+      const findSend = () => document.querySelector('button[aria-label*="Send"]') ||
+                             document.querySelector('button[aria-label*="傳送"]') ||
+                             document.querySelector('button[aria-label*="發送"]') ||
+                             document.querySelector('button[aria-label*="发送"]') ||
+                             document.querySelector('button:has(svg.lucide-arrow-up)');
+      return sendAndConfirm(input, findSend, 'Claude');
     } catch(err) {
       return { ok: false, error: err.message };
     }
@@ -121,22 +159,12 @@ const RAW_PLATFORM_INJECTORS = {
       }
       input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
       
-      setTimeout(() => {
-        const btn = document.querySelector('button[data-testid="send-button"]') ||
-                    document.querySelector('button[aria-label*="傳送"]') ||
-                    document.querySelector('button[aria-label*="发送"]') ||
-                    document.querySelector('button[aria-label*="Send"]');
-        if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') {
-          btn.focus();
-          btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
-          btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-          btn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
-          btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
-          btn.click();
-        }
-        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
-      }, 350);
-      return { ok: true, input: input.tagName };
+${SEND_CONFIRM_SOURCE}
+      const findSend = () => document.querySelector('button[data-testid="send-button"]') ||
+                             document.querySelector('button[aria-label*="傳送"]') ||
+                             document.querySelector('button[aria-label*="发送"]') ||
+                             document.querySelector('button[aria-label*="Send"]');
+      return sendAndConfirm(input, findSend, 'ChatGPT');
     } catch(err) {
       return { ok: false, error: err.message };
     }
@@ -347,70 +375,35 @@ const RAW_PLATFORM_INJECTORS = {
         input.dispatchEvent(new Event('change', { bubbles: true }));
       }
       
-      // 3. Submission logic (form submit, button click, or Enter key)
-      const trySubmit = () => {
-        const form = input.closest('form');
-        
-        const btnSelectors = [
-          'button[type="submit"]',
-          'button[aria-label*="Submit"]',
-          'button[aria-label*="Send"]',
-          'button[aria-label*="傳送"]',
-          'button[aria-label*="送出"]',
-          'button[data-testid*="send"]',
-          'button[data-testid*="submit"]',
-          'button:has(svg.lucide-arrow-up)',
-          'button:has(svg[data-icon="arrow-up"])',
-          'form button:last-of-type'
-        ];
-        
-        let sendBtn = null;
+      // 3. Submit with the first enabled send button, else submit the form, then confirm.
+${SEND_CONFIRM_SOURCE}
+      const btnSelectors = [
+        'button[type="submit"]',
+        'button[aria-label*="Submit"]',
+        'button[aria-label*="Send"]',
+        'button[aria-label*="傳送"]',
+        'button[aria-label*="送出"]',
+        'button[data-testid*="send"]',
+        'button[data-testid*="submit"]',
+        'button:has(svg.lucide-arrow-up)',
+        'button:has(svg[data-icon="arrow-up"])',
+        'form button:last-of-type'
+      ];
+      const findSend = () => {
         for (const s of btnSelectors) {
           try {
             const b = document.querySelector(s);
-            if (b && !b.disabled && b.getAttribute('aria-disabled') !== 'true') {
-              sendBtn = b;
-              break;
-            }
+            if (isEnabled(b)) return b;
           } catch(e) {}
         }
-        
-        if (sendBtn) {
-          sendBtn.focus();
-          sendBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
-          sendBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-          sendBtn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
-          sendBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
-          sendBtn.click();
-          return true;
-        }
-        
-        if (form) {
-          try {
-            form.requestSubmit();
-            return true;
-          } catch(e) {}
-        }
-        
-        return false;
+        return null;
       };
-      
-      setTimeout(() => {
-        if (!trySubmit()) {
-          setTimeout(() => {
-            if (!trySubmit()) {
-              setTimeout(() => {
-                if (!trySubmit()) {
-                  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-                  input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-                }
-              }, 300);
-            }
-          }, 250);
-        }
-      }, 150);
-      
-      return { ok: true, input: input.tagName };
+      const submitForm = () => {
+        const form = input.closest('form');
+        if (!form) return false;
+        try { form.requestSubmit(); return true; } catch(e) { return false; }
+      };
+      return sendAndConfirm(input, findSend, 'Grok', submitForm);
     } catch (err) {
       return { ok: false, error: err.message, stack: err.stack };
     }
@@ -486,16 +479,9 @@ const RAW_PLATFORM_INJECTORS = {
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
 
-      setTimeout(() => {
-        const btn = document.querySelector('button[aria-label*="Submit"], button[aria-label*="Send"], button:has(svg.lucide-arrow-right), button[type="submit"]');
-        if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') {
-          btn.click();
-        } else {
-          input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
-        }
-      }, 200);
-
-      return { ok: true, input: input.tagName };
+${SEND_CONFIRM_SOURCE}
+      const findSend = () => document.querySelector('button[aria-label*="Submit"], button[aria-label*="Send"], button:has(svg.lucide-arrow-right), button[type="submit"]');
+      return sendAndConfirm(input, findSend, 'Perplexity');
     } catch (err) {
       return { ok: false, error: err.message };
     }
