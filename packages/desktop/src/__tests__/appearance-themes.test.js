@@ -102,4 +102,23 @@ test('Themes: chrome colours come from tokens, not hard-coded dark-theme values'
     /#38bdf8|#94a3b8|#cbd5e1|#e2e8f0|#f8fafc|#64748b|rgba\(\s*255,\s*255,\s*255|rgba\(\s*56,\s*189,\s*248|rgba\(\s*15,\s*23,\s*42|background: rgba\(0, 0, 0, 0\.[34]/gi,
   );
   assert.deepStrictEqual(leftovers, null);
+
+  // Pastel status/brand text made for dark panels must go through --tint-* tokens.
+  const pastelText = rest.match(
+    /(?<![-\w])color:\s*#(ede9fe|c4b5fd|a78bfa|d8b4fe|a5b4fc|6ee7b7|34d399|fdba74|fcd34d|fef08a|f87171|fb7185|2dd4bf)\b/gi,
+  );
+  assert.deepStrictEqual(pastelText, null);
+});
+
+test('Themes: light themes darken the status and brand text tints', async () => {
+  const { win } = await loadShell();
+  win.selectTheme('daylight');
+  const tint = (/** @type {string} */ name) =>
+    win.getComputedStyle(win.document.documentElement).getPropertyValue(name).trim();
+
+  assert.strictEqual(tint('--tint-violet-100'), '#4c1d95');
+  assert.strictEqual(tint('--tint-emerald-400'), '#047857');
+
+  win.selectTheme('neon');
+  assert.strictEqual(tint('--tint-violet-100'), '#ede9fe');
 });
