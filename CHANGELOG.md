@@ -8,6 +8,10 @@
 
 ### ✨ 新增 (Added)
 
+- **外觀主題擴充為 12 款，新增明亮與繽紛系列**：原本 5 款都是深色，現在分成三組：深色（深夜深灰、太空純黑、賽博藍紫、極光翡翠、極簡冷銀）、明亮（晨光白、蜜桃晨曦、薄荷蘇打、薰衣草田）、繽紛（霓虹夜城、熱帶夕陽、海洋湛藍，以漸層為背景）。選主題時會一併套用它的建議強調色，之後仍可用色票覆蓋。
+  - Studio 外框的顏色全部改為 CSS token（`--text-*`、`--fg-rgb`、`--panel-rgb`、`--well-rgb`、`--accent-rgb`、`--accent-2`、`--on-accent` 等）。強調色現在會套用到整個介面，不再只影響少數元素。
+  - 每組主題的文字與強調色都經過 WCAG AA 對比計算（≥ 4.5:1，以半透明面板疊在背景上的實際顏色計算）。
+  - 測試 `appearance-themes.test.js` 會在 jsdom 載入真正的 `index.html`，並阻擋再寫死深色主題的顏色。
 - **Bots（[SPEC-AGENT-BOTS](SPEC-AGENT-BOTS.md)，借鏡 Hermes Bot Mode 與 herdr）**：Agent Roster 升級為有身分的 Bot，不另建新的資料單位。
   - **持久化身分**：`~/.nomad/roster.json` 儲存 `@handle`、顯示名稱、persona、頭像、分組與隱藏狀態；Studio 是唯一寫入者，daemon 只讀。新增 `GET/POST /api/bots`、`GET/PATCH/DELETE /api/bots/:id`、`POST /api/bots/:id/seen`、`GET /api/bots/resolve?mention=`。
   - **永久對話（Canonical Bot Chat）**：第一次派工時開新對話、送出 persona，並綁定對話 URL；之後都在同一個對話裡執行。對話被刪除時自動改綁新對話並寫入 timeline。只接受各平台真正的對話 URL（`claude.ai/chat/…`、`chatgpt.com/c/…` 等）。
