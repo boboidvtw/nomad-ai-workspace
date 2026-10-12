@@ -119,13 +119,13 @@
         background: rgba(var(--fg-rgb), 0.08);
       }
       .chip-claude.active {
-        color: #f59e0b;
+        color: var(--tint-amber-500);
       }
       .chip-chatgpt.active {
-        color: #10a37f;
+        color: var(--tint-chatgpt);
       }
       .chip-gemini.active {
-        color: #3b82f6;
+        color: var(--tint-blue-500);
       }
       .chip-grok.active {
         color: var(--accent-color);
@@ -180,11 +180,11 @@
       .btn-roundtable {
         background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(99, 102, 241, 0.25));
         border: 1px solid rgba(167, 139, 250, 0.4);
-        color: #c4b5fd;
+        color: var(--tint-violet-300);
       }
       .btn-roundtable:hover {
         background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(99, 102, 241, 0.4));
-        color: #ede9fe;
+        color: var(--tint-violet-100);
         box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
       }
       .btn-roundtable.active {
@@ -224,7 +224,7 @@
         background: transparent;
         border: none;
         outline: none;
-        color: #fff;
+        color: var(--text-strong);
         font-size: 12px;
         user-select: text;
       }
@@ -242,7 +242,7 @@
         display: none;
       }
       .btn-search-clear:hover {
-        color: #fff;
+        color: var(--text-strong);
         background: rgba(var(--fg-rgb), 0.1);
       }
 
@@ -307,37 +307,37 @@
       }
       .type-badge-修復 {
         background: rgba(244, 63, 94, 0.15);
-        color: #fb7185;
+        color: var(--tint-rose-400);
         border-color: rgba(244, 63, 94, 0.3);
       }
       .type-badge-設計 {
         background: rgba(129, 140, 248, 0.15);
-        color: #a5b4fc;
+        color: var(--tint-indigo-300);
         border-color: rgba(129, 140, 248, 0.3);
       }
       .type-badge-優化 {
         background: rgba(245, 158, 11, 0.15);
-        color: #fbbf24;
+        color: var(--tint-amber-400);
         border-color: rgba(245, 158, 11, 0.3);
       }
       .type-badge-文件 {
         background: rgba(16, 185, 129, 0.15);
-        color: #34d399;
+        color: var(--tint-emerald-400);
         border-color: rgba(16, 185, 129, 0.3);
       }
       .type-badge-探索 {
         background: rgba(192, 132, 252, 0.15);
-        color: #d8b4fe;
+        color: var(--tint-purple-300);
         border-color: rgba(192, 132, 252, 0.3);
       }
       .type-badge-研究 {
         background: rgba(20, 184, 166, 0.15);
-        color: #2dd4bf;
+        color: var(--tint-teal-400);
         border-color: rgba(20, 184, 166, 0.3);
       }
       .type-badge-發布 {
         background: rgba(251, 146, 60, 0.15);
-        color: #fdba74;
+        color: var(--tint-orange-300);
         border-color: rgba(251, 146, 60, 0.3);
       }
 
@@ -360,7 +360,7 @@
       }
       .search-highlight {
         background: rgba(250, 204, 21, 0.25);
-        color: #fef08a;
+        color: var(--tint-yellow-200);
         padding: 0 1px;
         border-radius: 2px;
         font-weight: 700;
@@ -404,7 +404,7 @@
       }
       .btn-ws-op:hover {
         background: rgba(var(--fg-rgb), 0.15);
-        color: #fff;
+        color: var(--text-strong);
       }
       .btn-ws-restore {
         background: rgba(var(--accent-rgb), 0.15);
@@ -413,7 +413,7 @@
       }
       .btn-ws-restore:hover {
         background: rgba(var(--accent-rgb), 0.3);
-        color: #fff;
+        color: var(--text-strong);
       }
 
       /* Right Dock / Sidebar Drawer */
@@ -459,7 +459,7 @@
       }
       .btn-tab.active {
         background: rgba(139, 92, 246, 0.3);
-        color: #ede9fe;
+        color: var(--tint-violet-100);
       }
 
       .sidebar-content {
@@ -498,7 +498,7 @@
       .btn-orch-mode.active {
         background: rgba(139, 92, 246, 0.25);
         border-color: #a78bfa;
-        color: #c4b5fd;
+        color: var(--tint-violet-300);
         font-weight: 700;
       }
       .orch-textarea {
@@ -508,7 +508,7 @@
         border: 1px solid rgba(var(--fg-rgb), 0.1);
         border-radius: 8px;
         padding: 10px;
-        color: #fff;
+        color: var(--text-strong);
         font-size: 12px;
         outline: none;
         resize: vertical;
@@ -547,7 +547,7 @@
       }
       .btn-orch-stop {
         background: rgba(239, 68, 68, 0.2);
-        color: #f87171;
+        color: var(--tint-red-400);
         border: 1px solid rgba(239, 68, 68, 0.4);
       }
 
@@ -615,7 +615,7 @@
       }
       .btn-step:hover {
         background: rgba(var(--fg-rgb), 0.15);
-        color: #fff;
+        color: var(--text-strong);
       }
       .zoom-val {
         min-width: 36px;
@@ -703,7 +703,7 @@
         border: 1px solid rgba(var(--fg-rgb), 0.12);
         border-radius: 10px;
         padding: 10px 14px;
-        color: #fff;
+        color: var(--text-strong);
         font-size: 13px;
         outline: none;
         resize: none;
@@ -811,6 +811,47 @@
         --on-accent: #ffffff;
         --well-rgb: 0, 0, 0;
         --bg-content: var(--bg-deep);
+        /* Status and brand text tints; light themes darken them below. */
+        --tint-violet-100: #ede9fe;
+        --tint-violet-300: #c4b5fd;
+        --tint-violet-400: #a78bfa;
+        --tint-purple-300: #d8b4fe;
+        --tint-indigo-300: #a5b4fc;
+        --tint-emerald-300: #6ee7b7;
+        --tint-emerald-400: #34d399;
+        --tint-emerald-500: #10b981;
+        --tint-orange-300: #fdba74;
+        --tint-amber-300: #fcd34d;
+        --tint-amber-400: #fbbf24;
+        --tint-amber-500: #f59e0b;
+        --tint-yellow-200: #fef08a;
+        --tint-red-400: #f87171;
+        --tint-red-500: #ef4444;
+        --tint-rose-400: #fb7185;
+        --tint-teal-400: #2dd4bf;
+        --tint-chatgpt: #10a37f;
+        --tint-blue-500: #3b82f6;
+      }
+      :root[data-theme-mode='light'] {
+        --tint-violet-100: #4c1d95;
+        --tint-violet-300: #6d28d9;
+        --tint-violet-400: #6d28d9;
+        --tint-purple-300: #7e22ce;
+        --tint-indigo-300: #4338ca;
+        --tint-emerald-300: #047857;
+        --tint-emerald-400: #047857;
+        --tint-emerald-500: #047857;
+        --tint-orange-300: #c2410c;
+        --tint-amber-300: #b45309;
+        --tint-amber-400: #b45309;
+        --tint-amber-500: #b45309;
+        --tint-yellow-200: #a16207;
+        --tint-red-400: #dc2626;
+        --tint-red-500: #dc2626;
+        --tint-rose-400: #e11d48;
+        --tint-teal-400: #0f766e;
+        --tint-chatgpt: #0b7a5f;
+        --tint-blue-500: #1d4ed8;
       }
       body {
         background-image: var(--bg-image) !important;
@@ -903,7 +944,7 @@
       .shortcut-input.recording {
         border-color: #ef4444 !important;
         background: rgba(239, 68, 68, 0.15) !important;
-        color: #f87171 !important;
+        color: var(--tint-red-400) !important;
         animation: pulse-border 1.2s infinite;
       }
       @keyframes pulse-border {
@@ -928,7 +969,7 @@
       }
       .btn-record-key:hover {
         background: rgba(var(--fg-rgb), 0.16);
-        color: white;
+        color: var(--text-strong);
       }
       .btn-record-key.recording {
         background: #ef4444 !important;
@@ -1041,12 +1082,12 @@
       }
       .diff-add {
         background: rgba(16, 185, 129, 0.18);
-        color: #34d399;
+        color: var(--tint-emerald-400);
         border-left: 3px solid #10b981;
       }
       .diff-del {
         background: rgba(239, 68, 68, 0.18);
-        color: #f87171;
+        color: var(--tint-red-400);
         border-left: 3px solid #ef4444;
       }
       .diff-equal {
@@ -1081,7 +1122,7 @@
         margin-left: 4px;
       }
       .attachment-pill .btn-remove-att:hover {
-        color: #f87171;
+        color: var(--tint-red-400);
       }
 
       /* Spotlight Floating HUD Modal */
@@ -1260,7 +1301,9 @@
           title="開啟本機微服務與決策儀表板 (HUD)"
         >
           <span class="pulse-dot pulse-emerald" id="hud-pulse-dot"></span>
-          <span id="hud-top-label" style="font-weight: 600; color: #6ee7b7">🖥️ 系統 HUD</span>
+          <span id="hud-top-label" style="font-weight: 600; color: var(--tint-emerald-300)"
+            >🖥️ 系統 HUD</span
+          >
         </div>
         <div class="pill-info" id="btn-zoom-toggle" onclick="openSidebarTab('zoom')">
           <span>🔍 視圖縮放</span>
@@ -1405,7 +1448,9 @@
         <!-- Live Status HUD -->
         <div class="orch-status-box" id="orch-status-box" style="display: none">
           <div style="display: flex; justify-content: space-between; font-weight: 700">
-            <span id="orch-status-label" style="color: #c4b5fd">運行狀態: 協作進行中</span>
+            <span id="orch-status-label" style="color: var(--tint-violet-300)"
+              >運行狀態: 協作進行中</span
+            >
             <span id="orch-round-label" style="color: var(--text-muted)">第 1/2 輪</span>
           </div>
           <div id="orch-speaker-label" style="color: var(--accent-color); font-weight: 600">
@@ -1996,7 +2041,7 @@
                 padding: 2px 8px;
                 border-radius: 4px;
                 background: rgba(16, 185, 129, 0.15);
-                color: #10b981;
+                color: var(--tint-emerald-500);
                 border: 1px solid rgba(16, 185, 129, 0.3);
                 font-weight: 600;
               "
@@ -2275,7 +2320,7 @@
             style="
               display: none;
               font-size: 11px;
-              color: #34d399;
+              color: var(--tint-emerald-400);
               text-align: center;
               margin-top: 4px;
             "
@@ -2474,7 +2519,7 @@
                 font-weight: 600;
                 background: rgba(16, 185, 129, 0.2);
                 border-color: #10b981;
-                color: #34d399;
+                color: var(--tint-emerald-400);
               "
             >
               探測
@@ -2594,7 +2639,7 @@
             >
               <div style="font-size: 10px; color: var(--text-muted)">Headroom 累積節省</div>
               <div
-                style="font-size: 14px; font-weight: 700; color: #10b981"
+                style="font-size: 14px; font-weight: 700; color: var(--tint-emerald-500)"
                 id="telemetry-saved-tokens"
               >
                 0 Tokens
@@ -2974,7 +3019,7 @@
                 </div>
                 <div class="hud-card-body">
                   <span>Port ${s.port}</span>
-                  <span style="color: ${s.online ? '#34d399' : 'var(--text-dim)'};">${s.online ? s.latencyMs + 'ms' : '離線'}</span>
+                  <span style="color: ${s.online ? 'var(--tint-emerald-400)' : 'var(--text-dim)'};">${s.online ? s.latencyMs + 'ms' : '離線'}</span>
                 </div>
               </div>
             `,
@@ -2984,7 +3029,7 @@
           }
         } catch (err) {
           if (grid) {
-            grid.innerHTML = `<div style="grid-column: span 2; font-size: 11px; color: #ef4444; text-align: center; padding: 10px;">⚠️ 探針連線失敗 (${err.message})</div>`;
+            grid.innerHTML = `<div style="grid-column: span 2; font-size: 11px; color: var(--tint-red-500); text-align: center; padding: 10px;">⚠️ 探針連線失敗 (${err.message})</div>`;
           }
         }
       }
@@ -3701,7 +3746,7 @@
           bgBase: '#0f172a',
           bgSurface: 'rgba(30, 41, 59, 0.9)',
           bgDeep: '#0b1222',
-          panel: '51, 65, 85',
+          panel: '30, 41, 59',
           fg: '255, 255, 255',
           text: DARK_TEXT,
           accent: '#38bdf8',
@@ -4176,7 +4221,7 @@
               const d = res.data;
               resultBox.innerHTML = `
               <div style="color: var(--accent-color); font-weight: 700;">🎯 意圖: ${d.laya.intent} (置信度: ${Math.round(d.laya.confidence * 100)}%)</div>
-              <div>🤖 建議引擎: <span style="color: #34d399; font-weight: 600;">${d.laya.recommendedPlatform}</span> | 耗時: ${d.laya.latencyMs}ms</div>
+              <div>🤖 建議引擎: <span style="color: var(--tint-emerald-400); font-weight: 600;">${d.laya.recommendedPlatform}</span> | 耗時: ${d.laya.latencyMs}ms</div>
               <div>📉 Headroom 節省: ${d.headroom.savedTokens} tokens (${Math.round(d.headroom.savingsRatio * 100)}%)</div>
               <div style="margin-top: 4px; color: var(--text-soft); font-size: 10px; background: rgba(var(--fg-rgb), 0.04); padding: 4px 6px; border-radius: 4px;">${d.processedPrompt}</div>
             `;
@@ -4388,7 +4433,7 @@
         if (res && res.success && res.data.online) {
           if (badge) {
             badge.innerText = '🟢 線上';
-            badge.style.color = '#34d399';
+            badge.style.color = 'var(--tint-emerald-400)';
             badge.style.background = 'rgba(16, 185, 129, 0.2)';
           }
           const models = res.data.models || [];
@@ -4398,7 +4443,7 @@
         } else {
           if (badge) {
             badge.innerText = '🔴 離線';
-            badge.style.color = '#f87171';
+            badge.style.color = 'var(--tint-red-400)';
             badge.style.background = 'rgba(239, 68, 68, 0.2)';
           }
           if (text) {
@@ -4641,7 +4686,7 @@
             banner.style.cssText =
               'position:fixed;right:16px;bottom:16px;z-index:9999;max-width:360px;padding:10px 14px;' +
               'border-radius:10px;border:1px solid rgba(245,158,11,0.5);background:rgba(30,22,8,0.95);' +
-              'color:#fcd34d;font-size:12px;text-align:left;cursor:pointer;';
+              'color:var(--tint-amber-300);font-size:12px;text-align:left;cursor:pointer;';
             banner.addEventListener('click', () => {
               banner.style.display = 'none';
               openDashboardInBrowser('#bots');

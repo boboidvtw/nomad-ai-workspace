@@ -33,11 +33,12 @@ function calculateLayoutBounds({
   const totalWidth = Math.max(200, winWidth || 1200);
   const width = Math.max(200, totalWidth - (Math.max(0, Number(drawerWidth)) || 0));
 
-  // Initialize all platforms as invisible
+  // Hidden platforms keep the full content-area size: bots still drive them, and a 0x0 page
+  // renders nothing (Grok's virtualised chat showed no messages to read back).
   /** @type {Record<string, { x: number, y: number, width: number, height: number, visible: boolean }>} */
   const bounds = {};
   for (const p of ALL_PLATFORMS) {
-    bounds[p] = { x: 0, y: topBarHeight, width: 0, height: 0, visible: false };
+    bounds[p] = { x: 0, y: topBarHeight, width, height: contentHeight, visible: false };
   }
 
   // Filter valid active platforms

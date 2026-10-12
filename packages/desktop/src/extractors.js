@@ -25,7 +25,12 @@ const PLATFORM_EXTRACTORS = {
           }
         }
         if (!target) return { ok: false, error: "No Claude assistant response found" };
-        const text = (target.innerText || target.textContent || "").trim();
+        // A message row also holds a screen-reader label and the action bar; read its markdown.
+        const blocks = target.matches('.standard-markdown')
+          ? [target]
+          : [...target.querySelectorAll('.standard-markdown')];
+        const parts = (blocks.length ? blocks : [target]).map((el) => (el.innerText || el.textContent || "").trim());
+        const text = parts.filter(Boolean).join("\\n\\n");
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
