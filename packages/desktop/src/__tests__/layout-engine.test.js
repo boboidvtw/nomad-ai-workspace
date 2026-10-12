@@ -21,7 +21,7 @@ test('Layout Engine: Focus mode gives 100% width and height to selected platform
   assert.strictEqual(bounds.chatgpt.visible, false);
   assert.strictEqual(bounds.gemini.visible, false);
   assert.strictEqual(bounds.grok.visible, false);
-  assert.strictEqual(bounds.deepseek.visible, false);
+  assert.strictEqual(bounds.copilot.visible, false);
   assert.strictEqual(bounds.perplexity.visible, false);
 });
 
@@ -47,7 +47,7 @@ test('Layout Engine: Dual mode splits width according to splitRatio', () => {
 
   assert.strictEqual(bounds.gemini.visible, false);
   assert.strictEqual(bounds.grok.visible, false);
-  assert.strictEqual(bounds.deepseek.visible, false);
+  assert.strictEqual(bounds.copilot.visible, false);
   assert.strictEqual(bounds.perplexity.visible, false);
 });
 
@@ -73,7 +73,7 @@ test('Layout Engine: Triple mode divides width across 3 columns', () => {
   assert.strictEqual(bounds.gemini.width, 400);
 
   assert.strictEqual(bounds.grok.visible, false);
-  assert.strictEqual(bounds.deepseek.visible, false);
+  assert.strictEqual(bounds.copilot.visible, false);
   assert.strictEqual(bounds.perplexity.visible, false);
 });
 
@@ -178,10 +178,10 @@ test('Layout Engine: Hexa mode tiles 6 views in 3x2 grid', () => {
   assert.strictEqual(bounds.grok.x, 0);
   assert.strictEqual(bounds.grok.y, 400);
 
-  // deepseek (col 1, row 1)
-  assert.strictEqual(bounds.deepseek.visible, true);
-  assert.strictEqual(bounds.deepseek.x, 400);
-  assert.strictEqual(bounds.deepseek.y, 400);
+  // copilot (col 1, row 1)
+  assert.strictEqual(bounds.copilot.visible, true);
+  assert.strictEqual(bounds.copilot.x, 400);
+  assert.strictEqual(bounds.copilot.y, 400);
 
   // perplexity (col 2, row 1)
   assert.strictEqual(bounds.perplexity.visible, true);

@@ -3,7 +3,7 @@
  * Pure function calculation of WebContentsView bounds.
  */
 
-const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok', 'deepseek', 'perplexity'];
+const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok', 'copilot', 'perplexity'];
 
 /**
  * Calculates bounds and visibility for all platforms.

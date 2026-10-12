@@ -58,7 +58,7 @@ const PLATFORMS = {
   claude: { name: 'Claude', url: 'https://claude.ai', color: '#D97706' },
   gemini: { name: 'Gemini', url: 'https://gemini.google.com', color: '#2563EB' },
   grok: { name: 'Grok', url: 'https://grok.com', color: '#1D9BF0' },
-  deepseek: { name: 'DeepSeek', url: 'https://chat.deepseek.com', color: '#4D6BFE' },
+  copilot: { name: 'Copilot', url: 'https://m365.cloud.microsoft/chat', color: '#8B5CF6' },
   perplexity: { name: 'Perplexity', url: 'https://www.perplexity.ai', color: '#22B8CD' },
 };
 

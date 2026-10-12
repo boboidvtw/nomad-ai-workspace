@@ -63,7 +63,7 @@ export const PLATFORMS: Readonly<{
         defaultUrl: string;
         color: string;
     };
-    deepseek: {
+    copilot: {
         id: string;
         name: string;
         defaultUrl: string;

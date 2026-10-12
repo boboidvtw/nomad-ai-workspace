@@ -164,15 +164,16 @@ graph TD
 
 ## 📱 支援平台矩陣 (Supported Platforms)
 
-| AI 平台              |    狀態     | 支援網域                                      |   階層側邊欄   | 通用提示詞 |   實體隔離備份   |
-| :------------------- | :---------: | :-------------------------------------------- | :------------: | :--------: | :--------------: |
-| **Google Gemini**    | 🟢 深度支援 | `gemini.google.com`, `business.gemini.google` |       ✅       |     ✅     |   ✅ `Gemini/`   |
-| **Google AI Studio** | 🟢 深度支援 | `aistudio.google.com`, `aistudio.google.cn`   |       ✅       |     ✅     |   ✅ `Gemini/`   |
-| **Anthropic Claude** | 🟢 深度支援 | `claude.ai`                                   |       ✅       |     ✅     |   ✅ `Claude/`   |
-| **OpenAI ChatGPT**   | 🟢 深度支援 | `chatgpt.com`, `chat.openai.com`              |       ✅       |     ✅     |  ✅ `ChatGPT/`   |
-| **xAI Grok**         | 🟢 深度支援 | `grok.com`, `x.com/i/grok`                    |       ✅       |     ✅     |    ✅ `Grok/`    |
-| **DeepSeek**         | 🟢 深度支援 | `chat.deepseek.com`                           | ✅ Hexa 6 分割 |     ✅     |  ✅ `DeepSeek/`  |
-| **Perplexity**       | 🟢 深度支援 | `perplexity.ai`                               | ✅ Hexa 6 分割 |     ✅     | ✅ `Perplexity/` |
+| AI 平台               |      狀態      | 支援網域                                      |   階層側邊欄   | 通用提示詞 |   實體隔離備份   |
+| :-------------------- | :------------: | :-------------------------------------------- | :------------: | :--------: | :--------------: |
+| **Google Gemini**     |  🟢 深度支援   | `gemini.google.com`, `business.gemini.google` |       ✅       |     ✅     |   ✅ `Gemini/`   |
+| **Google AI Studio**  |  🟢 深度支援   | `aistudio.google.com`, `aistudio.google.cn`   |       ✅       |     ✅     |   ✅ `Gemini/`   |
+| **Anthropic Claude**  |  🟢 深度支援   | `claude.ai`                                   |       ✅       |     ✅     |   ✅ `Claude/`   |
+| **OpenAI ChatGPT**    |  🟢 深度支援   | `chatgpt.com`, `chat.openai.com`              |       ✅       |     ✅     |  ✅ `ChatGPT/`   |
+| **xAI Grok**          |  🟢 深度支援   | `grok.com`, `x.com/i/grok`                    |       ✅       |     ✅     |    ✅ `Grok/`    |
+| **DeepSeek**          |  🟢 深度支援   | `chat.deepseek.com`                           | ✅ Hexa 6 分割 |     ✅     |  ✅ `DeepSeek/`  |
+| **Perplexity**        |  🟢 深度支援   | `perplexity.ai`                               | ✅ Hexa 6 分割 |     ✅     | ✅ `Perplexity/` |
+| **Microsoft Copilot** | 🟡 Studio 分頁 | `m365.cloud.microsoft`                        | ✅ Hexa 6 分割 |     —      |        —         |
 
 ---
 

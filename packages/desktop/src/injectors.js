@@ -416,32 +416,55 @@ const RAW_PLATFORM_INJECTORS = {
     }
   })()`,
 
-  deepseek: (/** @type {string} */ text) => `(function() {
+  // Microsoft 365 Copilot Chat (m365.cloud.microsoft/chat): a Lexical editor whose text keeps
+  // zero-width characters and clears late, so a send is confirmed by a new question bubble or
+  // the stop button rather than by an empty input box.
+  copilot: (/** @type {string} */ text) => `(async function() {
     try {
       const text = ${JSON.stringify(text)};
-      const input = document.querySelector('textarea[placeholder*="DeepSeek"], textarea#chat-input, textarea');
-      if (!input) return { ok: false, error: 'DeepSeek input not found' };
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      const input = document.querySelector('#m365-chat-editor-target-element') ||
+                    document.querySelector('[data-lexical-editor="true"][contenteditable="true"]');
+      if (!input) return { ok: false, error: 'Copilot input not found' };
 
-      input.focus();
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
-      if (nativeSetter) {
-        nativeSetter.call(input, text);
-      } else {
-        input.value = text;
-      }
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-
-      setTimeout(() => {
-        const btn = document.querySelector('div[class*="send-button"], button[type="submit"], button:has(svg)');
-        if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') {
-          btn.click();
-        } else {
-          input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+      const questionCount = () => document.querySelectorAll('[data-testid="chatQuestion"]').length;
+      const before = questionCount();
+      const isStreaming = () => Boolean(document.querySelector('button[aria-label*="停止"], button[aria-label*="Stop"]'));
+      const wasSent = () => questionCount() > before || isStreaming();
+      const waitFor = async (check, timeoutMs) => {
+        const deadline = Date.now() + timeoutMs;
+        for (;;) {
+          if (check()) return true;
+          if (Date.now() >= deadline) return false;
+          await sleep(100);
         }
-      }, 200);
+      };
 
-      return { ok: true, input: input.tagName };
+      // Replace anything left in the box. Lexical only honours the selection after it has seen
+      // the selectionchange, and otherwise restores its own state over the inserted text.
+      const squash = (value) => String(value || '').replace(/[\\u200b-\\u200d\\ufeff\\s]/g, '');
+      input.focus();
+      await sleep(100);
+      document.execCommand('selectAll');
+      await sleep(150);
+      document.execCommand('insertText', false, text);
+      await sleep(150);
+      if (squash(input.innerText) !== squash(text)) {
+        return { ok: false, error: 'Copilot input did not take the prompt' };
+      }
+
+      const findSend = () => document.querySelector('button[aria-label="傳送"], button[aria-label="Send"], button[aria-label="发送"]');
+      const isEnabled = (btn) => Boolean(btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true');
+      await waitFor(() => isEnabled(findSend()), 1500);
+      const btn = findSend();
+      if (isEnabled(btn)) {
+        btn.click();
+        if (await waitFor(wasSent, 3000)) return { ok: true, input: input.tagName, via: 'button' };
+      }
+      input.focus();
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
+      if (await waitFor(wasSent, 1500)) return { ok: true, input: input.tagName, via: 'enter' };
+      return { ok: false, error: 'Copilot did not send the prompt' };
     } catch (err) {
       return { ok: false, error: err.message };
     }

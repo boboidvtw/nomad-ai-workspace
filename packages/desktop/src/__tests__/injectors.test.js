@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const { PLATFORM_INJECTORS } = require('../injectors.js');
 
 test('Injectors: Generates syntactically valid scripts for all platforms', () => {
-  const platforms = ['claude', 'chatgpt', 'gemini', 'grok', 'deepseek', 'perplexity'];
+  const platforms = ['claude', 'chatgpt', 'gemini', 'grok', 'copilot', 'perplexity'];
   const samplePrompt =
     'Hello "world"! Testing special symbols: <script>alert(1)</script> \n newline & emoji 🚀';
 
@@ -128,4 +128,54 @@ test('Injectors: Gemini fails when the send click is swallowed', async () => {
   assert.strictEqual(result.ok, false);
   assert.match(result.error, /did not send/);
   assert.strictEqual(editor.textContent, 'hello');
+});
+
+/**
+ * Builds a Copilot chat page. jsdom has no execCommand, so insertText is emulated the way
+ * Lexical behaves: it replaces the editor's content, unless `ignoresInsert` is set.
+ * @param {{ ignoresInsert?: boolean }} [opts]
+ */
+function copilotPage(opts = {}) {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(
+    '<!doctype html><body><div id="feed"></div>' +
+      '<span id="m365-chat-editor-target-element" contenteditable="true">left over</span>' +
+      '<button aria-label="傳送" type="submit">↑</button></body>',
+    { runScripts: 'outside-only' },
+  );
+  const doc = dom.window.document;
+  const editor = /** @type {HTMLElement} */ (doc.getElementById('m365-chat-editor-target-element'));
+  Object.defineProperty(editor, 'innerText', { get: () => editor.textContent });
+  /** @type {any} */ (doc).execCommand = (/** @type {string} */ cmd, _ui, value) => {
+    if (cmd === 'insertText' && !opts.ignoresInsert) editor.textContent = String(value);
+    return true;
+  };
+  /** @type {string[]} */
+  const sent = [];
+  doc.querySelector('button')?.addEventListener('click', () => {
+    sent.push(String(editor.textContent));
+    const bubble = doc.createElement('div');
+    bubble.setAttribute('data-testid', 'chatQuestion');
+    doc.getElementById('feed')?.appendChild(bubble);
+  });
+  return { dom, sent };
+}
+
+test('Injectors: Copilot replaces leftover text and confirms the send', async () => {
+  const { dom, sent } = copilotPage();
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.copilot('hello copilot'));
+
+  assert.deepStrictEqual({ ok: result.ok, via: result.via }, { ok: true, via: 'button' });
+  assert.deepStrictEqual(sent, ['hello copilot']);
+});
+
+test('Injectors: Copilot refuses to send when the editor kept its old text', async () => {
+  const { dom, sent } = copilotPage({ ignoresInsert: true });
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.copilot('hello copilot'));
+
+  assert.strictEqual(result.ok, false);
+  assert.match(result.error, /did not take the prompt/);
+  assert.deepStrictEqual(sent, []);
 });

@@ -22,7 +22,7 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const WEBVIEW_PLATFORMS = ['claude', 'chatgpt', 'gemini', 'grok', 'deepseek', 'perplexity'];
+const WEBVIEW_PLATFORMS = ['claude', 'chatgpt', 'gemini', 'grok', 'copilot', 'perplexity'];
 const REPORT_DIR = path.join(homedir(), '.nomad', 'capture-checks');
 const DEFAULTS = { runs: 10, port: 8765, target: 0.9, bots: [] };
 
