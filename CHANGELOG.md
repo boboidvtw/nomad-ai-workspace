@@ -58,6 +58,7 @@
 
 ### ♻️ 重構 (Changed)
 
+- **Studio 第六個分頁改為 Microsoft Copilot**：取代 DeepSeek，網址為登入後的聊天頁 `m365.cloud.microsoft/chat`。Copilot 的輸入框是 Lexical 編輯器，送出前會確認框內確實是這次的提示詞（會取代殘留文字），並以新的提問泡泡或停止鈕確認已送出；擷取最後一則 `markdown-reply`。舊設定中的 `deepseek` 會自動換成 `copilot`。
 - **`@nomad/core` 型別合約改為自動產生**：移除漂移嚴重的手寫 `index.d.ts`（59 個 export 中 24 個、67 個錯誤碼中 29 個缺漏），改以 JS 原始碼的 JSDoc 為唯一來源，由 `tsc` 產生 `packages/core/types/`。daemon、desktop、dashboard 以 `checkJs` + `strictNullChecks` 對其做型別檢查；CI 新增 `typecheck:packages` 與 `types:check`（產生結果與 commit 內容不一致即失敗）。
 - **Dashboard 單一來源**：移除 `packages/desktop/src/dashboard-fallback.html` 重複副本與兩份重複的 static handler，Daemon 與 Desktop Bridge 統一透過 `@nomad/dashboard` 套件（`serveDashboard` / `findDashboardPath`）提供頁面；Electron 打包時隨 `node_modules/@nomad` 一併收錄。
 
