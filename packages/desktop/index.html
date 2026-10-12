@@ -685,8 +685,8 @@
       .dot-grok {
         background: #1d9bf0;
       }
-      .dot-deepseek {
-        background: #4d6bfe;
+      .dot-copilot {
+        background: #8b5cf6;
       }
       .dot-perplexity {
         background: #22b8cd;
@@ -1130,8 +1130,8 @@
           <div class="chip chip-grok" id="chip-grok" onclick="togglePlatform('grok')">
             <span class="dot dot-grok"></span>Grok
           </div>
-          <div class="chip chip-deepseek" id="chip-deepseek" onclick="togglePlatform('deepseek')">
-            <span class="dot dot-deepseek"></span>DeepSeek
+          <div class="chip chip-copilot" id="chip-copilot" onclick="togglePlatform('copilot')">
+            <span class="dot dot-copilot"></span>Copilot
           </div>
           <div
             class="chip chip-perplexity"
@@ -2725,7 +2725,7 @@
     </div>
 
     <script>
-      const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok', 'deepseek', 'perplexity'];
+      const ALL_PLATFORMS = ['chatgpt', 'claude', 'gemini', 'grok', 'copilot', 'perplexity'];
       let state = {
         layout: 'focus',
         activePlatforms: ['chatgpt'],
@@ -2735,7 +2735,7 @@
           claude: 1.0,
           gemini: 1.0,
           grok: 1.0,
-          deepseek: 1.0,
+          copilot: 1.0,
           perplexity: 1.0,
         },
         bridgePort: 8765,
