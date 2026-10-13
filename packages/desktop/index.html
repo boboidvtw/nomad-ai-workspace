@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nomad AI Studio - All-in-One Multi-AI Super Station</title>
+    <script>
+      // First paint in the stored theme's background (main.js passes it, see window-theme.js);
+      // applyTheme() sets the full token set once the settings IPC returns.
+      (() => {
+        const query = new URLSearchParams(location.search);
+        const bg = query.get('bg');
+        const mode = query.get('mode');
+        const root = document.documentElement;
+        if (/^#[0-9a-f]{6}$/i.test(bg || '')) root.style.setProperty('--bg-base', bg);
+        if (mode === 'light' || mode === 'dark') root.style.colorScheme = mode;
+      })();
+    </script>
     <style>
       * {
         box-sizing: border-box;
