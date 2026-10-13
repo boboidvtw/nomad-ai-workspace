@@ -18,6 +18,7 @@ const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
 const { createStudioBots } = require('./src/studio-bots');
+const { windowBackgroundFor, firstPaintQuery } = require('./src/window-theme');
 
 const CHAT_READY_DELAY_MS = 2500;
 const { TrayAndShortcutManager } = require('./src/tray');
@@ -252,7 +253,7 @@ async function createMainWindow() {
     minHeight: 640,
     title: 'Nomad AI Studio',
     titleBarStyle: isMac ? 'hiddenInset' : 'default',
-    backgroundColor: '#0f172a',
+    backgroundColor: windowBackgroundFor(store.get('appearance')),
     icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -261,7 +262,9 @@ async function createMainWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, 'index.html'), {
+    query: firstPaintQuery(store.get('appearance')),
+  });
 
   // 3. Initialize WebContentsViews for all 4 platforms with on-demand lazy loading
   const initialActive = store.get('activePlatforms') || ['chatgpt'];
@@ -925,6 +928,8 @@ ipcMain.handle('nomad:get-appearance', () => {
 ipcMain.handle('nomad:set-appearance', (event, appearance) => {
   store.set('appearance', appearance);
   if (mainWindow && !mainWindow.isDestroyed()) {
+    // Keeps resize gaps and the next reload in the new theme's colour.
+    mainWindow.setBackgroundColor(windowBackgroundFor(appearance));
     mainWindow.webContents.send('nomad:remote-update', { appearance });
   }
   return { success: true, appearance: store.get('appearance') };
