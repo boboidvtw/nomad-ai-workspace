@@ -13,6 +13,6 @@
     "types": ["node"],
     "typeRoots": ["../../node_modules/@types"]
   },
-  "include": ["index.js"],
+  "include": ["index.js", "theme.js"],
   "exclude": ["**/__tests__/**", "node_modules", "dist-build"]
 }

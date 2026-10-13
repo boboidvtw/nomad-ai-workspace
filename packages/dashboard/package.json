@@ -13,6 +13,7 @@
   "license": "GPL-3.0",
   "files": [
     "index.js",
+    "theme.js",
     "index.html",
     "bots-panel.html"
   ],

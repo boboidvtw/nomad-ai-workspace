@@ -434,6 +434,7 @@ async function createMainWindow() {
     // /api/debug/* runs scripts inside the logged-in AI webviews: dev builds only, or opt in explicitly.
     debugEndpoints: !app.isPackaged || process.env.NOMAD_DEBUG_ENDPOINTS === '1',
     getDriveSyncDir: () => store.get('driveSync')?.customPath || undefined,
+    getAppearance: () => store.get('appearance'),
     mcpGateway,
     getStatus: () => ({
       layout: store.get('layout'),
