@@ -52,6 +52,18 @@ describe('Bots - routines', () => {
     assert.strictEqual(explicit.data.enabled, true);
   });
 
+  it('treats Copilot and Perplexity bots as webview bots', () => {
+    const { scheduler, roster } = setup();
+    for (const platform of ['copilot', 'perplexity']) {
+      roster.registerAgent({ id: `bot-${platform}`, name: platform, platform });
+      const res = scheduler.addSchedule({
+        name: platform,
+        taskTemplate: template(`bot-${platform}`),
+      });
+      assert.strictEqual(res.data.enabled, false, platform);
+    }
+  });
+
   it('writes each routine run to the bot timeline', async () => {
     const { scheduler, roster } = setup();
     const added = scheduler.addSchedule({

@@ -10,6 +10,8 @@ const NEW_CHAT_URLS = Object.freeze({
   chatgpt: 'https://chatgpt.com/',
   gemini: 'https://gemini.google.com/app',
   grok: 'https://grok.com/',
+  copilot: 'https://m365.cloud.microsoft/chat',
+  perplexity: 'https://www.perplexity.ai/',
 });
 
 /** @type {Readonly<Record<string, RegExp>>} */
@@ -18,6 +20,8 @@ const CONVERSATION_PATTERNS = Object.freeze({
   chatgpt: /^https:\/\/chatgpt\.com\/(?:g\/[A-Za-z0-9-]+\/)?c\/[A-Za-z0-9-]+$/,
   gemini: /^https:\/\/gemini\.google\.com\/(?:u\/\d+\/)?app\/[A-Za-z0-9]+$/,
   grok: /^https:\/\/grok\.com\/(?:c|chat)\/[A-Za-z0-9-]+$/,
+  copilot: /^https:\/\/m365\.cloud\.microsoft\/chat\/conversation\/[A-Za-z0-9-]+$/,
+  perplexity: /^https:\/\/www\.perplexity\.ai\/search\/[A-Za-z0-9._-]+$/,
 });
 
 /**

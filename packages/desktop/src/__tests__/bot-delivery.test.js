@@ -24,6 +24,23 @@ test('delivers to webview bots through the webview task runner with the bot as c
   assert.strictEqual(calls[0].context.agent.id, 'agent-claude');
 });
 
+test('delivers to Copilot and Perplexity bots through the webview task runner', async () => {
+  /** @type {string[]} */
+  const platforms = [];
+  const deliver = createBotDeliver({
+    runWebviewTask: async (platform) => {
+      platforms.push(platform);
+      return ok({ text: 'web reply' });
+    },
+  });
+
+  for (const platform of ['copilot', 'perplexity']) {
+    const res = await deliver({ ...bot('agent-claude'), platform }, 'hello', meta);
+    assert.strictEqual(res.success, true, platform);
+  }
+  assert.deepStrictEqual(platforms, ['copilot', 'perplexity']);
+});
+
 test('delivers to local-model bots with the persona as the system prompt', async () => {
   /** @type {any[]} */
   const requests = [];

@@ -78,7 +78,14 @@ const DEFAULT_PRESET_SCHEDULES = [
   },
 ];
 
-const WEBVIEW_PLATFORMS = Object.freeze(['claude', 'chatgpt', 'gemini', 'grok']);
+const WEBVIEW_PLATFORMS = Object.freeze([
+  'claude',
+  'chatgpt',
+  'gemini',
+  'grok',
+  'copilot',
+  'perplexity',
+]);
 
 /**
  * Hermes-style routine label: `[bot:<handle>] <name>`. Falls back to the assignee id.
