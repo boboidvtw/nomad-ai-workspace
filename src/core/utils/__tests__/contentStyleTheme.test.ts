@@ -19,8 +19,6 @@ const STYLESHEETS = [
   'src/features/plugins/catalog/sites/chatgpt/plugins/reading-width/style.css',
   'src/features/plugins/catalog/sites/claude/plugins/reading-width/style.css',
   'src/features/plugins/catalog/sites/claude/plugins/cjk-render-fix/style.css',
-  'src/features/plugins/catalog/sites/deepseek/plugins/reading-width/style.css',
-  'src/features/plugins/catalog/sites/deepseek/plugins/timeline/style.css',
 ] as const;
 
 const HOST_DIALECTS: ReadonlyArray<{ name: string; pattern: RegExp }> = [

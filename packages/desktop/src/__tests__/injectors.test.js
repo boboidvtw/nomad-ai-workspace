@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const { PLATFORM_INJECTORS } = require('../injectors.js');
 
 test('Injectors: Generates syntactically valid scripts for all platforms', () => {
-  const platforms = ['claude', 'chatgpt', 'gemini', 'grok', 'deepseek', 'perplexity'];
+  const platforms = ['claude', 'chatgpt', 'gemini', 'grok', 'copilot', 'perplexity'];
   const samplePrompt =
     'Hello "world"! Testing special symbols: <script>alert(1)</script> \n newline & emoji 🚀';
 
@@ -46,31 +46,84 @@ test('Injectors: Formats attachments into prompt payload properly', () => {
 });
 
 /**
- * Runs an injector inside a jsdom page and resolves after its delayed send step.
- * @param {string} html
- * @param {string} script
+ * The pages each confirming injector types into. `send` is the button the page reacts to by
+ * emptying the input box, the way the real sites do once they take the prompt.
  */
-async function runInjector(html, script) {
+const SEND_PAGES = {
+  claude: {
+    html: '<div class="ProseMirror" contenteditable="true"></div><button aria-label="傳送訊息">↑</button>',
+    input: '.ProseMirror',
+  },
+  chatgpt: {
+    html: '<div id="prompt-textarea" contenteditable="true"><p></p></div><button data-testid="send-button" aria-label="傳送提示">↑</button>',
+    input: '#prompt-textarea',
+  },
+  grok: {
+    // The Voyager prompt manager's save button is also type=submit and comes first.
+    html:
+      '<div class="gv-pm"><button type="submit" class="gv-pm-save">儲存</button></div>' +
+      '<form><textarea placeholder="Ask Grok"></textarea><button type="submit" aria-label="提交">↑</button></form>',
+    input: 'textarea',
+  },
+  perplexity: {
+    html: '<textarea placeholder="Ask anything"></textarea><button aria-label="Submit">→</button>',
+    input: 'textarea',
+  },
+};
+
+/**
+ * Runs a confirming injector in jsdom.
+ * @param {keyof typeof SEND_PAGES} platform
+ * @param {{ swallowClicks?: boolean }} [opts]
+ */
+async function runConfirmingInjector(platform, opts = {}) {
   const { JSDOM } = require('jsdom');
-  const dom = new JSDOM(`<!doctype html><body>${html}</body>`, { runScripts: 'outside-only' });
+  const page = SEND_PAGES[platform];
+  // The Voyager extension tags <body> on these sites (gv-claude-page and the like).
+  const dom = new JSDOM(`<!doctype html><body class="gv-${platform}-page">${page.html}</body>`, {
+    runScripts: 'outside-only',
+  });
+  const doc = dom.window.document;
+  const input = /** @type {HTMLElement & { value?: string }} */ (doc.querySelector(page.input));
+  // jsdom has no layout; Grok picks the largest visible input.
+  input.getBoundingClientRect = () => /** @type {DOMRect} */ ({ width: 400, height: 40 });
+  doc.querySelector('form')?.addEventListener('submit', (e) => e.preventDefault());
   /** @type {string[]} */
-  const clicks = [];
-  for (const btn of dom.window.document.querySelectorAll('button')) {
-    btn.addEventListener('click', () => clicks.push(btn.getAttribute('aria-label') || ''));
+  const sent = [];
+  const send = doc.querySelector('button:not(.gv-pm-save)');
+  send?.addEventListener('click', () => {
+    sent.push(String(input.value ?? input.textContent));
+    if ('value' in input && input.tagName === 'TEXTAREA') input.value = '';
+    else input.innerHTML = '<p></p>';
+  });
+  if (opts.swallowClicks) {
+    dom.window.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      true,
+    );
   }
-  const result = dom.window.eval(script);
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  return { result, clicks, document: dom.window.document };
+  const result = await dom.window.eval(PLATFORM_INJECTORS[platform]('hello'));
+  return { result, sent };
 }
 
-test('Injectors: Claude clicks the zh-Hant send button (傳送訊息)', async () => {
-  const { result, clicks } = await runInjector(
-    '<div class="ProseMirror" contenteditable="true"></div><button aria-label="傳送訊息">↑</button>',
-    PLATFORM_INJECTORS.claude('hello'),
-  );
-  assert.strictEqual(result.ok, true);
-  assert.deepStrictEqual(clicks, ['傳送訊息']);
-});
+for (const platform of /** @type {(keyof typeof SEND_PAGES)[]} */ (Object.keys(SEND_PAGES))) {
+  test(`Injectors: ${platform} reports ok once the prompt leaves the input box`, async () => {
+    const { result, sent } = await runConfirmingInjector(platform);
+    assert.deepStrictEqual({ ok: result.ok, via: result.via }, { ok: true, via: 'button' });
+    assert.deepStrictEqual(sent, ['hello']);
+  });
+
+  test(`Injectors: ${platform} fails when the send click is swallowed`, async () => {
+    const { result, sent } = await runConfirmingInjector(platform, { swallowClicks: true });
+    assert.strictEqual(result.ok, false);
+    assert.match(result.error, /did not send the prompt/);
+    assert.deepStrictEqual(sent, []);
+  });
+}
 
 test('Injectors: toDeliveryResult keeps a failed injector result failed', () => {
   const { toDeliveryResult } = require('../injectors.js');
@@ -128,4 +181,54 @@ test('Injectors: Gemini fails when the send click is swallowed', async () => {
   assert.strictEqual(result.ok, false);
   assert.match(result.error, /did not send/);
   assert.strictEqual(editor.textContent, 'hello');
+});
+
+/**
+ * Builds a Copilot chat page. jsdom has no execCommand, so insertText is emulated the way
+ * Lexical behaves: it replaces the editor's content, unless `ignoresInsert` is set.
+ * @param {{ ignoresInsert?: boolean }} [opts]
+ */
+function copilotPage(opts = {}) {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(
+    '<!doctype html><body><div id="feed"></div>' +
+      '<span id="m365-chat-editor-target-element" contenteditable="true">left over</span>' +
+      '<button aria-label="傳送" type="submit">↑</button></body>',
+    { runScripts: 'outside-only' },
+  );
+  const doc = dom.window.document;
+  const editor = /** @type {HTMLElement} */ (doc.getElementById('m365-chat-editor-target-element'));
+  Object.defineProperty(editor, 'innerText', { get: () => editor.textContent });
+  /** @type {any} */ (doc).execCommand = (/** @type {string} */ cmd, _ui, value) => {
+    if (cmd === 'insertText' && !opts.ignoresInsert) editor.textContent = String(value);
+    return true;
+  };
+  /** @type {string[]} */
+  const sent = [];
+  doc.querySelector('button')?.addEventListener('click', () => {
+    sent.push(String(editor.textContent));
+    const bubble = doc.createElement('div');
+    bubble.setAttribute('data-testid', 'chatQuestion');
+    doc.getElementById('feed')?.appendChild(bubble);
+  });
+  return { dom, sent };
+}
+
+test('Injectors: Copilot replaces leftover text and confirms the send', async () => {
+  const { dom, sent } = copilotPage();
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.copilot('hello copilot'));
+
+  assert.deepStrictEqual({ ok: result.ok, via: result.via }, { ok: true, via: 'button' });
+  assert.deepStrictEqual(sent, ['hello copilot']);
+});
+
+test('Injectors: Copilot refuses to send when the editor kept its old text', async () => {
+  const { dom, sent } = copilotPage({ ignoresInsert: true });
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.copilot('hello copilot'));
+
+  assert.strictEqual(result.ok, false);
+  assert.match(result.error, /did not take the prompt/);
+  assert.deepStrictEqual(sent, []);
 });

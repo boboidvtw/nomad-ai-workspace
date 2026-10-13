@@ -10,22 +10,23 @@ import {
 
 describe('dedicated API provider settings', () => {
     it('recognizes dedicated providers and restores provider-specific settings', () => {
-        expect(isDedicatedApiProvider('deepseek')).toBe(true);
+        expect(isDedicatedApiProvider('zhipu')).toBe(true);
+        expect(isDedicatedApiProvider('deepseek')).toBe(false);
         expect(isDedicatedApiProvider('openai')).toBe(false);
 
         expect(
             createDedicatedApiSettingsPayload({
-                geminiDeepseekApiKey: 'deepseek-key',
-                geminiDeepseekModel: 'deepseek-v4-pro, deepseek-chat',
-                geminiDeepseekSelectedModel: 'deepseek-chat',
-            }).deepseek
+                geminiZhipuApiKey: 'zhipu-key',
+                geminiZhipuModel: 'glm-5.3, glm-5.2',
+                geminiZhipuSelectedModel: 'glm-5.2',
+            }).zhipu
         ).toEqual(
             expect.objectContaining({
-                provider: 'deepseek',
-                baseUrl: 'https://api.deepseek.com',
-                apiKey: 'deepseek-key',
-                model: 'deepseek-v4-pro, deepseek-chat',
-                selectedModel: 'deepseek-chat',
+                provider: 'zhipu',
+                baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+                apiKey: 'zhipu-key',
+                model: 'glm-5.3, glm-5.2',
+                selectedModel: 'glm-5.2',
                 providerRouting: '',
             })
         );

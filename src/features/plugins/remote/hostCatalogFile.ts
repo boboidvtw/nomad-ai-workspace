@@ -8,7 +8,7 @@
  * match is discarded as a whole.
  *
  * Shape:
- *   { format: 1, host: "chat.deepseek.com", generatedAt: "<ISO>",
+ *   { format: 1, host: "claude.ai", generatedAt: "<ISO>",
  *     site?: <site.json data; a valid one covering the host overrides the bundled adapter>,
  *     plugins: [<raw manifest with CSS inlined as contributes.styles[].css>] }
  */

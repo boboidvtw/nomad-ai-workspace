@@ -33,12 +33,9 @@ afterEach(() => {
 });
 
 describe('resolveScheme', () => {
-  it('reads each shipped class-dialect adapter its own way, DeepSeek included', () => {
+  it('reads each shipped class-dialect adapter its own way', () => {
     const registry = SiteRegistry.createDefault();
-    const cases: Array<[string, string]> = [
-      ['https://chat.deepseek.com/a/chat/s/1', 'dark'],
-      ['https://claude.ai/chat/1', 'dark'],
-    ];
+    const cases: Array<[string, string]> = [['https://claude.ai/chat/1', 'dark']];
 
     for (const [url, expected] of cases) {
       const theme = registry.resolveByUrl(url)?.theme;
@@ -86,17 +83,17 @@ describe('resolveScheme', () => {
 
 describe('startScheme', () => {
   it('stamps the root and follows a host class flip', async () => {
-    const deepseek = SiteRegistry.createDefault().resolveByUrl('https://chat.deepseek.com/')?.theme;
-    const bridge = startScheme(deepseek ?? null, document);
+    const claude = SiteRegistry.createDefault().resolveByUrl('https://claude.ai/')?.theme;
+    const bridge = startScheme(claude ?? null, document);
 
     expect(getScheme()).toBe('light');
 
-    document.body.className = 'dark';
+    document.documentElement.classList.add('dark');
     await settle();
     expect(document.documentElement.getAttribute(SCHEME_ATTR)).toBe('dark');
     expect(getScheme()).toBe('dark');
 
-    document.body.className = 'light';
+    document.documentElement.classList.remove('dark');
     await settle();
     expect(getScheme()).toBe('light');
 

@@ -14,7 +14,6 @@ describe('SiteRegistry.resolveByUrl', () => {
     expect(
       registry.resolveByUrl('https://artifact-id.frame.claudeusercontent.com/_f/version/')?.id,
     ).toBe('claude');
-    expect(registry.resolveByUrl('https://chat.deepseek.com/a/chat/s/abc')?.id).toBe('deepseek');
   });
 
   it('returns null for sites with no adapter', () => {
@@ -30,7 +29,6 @@ describe('resolvePluginPlatformId', () => {
     expect(
       resolvePluginPlatformId('https://artifact-id.frame.claudeusercontent.com/_f/version/'),
     ).toBe('claude');
-    expect(resolvePluginPlatformId('https://chat.deepseek.com/a/chat/s/abc')).toBe('deepseek');
   });
 
   it('returns null for native Voyager sites (full feature set runs there)', () => {
@@ -48,12 +46,10 @@ describe('resolvePluginPlatformId', () => {
   });
 });
 
-describe('DeepSeek URL boundaries', () => {
-  it.each(['https://chat.deepseek.com/', 'https://chat.deepseek.com/a/chat/s/example?x=1#last'])(
-    'resolves %s as a plugin-only platform',
-    (url) => expect(resolvePluginPlatformId(url)).toBe('deepseek'),
-  );
+describe('DeepSeek (removed platform)', () => {
   it.each([
+    'https://chat.deepseek.com/',
+    'https://chat.deepseek.com/a/chat/s/example?x=1#last',
     'https://deepseek.com/',
     'https://api.deepseek.com/',
     'https://chat.deepseek.com.example.org/',

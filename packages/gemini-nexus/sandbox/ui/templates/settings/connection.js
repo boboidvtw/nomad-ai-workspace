@@ -12,7 +12,6 @@ export const ConnectionSettingsTemplate = `
                 <option value="official" data-i18n="providerOfficial">Google Gemini API</option>
                 <option value="openai" data-i18n="providerOpenAI">OpenAI Compatible API</option>
                 <option value="openai_official" data-i18n="providerOpenAIOfficial">OpenAI Official API</option>
-                <option value="deepseek" data-i18n="providerDeepSeek">DeepSeek API</option>
                 <option value="openrouter" data-i18n="providerOpenRouter">OpenRouter API</option>
                 <option value="dashscope" data-i18n="providerDashScope">Qwen / DashScope API</option>
                 <option value="anthropic" data-i18n="providerAnthropic">Anthropic API</option>

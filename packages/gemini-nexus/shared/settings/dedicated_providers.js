@@ -203,8 +203,8 @@ export function getDedicatedApiHeaders(provider) {
 export function getDedicatedApiReasoningEffort(provider, thinkingLevel = DEFAULT_THINKING_LEVEL) {
     const config = getProviderConfig(provider);
     if (!config) return thinkingLevel;
-    if (config.transport === 'openai-responses') return thinkingLevel;
-    return config.reasoningAdapter === 'reasoning_effort' ? thinkingLevel : null;
+    // Chat Completions providers carry reasoning in their own payload (createDedicatedApiChatPayload).
+    return config.transport === 'openai-responses' ? thinkingLevel : null;
 }
 
 export function createDedicatedApiChatPayload(

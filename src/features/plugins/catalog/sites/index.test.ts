@@ -15,12 +15,8 @@ import {
 describe('bundled catalog discovery', () => {
   it('finds one site.json per plugin platform, with ids equal to their directories', () => {
     const entries = listBundledSiteEntries();
-    expect(entries.map((entry) => entry.siteDir)).toEqual(['chatgpt', 'claude', 'deepseek']);
-    expect(BUNDLED_SITE_ADAPTERS.map((adapter) => adapter.id)).toEqual([
-      'chatgpt',
-      'claude',
-      'deepseek',
-    ]);
+    expect(entries.map((entry) => entry.siteDir)).toEqual(['chatgpt', 'claude']);
+    expect(BUNDLED_SITE_ADAPTERS.map((adapter) => adapter.id)).toEqual(['chatgpt', 'claude']);
     for (const adapter of BUNDLED_SITE_ADAPTERS) {
       expect(requireBundledSiteAdapter(adapter.id)).toBe(adapter);
       expect(adapter.capabilities).toBeInstanceOf(Set);
@@ -38,11 +34,6 @@ describe('bundled catalog discovery', () => {
       'sites/chatgpt/plugins/reading-width/plugin.json',
       'sites/claude/plugins/cjk-render-fix/plugin.json',
       'sites/claude/plugins/reading-width/plugin.json',
-      'sites/deepseek/plugins/formula-copy/plugin.json',
-      'sites/deepseek/plugins/reading-width/plugin.json',
-      'sites/deepseek/plugins/timeline/plugin.json',
-      'sites/deepseek/plugins/vim-input/plugin.json',
-      'sites/deepseek/plugins/wrap-code/plugin.json',
     ]);
     for (const entry of entries) {
       // A primitive-only plugin ships no CSS; every CSS file found is real content.

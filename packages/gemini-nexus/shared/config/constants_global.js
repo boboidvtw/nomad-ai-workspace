@@ -93,22 +93,12 @@
             transport: 'openai-responses',
             supportsWebSearch: true,
         }),
-        deepseek: Object.freeze({
-            id: 'deepseek',
-            storagePrefix: 'Deepseek',
-            defaultBaseUrl: 'https://api.deepseek.com',
-            defaultModels: 'deepseek-v4-pro, deepseek-v4-flash, deepseek-reasoner, deepseek-chat',
-            defaultModel: 'deepseek-v4-pro',
-            transport: 'openai-chat',
-            reasoningAdapter: 'reasoning_effort',
-            supportsWebSearch: false,
-        }),
         openrouter: Object.freeze({
             id: 'openrouter',
             storagePrefix: 'Openrouter',
             defaultBaseUrl: 'https://openrouter.ai/api/v1',
             defaultModels:
-                'openai/gpt-5.6-terra, anthropic/claude-sonnet-5, google/gemini-3.1-pro, deepseek/deepseek-v4-flash',
+                'openai/gpt-5.6-terra, anthropic/claude-sonnet-5, google/gemini-3.1-pro',
             defaultModel: 'openai/gpt-5.6-terra',
             modelListUrl: 'https://openrouter.ai/api/v1/models',
             transport: 'openai-chat',

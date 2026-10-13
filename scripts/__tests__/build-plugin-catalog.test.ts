@@ -22,7 +22,6 @@ const EXPECTED_SITES: Readonly<Record<string, string>> = {
   'claude.ai': 'claude',
   'chatgpt.com': 'chatgpt',
   'chat.openai.com': 'chatgpt',
-  'chat.deepseek.com': 'deepseek',
 };
 
 const tempRoots: string[] = [];
@@ -106,9 +105,7 @@ describe('build-plugin-catalog', () => {
 
     const names = readdirSync(join(outDir, 'hosts')).sort();
     expect(names).toEqual(
-      ['chat.deepseek.com', 'chat.openai.com', 'chatgpt.com', 'claude.ai'].map(
-        (host) => `${host}.json`,
-      ),
+      ['chat.openai.com', 'chatgpt.com', 'claude.ai'].map((host) => `${host}.json`),
     );
     // Wildcard patterns (https://*.frame.claudeusercontent.com/*) have no host
     // a client could derive from location.host, so they publish nothing.
@@ -218,22 +215,24 @@ describe('build-plugin-catalog', () => {
     expect(existsSync(join(outDir, 'hosts', 'demo.example.json'))).toBe(false);
   });
 
-  it('publishes the DeepSeek formula-copy plugin with its requires and native op', async () => {
+  it('publishes a primitive-backed plugin with its requires and native op', async () => {
     const outDir = makeTempDir();
-    await build(outDir);
+    const catalogDir = makeFixtureCatalog({
+      manifest: {
+        engine: '>=1.3.0',
+        requires: { handlers: ['formulaCopy'] },
+        contributes: { domOps: [{ op: 'native', handler: 'formulaCopy', params: {} }] },
+      },
+    });
+    await build(outDir, catalogDir);
 
-    const plugins = readHostFile(outDir, 'chat.deepseek.com').plugins as readonly Record<
+    const plugins = readHostFile(outDir, 'demo.example').plugins as readonly Record<
       string,
       unknown
     >[];
-    // The exact count is the catalog's business, not this test's: it grows
-    // whenever a plugin is added under sites/deepseek/.
-    expect(plugins.length).toBeGreaterThanOrEqual(2);
-
-    const formulaCopy = plugins.find((plugin) => plugin.id === 'voyager.deepseek-formula-copy');
-    if (!formulaCopy) throw new Error('the formula-copy plugin was not published');
+    const formulaCopy = plugins.find((plugin) => plugin.id === 'demo.widen');
+    if (!formulaCopy) throw new Error('the primitive-backed plugin was not published');
     expect(formulaCopy.requires).toEqual({ handlers: ['formulaCopy'] });
-    expect(typeof formulaCopy.changelog).toBe('string');
     const contributes = formulaCopy.contributes as { domOps?: readonly Record<string, unknown>[] };
     expect(contributes.domOps).toEqual([{ op: 'native', handler: 'formulaCopy', params: {} }]);
     // The engine floor is what makes an old build say "update Voyager" instead

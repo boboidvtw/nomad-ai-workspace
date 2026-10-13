@@ -12,7 +12,6 @@ import { SettingToggleRow } from './SettingToggleRow';
 import {
   IconChatGPT,
   IconClaude,
-  IconDeepSeek,
   IconKimi,
   IconMidjourney,
   IconNotebookLM,
@@ -122,7 +121,6 @@ export function PromptManagerSettingsCard({
               {[
                 { domain: 'chatgpt.com', label: 'ChatGPT', Icon: IconChatGPT },
                 { domain: 'claude.ai', label: 'Claude', Icon: IconClaude },
-                { domain: 'deepseek.com', label: 'DeepSeek', Icon: IconDeepSeek },
                 { domain: 'qwen.ai', label: 'Qwen', Icon: IconQwen },
                 { domain: 'kimi.com', label: 'Kimi', Icon: IconKimi },
                 { domain: 'notebooklm.google.com', label: 'NotebookLM', Icon: IconNotebookLM },

@@ -49,7 +49,7 @@
 
 Gemini Nexus 当前围绕浏览器内 AI 工作流提供以下能力：
 
-- **Gemini Web**、**Gemini API**、**OpenAI Compatible API**、**OpenAI 官方 API**、**DeepSeek API**、**OpenRouter API**、**通义 / DashScope API**、**Anthropic API** 与 **智谱 API** 多提供方切换，支持按渠道配置 `Base URL`、`API Key` 与 `Model IDs`。
+- **Gemini Web**、**Gemini API**、**OpenAI Compatible API**、**OpenAI 官方 API**、**OpenRouter API**、**通义 / DashScope API**、**Anthropic API** 与 **智谱 API** 多提供方切换，支持按渠道配置 `Base URL`、`API Key` 与 `Model IDs`。
 - **Gemini Web 临时对话** 开关，可让 Web 渠道请求不进入 Gemini 近期对话。
 - **Gemini API Google Search grounding** 支持，并在回复中展示联网来源。
 - **OpenAI Compatible API 联网搜索** 支持，可按当前接口使用 Responses API `web_search` 或 Chat Completions `web_search_options`。
@@ -70,7 +70,6 @@ Gemini Nexus 当前围绕浏览器内 AI 工作流提供以下能力：
 | **Official API**      | `official.js`          | Gemini 3.8 Flash / 3.5 Flash-Lite / 3.1 Pro | **极速响应**，支持 **Thinking** 与 Google Search grounding          | 需 Google AI Studio Key |
 | **OpenAI Compatible** | `openai_compatible.js` | GPT/Claude/兼容模型                         | **高扩展性**，支持 Chat Completions / Responses API 与可选联网搜索  | 需第三方服务密钥        |
 | **OpenAI 官方 API**   | `openai_compatible.js` | GPT 推理/搜索模型                           | 专门走 Responses API，支持 reasoning summary 与可选联网搜索         | 需 OpenAI API Key       |
-| **DeepSeek API**      | `openai_compatible.js` | DeepSeek 对话/推理模型                      | DeepSeek Chat Completions 默认端点，并显示 `reasoning_content`      | 需 DeepSeek API Key     |
 | **OpenRouter API**    | `openai_compatible.js` | OpenRouter 模型 ID                          | 可拉取 `/models`，支持 provider routing JSON 与原生 `reasoning`     | 需 OpenRouter API Key   |
 | **通义 / DashScope**  | `openai_compatible.js` | Qwen 文本与 VL 模型                         | 专门 DashScope 兼容端点，发送 `enable_thinking` 并支持 VL 图片输入  | 需 DashScope API Key    |
 | **Anthropic API**     | `anthropic.js`         | Claude 模型                                 | 原生 Messages API，支持图片输入与 extended thinking 流式显示        | 需 Anthropic API Key    |

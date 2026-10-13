@@ -32,8 +32,10 @@ test('Orchestrator: Executes full round-robin relay sequence with state events',
       promptsInjected.push({ platform, text });
       return { ok: true };
     },
+    // A platform shows its reply only after it has been sent a prompt.
     extractResponse: async (platform) => {
-      return { ok: true, text: mockResponses[platform] || 'Mock output' };
+      const sent = promptsInjected.some((p) => p.platform === platform);
+      return { ok: true, text: sent ? mockResponses[platform] || 'Mock output' : '' };
     },
     checkStreaming: async () => {
       return { ok: true, isStreaming: false };
@@ -173,4 +175,40 @@ test('Orchestrator: Falls back to the default turn delay for non-numeric input',
   await orch2.start({ prompt: 'Goal', sequence: ['claude', 'chatgpt'], turnDelayMs: -10 });
   assert.strictEqual(orch2.turnDelayMs, 0);
   orch2.stop();
+});
+
+test('Orchestrator: A relay turn skips the reply that was on the page before the send', async () => {
+  /** @type {Record<string, string>} */
+  const page = { claude: 'stale claude', chatgpt: 'stale chatgpt' };
+  /** @type {Record<string, number>} */
+  const pollsSinceSend = {};
+  const orch = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    pollIntervalMs: 2,
+    maxWaitMs: 500,
+    injectPrompt: async (/** @type {string} */ platform) => {
+      pollsSinceSend[platform] = 0;
+      return { ok: true };
+    },
+    // The new reply shows up only after a few polls; until then the old one is still there.
+    extractResponse: async (/** @type {string} */ platform) => {
+      pollsSinceSend[platform] = (pollsSinceSend[platform] ?? 0) + 1;
+      if (pollsSinceSend[platform] > 3) page[platform] = `fresh ${platform}`;
+      return { ok: true, text: page[platform] };
+    },
+  });
+
+  /** @type {any} */
+  let summary = null;
+  orch.onComplete = (/** @type {any} */ s) => {
+    summary = s;
+  };
+  await orch.start({ prompt: 'hi', sequence: ['claude', 'chatgpt'], maxRounds: 1, turnDelayMs: 0 });
+  while (!summary) await orch.sleep(5);
+
+  const replies = summary.history.filter((/** @type {any} */ t) => t.type === 'assistant-response');
+  assert.deepStrictEqual(
+    replies.map((/** @type {any} */ t) => t.content),
+    ['fresh claude', 'fresh chatgpt'],
+  );
 });

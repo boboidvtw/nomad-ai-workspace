@@ -23,7 +23,8 @@ const TASK_REPLY_TIMEOUT_MS = 180000;
 /**
  * @typedef {Object} StudioBotsDeps
  * @property {(platform: string, text: string) => Promise<Record<string, any>>} inject
- * @property {(platform: string, options: { maxWaitMs: number }) => Promise<any>} awaitSettled
+ * @property {(platform: string, options: { maxWaitMs: number, previousText: string }) => Promise<any>} awaitSettled
+ * @property {(platform: string) => Promise<string>} [readReply]
  * @property {(platform: string, url: string | null) => Promise<{ ok: boolean, error?: string }>} openChat
  * @property {(platform: string) => Promise<string | null>} currentUrl
  * @property {(notice: any) => void} notify
@@ -53,7 +54,9 @@ function createStudioBots(deps) {
   const webviewRunner = createWebviewTaskRunner({
     roster: enabled ? roster : undefined,
     inject: deps.inject,
-    awaitSettled: (platform) => deps.awaitSettled(platform, { maxWaitMs: TASK_REPLY_TIMEOUT_MS }),
+    readReply: deps.readReply,
+    awaitSettled: (platform, { previousText }) =>
+      deps.awaitSettled(platform, { maxWaitMs: TASK_REPLY_TIMEOUT_MS, previousText }),
     openChat: enabled ? deps.openChat : undefined,
     currentUrl: enabled ? deps.currentUrl : undefined,
     notify: deps.notify,

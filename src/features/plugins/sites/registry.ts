@@ -13,7 +13,7 @@ import { matchesAnyPattern } from './matchPattern';
 
 /**
  * Gemini and AI Studio are native surfaces whose selectors come from Voyager's
- * own first-party code; every plugin platform (Claude, ChatGPT, DeepSeek, …) is
+ * own first-party code; every plugin platform (Claude, ChatGPT, …) is
  * data in `catalog/sites/<site>/site.json`, discovered at build time.
  */
 export const DEFAULT_ADAPTERS: readonly SiteAdapter[] = [
@@ -25,7 +25,7 @@ export const DEFAULT_ADAPTERS: readonly SiteAdapter[] = [
 /**
  * Site ids Voyager treats as first-party "native" surfaces — these get the full
  * Gemini Voyager feature set (Timeline, Folders, Prompt Manager, …). Every other
- * adapter (Claude / ChatGPT / DeepSeek) is a *plugin platform*: declarative plugins
+ * adapter (Claude / ChatGPT) is a *plugin platform*: declarative plugins
  * + platform theming only, never core Gemini features.
  */
 export const NATIVE_SITE_IDS: ReadonlySet<SiteId> = new Set<SiteId>(['gemini', 'aistudio']);
@@ -57,7 +57,7 @@ export class SiteRegistry {
 }
 
 /**
- * Resolve the id of a third-party *plugin platform* for a URL (Claude / ChatGPT / DeepSeek),
+ * Resolve the id of a third-party *plugin platform* for a URL (Claude / ChatGPT),
  * or `null` when the URL is a native Voyager site (Gemini / AI Studio)
  * or has no adapter at all. The content script uses this to keep core Gemini
  * features off plugin-only platforms while still running the plugin host + theme.

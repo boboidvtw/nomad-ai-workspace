@@ -2,7 +2,7 @@
 
 A self-contained subsystem that lets Voyager run **plugins** — units that inject
 styles / DOM changes into AI chat sites (Gemini, AI Studio, ChatGPT, Claude,
-DeepSeek, …). Voyager's own features can migrate onto this over time; third parties
+…). Voyager's own features can migrate onto this over time; third parties
 can ship their own plugins against the same contract.
 
 ## Two design constraints that shaped everything
@@ -46,8 +46,8 @@ EntitlementProvider  ─► entitled?         │  styles + domOps, reversible, 
   `assistantTurn`, `thinkingBlock`, `codeBlock`, `composer`, `sidebar`,
   `sidePanel`, `headerActions`, `scrollContainer`), so a site redesign is a
   one-file fix. Gemini and AI Studio are native surfaces and stay TypeScript
-  adapters; every plugin platform is data, so `adapters/claude.ts`,
-  `adapters/chatgpt.ts` and `adapters/deepseek.ts` are one-line shells over their
+  adapters; every plugin platform is data, so `adapters/claude.ts` and
+  `adapters/chatgpt.ts` are one-line shells over their
   `site.json`: edit the JSON, not the TS. `sites/siteAdapterData.ts` holds
   `validateSiteAdapterData`, the one validator for the bundled `site.json`, the
   remote override and `catalog:build`.
@@ -85,15 +85,15 @@ catalog/
 `catalog/sites/index.ts` finds every `site.json` and `plugin.json` with
 `import.meta.glob`, so adding a site or a plugin is adding files: there is no
 mapping table. (`scripts/build-plugin-catalog.ts` reads the same tree from disk,
-because `import.meta.glob` does not exist under Bun.) Sites today are `chatgpt`,
-`claude` and `deepseek`. A plugin's `matches` must stay inside its site's
+because `import.meta.glob` does not exist under Bun.) Sites today are `chatgpt`
+and `claude`. A plugin's `matches` must stay inside its site's
 `matches` (plan D18) or the build fails, and `bun run catalog:build` validates
 every site and plugin before publishing.
 
 `catalog/marketplace.json` is **not** that mapping table. It is only the index
 the docs plugin-store page reads at build time, and a test keeps it in sync with discovery,
 so a new plugin also needs an entry there whose `source` is the catalog-relative
-path (`sites/deepseek/plugins/reading-width/plugin.json`).
+path (`sites/claude/plugins/reading-width/plugin.json`).
 
 ## Authoring a declarative plugin
 
@@ -241,8 +241,8 @@ breaking ships under a new primitive name, so `handler` never needs a version
 suffix. A committed baseline in `verbs/paramsBaseline.json` holds the contract
 tests to this.
 
-`formulaCopy` is the first primitive, and
-`catalog/sites/deepseek/plugins/formula-copy/` is the first plugin built on one.
+`formulaCopy` is the first primitive. Its first plugin (DeepSeek formula-copy) was
+removed with the DeepSeek site, so no bundled plugin uses it today.
 The native builtin `voyager.formula-copy` is unaffected and stays as it is until
 P4 rewrites the Claude and ChatGPT builtins as primitive-backed JSON.
 
@@ -267,8 +267,8 @@ generates the remote catalog published by the docs deploy. See the
 
 The official CSS/JSON plugins ship as a snapshot inside the extension, and the
 same data is published per site at `<base>/hosts/<host>.json` (default base
-`https://raw.githubusercontent.com/boboidvtw/nomad-ai-workspace/main/catalog`, so DeepSeek is
-`https://raw.githubusercontent.com/boboidvtw/nomad-ai-workspace/main/catalog/hosts/chat.deepseek.com.json`). A selector fix
+`https://raw.githubusercontent.com/boboidvtw/nomad-ai-workspace/main/catalog`, so Claude is
+`https://raw.githubusercontent.com/boboidvtw/nomad-ai-workspace/main/catalog/hosts/claude.ai.json`). A selector fix
 can therefore reach users without a store release, while the engine that reads
 the data still ships in the package. The host file's optional `site` section is
 adapter data validated by the same `validateSiteAdapterData`, and it overrides

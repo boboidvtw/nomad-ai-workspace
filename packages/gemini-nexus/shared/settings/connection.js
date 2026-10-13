@@ -66,11 +66,18 @@ export function getOpenAIWebSearchStorageKeys({ includeLegacyFallbacks = false }
         : GEMINI_OPENAI_WEB_SEARCH_KEYS;
 }
 
+const BUILT_IN_PROVIDERS = new Set(['web', 'official', 'openai']);
+
+function isKnownProvider(provider) {
+    return BUILT_IN_PROVIDERS.has(provider) || isDedicatedApiProvider(provider);
+}
+
 export function getConnectionProvider(storageData = {}) {
-    return (
-        storageData.geminiProvider ||
-        (storageData.geminiUseOfficialApi === true ? 'official' : DEFAULT_PROVIDER)
-    );
+    // A stored provider that has since been removed (DeepSeek API) falls back to the default.
+    if (storageData.geminiProvider && isKnownProvider(storageData.geminiProvider)) {
+        return storageData.geminiProvider;
+    }
+    return storageData.geminiUseOfficialApi === true ? 'official' : DEFAULT_PROVIDER;
 }
 
 export function getSelectedModelForProvider(

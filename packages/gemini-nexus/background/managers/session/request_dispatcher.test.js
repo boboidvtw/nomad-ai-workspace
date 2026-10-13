@@ -360,55 +360,9 @@ describe('RequestDispatcher response mapping', () => {
         ).resolves.toEqual(expect.objectContaining({ status: 'success' }));
     });
 
-    it('routes the dedicated DeepSeek provider through Chat Completions with reasoning settings', async () => {
-        sendOpenAIMessage.mockResolvedValue({
-            text: 'deepseek text',
-            thoughts: 'deepseek thoughts',
-            sources: [],
-            images: [],
-        });
-        const dispatcher = new RequestDispatcher({});
-
-        await expect(
-            dispatcher.dispatch(
-                { text: 'hello', sessionId: null },
-                {
-                    provider: 'deepseek',
-                    dedicatedApiProviders: {
-                        deepseek: {
-                            baseUrl: 'https://api.deepseek.com',
-                            apiKey: 'deepseek-key',
-                            model: 'deepseek-v4-pro',
-                            thinkingLevel: 'high',
-                        },
-                    },
-                },
-                [],
-                vi.fn(),
-                null
-            )
-        ).resolves.toEqual(expect.objectContaining({ text: 'deepseek text' }));
-
-        expect(sendOpenAIMessage).toHaveBeenCalledWith(
-            'hello',
-            'system',
-            [],
-            expect.objectContaining({
-                baseUrl: 'https://api.deepseek.com',
-                apiKey: 'deepseek-key',
-                model: 'deepseek-v4-pro',
-                reasoningEffort: 'high',
-                useResponsesApi: false,
-            }),
-            [],
-            null,
-            expect.any(Function)
-        );
-    });
-
     it('falls back to configured dedicated provider models when a stale request model is invalid', async () => {
         sendOpenAIMessage.mockResolvedValue({
-            text: 'deepseek text',
+            text: 'zhipu text',
             thoughts: null,
             sources: [],
             images: [],
@@ -418,12 +372,12 @@ describe('RequestDispatcher response mapping', () => {
         await dispatcher.dispatch(
             { text: 'hello', model: 'gpt-5-from-previous-provider', sessionId: null },
             {
-                provider: 'deepseek',
+                provider: 'zhipu',
                 dedicatedApiProviders: {
-                    deepseek: {
-                        baseUrl: 'https://api.deepseek.com',
-                        apiKey: 'deepseek-key',
-                        model: 'deepseek-v4-pro, deepseek-chat',
+                    zhipu: {
+                        baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+                        apiKey: 'zhipu-key',
+                        model: 'glm-5.3, glm-5.2',
                         thinkingLevel: 'high',
                     },
                 },
@@ -438,7 +392,7 @@ describe('RequestDispatcher response mapping', () => {
             'system',
             [],
             expect.objectContaining({
-                model: 'deepseek-v4-pro',
+                model: 'glm-5.3',
             }),
             [],
             null,
@@ -448,7 +402,7 @@ describe('RequestDispatcher response mapping', () => {
 
     it('uses a dedicated provider selected model when the request model is stale', async () => {
         sendOpenAIMessage.mockResolvedValue({
-            text: 'deepseek text',
+            text: 'zhipu text',
             thoughts: null,
             sources: [],
             images: [],
@@ -458,13 +412,13 @@ describe('RequestDispatcher response mapping', () => {
         await dispatcher.dispatch(
             { text: 'hello', model: 'gpt-5-from-previous-provider', sessionId: null },
             {
-                provider: 'deepseek',
+                provider: 'zhipu',
                 dedicatedApiProviders: {
-                    deepseek: {
-                        baseUrl: 'https://api.deepseek.com',
-                        apiKey: 'deepseek-key',
-                        model: 'deepseek-v4-pro, deepseek-chat',
-                        selectedModel: 'deepseek-chat',
+                    zhipu: {
+                        baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+                        apiKey: 'zhipu-key',
+                        model: 'glm-5.3, glm-5.2',
+                        selectedModel: 'glm-5.2',
                         thinkingLevel: 'high',
                     },
                 },
@@ -479,7 +433,7 @@ describe('RequestDispatcher response mapping', () => {
             'system',
             [],
             expect.objectContaining({
-                model: 'deepseek-chat',
+                model: 'glm-5.2',
             }),
             [],
             null,
@@ -489,7 +443,7 @@ describe('RequestDispatcher response mapping', () => {
 
     it('keeps an explicitly requested dedicated provider default model when it is configured', async () => {
         sendOpenAIMessage.mockResolvedValue({
-            text: 'deepseek text',
+            text: 'zhipu text',
             thoughts: null,
             sources: [],
             images: [],
@@ -497,14 +451,14 @@ describe('RequestDispatcher response mapping', () => {
         const dispatcher = new RequestDispatcher({});
 
         await dispatcher.dispatch(
-            { text: 'hello', model: 'deepseek-v4-pro', sessionId: null },
+            { text: 'hello', model: 'glm-5.3', sessionId: null },
             {
-                provider: 'deepseek',
+                provider: 'zhipu',
                 dedicatedApiProviders: {
-                    deepseek: {
-                        baseUrl: 'https://api.deepseek.com',
-                        apiKey: 'deepseek-key',
-                        model: 'deepseek-chat, deepseek-v4-pro',
+                    zhipu: {
+                        baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+                        apiKey: 'zhipu-key',
+                        model: 'glm-5.2, glm-5.3',
                         thinkingLevel: 'high',
                     },
                 },
@@ -519,7 +473,7 @@ describe('RequestDispatcher response mapping', () => {
             'system',
             [],
             expect.objectContaining({
-                model: 'deepseek-v4-pro',
+                model: 'glm-5.3',
             }),
             [],
             null,

@@ -8,6 +8,10 @@
 
 ### ✨ 新增 (Added)
 
+- **外觀主題擴充為 12 款，新增明亮與繽紛系列**：原本 5 款都是深色，現在分成三組：深色（深夜深灰、太空純黑、賽博藍紫、極光翡翠、極簡冷銀）、明亮（晨光白、蜜桃晨曦、薄荷蘇打、薰衣草田）、繽紛（霓虹夜城、熱帶夕陽、海洋湛藍，以漸層為背景）。選主題時會一併套用它的建議強調色，之後仍可用色票覆蓋。
+  - Studio 外框的顏色全部改為 CSS token（`--text-*`、`--fg-rgb`、`--panel-rgb`、`--well-rgb`、`--accent-rgb`、`--accent-2`、`--on-accent` 等）。強調色現在會套用到整個介面，不再只影響少數元素。
+  - 每組主題的文字與強調色都經過 WCAG AA 對比計算（≥ 4.5:1，以半透明面板疊在背景上的實際顏色計算）。
+  - 測試 `appearance-themes.test.js` 會在 jsdom 載入真正的 `index.html`，並阻擋再寫死深色主題的顏色。
 - **Bots（[SPEC-AGENT-BOTS](SPEC-AGENT-BOTS.md)，借鏡 Hermes Bot Mode 與 herdr）**：Agent Roster 升級為有身分的 Bot，不另建新的資料單位。
   - **持久化身分**：`~/.nomad/roster.json` 儲存 `@handle`、顯示名稱、persona、頭像、分組與隱藏狀態；Studio 是唯一寫入者，daemon 只讀。新增 `GET/POST /api/bots`、`GET/PATCH/DELETE /api/bots/:id`、`POST /api/bots/:id/seen`、`GET /api/bots/resolve?mention=`。
   - **永久對話（Canonical Bot Chat）**：第一次派工時開新對話、送出 persona，並綁定對話 URL；之後都在同一個對話裡執行。對話被刪除時自動改綁新對話並寫入 timeline。只接受各平台真正的對話 URL（`claude.ai/chat/…`、`chatgpt.com/c/…` 等）。
@@ -58,6 +62,7 @@
 
 ### ♻️ 重構 (Changed)
 
+- **Studio 第六個分頁改為 Microsoft Copilot**：取代 DeepSeek，網址為登入後的聊天頁 `m365.cloud.microsoft/chat`。Copilot 的輸入框是 Lexical 編輯器，送出前會確認框內確實是這次的提示詞（會取代殘留文字），並以新的提問泡泡或停止鈕確認已送出；擷取最後一則 `markdown-reply`。舊設定中的 `deepseek` 會自動換成 `copilot`。
 - **`@nomad/core` 型別合約改為自動產生**：移除漂移嚴重的手寫 `index.d.ts`（59 個 export 中 24 個、67 個錯誤碼中 29 個缺漏），改以 JS 原始碼的 JSDoc 為唯一來源，由 `tsc` 產生 `packages/core/types/`。daemon、desktop、dashboard 以 `checkJs` + `strictNullChecks` 對其做型別檢查；CI 新增 `typecheck:packages` 與 `types:check`（產生結果與 commit 內容不一致即失敗）。
 - **Dashboard 單一來源**：移除 `packages/desktop/src/dashboard-fallback.html` 重複副本與兩份重複的 static handler，Daemon 與 Desktop Bridge 統一透過 `@nomad/dashboard` 套件（`serveDashboard` / `findDashboardPath`）提供頁面；Electron 打包時隨 `node_modules/@nomad` 一併收錄。
 
@@ -68,6 +73,7 @@
 
 ### 🗑️ 移除 (Removed)
 
+- **DeepSeek 支援**：擴充功能移除 DeepSeek 平台（`chat.deepseek.com` 站點設定、5 個外掛：時間軸、閱讀寬度、Vim 輸入、公式複製、程式碼換行）、側邊欄節點、logo 與各語系文字；gemini-nexus 移除 DeepSeek API provider。已選 DeepSeek API 的設定會退回預設 provider（Gemini Web）。Studio 的第六個分頁改為 Microsoft Copilot（另一個 PR）。
 - **`packages/gemini-voyager` 上游快照**：此為上游 Voyager v1.9.0（+17 commits）的未修改快照，根目錄 `src/` 已是其超集且無任何建置 / 測試使用（35MB、1688 檔、約 33 萬行）。改以 `voyager-upstream` git remote 追蹤上游，同步方式見 `docs/ARCHITECTURE.md`；subtree 匯入歷史仍保留於 git log。
 - **根目錄 vitest 不再掃描 `.claude/**`**：該處的 agent / 編輯器 worktree 是整份 repo 的副本，會被重複收集而產生假失敗。
 - **根目錄 vitest 不再掃描 `packages/**`**：子套件各有自己的測試執行器，先前被根目錄 vitest 誤收而產生 76 個假失敗檔案。

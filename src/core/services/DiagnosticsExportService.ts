@@ -18,7 +18,6 @@ export type DiagnosticSite =
   | 'chatgpt'
   | 'claude'
   | 'custom'
-  | 'deepseek'
   | 'gemini'
   | 'grok'
   | 'kimi'
@@ -251,7 +250,6 @@ function resolveDiagnosticSite(activeUrl: string): DiagnosticSite {
     if (hostname === 'aistudio.google.com') return 'aistudio';
     if (hostname === 'chatgpt.com' || hostname === 'chat.openai.com') return 'chatgpt';
     if (hostname === 'claude.ai') return 'claude';
-    if (hostname === 'deepseek.com' || hostname.endsWith('.deepseek.com')) return 'deepseek';
     if (hostname === 'qwen.ai' || hostname.endsWith('.qwen.ai')) return 'qwen';
     if (hostname === 'kimi.com' || hostname.endsWith('.kimi.com')) return 'kimi';
     if (hostname === 'notebooklm.google.com') return 'notebooklm';

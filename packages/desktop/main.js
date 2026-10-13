@@ -58,7 +58,7 @@ const PLATFORMS = {
   claude: { name: 'Claude', url: 'https://claude.ai', color: '#D97706' },
   gemini: { name: 'Gemini', url: 'https://gemini.google.com', color: '#2563EB' },
   grok: { name: 'Grok', url: 'https://grok.com', color: '#1D9BF0' },
-  deepseek: { name: 'DeepSeek', url: 'https://chat.deepseek.com', color: '#4D6BFE' },
+  copilot: { name: 'Copilot', url: 'https://m365.cloud.microsoft/chat', color: '#8B5CF6' },
   perplexity: { name: 'Perplexity', url: 'https://www.perplexity.ai', color: '#22B8CD' },
 };
 
@@ -164,13 +164,14 @@ function updateViewBounds() {
 
   for (const [key, item] of Object.entries(views)) {
     const b = boundsMap[key];
-    if (b && b.visible) {
-      ensurePlatformLoaded(key);
-      item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
-      item.view.setVisible(true);
-    } else {
+    if (!b) {
       item.view.setVisible(false);
+      continue;
     }
+    if (b.visible) ensurePlatformLoaded(key);
+    // Hidden views are sized too, so a page a bot drives in the background still lays out.
+    item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
+    item.view.setVisible(b.visible);
   }
 }
 
@@ -269,6 +270,10 @@ async function createMainWindow() {
       webPreferences: {
         session: session.defaultSession,
         contextIsolation: true,
+        // Bots and relays drive platforms whose pane is hidden. Throttled, a hidden page's
+        // timers drop to about one wake-up a minute, so an injector waiting to confirm a send
+        // (and the page's own send handling) would stall for minutes.
+        backgroundThrottling: false,
       },
     });
 
@@ -403,6 +408,8 @@ async function createMainWindow() {
   studioBots = createStudioBots({
     enabled: store.get('bots')?.enabled !== false,
     inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
+    readReply: (platform) =>
+      orchestrator ? orchestrator.readReply(platform) : Promise.resolve(''),
     awaitSettled: (platform, options) =>
       orchestrator
         ? orchestrator.awaitSettled(platform, options)

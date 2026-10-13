@@ -11,7 +11,7 @@
  *     while, say, an artifact frame is open; `position` picks the rail side.
  *
  * Markers are accumulated across refreshes by content hash so virtualised
- * conversations (Claude, DeepSeek) never lose turns; see the merge notes below.
+ * conversations (Claude) never lose turns; see the merge notes below.
  */
 import { StorageKeys, type TimelineStyle } from '@/core/types/common';
 import { hashString } from '@/core/utils/hash';

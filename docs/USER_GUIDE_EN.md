@@ -33,7 +33,6 @@ Nomad AI Workspace automatically mounts into the native web interfaces of your f
   - 🟠 **Anthropic Claude** (`#cc785c` Warm Terracotta)
   - 🟢 **OpenAI ChatGPT** (`#10a37f` Emerald Green)
   - ⚪ **xAI Grok** (`#1D9BF0` Sky Tech Blue)
-  - 🟣 **DeepSeek** (`#4d6bfe` Indigo Blue — in planning)
 
 ### 1.2 Folder Creation & Nested Organization
 

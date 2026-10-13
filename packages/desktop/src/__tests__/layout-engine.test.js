@@ -21,7 +21,7 @@ test('Layout Engine: Focus mode gives 100% width and height to selected platform
   assert.strictEqual(bounds.chatgpt.visible, false);
   assert.strictEqual(bounds.gemini.visible, false);
   assert.strictEqual(bounds.grok.visible, false);
-  assert.strictEqual(bounds.deepseek.visible, false);
+  assert.strictEqual(bounds.copilot.visible, false);
   assert.strictEqual(bounds.perplexity.visible, false);
 });
 
@@ -47,7 +47,7 @@ test('Layout Engine: Dual mode splits width according to splitRatio', () => {
 
   assert.strictEqual(bounds.gemini.visible, false);
   assert.strictEqual(bounds.grok.visible, false);
-  assert.strictEqual(bounds.deepseek.visible, false);
+  assert.strictEqual(bounds.copilot.visible, false);
   assert.strictEqual(bounds.perplexity.visible, false);
 });
 
@@ -73,7 +73,7 @@ test('Layout Engine: Triple mode divides width across 3 columns', () => {
   assert.strictEqual(bounds.gemini.width, 400);
 
   assert.strictEqual(bounds.grok.visible, false);
-  assert.strictEqual(bounds.deepseek.visible, false);
+  assert.strictEqual(bounds.copilot.visible, false);
   assert.strictEqual(bounds.perplexity.visible, false);
 });
 
@@ -178,13 +178,34 @@ test('Layout Engine: Hexa mode tiles 6 views in 3x2 grid', () => {
   assert.strictEqual(bounds.grok.x, 0);
   assert.strictEqual(bounds.grok.y, 400);
 
-  // deepseek (col 1, row 1)
-  assert.strictEqual(bounds.deepseek.visible, true);
-  assert.strictEqual(bounds.deepseek.x, 400);
-  assert.strictEqual(bounds.deepseek.y, 400);
+  // copilot (col 1, row 1)
+  assert.strictEqual(bounds.copilot.visible, true);
+  assert.strictEqual(bounds.copilot.x, 400);
+  assert.strictEqual(bounds.copilot.y, 400);
 
   // perplexity (col 2, row 1)
   assert.strictEqual(bounds.perplexity.visible, true);
   assert.strictEqual(bounds.perplexity.x, 800);
   assert.strictEqual(bounds.perplexity.y, 400);
+});
+
+test('LayoutEngine: hidden platforms keep a full content-area size', () => {
+  // A 0x0 view renders nothing: Grok's virtualised chat showed no messages to read back.
+  const bounds = calculateLayoutBounds({
+    winWidth: 1400,
+    winHeight: 900,
+    topBarHeight: 52,
+    bottomBarHeight: 68,
+    layout: 'focus',
+    activePlatforms: ['claude'],
+    drawerWidth: 300,
+  });
+
+  assert.deepStrictEqual(bounds.grok, {
+    x: 0,
+    y: 52,
+    width: 1100,
+    height: 780,
+    visible: false,
+  });
 });

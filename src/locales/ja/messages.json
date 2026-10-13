@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Gemini™、Claude™、ChatGPT™、DeepSeek™ をもっと快適に。プロンプト、読書支援、整理、エクスポートなどを一つに。",
+    "message": "Gemini™、Claude™、ChatGPT™ をもっと快適に。プロンプト、読書支援、整理、エクスポートなどを一つに。",
     "description": "Extension description"
   },
   "timelineStyle": {
@@ -3103,7 +3103,7 @@
     "description": "Welcome page: primary button"
   },
   "welcomeOtherSites": {
-    "message": "Claude、ChatGPT、DeepSeek は Nomad のポップアップから有効にします。",
+    "message": "Claude、ChatGPT は Nomad のポップアップから有効にします。",
     "description": "Welcome page: note under the supported-sites list"
   },
   "welcomeStepDone": {

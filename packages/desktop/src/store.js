@@ -16,7 +16,7 @@ const DEFAULT_SETTINGS = {
     toggleHUD: 'CommandOrControl+Shift+H',
   },
   appearance: {
-    theme: 'charcoal', // 'charcoal' | 'oled' | 'cyberpunk' | 'aurora' | 'nordic'
+    theme: 'charcoal', // a THEME_PRESETS key in index.html: dark (charcoal…nordic), light (daylight, peach, mint, lavender), vivid (neon, sunset, ocean)
     accentColor: '#38bdf8',
     glassmorphism: true,
     fontSize: 'normal',
@@ -44,13 +44,37 @@ const DEFAULT_SETTINGS = {
     claude: 1.0,
     gemini: 1.0,
     grok: 1.0,
-    deepseek: 1.0,
+    copilot: 1.0,
     perplexity: 1.0,
   },
   bridgePort: 8765,
   bridgeEnabled: true,
   minimizeToTray: true,
 };
+
+/** Platforms dropped from Studio, mapped to the platform that took their place. */
+const REPLACED_PLATFORMS = Object.freeze({ deepseek: 'copilot' });
+
+/**
+ * Rewrites settings saved before a platform was replaced, so a stored layout keeps its
+ * column count and no zoom entry points at a platform that no longer exists.
+ * @param {Record<string, any>} parsed
+ * @returns {Record<string, any>}
+ */
+function migrateReplacedPlatforms(parsed) {
+  const replace = (/** @type {string} */ p) =>
+    /** @type {Record<string, string>} */ (REPLACED_PLATFORMS)[p] || p;
+  const next = { ...parsed };
+  if (Array.isArray(parsed.activePlatforms)) {
+    next.activePlatforms = [...new Set(parsed.activePlatforms.map(replace))];
+  }
+  if (parsed.zoomFactors && typeof parsed.zoomFactors === 'object') {
+    next.zoomFactors = Object.fromEntries(
+      Object.entries(parsed.zoomFactors).filter(([p]) => !(p in REPLACED_PLATFORMS)),
+    );
+  }
+  return next;
+}
 
 class SettingsStore {
   /**
@@ -85,7 +109,7 @@ class SettingsStore {
     try {
       if (fs.existsSync(this.filePath)) {
         const raw = fs.readFileSync(this.filePath, 'utf-8');
-        const parsed = JSON.parse(raw);
+        const parsed = migrateReplacedPlatforms(JSON.parse(raw));
         this.data = {
           ...DEFAULT_SETTINGS,
           ...parsed,
@@ -238,6 +262,7 @@ const store = new SettingsStore();
 
 module.exports = {
   DEFAULT_SETTINGS,
+  migrateReplacedPlatforms,
   SettingsStore,
   store,
 };

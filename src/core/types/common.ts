@@ -334,7 +334,7 @@ export const StorageKeys = {
   PLUGIN_CATALOG_CACHE: 'gvPluginCatalogCache',
   // Key PREFIX for the per-host remote plugin catalog cache
   // (chrome.storage.local). Full key: `${prefix}${location.host}`, e.g.
-  // `gvPluginHostCatalog:chat.deepseek.com`. Shape: HostCatalogCacheEntry (see
+  // `gvPluginHostCatalog:claude.ai`. Shape: HostCatalogCacheEntry (see
   // src/features/plugins/remote/hostCatalogCache.ts). Network-derived per-device
   // data rebuilt on the next check; never backed up.
   PLUGIN_HOST_CATALOG_PREFIX: 'gvPluginHostCatalog:',

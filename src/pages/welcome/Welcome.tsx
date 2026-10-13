@@ -20,7 +20,6 @@ import {
   IconAIStudio,
   IconChatGPT,
   IconClaude,
-  IconDeepSeek,
   IconGemini,
 } from '../popup/components/WebsiteLogos';
 import { ToolbarMock } from './ToolbarMock';
@@ -122,7 +121,6 @@ const OTHER_SITES: Array<{ label: string; icon: React.ReactNode }> = [
   { label: 'AI Studio', icon: <IconAIStudio /> },
   { label: 'Claude', icon: <IconClaude /> },
   { label: 'ChatGPT', icon: <IconChatGPT /> },
-  { label: 'DeepSeek', icon: <IconDeepSeek /> },
 ];
 
 export function Welcome() {

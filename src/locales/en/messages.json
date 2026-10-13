@@ -3103,7 +3103,7 @@
     "description": "Welcome page: primary button"
   },
   "welcomeOtherSites": {
-    "message": "Claude, ChatGPT and DeepSeek are turned on from the Nomad popup.",
+    "message": "Claude and ChatGPT are turned on from the Nomad popup.",
     "description": "Welcome page: note under the supported-sites list"
   },
   "welcomeStepDone": {

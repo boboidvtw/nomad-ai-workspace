@@ -79,7 +79,6 @@ export const MultiAISidebarTree: React.FC<Props> = ({
     claude: currentPlatform === 'claude',
     chatgpt: currentPlatform === 'chatgpt',
     grok: currentPlatform === 'grok',
-    deepseek: false,
   });
 
   // Track expanded folders
@@ -560,44 +559,6 @@ export const MultiAISidebarTree: React.FC<Props> = ({
                     </span>
                   </div>
                   {isExpanded && renderFolderList(grokFolders, 'grok')}
-                </div>
-              );
-            })()}
-
-            {/* 5. DeepSeek Node (Planned) */}
-            {(() => {
-              const cfg = SUPPORTED_PLATFORMS.deepseek;
-              const isExpanded = expandedPlatforms.deepseek;
-              return (
-                <div className="px-2 opacity-50 transition-opacity hover:opacity-90">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => togglePlatform('deepseek')}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        togglePlatform('deepseek');
-                      }
-                    }}
-                    className={`flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 ${bgHover}`}
-                  >
-                    {isExpanded ? (
-                      <ChevronDown className="h-3.5 w-3.5 flex-shrink-0 text-indigo-400" />
-                    ) : (
-                      <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-indigo-400" />
-                    )}
-                    <span className="h-2 w-2 flex-shrink-0 rounded-full bg-indigo-500" />
-                    <span className={`flex-1 text-xs font-medium ${textPrimary}`}>{cfg.name}</span>
-                    <span className="rounded bg-white/10 px-1 py-0.5 text-[9px] text-zinc-400">
-                      規劃中
-                    </span>
-                  </div>
-                  {isExpanded && (
-                    <div className="py-1 pl-6 text-[11px] text-zinc-500 italic">
-                      DeepSeek 工作空間規劃中
-                    </div>
-                  )}
                 </div>
               );
             })()}

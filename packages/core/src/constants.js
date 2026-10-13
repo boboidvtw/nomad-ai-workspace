@@ -85,11 +85,11 @@ const PLATFORMS = Object.freeze({
     color: '#2563EB',
   },
   grok: { id: 'grok', name: 'Grok', defaultUrl: 'https://grok.com', color: '#1D9BF0' },
-  deepseek: {
-    id: 'deepseek',
-    name: 'DeepSeek',
-    defaultUrl: 'https://chat.deepseek.com',
-    color: '#4D6BFE',
+  copilot: {
+    id: 'copilot',
+    name: 'Copilot',
+    defaultUrl: 'https://m365.cloud.microsoft/chat',
+    color: '#8B5CF6',
   },
   perplexity: {
     id: 'perplexity',
