@@ -482,25 +482,43 @@ ${SEND_CONFIRM_SOURCE}
     }
   })()`,
 
-  perplexity: (/** @type {string} */ text) => `(function() {
+  perplexity: (/** @type {string} */ text) => `(async function() {
     try {
       const text = ${JSON.stringify(text)};
-      const input = document.querySelector('textarea[placeholder*="Ask"], textarea[placeholder*="搜尋"], textarea');
+${SEND_CONFIRM_SOURCE}
+      // Perplexity moved from a <textarea> to a Lexical editor (#ask-input); keep both.
+      const input = document.querySelector('#ask-input[contenteditable="true"]') ||
+                    document.querySelector('[data-lexical-editor="true"][contenteditable="true"]') ||
+                    document.querySelector('textarea[placeholder*="Ask"], textarea[placeholder*="搜尋"], textarea');
       if (!input) return { ok: false, error: 'Perplexity input not found' };
 
       input.focus();
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
-      if (nativeSetter) {
-        nativeSetter.call(input, text);
+      if (input.tagName === 'TEXTAREA') {
+        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+        if (nativeSetter) {
+          nativeSetter.call(input, text);
+        } else {
+          input.value = text;
+        }
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
       } else {
-        input.value = text;
+        // Lexical only honours the selection after it has seen the selectionchange, and
+        // otherwise restores its own state over the inserted text (same as Copilot).
+        const squash = (value) => String(value || '').replace(/[\\u200b-\\u200d\\ufeff\\s]/g, '');
+        await sleep(100);
+        document.execCommand('selectAll');
+        await sleep(150);
+        document.execCommand('insertText', false, text);
+        await sleep(150);
+        if (squash(input.innerText) !== squash(text)) {
+          return { ok: false, error: 'Perplexity input did not take the prompt' };
+        }
       }
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
 
-${SEND_CONFIRM_SOURCE}
       const findSend = () => findButton(input, [
         'button[aria-label*="Submit"]',
+        'button[aria-label*="提交"]',
         'button[aria-label*="Send"]',
         'button:has(svg.lucide-arrow-right)',
         'button[type="submit"]',

@@ -232,3 +232,54 @@ test('Injectors: Copilot refuses to send when the editor kept its old text', asy
   assert.match(result.error, /did not take the prompt/);
   assert.deepStrictEqual(sent, []);
 });
+
+/**
+ * Builds the current Perplexity page: a Lexical editor (#ask-input) and a 提交 button.
+ * jsdom has no execCommand, so insertText is emulated the way Lexical takes it, unless
+ * `ignoresInsert` is set.
+ * @param {{ ignoresInsert?: boolean }} [opts]
+ */
+function perplexityPage(opts = {}) {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(
+    '<!doctype html><body><div id="ask-input" contenteditable="true" role="textbox" data-lexical-editor="true"><p><br></p></div>' +
+      '<button type="button" aria-label="聽寫">mic</button><button type="button" aria-label="提交">→</button></body>',
+    { runScripts: 'outside-only' },
+  );
+  const doc = dom.window.document;
+  const editor = /** @type {HTMLElement} */ (doc.getElementById('ask-input'));
+  Object.defineProperty(editor, 'innerText', { get: () => editor.textContent });
+  /** @type {any} */ (doc).execCommand = (/** @type {string} */ cmd, _ui, value) => {
+    if (cmd === 'insertText' && !opts.ignoresInsert) editor.textContent = String(value);
+    return true;
+  };
+  /** @type {string[]} */
+  const sent = [];
+  doc.querySelector('button[aria-label="提交"]')?.addEventListener('click', () => {
+    sent.push(String(editor.textContent));
+    editor.innerHTML = '<p><br></p>';
+  });
+  return { dom, sent };
+}
+
+test('Injectors: Perplexity types into its Lexical editor and clicks 提交', async () => {
+  const { dom, sent } = perplexityPage();
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.perplexity('hello perplexity'));
+
+  assert.deepStrictEqual(
+    { ok: result.ok, input: result.input, via: result.via },
+    { ok: true, input: 'DIV', via: 'button' },
+  );
+  assert.deepStrictEqual(sent, ['hello perplexity']);
+});
+
+test('Injectors: Perplexity refuses to send when the editor did not take the prompt', async () => {
+  const { dom, sent } = perplexityPage({ ignoresInsert: true });
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.perplexity('hello perplexity'));
+
+  assert.strictEqual(result.ok, false);
+  assert.match(result.error, /did not take the prompt/);
+  assert.deepStrictEqual(sent, []);
+});
