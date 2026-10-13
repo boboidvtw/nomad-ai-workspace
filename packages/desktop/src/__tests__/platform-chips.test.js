@@ -79,9 +79,9 @@ test('Platform chips: fixed layouts keep their count and drop the longest-shown 
   assert.deepStrictEqual(
     await clickThrough(
       { layout: 'quad', activePlatforms: ['chatgpt', 'claude', 'gemini', 'grok'] },
-      ['deepseek'],
+      ['copilot'],
     ),
-    [['quad', ['claude', 'gemini', 'grok', 'deepseek']]],
+    [['quad', ['claude', 'gemini', 'grok', 'copilot']]],
   );
 });
 
@@ -101,13 +101,13 @@ test('Platform chips: a shown platform is removed and the matching layout lights
     await clickThrough(
       {
         layout: 'hexa',
-        activePlatforms: ['chatgpt', 'claude', 'gemini', 'grok', 'deepseek', 'perplexity'],
+        activePlatforms: ['chatgpt', 'claude', 'gemini', 'grok', 'copilot', 'perplexity'],
       },
-      ['deepseek', 'deepseek'],
+      ['copilot', 'copilot'],
     ),
     [
       ['custom', ['chatgpt', 'claude', 'gemini', 'grok', 'perplexity']],
-      ['hexa', ['chatgpt', 'claude', 'gemini', 'grok', 'perplexity', 'deepseek']],
+      ['hexa', ['chatgpt', 'claude', 'gemini', 'grok', 'perplexity', 'copilot']],
     ],
   );
 });
