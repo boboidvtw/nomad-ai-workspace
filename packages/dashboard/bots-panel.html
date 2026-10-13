@@ -586,7 +586,15 @@
       var name = window.prompt('新 Bot 的名稱（例如 Research Buddy）');
       if (!name) return;
       var caps = await api('GET', '/api/bots/capabilities');
-      var platforms = ['claude', 'chatgpt', 'gemini', 'grok', 'local-model'];
+      var platforms = [
+        'claude',
+        'chatgpt',
+        'gemini',
+        'grok',
+        'copilot',
+        'perplexity',
+        'local-model',
+      ];
       if (caps.success && caps.data.herdr) platforms.push('herdr');
       var platform = window.prompt('平台：' + platforms.join(' / '), 'claude');
       if (!platform || platforms.indexOf(platform) === -1) return;
