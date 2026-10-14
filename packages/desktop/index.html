@@ -185,6 +185,32 @@
         cursor: pointer;
         transition: all 0.15s;
       }
+      .top-bar .pill-info {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      /* The top bar needs ~1720px with every label; narrower windows drop secondary labels
+         (the icon and tooltip stay) instead of squeezing pills into vertical text. */
+      @media (max-width: 1760px) {
+        .pill-compact .pill-label,
+        #shortcut-pill {
+          display: none;
+        }
+      }
+      .pill-icon-narrow {
+        display: none;
+      }
+      @media (max-width: 1420px) {
+        .pill-compact-narrow .pill-label {
+          display: none;
+        }
+        .pill-icon-narrow {
+          display: inline;
+        }
+        .top-bar .controls {
+          gap: 6px;
+        }
+      }
       .pill-info:hover {
         background: rgba(var(--fg-rgb), 0.08);
         color: var(--text-strong);
@@ -1275,12 +1301,12 @@
 
         <!-- In-app Dashboard (Bots, Tasks, Agents ...) -->
         <div
-          class="pill-info btn-dashboard"
+          class="pill-info btn-dashboard pill-compact-narrow"
           id="btn-dashboard-pill"
           onclick="toggleDashboard()"
           title="在 Studio 內開啟 Dashboard（Bots、Tasks、Agents…），再按一次回到 AI 分頁"
         >
-          <span>📊 Dashboard</span>
+          <span>📊</span><span class="pill-label">Dashboard</span>
         </div>
 
         <!-- Workspace Pill -->
@@ -1288,7 +1314,7 @@
           class="pill-info"
           id="btn-workspace-pill"
           onclick="openSidebarTab('ws')"
-          title="點擊檢視與切換當前會話工作區 (MMDD | 類型 | 主題)"
+          title="目前工作區：點擊切換、重新命名或開新工作區 (MMDD | 類型 | 主題)"
         >
           <span>📁</span>
           <span
@@ -1301,54 +1327,70 @@
               color: var(--accent-color);
               font-weight: 700;
             "
-            >新協作對話</span
+            >未命名工作區</span
           >
         </div>
 
         <!-- AI Round-Table Orchestration Trigger Button -->
-        <div class="pill-info btn-roundtable" id="btn-roundtable" onclick="openSidebarTab('orch')">
+        <div
+          class="pill-info btn-roundtable"
+          id="btn-roundtable"
+          onclick="openSidebarTab('orch')"
+          title="AI 圓桌協作：讓多個 AI 任務接力、交叉辯論或主控分工"
+        >
           <span class="pulse-dot pulse-purple"></span>
-          <span>🤝 AI 圓桌協作</span>
+          <span>🤝 圓桌</span>
         </div>
 
         <!-- Zoom Popover Toggle -->
         <!-- System Cockpit HUD Pill -->
         <div
-          class="pill-info btn-settings"
+          class="pill-info btn-settings pill-compact"
           id="btn-settings-pill"
           onclick="openSidebarTab('settings')"
           title="全域快捷鍵、主題色彩與 Google Drive 雲端同步"
         >
-          <span>⚙️ 設定與外觀</span>
+          <span>⚙️</span><span class="pill-label">設定與外觀</span>
         </div>
         <div
-          class="pill-info btn-hud"
+          class="pill-info btn-hud pill-compact"
           id="btn-hud-pill"
           onclick="openSidebarTab('hud')"
           title="開啟本機微服務與決策儀表板 (HUD)"
         >
           <span class="pulse-dot pulse-emerald" id="hud-pulse-dot"></span>
-          <span id="hud-top-label" style="font-weight: 600; color: var(--tint-emerald-300)"
-            >🖥️ 系統 HUD</span
+          <span style="font-weight: 600; color: var(--tint-emerald-300)"
+            >🖥️<span class="pill-label"> 系統 HUD</span></span
           >
         </div>
-        <div class="pill-info" id="btn-zoom-toggle" onclick="openSidebarTab('zoom')">
-          <span>🔍 視圖縮放</span>
+        <div
+          class="pill-info pill-compact"
+          id="btn-zoom-toggle"
+          onclick="openSidebarTab('zoom')"
+          title="視圖縮放"
+        >
+          <span>🔍</span><span class="pill-label">視圖縮放</span>
         </div>
 
         <!-- Local Bridge Status Pill -->
         <div
-          class="pill-info"
+          class="pill-info pill-compact-narrow"
           id="bridge-pill"
           onclick="copyBridgeInfo()"
           title="點擊複製 Local Sync Bridge API 位址"
         >
           <span class="pulse-dot"></span>
-          <span id="bridge-status-text">Bridge :8765</span>
+          <span class="pill-icon-narrow">🔌</span>
+          <span class="pill-label" id="bridge-status-text">Bridge :8765</span>
         </div>
 
         <!-- Global Shortcut Legend Pill -->
-        <div class="pill-info" style="cursor: default" title="macOS 全域喚醒快捷鍵">
+        <div
+          class="pill-info"
+          id="shortcut-pill"
+          style="cursor: default"
+          title="macOS 全域喚醒快捷鍵"
+        >
           <span>⚡ Cmd+Shift+Space</span>
         </div>
       </div>
@@ -1522,7 +1564,7 @@
             <span
               style="font-size: 13px; font-weight: 700; color: var(--accent-color)"
               id="ws-active-title"
-              >新協作對話</span
+              >未命名工作區</span
             >
             <button class="btn-ws-op" onclick="promptRenameActiveWs()" title="手動微調標題">
               ✏️ 重新命名
@@ -3286,6 +3328,14 @@
         }
       }
 
+      const UNNAMED_WORKSPACE = '未命名工作區';
+      // Older builds saved new workspaces under these placeholder titles.
+      const PLACEHOLDER_WORKSPACE_TITLES = ['新協作對話', '協作會話'];
+
+      function workspaceLabel(title) {
+        return !title || PLACEHOLDER_WORKSPACE_TITLES.includes(title) ? UNNAMED_WORKSPACE : title;
+      }
+
       function renderWorkspaces() {
         const topTitle = document.getElementById('top-workspace-title');
         const activeTitle = document.getElementById('ws-active-title');
@@ -3298,8 +3348,8 @@
           workspacesState.activeWorkspace ||
           (workspacesState.workspaces && workspacesState.workspaces[0]);
         if (active) {
-          if (topTitle) topTitle.textContent = active.title || '協作會話';
-          if (activeTitle) activeTitle.textContent = active.title || '協作會話';
+          if (topTitle) topTitle.textContent = workspaceLabel(active.title);
+          if (activeTitle) activeTitle.textContent = workspaceLabel(active.title);
           if (activeTime) {
             const t = active.createdAt
               ? new Date(active.createdAt).toLocaleTimeString([], {
@@ -3319,7 +3369,7 @@
               .join('');
           }
         } else {
-          if (topTitle) topTitle.textContent = '新協作對話';
+          if (topTitle) topTitle.textContent = UNNAMED_WORKSPACE;
         }
 
         const totalWorkspaces = workspacesState.workspaces || [];
@@ -3411,17 +3461,18 @@
                 }
               }
 
+              const label = workspaceLabel(ws.title);
               const highlightedTitle =
                 queryTokens.length > 0
-                  ? highlightMatch(escapeHtml(ws.title), queryTokens)
-                  : escapeHtml(ws.title);
+                  ? highlightMatch(escapeHtml(label), queryTokens)
+                  : escapeHtml(label);
 
               return `
             <div class="ws-item-card ${isActive ? 'active' : ''}">
               <div class="ws-title-row">
                 <div style="display: flex; align-items: center; gap: 6px; overflow: hidden; max-width: 270px;">
                   <span class="type-badge type-badge-${wsType}">${wsType}</span>
-                  <span style="color: ${isActive ? 'var(--accent-color)' : 'var(--text)'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(ws.title)}">
+                  <span style="color: ${isActive ? 'var(--accent-color)' : 'var(--text)'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(label)}">
                     ${isActive ? '👉 ' : ''}${highlightedTitle}
                   </span>
                 </div>
