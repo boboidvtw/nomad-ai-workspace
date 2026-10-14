@@ -12,6 +12,25 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { store } = require('./src/store');
+const { createFileLogger, teeConsole } = require('./src/main-log');
+
+const mainLog = createFileLogger({ dir: app.getPath('logs') });
+teeConsole(console, mainLog);
+process.on('uncaughtExceptionMonitor', (err, origin) => {
+  mainLog.write('fatal', [`${origin}:`, err]);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[Nomad Desktop] Unhandled rejection:', reason);
+});
+app.on('render-process-gone', (_event, contents, details) => {
+  console.error('[Nomad Desktop] Renderer gone:', contents.getURL(), details);
+});
+app.on('child-process-gone', (_event, details) => {
+  console.error('[Nomad Desktop] Child process gone:', details);
+});
+mainLog.write('info', [
+  `[Nomad Desktop] v${app.getVersion()} starting (packaged=${app.isPackaged})`,
+]);
 const { calculateLayoutBounds, ALL_PLATFORMS } = require('./src/layout-engine');
 const { PLATFORM_INJECTORS, toDeliveryResult } = require('./src/injectors');
 const { PLATFORM_EXTRACTORS } = require('./src/extractors');
@@ -654,6 +673,7 @@ async function createMainWindow() {
     mainWindow,
     store,
     bridge,
+    logFile: mainLog.file,
     onLayoutChange: (/** @type {string} */ layout) => {
       store.set('layout', layout);
       if (layout === 'focus') store.set('activePlatforms', ['chatgpt']);

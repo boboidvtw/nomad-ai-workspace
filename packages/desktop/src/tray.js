@@ -3,7 +3,7 @@
  * Manages macOS / Windows system tray resident icon, menu, and global shortcuts.
  */
 
-const { app, Tray, Menu, globalShortcut, nativeImage } = require('electron');
+const { app, Tray, Menu, globalShortcut, nativeImage, shell } = require('electron');
 const path = require('path');
 
 class TrayAndShortcutManager {
@@ -17,6 +17,7 @@ class TrayAndShortcutManager {
    * @param {Function} [options.onToggleDrawer] - Callback for toggling drawer
    * @param {Function} [options.onNewSession] - Callback for new session
    * @param {Function} [options.onToggleHud] - Callback for toggling HUD
+   * @param {string} [options.logFile] - Main-process log file, revealed from the tray
    */
   constructor({
     mainWindow,
@@ -27,6 +28,7 @@ class TrayAndShortcutManager {
     onToggleDrawer,
     onNewSession,
     onToggleHud,
+    logFile,
   }) {
     this.mainWindow = mainWindow;
     this.store = store;
@@ -36,6 +38,7 @@ class TrayAndShortcutManager {
     this.onToggleDrawer = onToggleDrawer || (() => {});
     this.onNewSession = onNewSession || (() => {});
     this.onToggleHud = onToggleHud || (() => {});
+    this.logFile = logFile || '';
     this.tray = null;
     this.registeredShortcuts = new Map(); // accelerator -> actionName
   }
@@ -149,6 +152,11 @@ class TrayAndShortcutManager {
         enabled: false,
       },
       { type: 'separator' },
+      {
+        label: '顯示執行紀錄 (Log)',
+        enabled: Boolean(this.logFile),
+        click: () => shell.showItemInFolder(this.logFile),
+      },
       {
         label: '開機自動啟動',
         type: 'checkbox',

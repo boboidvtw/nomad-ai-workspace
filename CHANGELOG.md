@@ -8,6 +8,10 @@
 
 ### ✨ 新增 (Added)
 
+- **主程序執行紀錄檔**：打包版 app 沒有終端機，main process 的輸出原本會直接消失。現在 `console.log/info/warn/error` 會同步寫入 `main.log`（macOS 為 `~/Library/Logs/Nomad AI Studio/main.log`，權限 600），超過 1 MB 輪替成 `main.log.1`。
+  - 另外記錄未捕捉例外（`fatal`）、未處理的 Promise rejection、renderer 與 child process 異常結束。
+  - 托盤選單新增「顯示執行紀錄 (Log)」，在 Finder 中顯示該檔案。
+
 - **Dashboard 直接在 Studio 內開啟**：頂部新增「📊 Dashboard」按鈕，Dashboard 以全畫面頁面顯示在 AI 分頁的位置，再按一次、點已顯示的平台標籤或切換版面就回到 AI 分頁。Bot 被擋下的提示也改成在 Studio 內開啟 `#bots`。
   - Dashboard 使用獨立的 `WebContentsView`（`persist:nomad-dashboard` session、sandbox），不載入 Nomad 擴充功能，也拿不到 AI 網站的 cookie；只能停留在 Bridge 的 `/dashboard`，其他連結交給系統瀏覽器。
   - 網址使用 Bridge 實際的 port（8765 被占用時會是 8766），不再寫死 8765。
