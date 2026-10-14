@@ -76,3 +76,12 @@
   stale reply.
 - **Guard:** `src/pages/content/coachmark/__tests__/coachmark.test.ts`,
   `packages/desktop/src/__tests__/injectors.test.js`
+
+## Perplexity replies carried source chip text
+
+- **Trap:** The Perplexity extractor read `innerText` of the last `.prose`, which includes
+  the inline source chips perplexity.ai renders after each sentence. Bot replies came back
+  as "…重新訓練。\ndatabricks\n+1".
+- **Rule:** Read the reply from an off-screen copy with `[data-pplx-citation]` removed;
+  never edit the live page, and keep reading `innerText` so paragraph breaks survive.
+- **Guard:** `packages/desktop/src/__tests__/extractors.test.js`

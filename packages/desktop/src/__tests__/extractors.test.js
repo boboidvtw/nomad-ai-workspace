@@ -64,3 +64,28 @@ test('Extractors: Claude reads only the markdown of the last reply, not its row 
   assert.strictEqual(reply.ok, true);
   assert.match(reply.text, /^CODE-1\s*line two$/);
 });
+
+test('Extractors: Perplexity drops inline citation chips from the reply', () => {
+  const { JSDOM } = require('jsdom');
+  // Live perplexity.ai markup (2026-10-14): each source is an inline chip "<site> +N".
+  const chip = (/** @type {string} */ site) =>
+    `<span class="citation inline" data-pplx-citation="" data-pplx-citation-url="https://${site}.com/x">` +
+    `<span class="group/trigger inline-flex"><span class="citation inline"><span>${site}</span><span>+1</span></span></span></span>`;
+  const dom = new JSDOM(
+    '<!doctype html><body>' +
+      '<div class="prose"><p>old answer</p></div>' +
+      `<div class="prose"><p>選 RAG。${chip('databricks')}</p><p>第二點。${chip('redhat')}</p></div>` +
+      '</body>',
+    { runScripts: 'outside-only' },
+  );
+  const before = dom.window.document.body.innerHTML;
+
+  const reply = dom.window.eval(PLATFORM_EXTRACTORS.perplexity.getLatestResponse());
+
+  assert.strictEqual(reply.ok, true);
+  assert.ok(!/databricks|redhat|\+1/.test(reply.text), `chip text leaked: ${reply.text}`);
+  assert.match(reply.text, /選 RAG。/);
+  assert.match(reply.text, /第二點。/);
+  assert.strictEqual(reply.length, reply.text.length);
+  assert.strictEqual(dom.window.document.body.innerHTML, before, 'page DOM is left untouched');
+});
