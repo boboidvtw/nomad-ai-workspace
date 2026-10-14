@@ -204,6 +204,11 @@
         color: white;
         box-shadow: 0 0 16px rgba(124, 58, 237, 0.4);
       }
+      .btn-dashboard.active {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        color: white;
+      }
       .pulse-dot {
         width: 7px;
         height: 7px;
@@ -1268,6 +1273,16 @@
           <button class="btn-ratio" id="ratio-60" onclick="setRatio(0.6)">6:4</button>
         </div>
 
+        <!-- In-app Dashboard (Bots, Tasks, Agents ...) -->
+        <div
+          class="pill-info btn-dashboard"
+          id="btn-dashboard-pill"
+          onclick="toggleDashboard()"
+          title="在 Studio 內開啟 Dashboard（Bots、Tasks、Agents…），再按一次回到 AI 分頁"
+        >
+          <span>📊 Dashboard</span>
+        </div>
+
         <!-- Workspace Pill -->
         <div
           class="pill-info"
@@ -2016,13 +2031,18 @@
           </button>
           <button
             class="btn-ws-op"
-            onclick="
-              window.nomadDesktop &&
-                window.nomadDesktop.openExternal('http://127.0.0.1:8765/dashboard')
-            "
+            onclick="openDashboard()"
             style="flex: 1; padding: 6px; text-align: center"
           >
-            🌐 開啟 Dashboard
+            📊 開啟 Dashboard
+          </button>
+          <button
+            class="btn-ws-op"
+            onclick="openDashboardInBrowser()"
+            style="flex: 1; padding: 6px; text-align: center"
+            title="用系統瀏覽器開啟同一個 Dashboard"
+          >
+            🌐 在瀏覽器開啟
           </button>
         </div>
       </div>
@@ -2824,6 +2844,7 @@
           perplexity: 1.0,
         },
         bridgePort: 8765,
+        isDashboardOpen: false,
         isSidebarOpen: false,
         activeSidebarTab: 'orch',
       };
@@ -2923,6 +2944,34 @@
         if (bridgeText && state.bridgePort) {
           bridgeText.textContent = `Bridge :${state.bridgePort}`;
         }
+
+        // 7. In-app Dashboard
+        const dashboardPill = document.getElementById('btn-dashboard-pill');
+        if (dashboardPill) dashboardPill.classList.toggle('active', Boolean(state.isDashboardOpen));
+      }
+
+      async function setDashboard(open, hash = '') {
+        if (!window.nomadDesktop || !window.nomadDesktop.setDashboard) {
+          if (open) openDashboardInBrowser(hash);
+          return;
+        }
+        try {
+          const res = await window.nomadDesktop.setDashboard({ open, hash });
+          state.isDashboardOpen = Boolean(res && res.open);
+          if (res && res.port) state.bridgePort = res.port;
+        } catch (err) {
+          console.warn('[Nomad Studio] Dashboard toggle failed:', err);
+          state.isDashboardOpen = false;
+        }
+        renderUI();
+      }
+
+      function openDashboard(hash = '') {
+        return setDashboard(true, hash);
+      }
+
+      function toggleDashboard() {
+        return setDashboard(!state.isDashboardOpen);
       }
 
       function handleLayoutClick(mode) {
@@ -2951,6 +3000,11 @@
 
       function togglePlatform(platform) {
         const active = state.activePlatforms;
+        // While the Dashboard is up, a shown platform's chip just brings the AI panes back.
+        if (state.isDashboardOpen && active.includes(platform)) {
+          setDashboard(false);
+          return;
+        }
         if (active.includes(platform)) {
           // A shown platform is removed, one column fewer.
           if (active.length <= 1) return;
@@ -2978,6 +3032,7 @@
       }
 
       function notifyLayout() {
+        if (state.isDashboardOpen) setDashboard(false);
         if (window.nomadDesktop && window.nomadDesktop.setLayout) {
           window.nomadDesktop.setLayout({
             layout: state.layout,
@@ -4709,7 +4764,7 @@
               'color:var(--tint-amber-300);font-size:12px;text-align:left;cursor:pointer;';
             banner.addEventListener('click', () => {
               banner.style.display = 'none';
-              openDashboardInBrowser('#bots');
+              openDashboard('#bots');
             });
             document.body.appendChild(banner);
           }

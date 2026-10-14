@@ -8,6 +8,13 @@
 
 ### ✨ 新增 (Added)
 
+- **Dashboard 直接在 Studio 內開啟**：頂部新增「📊 Dashboard」按鈕，Dashboard 以全畫面頁面顯示在 AI 分頁的位置，再按一次、點已顯示的平台標籤或切換版面就回到 AI 分頁。Bot 被擋下的提示也改成在 Studio 內開啟 `#bots`。
+  - Dashboard 使用獨立的 `WebContentsView`（`persist:nomad-dashboard` session、sandbox），不載入 Nomad 擴充功能，也拿不到 AI 網站的 cookie；只能停留在 Bridge 的 `/dashboard`，其他連結交給系統瀏覽器。
+  - 網址使用 Bridge 實際的 port（8765 被占用時會是 8766），不再寫死 8765。
+  - 換主題時會重新載入已開啟的 Dashboard，馬上套用新主題。
+  - 網址的 `#<分類>`（`#bots`、`#tasks`…）在頁面開著時改變也會切換分類。
+  - HUD 保留「🌐 在瀏覽器開啟」按鈕。
+
 - **外觀主題擴充為 12 款，新增明亮與繽紛系列**：原本 5 款都是深色，現在分成三組：深色（深夜深灰、太空純黑、賽博藍紫、極光翡翠、極簡冷銀）、明亮（晨光白、蜜桃晨曦、薄荷蘇打、薰衣草田）、繽紛（霓虹夜城、熱帶夕陽、海洋湛藍，以漸層為背景）。選主題時會一併套用它的建議強調色，之後仍可用色票覆蓋。
   - Studio 外框的顏色全部改為 CSS token（`--text-*`、`--fg-rgb`、`--panel-rgb`、`--well-rgb`、`--accent-rgb`、`--accent-2`、`--on-accent` 等）。強調色現在會套用到整個介面，不再只影響少數元素。
   - 每組主題的文字與強調色都經過 WCAG AA 對比計算（≥ 4.5:1，以半透明面板疊在背景上的實際顏色計算）。
@@ -46,6 +53,7 @@
 
 ### 🐛 修復 (Fixed)
 
+- **Studio「開啟 Dashboard」按鈕與 Bot 提示點了沒反應**：preload 提供了 `openExternal`，但 main process 從未註冊 `nomad:open-external`，呼叫一律失敗。現在已註冊，只接受 http(s) 網址。
 - **明亮主題啟動時閃黑**：視窗原本寫死底色 `#0f172a`，`index.html` 也要等設定 IPC 回來才套主題。現在視窗以已存主題的底色建立，並以 `?bg=&mode=` 讓第一幀就用正確底色；執行中切換主題也會同步更新視窗底色（`src/window-theme.js`）。
 - **網頁版注入失敗不再空等**：注入腳本回傳 `{ ok: false }`（例如找不到輸入框）時，任務會立刻失敗並附上原因，不再等滿 180 秒。
 - **Claude 繁中介面送出**：辨識「傳送訊息」按鈕；先前只認 Send／發送／发送，繁中介面下文字填入後不會送出。
