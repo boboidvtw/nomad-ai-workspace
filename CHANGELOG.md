@@ -12,6 +12,10 @@
   - Studio 外框的顏色全部改為 CSS token（`--text-*`、`--fg-rgb`、`--panel-rgb`、`--well-rgb`、`--accent-rgb`、`--accent-2`、`--on-accent` 等）。強調色現在會套用到整個介面，不再只影響少數元素。
   - 每組主題的文字與強調色都經過 WCAG AA 對比計算（≥ 4.5:1，以半透明面板疊在背景上的實際顏色計算）。
   - 測試 `appearance-themes.test.js` 會在 jsdom 載入真正的 `index.html`，並阻擋再寫死深色主題的顏色。
+- **Dashboard 跟隨 Studio 主題**：Studio bridge 提供 `/dashboard` 時，會把已存的主題與強調色注入成 `<style id="nomad-theme">`，明亮主題下也能閱讀。
+  - 12 款主題資料移到 `@nomad/core` 的 `THEME_PRESETS`，成為唯一來源；Studio `index.html` 保留一份內嵌副本，由測試確保兩者一致。
+  - `index.html` 與 `bots-panel.html` 約 200 處寫死的顏色改為 token（`--fg-rgb`、`--panel-rgb`、`--well-rgb`、`--primary-rgb`、`--bg-solid`、`--on-primary`、`--tint-*`）；回歸測試會阻擋舊的寫死顏色。
+  - Daemon 沒有已存的外觀設定，提供預設深色樣式。換主題後需重新整理 Dashboard。
 - **Bots（[SPEC-AGENT-BOTS](SPEC-AGENT-BOTS.md)，借鏡 Hermes Bot Mode 與 herdr）**：Agent Roster 升級為有身分的 Bot，不另建新的資料單位。
   - **持久化身分**：`~/.nomad/roster.json` 儲存 `@handle`、顯示名稱、persona、頭像、分組與隱藏狀態；Studio 是唯一寫入者，daemon 只讀。新增 `GET/POST /api/bots`、`GET/PATCH/DELETE /api/bots/:id`、`POST /api/bots/:id/seen`、`GET /api/bots/resolve?mention=`。
   - **永久對話（Canonical Bot Chat）**：第一次派工時開新對話、送出 persona，並綁定對話 URL；之後都在同一個對話裡執行。對話被刪除時自動改綁新對話並寫入 timeline。只接受各平台真正的對話 URL（`claude.ai/chat/…`、`chatgpt.com/c/…` 等）。
@@ -42,6 +46,7 @@
 
 ### 🐛 修復 (Fixed)
 
+- **明亮主題啟動時閃黑**：視窗原本寫死底色 `#0f172a`，`index.html` 也要等設定 IPC 回來才套主題。現在視窗以已存主題的底色建立，並以 `?bg=&mode=` 讓第一幀就用正確底色；執行中切換主題也會同步更新視窗底色（`src/window-theme.js`）。
 - **網頁版注入失敗不再空等**：注入腳本回傳 `{ ok: false }`（例如找不到輸入框）時，任務會立刻失敗並附上原因，不再等滿 180 秒。
 - **Claude 繁中介面送出**：辨識「傳送訊息」按鈕；先前只認 Send／發送／发送，繁中介面下文字填入後不會送出。
 - **`bots-capture-check.mjs` 經 symlink 路徑執行時沒有任何動作**：改用實際路徑判斷是否為進入點。
