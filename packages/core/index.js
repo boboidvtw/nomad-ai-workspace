@@ -23,6 +23,7 @@
 /** @typedef {import('./src/bots/bot-roster').Bot} Bot */
 /** @typedef {import('./src/bots/bot-routes').BotServices} BotServices */
 /** @typedef {import('./src/constants').MonitoredService} MonitoredService */
+/** @typedef {import('./src/theme/theme-presets').ThemePreset} ThemePreset */
 /** @typedef {import('./src/constants').PlatformConfig} PlatformConfig */
 /** @typedef {import('./src/extensions/template-parser').TemplateVariable} TemplateVariable */
 /** @typedef {import('./src/extensions/markdown-exporter').ChatMessage} ChatMessage */
@@ -149,6 +150,15 @@ const {
 // P3: Nomad Plugin Runtime
 const { PluginRuntime } = require('./src/plugins/plugin-runtime');
 
+// Themes shared by the Studio window and the Dashboard
+const {
+  DEFAULT_THEME,
+  THEME_PRESETS,
+  resolveThemeName,
+  isHexColor,
+  hexToRgb,
+} = require('./src/theme/theme-presets');
+
 const ArtifactExtractor = {
   extract: extractArtifacts,
   extractArtifacts,
@@ -161,6 +171,11 @@ const DiffEngine = {
 };
 
 module.exports = {
+  DEFAULT_THEME,
+  THEME_PRESETS,
+  resolveThemeName,
+  isHexColor,
+  hexToRgb,
   ok,
   err,
   isOk,

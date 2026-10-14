@@ -6,7 +6,7 @@
 
 const http = require('http');
 const fs = require('fs');
-const { serveDashboard } = require('@nomad/dashboard');
+const { serveDashboard, themeDashboardHtml } = require('@nomad/dashboard');
 const {
   ok,
   err,
@@ -54,6 +54,7 @@ class LocalSyncBridge {
    * @param {Function} [options.onEvalScript] - Debug hook: run a script in a platform webview
    * @param {boolean} [options.debugEndpoints=false] - Serve /api/debug/* (they run scripts inside logged-in AI sessions); 404 otherwise
    * @param {() => (string | undefined)} [options.getDriveSyncDir] - Configured Drive sync folder; HTTP callers cannot choose it
+   * @param {() => ({ theme?: unknown, accentColor?: unknown } | undefined)} [options.getAppearance] - Stored Studio theme, applied to /dashboard
    * @param {import('./session-manager').SessionManager | null} [options.sessionManager] - SessionManager for workspace/session routes
    * @param {number} [options.daemonPort=8765] - Daemon port to register with when running on another port
    * @param {import('@nomad/core').McpGateway} [options.mcpGateway] - Shared MCP gateway (defaults to a new one with core's default roots)
@@ -76,6 +77,7 @@ class LocalSyncBridge {
     this.debugEndpoints = options.debugEndpoints === true;
     this.getDriveSyncDir = options.getDriveSyncDir || (() => undefined);
     this.sessionManager = options.sessionManager || null;
+    this.getAppearance = options.getAppearance || (() => undefined);
 
     this.server = null;
     this.sseClients = new Set();
@@ -379,7 +381,10 @@ class LocalSyncBridge {
       // 0. Dashboard static hosting
       if (isDashboardPath(pathname)) {
         serveDashboard(req, res, (html) =>
-          injectDashboardAuth(html, this.authToken, [this.port, DEFAULT_DAEMON_PORT]),
+          themeDashboardHtml(
+            injectDashboardAuth(html, this.authToken, [this.port, DEFAULT_DAEMON_PORT]),
+            this.getAppearance(),
+          ),
         );
         return;
       }

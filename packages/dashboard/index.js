@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const { err, ErrorCodes } = require('@nomad/core');
+const { dashboardThemeTokens, themeDashboardHtml } = require('./theme');
 
 const DASHBOARD_HTML_PATH = path.join(__dirname, 'index.html');
 const BOTS_PANEL_PATH = path.join(__dirname, 'bots-panel.html');
@@ -81,4 +82,6 @@ module.exports = {
   composeDashboard,
   findDashboardPath,
   serveDashboard,
+  dashboardThemeTokens,
+  themeDashboardHtml,
 };

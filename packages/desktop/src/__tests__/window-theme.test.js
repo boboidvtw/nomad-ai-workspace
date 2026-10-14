@@ -8,27 +8,24 @@ const { THEME_BACKGROUNDS, windowBackgroundFor, firstPaintQuery } = require('../
 const HTML_PATH = path.join(__dirname, '../../index.html');
 const HTML = fs.readFileSync(HTML_PATH, 'utf8');
 
-/** Reads `name -> { group, bgBase }` from the THEME_PRESETS literal in index.html. */
-function readPresets() {
-  const block = HTML.slice(
-    HTML.indexOf('const THEME_PRESETS = {'),
-    HTML.indexOf('const THEME_GROUPS'),
-  );
-  /** @type {Record<string, { group: string, bg: string }>} */
-  const found = {};
-  const preset = /^\s{8}(\w+): \{\s*group: '(\w+)',[\s\S]*?bgBase: '(#[0-9a-f]{6})'/gim;
-  for (const m of block.matchAll(preset)) found[m[1]] = { group: m[2], bg: m[3] };
-  return found;
+const { THEME_PRESETS } = require('@nomad/core');
+
+/** Evaluates the inline THEME_PRESETS literal in index.html. */
+function readStudioPresets() {
+  const block = HTML.slice(HTML.indexOf('const DARK_TEXT'), HTML.indexOf('const THEME_GROUPS'));
+  return new Function(block + 'return THEME_PRESETS;')();
 }
 
-test('Window theme: every index.html preset has the same background and mode', () => {
-  const presets = readPresets();
-  assert.strictEqual(Object.keys(presets).length, 12);
-  const expected = Object.fromEntries(Object.entries(presets).map(([k, p]) => [k, p.bg]));
-  assert.deepStrictEqual(THEME_BACKGROUNDS, expected);
-  for (const [theme, p] of Object.entries(presets)) {
+test('Window theme: the Studio copy of THEME_PRESETS matches @nomad/core', () => {
+  assert.deepStrictEqual(readStudioPresets(), { ...THEME_PRESETS });
+});
+
+test('Window theme: every preset maps to its background and mode', () => {
+  assert.strictEqual(Object.keys(THEME_BACKGROUNDS).length, 12);
+  for (const [theme, p] of Object.entries(THEME_PRESETS)) {
+    assert.strictEqual(THEME_BACKGROUNDS[theme], p.bgBase);
     assert.deepStrictEqual(firstPaintQuery({ theme }), {
-      bg: p.bg,
+      bg: p.bgBase,
       mode: p.group === 'light' ? 'light' : 'dark',
     });
   }
