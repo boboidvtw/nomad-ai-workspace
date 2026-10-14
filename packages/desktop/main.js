@@ -19,6 +19,13 @@ const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { LocalSyncBridge } = require('./src/bridge');
 const { createStudioBots } = require('./src/studio-bots');
 const { windowBackgroundFor, firstPaintQuery } = require('./src/window-theme');
+const {
+  dashboardUrl,
+  dashboardBounds,
+  isDashboardNavigation,
+  isExternalWebUrl,
+  normalizeDashboardHash,
+} = require('./src/dashboard-view');
 
 const CHAT_READY_DELAY_MS = 2500;
 const { TrayAndShortcutManager } = require('./src/tray');
@@ -78,6 +85,9 @@ let studioBots = null;
 /** @type {import('./src/session-manager').SessionManager | null} */
 let sessionManager = null;
 let isDrawerOpen = false;
+/** @type {WebContentsView | null} */
+let dashboardView = null;
+let isDashboardOpen = false;
 app.isQuitting = false;
 
 const TOP_BAR_HEIGHT = 52;
@@ -169,11 +179,82 @@ function updateViewBounds() {
       item.view.setVisible(false);
       continue;
     }
-    if (b.visible) ensurePlatformLoaded(key);
+    const visible = b.visible && !isDashboardOpen;
+    if (visible) ensurePlatformLoaded(key);
     // Hidden views are sized too, so a page a bot drives in the background still lays out.
     item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
-    item.view.setVisible(b.visible);
+    item.view.setVisible(visible);
   }
+
+  if (dashboardView) {
+    dashboardView.setBounds(
+      dashboardBounds({
+        winWidth,
+        winHeight,
+        topBarHeight: TOP_BAR_HEIGHT,
+        bottomBarHeight: BOTTOM_BAR_HEIGHT,
+        drawerWidth: isDrawerOpen ? DRAWER_WIDTH : 0,
+      }),
+    );
+    dashboardView.setVisible(isDashboardOpen);
+  }
+}
+
+/**
+ * Creates the Dashboard view on first use. It gets its own session (no Nomad extension, no AI
+ * site cookies) and cannot leave the bridge's /dashboard page.
+ * @param {number} port
+ * @returns {WebContentsView | null}
+ */
+function ensureDashboardView(port) {
+  if (dashboardView) return dashboardView;
+  if (!mainWindow || mainWindow.isDestroyed()) return null;
+  const view = new WebContentsView({
+    webPreferences: {
+      partition: 'persist:nomad-dashboard',
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+  view.setBackgroundColor(windowBackgroundFor(store.get('appearance')));
+  view.webContents.setWindowOpenHandler(({ url }) => {
+    if (isExternalWebUrl(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  view.webContents.on('will-navigate', (event, url) => {
+    if (isDashboardNavigation(url, port)) return;
+    event.preventDefault();
+    if (isExternalWebUrl(url)) shell.openExternal(url);
+  });
+  mainWindow.contentView.addChildView(view);
+  view.webContents.loadURL(dashboardUrl(port));
+  dashboardView = view;
+  return view;
+}
+
+/**
+ * Shows or hides the in-app Dashboard; platform views (and bots driving them) keep running.
+ * @param {boolean} open
+ * @param {unknown} [hash] - Section to show, e.g. '#bots'
+ * @returns {{ open: boolean, port: number | null }}
+ */
+function setDashboardOpen(open, hash) {
+  const port = bridge ? bridge.port : null;
+  if (open && port) {
+    const view = ensureDashboardView(port);
+    const section = normalizeDashboardHash(hash);
+    if (view && section) {
+      view.webContents
+        .executeJavaScript(`location.hash = ${JSON.stringify(section)};`)
+        .catch(() => {});
+    }
+    isDashboardOpen = Boolean(view);
+  } else {
+    isDashboardOpen = false;
+  }
+  updateViewBounds();
+  return { open: isDashboardOpen, port };
 }
 
 /**
@@ -546,6 +627,9 @@ async function createMainWindow() {
   try {
     studioBots?.attach(bridge);
     await bridge.start();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('nomad:remote-update', { bridgePort: bridge.port });
+    }
 
     try {
       globalShortcut.register('CommandOrControl+Shift+P', () => {
@@ -692,7 +776,20 @@ ipcMain.handle('nomad:get-settings', () => {
   return {
     ...store.getAll(),
     platforms: PLATFORMS,
+    ...(bridge ? { bridgePort: bridge.port } : {}),
+    isDashboardOpen,
   };
+});
+
+ipcMain.handle('nomad:set-dashboard', (event, options) => {
+  const { open, hash } = options && typeof options === 'object' ? options : {};
+  return setDashboardOpen(Boolean(open), hash);
+});
+
+ipcMain.handle('nomad:open-external', async (event, url) => {
+  if (!isExternalWebUrl(url)) return { success: false, errorCode: 'INVALID_URL' };
+  await shell.openExternal(String(url));
+  return { success: true };
 });
 
 ipcMain.on('nomad:set-layout', (event, { layout, activePlatforms, focus, dual, splitRatio }) => {
@@ -932,6 +1029,11 @@ ipcMain.handle('nomad:set-appearance', (event, appearance) => {
     // Keeps resize gaps and the next reload in the new theme's colour.
     mainWindow.setBackgroundColor(windowBackgroundFor(appearance));
     mainWindow.webContents.send('nomad:remote-update', { appearance });
+  }
+  if (dashboardView) {
+    // The bridge themes the Dashboard HTML when serving it, so a reload picks up the change.
+    dashboardView.setBackgroundColor(windowBackgroundFor(appearance));
+    dashboardView.webContents.reload();
   }
   return { success: true, appearance: store.get('appearance') };
 });

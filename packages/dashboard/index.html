@@ -5203,8 +5203,16 @@
       setInterval(checkAllServicesHealth, 6000);
       loadTaskPlaneData();
       setupTaskSseEvents();
-      // Studio links here as /dashboard#bots (e.g. from a "bot needs you" notice).
-      if (window.location.hash === '#bots') filterCategory('bots');
+      // Studio links here as /dashboard#bots (e.g. from a "bot needs you" notice); the in-app
+      // Dashboard changes the hash on an already open page.
+      function openHashCategory() {
+        const cat = window.location.hash.slice(1);
+        if (cat && document.querySelector('.tab-btn[data-category="' + CSS.escape(cat) + '"]')) {
+          filterCategory(cat);
+        }
+      }
+      openHashCategory();
+      window.addEventListener('hashchange', openHashCategory);
     </script>
   </body>
 </html>

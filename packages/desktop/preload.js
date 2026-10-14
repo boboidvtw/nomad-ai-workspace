@@ -46,6 +46,8 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
   openExportFolder: () => ipcRenderer.invoke('nomad:open-export-folder'),
   getProbe: () => ipcRenderer.invoke('nomad:get-probe'),
   openExternal: (/** @type {unknown} */ url) => ipcRenderer.invoke('nomad:open-external', url),
+  setDashboard: (/** @type {unknown} */ options) =>
+    ipcRenderer.invoke('nomad:set-dashboard', options),
   toggleHud: () => ipcRenderer.invoke('nomad:toggle-hud'),
   onWorkspacesUpdated: (/** @type {IpcListener} */ callback) => {
     ipcRenderer.on('nomad:workspaces-updated', (event, data) => callback(data));
