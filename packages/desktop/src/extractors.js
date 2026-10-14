@@ -243,7 +243,20 @@ const PLATFORM_EXTRACTORS = {
           }
         }
         if (!target) return { ok: false, error: "No Perplexity response found" };
-        const text = (target.innerText || target.textContent || "").trim();
+        // Sources render as inline chips ("databricks +1"); read a copy without them. The copy
+        // sits off-screen in the page so innerText still sees the layout and keeps line breaks.
+        const copy = target.cloneNode(true);
+        copy.querySelectorAll('[data-pplx-citation], .citation').forEach((el) => el.remove());
+        const host = document.createElement('div');
+        host.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;width:' + (target.clientWidth || 800) + 'px';
+        host.appendChild(copy);
+        document.body.appendChild(host);
+        let text;
+        try {
+          text = (copy.innerText || copy.textContent || "").replace(/\\n{3,}/g, "\\n\\n").trim();
+        } finally {
+          host.remove();
+        }
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
