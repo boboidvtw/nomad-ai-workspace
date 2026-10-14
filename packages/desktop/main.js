@@ -996,7 +996,7 @@ ipcMain.handle('nomad:new-session', async () => {
     }
   }
   const ws = sessionManager.createWorkspace({
-    title: '新協作對話',
+    title: '未命名工作區',
     urls: { ...NEW_CHAT_URLS },
   });
   if (mainWindow && !mainWindow.isDestroyed()) {
