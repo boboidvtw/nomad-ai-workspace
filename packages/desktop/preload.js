@@ -109,4 +109,16 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
   onBotBlocked: (/** @type {IpcListener} */ callback) => {
     ipcRenderer.on('nomad:bot-blocked', (event, data) => callback(data));
   },
+
+  // Evolver IDE Workbench & Auto-Guarded Harness Evolution (RFC-0001)
+  evolverGetState: () => ipcRenderer.invoke('nomad:evolver-get-state'),
+  evolverSynthesizeGene: (/** @type {unknown} */ input) =>
+    ipcRenderer.invoke('nomad:evolver-synthesize-gene', input),
+  evolverApproveGene: (/** @type {unknown} */ options) =>
+    ipcRenderer.invoke('nomad:evolver-approve-gene', options),
+  evolverRevertGene: (/** @type {unknown} */ options) =>
+    ipcRenderer.invoke('nomad:evolver-revert-gene', options),
+  evolverResolvePatch: (/** @type {unknown} */ options) =>
+    ipcRenderer.invoke('nomad:evolver-resolve-patch', options),
+  evolverSyncRepos: () => ipcRenderer.invoke('nomad:evolver-sync-repos'),
 });

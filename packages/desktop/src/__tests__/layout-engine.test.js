@@ -209,3 +209,21 @@ test('LayoutEngine: hidden platforms keep a full content-area size', () => {
     visible: false,
   });
 });
+
+test('Layout Engine: Evolver IDE mode hides all WebContentsViews while retaining full dimensions for background bots', () => {
+  const bounds = calculateLayoutBounds({
+    winWidth: 1440,
+    winHeight: 900,
+    topBarHeight: 52,
+    bottomBarHeight: 68,
+    layout: 'evolver',
+    activePlatforms: ['claude', 'chatgpt'],
+    drawerWidth: 0,
+  });
+
+  for (const p of ALL_PLATFORMS) {
+    assert.strictEqual(bounds[p].visible, false, `${p} should be hidden in evolver IDE mode`);
+    assert.strictEqual(bounds[p].width, 1440);
+    assert.strictEqual(bounds[p].height, 780);
+  }
+});

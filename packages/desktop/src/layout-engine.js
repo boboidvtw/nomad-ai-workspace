@@ -49,6 +49,11 @@ function calculateLayoutBounds({
 
   // Determine effective mode
   let effectiveMode = layout;
+  if (effectiveMode === 'evolver') {
+    // Native Evolver Agent IDE Workbench occupies the DOM canvas; hide WebContentsViews
+    // while retaining full content-area dimensions so background bots are not 0x0 throttled.
+    return bounds;
+  }
   if (effectiveMode === 'custom') {
     if (active.length === 1) effectiveMode = 'focus';
     else if (active.length === 2) effectiveMode = 'dual';

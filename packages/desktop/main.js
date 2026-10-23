@@ -64,9 +64,11 @@ const {
   createHerdrRunner,
   buildStateSnapshotScript,
   detectBlocked,
+  EvolverWorkbench,
 } = require('@nomad/core');
 
 const localModelClient = new LocalModelClient();
+const evolverWorkbench = new EvolverWorkbench({ persistToDisk: true });
 const mcpGateway = new McpGateway({
   allowedPaths: resolveMcpAllowedPaths({
     isPackaged: app.isPackaged,
@@ -1163,6 +1165,31 @@ ipcMain.handle('nomad:toggle-spotlight', () => {
 ipcMain.handle('nomad:pipeline-stats', async () => {
   const pm = new PipelineManager(store.get('pipeline') || {});
   return pm.getStats();
+});
+
+// Evolver IDE Workbench & Auto-Guarded Harness Evolution IPC (RFC-0001)
+ipcMain.handle('nomad:evolver-get-state', () => {
+  return evolverWorkbench.getWorkbenchState();
+});
+
+ipcMain.handle('nomad:evolver-synthesize-gene', (_event, input) => {
+  return evolverWorkbench.synthesizeCandidateGene(input || {});
+});
+
+ipcMain.handle('nomad:evolver-approve-gene', (_event, { geneId }) => {
+  return evolverWorkbench.approveGene(geneId);
+});
+
+ipcMain.handle('nomad:evolver-revert-gene', (_event, { geneId }) => {
+  return evolverWorkbench.revertGene(geneId);
+});
+
+ipcMain.handle('nomad:evolver-resolve-patch', (_event, { patchId, action }) => {
+  return evolverWorkbench.resolveSurgicalPatch(patchId, action);
+});
+
+ipcMain.handle('nomad:evolver-sync-repos', () => {
+  return evolverWorkbench.syncToThreeRepos();
 });
 
 // App Lifecycle

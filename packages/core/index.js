@@ -150,6 +150,20 @@ const {
 // P3: Nomad Plugin Runtime
 const { PluginRuntime } = require('./src/plugins/plugin-runtime');
 
+// Evolver IDE Workbench & Harness Evolution (RFC-0001)
+const {
+  DEFAULT_MAX_TOKEN_DELTA,
+  EVOLVER_BLOCK_START,
+  EVOLVER_BLOCK_END,
+  resolveEvolverPaths,
+  compileGeneToThreeRepos,
+  syncGenesToThreeRepos,
+  verifyGeneInShadowSandbox,
+  createDefaultGenes,
+  createDefaultSurgicalPatches,
+  EvolverWorkbench,
+} = require('./src/evolver/evolver-workbench');
+
 // Themes shared by the Studio window and the Dashboard
 const {
   DEFAULT_THEME,
@@ -274,4 +288,15 @@ module.exports = {
   applyCorsHeaders,
   authorizeRequest,
   injectDashboardAuth,
+  // Evolver IDE Workbench & Harness Evolution
+  DEFAULT_MAX_TOKEN_DELTA,
+  EVOLVER_BLOCK_START,
+  EVOLVER_BLOCK_END,
+  resolveEvolverPaths,
+  compileGeneToThreeRepos,
+  syncGenesToThreeRepos,
+  verifyGeneInShadowSandbox,
+  createDefaultGenes,
+  createDefaultSurgicalPatches,
+  EvolverWorkbench,
 };

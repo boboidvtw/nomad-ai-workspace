@@ -99,7 +99,7 @@ const PLATFORMS = Object.freeze({
   },
 });
 
-const LAYOUTS = Object.freeze(['focus', 'dual', 'triple', 'quad', 'hexa', 'custom']);
+const LAYOUTS = Object.freeze(['focus', 'dual', 'triple', 'quad', 'hexa', 'evolver', 'custom']);
 
 const SEMANTIC_TYPES = Object.freeze([
   '功能',
