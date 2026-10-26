@@ -1,3 +1,52 @@
+export type ComponentFormSpec = {
+    domain?: string | undefined;
+    conditionalWorkflow?: boolean | undefined;
+    deterministicCheck?: boolean | undefined;
+    repeatableCli?: boolean | undefined;
+    isolatedSearch?: boolean | undefined;
+    heavyContextExploration?: boolean | undefined;
+    hardGate?: boolean | undefined;
+    preToolIntercept?: boolean | undefined;
+    universalInvariant?: boolean | undefined;
+    cannotBeTriggeredOnDemand?: boolean | undefined;
+    estimatedChars?: number | undefined;
+};
+export type SurfaceCensus = {
+    alwaysOnChars: number;
+    skills: string[];
+    scripts: string[];
+    subagents: string[];
+    hooks: string[];
+};
+export type ContrastiveCandidate = {
+    candidateId: string;
+    isBase?: boolean | undefined;
+    trajectorySummary: string;
+    checksPassed?: number | undefined;
+    errorsEncountered?: number | undefined;
+    alwaysOnCharsDelta?: number | undefined;
+};
+export type ContrastiveSelectionResult = {
+    winnerLabel: string;
+    winnerId: string;
+    tiedToBase: boolean;
+    anonymizedPool: Array<{
+        label: string;
+        trajectorySummary: string;
+        checksPassed: number;
+        errorsEncountered: number;
+        alwaysOnCharsDelta: number;
+    }>;
+    promptEnvelope: string;
+};
+export type DomainExperienceEntry = {
+    domain: string;
+    taskId: string;
+    cue: string;
+    lesson: string;
+    evidence: string;
+    confidence: number;
+};
 export type EvolverTargetPaths = {
     /**
      * - e.g. ~/.gemini/memory/experience-db/genes/evolver
@@ -79,6 +128,7 @@ export type SurgicalPatchItem = {
         };
     };
 };
+export type HarnessComponentForm = "SKILL" | "SCRIPT" | "SUBAGENT" | "HOOK" | "ALWAYS_ON_RULE";
 /**
  * @typedef {'RULE' | 'HOOK' | 'SKILL_PATCH' | 'HYBRID'} GeneMutationType
  */
@@ -114,8 +164,70 @@ export type SurgicalPatchItem = {
  * @property {{ lines: Array<{ type: 'equal'|'add'|'del', value: string, lineA?: number, lineB?: number }>, stats: { added: number, deleted: number, unchanged: number, similarityRatio: number } }} diff
  */
 export const DEFAULT_MAX_TOKEN_DELTA: 120;
+export const DEFAULT_ALWAYS_ON_MAX_CHARS: 3000;
 export const EVOLVER_BLOCK_START: "<!-- BEGIN_NOMAD_EVOLVER_GENES -->";
 export const EVOLVER_BLOCK_END: "<!-- END_NOMAD_EVOLVER_GENES -->";
+/**
+ * @typedef {'SKILL' | 'SCRIPT' | 'SUBAGENT' | 'HOOK' | 'ALWAYS_ON_RULE'} HarnessComponentForm
+ */
+/**
+ * Harness² Cost Hierarchy (Google Research):
+ * Prefer on-demand skills and deterministic scripts over always-on rules.
+ * @type {readonly HarnessComponentForm[]}
+ */
+export const HARNESS2_COST_HIERARCHY: readonly HarnessComponentForm[];
+/**
+ * Harness² Cost Constitution injected into Evolver synthesis & knowledge_injection.py.
+ */
+export const HARNESS2_COST_CONSTITUTION: string;
+/**
+ * @typedef {Object} ComponentFormSpec
+ * @property {string} [domain]
+ * @property {boolean} [conditionalWorkflow]
+ * @property {boolean} [deterministicCheck]
+ * @property {boolean} [repeatableCli]
+ * @property {boolean} [isolatedSearch]
+ * @property {boolean} [heavyContextExploration]
+ * @property {boolean} [hardGate]
+ * @property {boolean} [preToolIntercept]
+ * @property {boolean} [universalInvariant]
+ * @property {boolean} [cannotBeTriggeredOnDemand]
+ * @property {number} [estimatedChars]
+ */
+/**
+ * @typedef {Object} SurfaceCensus
+ * @property {number} alwaysOnChars
+ * @property {string[]} skills
+ * @property {string[]} scripts
+ * @property {string[]} subagents
+ * @property {string[]} hooks
+ */
+/**
+ * @typedef {Object} ContrastiveCandidate
+ * @property {string} candidateId
+ * @property {boolean} [isBase]
+ * @property {string} trajectorySummary
+ * @property {number} [checksPassed]
+ * @property {number} [errorsEncountered]
+ * @property {number} [alwaysOnCharsDelta]
+ */
+/**
+ * @typedef {Object} ContrastiveSelectionResult
+ * @property {string} winnerLabel
+ * @property {string} winnerId
+ * @property {boolean} tiedToBase
+ * @property {Array<{ label: string, trajectorySummary: string, checksPassed: number, errorsEncountered: number, alwaysOnCharsDelta: number }>} anonymizedPool
+ * @property {string} promptEnvelope
+ */
+/**
+ * @typedef {Object} DomainExperienceEntry
+ * @property {string} domain
+ * @property {string} taskId
+ * @property {string} cue
+ * @property {string} lesson
+ * @property {string} evidence
+ * @property {number} confidence
+ */
 /**
  * @typedef {Object} EvolverTargetPaths
  * @property {string} experienceDbGenesDir - e.g. ~/.gemini/memory/experience-db/genes/evolver
@@ -159,17 +271,102 @@ export function syncGenesToThreeRepos(genes: HarnessGene[], customPaths?: Partia
     paths: EvolverTargetPaths;
 }>;
 /**
- * Validates a candidate gene against the Shadow Sandbox regression & token budget gate.
+ * Validates a candidate gene against the Shadow Sandbox regression & token budget gate,
+ * plus optional Harness² open-world contrastive candidate selection when unit tests are absent.
  * @param {Partial<HarnessGene>} gene
- * @param {{ maxTokenDelta?: number }} [options]
- * @returns {import('../result').UnitResult<{ passed: boolean, tokenDelta: number, passRate: number }>}
+ * @param {{ maxTokenDelta?: number, contrastiveCandidates?: ContrastiveCandidate[], selectionOptions?: { additionalContext?: string } }} [options]
+ * @returns {import('../result').UnitResult<{ passed: boolean, tokenDelta: number, passRate: number, contrastiveSelection?: ContrastiveSelectionResult }>}
  */
 export function verifyGeneInShadowSandbox(gene: Partial<HarnessGene>, options?: {
     maxTokenDelta?: number;
+    contrastiveCandidates?: ContrastiveCandidate[];
+    selectionOptions?: {
+        additionalContext?: string;
+    };
 }): import("../result").UnitResult<{
     passed: boolean;
     tokenDelta: number;
     passRate: number;
+    contrastiveSelection?: ContrastiveSelectionResult;
+}>;
+/**
+ * Recommends the most token-economical Harness component form according to the Harness² Cost Hierarchy:
+ * SKILL > SCRIPT > SUBAGENT > HOOK > ALWAYS_ON_RULE
+ *
+ * @param {ComponentFormSpec} spec
+ * @returns {import('../result').UnitResult<{ recommendedForm: HarnessComponentForm, rank: number, hierarchy: readonly HarnessComponentForm[], rationale: string }>}
+ */
+export function recommendComponentForm(spec: ComponentFormSpec): import("../result").UnitResult<{
+    recommendedForm: HarnessComponentForm;
+    rank: number;
+    hierarchy: readonly HarnessComponentForm[];
+    rationale: string;
+}>;
+/**
+ * Auto-repairs untriggered skills in a 4-surface harness tree by injecting explicit
+ * routing trigger bullets into the target Always-On instruction file (default: `guardrails.md`).
+ *
+ * @param {Record<string, string>} surfaceTree
+ * @param {{ targetFile?: string }} [options]
+ * @returns {import('../result').UnitResult<{ surfaceTree: Record<string, string>, repairedSkills: string[], targetFile: string }>}
+ */
+export function autoRepairSkillTriggers(surfaceTree: Record<string, string>, options?: {
+    targetFile?: string;
+}): import("../result").UnitResult<{
+    surfaceTree: Record<string, string>;
+    repairedSkills: string[];
+    targetFile: string;
+}>;
+/**
+ * Validates the 4-surface Harness² contract across Always-On prose, Skills, Scripts, Subagents, and Hooks:
+ * 1. Always-On character budget & raw Jinja template leak check (`EVOLVER_SURFACE_BUDGET_EXCEEDED_009`)
+ * 2. Every `skills/<name>/SKILL.md` is explicitly triggered in Always-On prose (`EVOLVER_SURFACE_UNTRIGGERED_SKILL_006`)
+ * 3. Every referenced or present `scripts/<name>.py|js` exists and is syntax-valid (`EVOLVER_SURFACE_SCRIPT_INVALID_007`)
+ * 4. `.codex/hooks.json` uses PascalCase event names and `type: "command"` handlers (`EVOLVER_SURFACE_HOOK_SCHEMA_008`)
+ *
+ * @param {Record<string, string>} surfaceTree
+ * @param {{ alwaysOnMaxChars?: number, autoRepair?: boolean, targetFile?: string }} [options]
+ * @returns {import('../result').UnitResult<{ valid: boolean, census: SurfaceCensus, surfaceTree: Record<string, string>, repairedSkills: string[] }>}
+ */
+export function validateHarnessSurface(surfaceTree: Record<string, string>, options?: {
+    alwaysOnMaxChars?: number;
+    autoRepair?: boolean;
+    targetFile?: string;
+}): import("../result").UnitResult<{
+    valid: boolean;
+    census: SurfaceCensus;
+    surfaceTree: Record<string, string>;
+    repairedSkills: string[];
+}>;
+/**
+ * Selects the best harness candidate anonymously in open-world contrastive mode (Harness² Mechanism 3).
+ * Enforces grader-leak isolation, anonymizes candidates as A/B/C..., constructs an
+ * EVIDENCE_BOUNDARY + POOL_MIXED_SELECT prompt envelope, and resolves ties to the base harness.
+ *
+ * @param {ContrastiveCandidate[]} candidates
+ * @param {{ additionalContext?: string }} [options]
+ * @returns {import('../result').UnitResult<ContrastiveSelectionResult>}
+ */
+export function selectCandidateAnonymously(candidates: ContrastiveCandidate[], options?: {
+    additionalContext?: string;
+}): import("../result").UnitResult<ContrastiveSelectionResult>;
+/**
+ * Distills a verified harness improvement into the persistent Domain Experience Library (Harness² Mechanism 4).
+ * Writes `<libraryRoot>/<domain>/harnesses/<taskId>/EXPERIENCE.md` and updates `<libraryRoot>/<domain>/INDEX.md`
+ * with structured `cue`, `lesson`, `evidence`, and `confidence` fields.
+ *
+ * @param {DomainExperienceEntry} entry
+ * @param {{ libraryRoot?: string }} [options]
+ * @returns {import('../result').UnitResult<{ experiencePath: string, indexPath: string, domain: string, taskId: string, entry: DomainExperienceEntry }>}
+ */
+export function distillDomainExperience(entry: DomainExperienceEntry, options?: {
+    libraryRoot?: string;
+}): import("../result").UnitResult<{
+    experiencePath: string;
+    indexPath: string;
+    domain: string;
+    taskId: string;
+    entry: DomainExperienceEntry;
 }>;
 /**
  * Creates the initial seed genes derived from the user's real lessons_learned-ZH.md.
@@ -296,6 +493,7 @@ export class EvolverWorkbench {
             passed: boolean;
             tokenDelta: number;
             passRate: number;
+            contrastiveSelection?: ContrastiveSelectionResult;
         };
         filesystemSync: {
             writtenFiles: string[];
@@ -353,4 +551,51 @@ export class EvolverWorkbench {
         patch: SurgicalPatchItem;
         resolvedAt: string;
     }>;
+    /**
+     * Recommends the most token-economical Harness component form (SKILL > SCRIPT > SUBAGENT > HOOK > ALWAYS_ON_RULE).
+     * @param {ComponentFormSpec} spec
+     */
+    recommendForm(spec: ComponentFormSpec): import("../result").UnitResult<{
+        recommendedForm: HarnessComponentForm;
+        rank: number;
+        hierarchy: readonly HarnessComponentForm[];
+        rationale: string;
+    }, string>;
+    /**
+     * Validates a 4-surface harness tree (with optional auto-repair of untriggered skills).
+     * @param {Record<string, string>} surfaceTree
+     * @param {{ alwaysOnMaxChars?: number, autoRepair?: boolean, targetFile?: string }} [options]
+     */
+    validateSurface(surfaceTree: Record<string, string>, options?: {
+        alwaysOnMaxChars?: number;
+        autoRepair?: boolean;
+        targetFile?: string;
+    }): import("../result").UnitResult<{
+        valid: boolean;
+        census: SurfaceCensus;
+        surfaceTree: Record<string, string>;
+        repairedSkills: string[];
+    }, string>;
+    /**
+     * Performs blind contrastive selection across anonymized harness candidates.
+     * @param {ContrastiveCandidate[]} candidates
+     * @param {{ additionalContext?: string }} [options]
+     */
+    selectCandidate(candidates: ContrastiveCandidate[], options?: {
+        additionalContext?: string;
+    }): import("../result").UnitResult<ContrastiveSelectionResult, string>;
+    /**
+     * Distills a verified harness improvement into the Domain Experience Library (`EXPERIENCE.md` + `INDEX.md`).
+     * @param {DomainExperienceEntry} entry
+     * @param {{ libraryRoot?: string }} [options]
+     */
+    distillExperience(entry: DomainExperienceEntry, options?: {
+        libraryRoot?: string;
+    }): import("../result").UnitResult<{
+        experiencePath: string;
+        indexPath: string;
+        domain: string;
+        taskId: string;
+        entry: DomainExperienceEntry;
+    }, string>;
 }

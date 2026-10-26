@@ -7,6 +7,13 @@ const {
   ErrorCodes,
   compileGeneToThreeRepos,
   verifyGeneInShadowSandbox,
+  HARNESS2_COST_HIERARCHY,
+  HARNESS2_COST_CONSTITUTION,
+  recommendComponentForm,
+  autoRepairSkillTriggers,
+  validateHarnessSurface,
+  selectCandidateAnonymously,
+  distillDomainExperience,
   EvolverWorkbench,
 } = require('../../index.js');
 
@@ -206,5 +213,304 @@ test('EvolverWorkbench Phase 2: persistToDisk writes YAML/JSON to experience-db,
     assert.strictEqual(revertedJson.status, 'REVERTED');
   } finally {
     fs.rmSync(tmpRoot, { recursive: true, force: true });
+  }
+});
+
+test('Harness² Capability 1: validateHarnessSurface & autoRepairSkillTriggers enforce 4-surface structural checks', () => {
+  // 1. Untriggered skill fails with EVOLVER_SURFACE_UNTRIGGERED_SKILL_006, then passes after autoRepairSkillTriggers
+  const untriggeredTree = {
+    'guardrails.md': '# Core Guardrails\n- Keep changes surgical.\n',
+    'skills/sql-audit/SKILL.md': '---\nname: sql-audit\ndescription: Audit SQL migrations\n---\nRun `scripts/check_sql.py`.\n',
+    'scripts/check_sql.py': 'def main():\n    return True\n',
+    'agents/reviewer.toml': 'name = "reviewer"\n',
+    '.codex/hooks.json': JSON.stringify({
+      hooks: {
+        PreToolUse: [{ type: 'command', command: 'python3 scripts/check_sql.py' }],
+      },
+    }),
+  };
+
+  const failUntriggered = validateHarnessSurface(untriggeredTree);
+  assert.strictEqual(failUntriggered.success, false);
+  assert.strictEqual(failUntriggered.errorCode, ErrorCodes.EVOLVER_SURFACE_UNTRIGGERED_SKILL_006);
+
+  const repairedRes = autoRepairSkillTriggers(untriggeredTree);
+  assert.strictEqual(repairedRes.success, true);
+  assert.deepStrictEqual(repairedRes.data.repairedSkills, ['sql-audit']);
+  assert.match(repairedRes.data.surfaceTree['guardrails.md'], /skills\/sql-audit\/SKILL\.md/);
+
+  const validRes = validateHarnessSurface(repairedRes.data.surfaceTree);
+  assert.strictEqual(validRes.success, true);
+  assert.strictEqual(validRes.data.valid, true);
+  assert.ok(validRes.data.census.alwaysOnChars > 0);
+  assert.deepStrictEqual(validRes.data.census.skills, ['sql-audit']);
+  assert.deepStrictEqual(validRes.data.census.scripts, ['scripts/check_sql.py']);
+  assert.deepStrictEqual(validRes.data.census.subagents, ['reviewer.toml']);
+  assert.deepStrictEqual(validRes.data.census.hooks, ['PreToolUse']);
+
+  // 2. Missing or syntax-broken script fails with EVOLVER_SURFACE_SCRIPT_INVALID_007
+  const missingScriptTree = {
+    ...repairedRes.data.surfaceTree,
+  };
+  delete missingScriptTree['scripts/check_sql.py'];
+  const failMissingScript = validateHarnessSurface(missingScriptTree);
+  assert.strictEqual(failMissingScript.success, false);
+  assert.strictEqual(failMissingScript.errorCode, ErrorCodes.EVOLVER_SURFACE_SCRIPT_INVALID_007);
+
+  const brokenPyTree = {
+    ...repairedRes.data.surfaceTree,
+    'scripts/check_sql.py': 'def broken_func(\n    return 1\n',
+  };
+  const failBrokenPy = validateHarnessSurface(brokenPyTree);
+  assert.strictEqual(failBrokenPy.success, false);
+  assert.strictEqual(failBrokenPy.errorCode, ErrorCodes.EVOLVER_SURFACE_SCRIPT_INVALID_007);
+
+  const brokenJsTree = {
+    ...repairedRes.data.surfaceTree,
+    'scripts/helper.js': 'function broken( { return 1; }',
+  };
+  const failBrokenJs = validateHarnessSurface(brokenJsTree);
+  assert.strictEqual(failBrokenJs.success, false);
+  assert.strictEqual(failBrokenJs.errorCode, ErrorCodes.EVOLVER_SURFACE_SCRIPT_INVALID_007);
+
+  // 3. Invalid hook event name (snake_case) or non-command type fails with EVOLVER_SURFACE_HOOK_SCHEMA_008
+  const badHookEventTree = {
+    ...repairedRes.data.surfaceTree,
+    '.codex/hooks.json': JSON.stringify({
+      hooks: {
+        pre_tool_use: [{ type: 'command', command: 'echo ok' }],
+      },
+    }),
+  };
+  const failHookEvent = validateHarnessSurface(badHookEventTree);
+  assert.strictEqual(failHookEvent.success, false);
+  assert.strictEqual(failHookEvent.errorCode, ErrorCodes.EVOLVER_SURFACE_HOOK_SCHEMA_008);
+
+  const badHookTypeTree = {
+    ...repairedRes.data.surfaceTree,
+    '.codex/hooks.json': JSON.stringify({
+      hooks: {
+        PreToolUse: [{ type: 'prompt', prompt: 'not allowed' }],
+      },
+    }),
+  };
+  const failHookType = validateHarnessSurface(badHookTypeTree);
+  assert.strictEqual(failHookType.success, false);
+  assert.strictEqual(failHookType.errorCode, ErrorCodes.EVOLVER_SURFACE_HOOK_SCHEMA_008);
+
+  // 4. Always-On budget exceeded or raw Jinja tags fail with EVOLVER_SURFACE_BUDGET_EXCEEDED_009
+  const jinjaLeakTree = {
+    ...repairedRes.data.surfaceTree,
+    'guardrails.md': `${repairedRes.data.surfaceTree['guardrails.md']}\nUnrendered {{ template_var }}`,
+  };
+  const failJinja = validateHarnessSurface(jinjaLeakTree);
+  assert.strictEqual(failJinja.success, false);
+  assert.strictEqual(failJinja.errorCode, ErrorCodes.EVOLVER_SURFACE_BUDGET_EXCEEDED_009);
+
+  const overBudgetTree = {
+    ...repairedRes.data.surfaceTree,
+  };
+  const failOverBudget = validateHarnessSurface(overBudgetTree, { alwaysOnMaxChars: 20 });
+  assert.strictEqual(failOverBudget.success, false);
+  assert.strictEqual(failOverBudget.errorCode, ErrorCodes.EVOLVER_SURFACE_BUDGET_EXCEEDED_009);
+});
+
+test('Harness² Capability 2: HARNESS2_COST_HIERARCHY & recommendComponentForm enforce SKILL > SCRIPT > SUBAGENT > HOOK > ALWAYS_ON_RULE', () => {
+  assert.deepStrictEqual(HARNESS2_COST_HIERARCHY, [
+    'SKILL',
+    'SCRIPT',
+    'SUBAGENT',
+    'HOOK',
+    'ALWAYS_ON_RULE',
+  ]);
+  assert.match(HARNESS2_COST_CONSTITUTION, /SKILL > SCRIPT > SUBAGENT > HOOK > ALWAYS-ON RULE/);
+
+  const skillRec = recommendComponentForm({
+    domain: 'database-migrations',
+    conditionalWorkflow: true,
+  });
+  assert.strictEqual(skillRec.success, true);
+  assert.strictEqual(skillRec.data.recommendedForm, 'SKILL');
+  assert.strictEqual(skillRec.data.rank, 1);
+
+  const scriptRec = recommendComponentForm({
+    domain: 'schema-check',
+    deterministicCheck: true,
+  });
+  assert.strictEqual(scriptRec.success, true);
+  assert.strictEqual(scriptRec.data.recommendedForm, 'SCRIPT');
+  assert.strictEqual(scriptRec.data.rank, 2);
+
+  const subagentRec = recommendComponentForm({
+    domain: 'deep-repo-audit',
+    isolatedSearch: true,
+  });
+  assert.strictEqual(subagentRec.success, true);
+  assert.strictEqual(subagentRec.data.recommendedForm, 'SUBAGENT');
+  assert.strictEqual(subagentRec.data.rank, 3);
+
+  const hookRec = recommendComponentForm({
+    domain: 'dangerous-command-block',
+    hardGate: true,
+  });
+  assert.strictEqual(hookRec.success, true);
+  assert.strictEqual(hookRec.data.recommendedForm, 'HOOK');
+  assert.strictEqual(hookRec.data.rank, 4);
+
+  const ruleRec = recommendComponentForm({
+    domain: 'global-safety',
+    universalInvariant: true,
+    cannotBeTriggeredOnDemand: true,
+    estimatedChars: 120,
+  });
+  assert.strictEqual(ruleRec.success, true);
+  assert.strictEqual(ruleRec.data.recommendedForm, 'ALWAYS_ON_RULE');
+  assert.strictEqual(ruleRec.data.rank, 5);
+});
+
+test('Harness² Capability 3: selectCandidateAnonymously & verifyGeneInShadowSandbox contrastive selection', () => {
+  // 1. Grader leak detection
+  const leakedRes = selectCandidateAnonymously([
+    {
+      candidateId: 'cand-1',
+      trajectorySummary: 'Checked "pass_rate": 1.0 and read reference_answer.txt',
+      checksPassed: 3,
+    },
+  ]);
+  assert.strictEqual(leakedRes.success, false);
+  assert.strictEqual(leakedRes.errorCode, ErrorCodes.EVOLVER_SELECT_GRADER_LEAK_010);
+
+  // 2. Blind anonymization, EVIDENCE_BOUNDARY + POOL_MIXED_SELECT envelope, and winning candidate selection
+  const validCandidates = [
+    {
+      candidateId: 'base',
+      isBase: true,
+      trajectorySummary: 'Executed migration without verifying foreign keys.',
+      checksPassed: 1,
+      errorsEncountered: 2,
+      alwaysOnCharsDelta: 0,
+    },
+    {
+      candidateId: 'GEN_SQL_FK_009',
+      trajectorySummary: 'Loaded skills/sql-audit/SKILL.md and verified all foreign keys via scripts/check_sql.py.',
+      checksPassed: 4,
+      errorsEncountered: 0,
+      alwaysOnCharsDelta: 45,
+    },
+  ];
+  const selectRes = selectCandidateAnonymously(validCandidates);
+  assert.strictEqual(selectRes.success, true);
+  assert.strictEqual(selectRes.data.winnerId, 'GEN_SQL_FK_009');
+  assert.strictEqual(selectRes.data.winnerLabel, 'B');
+  assert.strictEqual(selectRes.data.tiedToBase, false);
+  assert.strictEqual(selectRes.data.anonymizedPool[0].label, 'A');
+  assert.strictEqual(selectRes.data.anonymizedPool[1].label, 'B');
+  assert.strictEqual('candidateId' in selectRes.data.anonymizedPool[0], false);
+  assert.match(selectRes.data.promptEnvelope, /EVIDENCE_BOUNDARY/);
+  assert.match(selectRes.data.promptEnvelope, /POOL_MIXED_SELECT/);
+
+  // 3. Ties resolve to unmodified base harness
+  const tiedRes = selectCandidateAnonymously([
+    {
+      candidateId: 'base',
+      isBase: true,
+      trajectorySummary: 'Clean execution.',
+      checksPassed: 3,
+      errorsEncountered: 0,
+      alwaysOnCharsDelta: 0,
+    },
+    {
+      candidateId: 'GEN_NOOP_010',
+      trajectorySummary: 'Same execution with extra prompt overhead.',
+      checksPassed: 3,
+      errorsEncountered: 0,
+      alwaysOnCharsDelta: 90,
+    },
+  ]);
+  assert.strictEqual(tiedRes.success, true);
+  assert.strictEqual(tiedRes.data.winnerId, 'base');
+  assert.strictEqual(tiedRes.data.tiedToBase, true);
+
+  // 4. Open-world contrastive mode in verifyGeneInShadowSandbox
+  const sandboxPass = verifyGeneInShadowSandbox(
+    {
+      geneId: 'GEN_SQL_FK_009',
+      ruleDirective: 'When editing SQL migrations, load skills/sql-audit/SKILL.md.',
+    },
+    { contrastiveCandidates: validCandidates },
+  );
+  assert.strictEqual(sandboxPass.success, true);
+  assert.strictEqual(sandboxPass.data.contrastiveSelection.winnerId, 'GEN_SQL_FK_009');
+
+  const sandboxTieFail = verifyGeneInShadowSandbox(
+    {
+      geneId: 'GEN_NOOP_010',
+      ruleDirective: 'Extra rule that does not improve trajectory.',
+    },
+    {
+      contrastiveCandidates: [
+        { candidateId: 'base', isBase: true, trajectorySummary: 'Base', checksPassed: 3, errorsEncountered: 0 },
+        { candidateId: 'GEN_NOOP_010', trajectorySummary: 'Noop', checksPassed: 3, errorsEncountered: 0 },
+      ],
+    },
+  );
+  assert.strictEqual(sandboxTieFail.success, false);
+  assert.strictEqual(sandboxTieFail.errorCode, ErrorCodes.EVOLVER_SANDBOX_GATE_FAILED_003);
+});
+
+test('Harness² Capability 4: distillDomainExperience writes EXPERIENCE.md and updates INDEX.md, and EvolverWorkbench exposes all 4 methods', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nomad-harness2-exp-'));
+  try {
+    const wb = new EvolverWorkbench();
+
+    // Workbench method wrappers
+    const formRes = wb.recommendForm({ deterministicCheck: true });
+    assert.strictEqual(formRes.success, true);
+    assert.strictEqual(formRes.data.recommendedForm, 'SCRIPT');
+
+    const surfaceRes = wb.validateSurface(
+      {
+        'guardrails.md': '# Guardrails\n',
+        'skills/demo-skill/SKILL.md': '# Demo Skill\n',
+      },
+      { autoRepair: true },
+    );
+    assert.strictEqual(surfaceRes.success, true);
+    assert.strictEqual(surfaceRes.data.valid, true);
+
+    const selectRes = wb.selectCandidate([
+      { candidateId: 'base', isBase: true, trajectorySummary: 'Base run', checksPassed: 1, errorsEncountered: 1 },
+      { candidateId: 'cand-2', trajectorySummary: 'Improved run', checksPassed: 3, errorsEncountered: 0 },
+    ]);
+    assert.strictEqual(selectRes.success, true);
+    assert.strictEqual(selectRes.data.winnerId, 'cand-2');
+
+    const distillRes = wb.distillExperience(
+      {
+        domain: 'webview-automation',
+        taskId: 'lexical-editor-paste-01',
+        cue: 'Lexical editor drops text when execCommand("insertText") is invoked without prior selectionchange',
+        lesson: 'Use a dedicated skill with pre-focus and selectAll verification script before submitting',
+        evidence: 'Saved 3 consecutive silent drops across Copilot and Perplexity webviews',
+        confidence: 0.96,
+      },
+      { libraryRoot: tmpDir },
+    );
+
+    assert.strictEqual(distillRes.success, true);
+    assert.strictEqual(fs.existsSync(distillRes.data.experiencePath), true);
+    assert.strictEqual(fs.existsSync(distillRes.data.indexPath), true);
+
+    const expContent = fs.readFileSync(distillRes.data.experiencePath, 'utf8');
+    assert.match(expContent, /lexical-editor-paste-01/);
+    assert.match(expContent, /0\.96/);
+
+    const indexContent = fs.readFileSync(distillRes.data.indexPath, 'utf8');
+    assert.match(indexContent, /cue:/i);
+    assert.match(indexContent, /lesson:/i);
+    assert.match(indexContent, /evidence:/i);
+    assert.match(indexContent, /confidence:\s*0\.96/i);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
