@@ -248,3 +248,84 @@ it('broadcasts real-time SSE events over /api/events on task lifecycle changes',
     await server.stop();
   }
 });
+
+it('supports Agensh decentralized self-claiming, P2P contract locks, and shared context via REST APIs', async () => {
+  const TEST_PORT = 19925;
+  const server = new NomadDaemonServer({ port: TEST_PORT });
+  await server.start();
+
+  try {
+    // 1. Create a task with requiredSkills and estimatedTokens
+    const createRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks', {
+      title: 'Agensh Self-Claimable Task',
+      priority: 'urgent',
+      metadata: {
+        requiredSkills: ['architecture'],
+        estimatedTokens: 12000,
+      },
+    });
+    assert.strictEqual(createRes.status, 200);
+    const createdTaskId = createRes.data.data.id;
+
+    // 2. Self-claim via POST /api/tasks/claim without taskId
+    const selfClaimRes = await makeRequest(TEST_PORT, 'POST', '/api/tasks/claim', {
+      agentId: 'agent-claude',
+      skills: ['architecture'],
+      remainingTokenBudget: 28000,
+    });
+    assert.strictEqual(selfClaimRes.status, 200);
+    assert.strictEqual(selfClaimRes.data.success, true);
+    assert.strictEqual(selfClaimRes.data.data.id, createdTaskId);
+    assert.strictEqual(selfClaimRes.data.data.assignee, 'agent-claude');
+
+    // 3. Send P2P message with [CONTRACT_LOCKED]
+    const p2pRes = await makeRequest(TEST_PORT, 'POST', '/api/agensh/p2p/message', {
+      fromAgentId: 'agent-claude',
+      toAgentId: 'agent-chatgpt',
+      taskId: createdTaskId,
+      content: '[CONTRACT_LOCKED] packages/core/src/result.js: ok(data) => UnitSuccess<T>',
+    });
+    assert.strictEqual(p2pRes.status, 200);
+    assert.strictEqual(p2pRes.data.data.contractLocked, true);
+
+    // 4. Broadcast a failure immunization & publish a finding
+    const failRes = await makeRequest(TEST_PORT, 'POST', '/api/agensh/context/failures', {
+      agentId: 'agent-grok',
+      taskId: createdTaskId,
+      domain: 'daemon',
+      errorCode: 'DAEMON_SERVER_PORT_IN_USE_001',
+      symptom: 'Port collision during parallel test execution',
+      mitigation: 'Assign distinct ephemeral ports per test worker',
+      distillToExperienceDb: false,
+    });
+    assert.strictEqual(failRes.status, 200);
+
+    const findRes = await makeRequest(TEST_PORT, 'POST', '/api/agensh/context/findings', {
+      agentId: 'agent-gemini',
+      taskId: createdTaskId,
+      domain: 'daemon',
+      title: 'SSE Broadcast Pattern',
+      content: 'Use server.broadcast(eventType, payload) for all Agensh events.',
+    });
+    assert.strictEqual(findRes.status, 200);
+
+    // 5. Gather context with token budget cap
+    const gatherRes = await makeRequest(
+      TEST_PORT,
+      'GET',
+      '/api/agensh/context/gather?domain=daemon&maxTokenBudget=1500',
+    );
+    assert.strictEqual(gatherRes.status, 200);
+    assert.strictEqual(gatherRes.data.data.immunizations.length, 1);
+    assert.strictEqual(gatherRes.data.data.findings.length, 1);
+    assert.strictEqual(gatherRes.data.data.contracts.length, 1);
+
+    // 6. Verify /api/agensh/status telemetry
+    const statusRes = await makeRequest(TEST_PORT, 'GET', '/api/agensh/status');
+    assert.strictEqual(statusRes.status, 200);
+    assert.strictEqual(statusRes.data.data.contracts.length, 1);
+    assert.strictEqual(statusRes.data.data.immunizations.length, 1);
+  } finally {
+    await server.stop();
+  }
+});

@@ -269,20 +269,49 @@ class TaskDispatcher {
   }
 
   /**
-   * Atomically claims a task for an agent with an exclusive lease
-   * @param {string} taskId
-   * @param {string} agentId
+   * Atomically claims a task for an agent with an exclusive lease.
+   * When taskId is null/omitted (or an options object is passed as the first argument),
+   * delegates to decentralized self-claiming (`claimNextTask`).
+   * @param {string | null | undefined | Object} taskId
+   * @param {string} [agentId]
    * @param {number} [leaseDurationMs]
+   * @param {Object} [claimOptions]
    * @returns {import('../result').UnitResult<import('./task-model').Task>}
    */
-  claimTask(taskId, agentId, leaseDurationMs = this.defaultLeaseDurationMs) {
-    const task = this.tasks.get(taskId);
+  claimTask(taskId, agentId, leaseDurationMs = this.defaultLeaseDurationMs, claimOptions = {}) {
+    if (taskId && typeof taskId === 'object') {
+      const opts = /** @type {Record<string, any>} */ (taskId);
+      if (opts.taskId) {
+        return this.claimTask(
+          String(opts.taskId),
+          String(opts.agentId || ''),
+          typeof opts.leaseDurationMs === 'number'
+            ? opts.leaseDurationMs
+            : this.defaultLeaseDurationMs,
+        );
+      }
+      return this.claimNextTask({
+        ...opts,
+        agentId: String(opts.agentId || ''),
+      });
+    }
+
+    if (!taskId) {
+      return this.claimNextTask({
+        ...claimOptions,
+        agentId: agentId || '',
+        leaseDurationMs,
+      });
+    }
+
+    const task = this.tasks.get(String(taskId));
     if (!task) {
       return err(ErrorCodes.TASK_NOT_FOUND_001, `Task '${taskId}' not found`);
     }
 
     // Verify agent exists in roster
-    const agentRes = this.roster.getAgent(agentId);
+    const resolvedAgentId = String(agentId || '');
+    const agentRes = this.roster.getAgent(resolvedAgentId);
     if (!agentRes.success) {
       return agentRes;
     }
@@ -302,7 +331,7 @@ class TaskDispatcher {
     // Check active lease
     if (task.lease) {
       const leaseExpires = new Date(task.lease.expiresAt).getTime();
-      if (leaseExpires > now && task.lease.agentId !== agentId) {
+      if (leaseExpires > now && task.lease.agentId !== resolvedAgentId) {
         return err(
           ErrorCodes.TASK_ALREADY_CLAIMED_003,
           `Task '${taskId}' is already claimed by agent '${task.lease.agentId}' until ${task.lease.expiresAt}`,
@@ -318,9 +347,9 @@ class TaskDispatcher {
 
     const expiresAt = new Date(now + leaseDurationMs).toISOString();
     task.status = TASK_STATUS.IN_PROGRESS;
-    task.assignee = agentId;
+    task.assignee = resolvedAgentId;
     task.lease = {
-      agentId,
+      agentId: resolvedAgentId,
       acquiredAt: isoNow,
       expiresAt,
     };
@@ -328,14 +357,14 @@ class TaskDispatcher {
     task.logs.push({
       timestamp: isoNow,
       level: 'info',
-      message: `Task claimed by ${agent.name} (${agentId}) with lease expiring at ${expiresAt}`,
+      message: `Task claimed by ${agent.name} (${resolvedAgentId}) with lease expiring at ${expiresAt}`,
     });
 
     // Update roster state
-    const rosterAgent = this.roster.agents.get(agentId);
+    const rosterAgent = this.roster.agents.get(resolvedAgentId);
     if (rosterAgent) {
-      if (!rosterAgent.currentTaskIds.includes(taskId)) {
-        rosterAgent.currentTaskIds.push(taskId);
+      if (!rosterAgent.currentTaskIds.includes(String(taskId))) {
+        rosterAgent.currentTaskIds.push(String(taskId));
       }
       if (rosterAgent.currentTaskIds.length >= rosterAgent.maxConcurrency) {
         rosterAgent.status = AGENT_STATUS.BUSY;
@@ -344,6 +373,147 @@ class TaskDispatcher {
 
     this._notify('task:claimed', task);
     return ok({ ...task });
+  }
+
+  /**
+   * Decentralized Self-Claiming Loop (Agensh RFC-0002 Module 1):
+   * Sweeps expired leases, filters unblocked TODO tasks by agent skill/role affinity
+   * and remaining token budget, and atomically claims the highest-priority task.
+   * @param {Object} options
+   * @param {string} options.agentId
+   * @param {string[]} [options.skills]
+   * @param {string} [options.role]
+   * @param {number} [options.remainingTokenBudget]
+   * @param {number} [options.leaseDurationMs]
+   * @returns {import('../result').UnitResult<import('./task-model').Task>}
+   */
+  claimNextTask(options = { agentId: '' }) {
+    if (!options || typeof options !== 'object' || !options.agentId) {
+      return err(
+        ErrorCodes.TASK_INVALID_PAYLOAD_002,
+        'agentId is required for decentralized self-claiming',
+      );
+    }
+
+    // 1. Reclaim any expired leases before scanning the pool
+    this.checkExpiredLeases();
+
+    const agentId = String(options.agentId).trim();
+    const agentRes = this.roster.getAgent(agentId);
+    if (!agentRes.success) {
+      return agentRes;
+    }
+    const agent = agentRes.data;
+
+    // 2. Enforce agent concurrency cap
+    if (
+      Array.isArray(agent.currentTaskIds) &&
+      agent.currentTaskIds.length >= (agent.maxConcurrency || 1)
+    ) {
+      return err(
+        ErrorCodes.TASK_CLAIM_CONCURRENCY_LIMIT_012,
+        `Agent '${agentId}' has reached maxConcurrency (${agent.maxConcurrency})`,
+      );
+    }
+
+    const effectiveSkills = new Set([
+      ...(Array.isArray(agent.skills) ? agent.skills : []),
+      ...(Array.isArray(options.skills) ? options.skills : []),
+    ]);
+    const effectiveRole = (options.role || agent.role || '').toLowerCase();
+    const tokenBudget =
+      typeof options.remainingTokenBudget === 'number'
+        ? options.remainingTokenBudget
+        : typeof agent.budgetTokenLimit === 'number'
+          ? agent.budgetTokenLimit
+          : Infinity;
+
+    /** @type {Record<string, number>} */
+    const priorityRank = {
+      urgent: 4,
+      high: 3,
+      medium: 2,
+      low: 1,
+    };
+
+    /** @type {Array<{ task: import('./task-model').Task, pScore: number, skillScore: number, createdMs: number }>} */
+    const candidates = [];
+
+    for (const task of this.tasks.values()) {
+      if (task.status !== TASK_STATUS.TODO) continue;
+
+      // Skip if explicitly assigned to a different agent
+      if (task.assignee && task.assignee !== agentId) continue;
+
+      // Verify all upstream dependencies are completed
+      if (Array.isArray(task.dependencies) && task.dependencies.length > 0) {
+        const allDone = task.dependencies.every((depId) => {
+          const dep = this.tasks.get(depId);
+          return dep && dep.status === TASK_STATUS.COMPLETED;
+        });
+        if (!allDone) continue;
+      }
+
+      const meta = /** @type {Record<string, any>} */ (task.metadata || {});
+
+      // Token Budget Guard
+      if (typeof meta.estimatedTokens === 'number' && meta.estimatedTokens > tokenBudget) {
+        continue;
+      }
+
+      // Role affinity check if requiredRole is specified
+      if (typeof meta.requiredRole === 'string' && meta.requiredRole.trim()) {
+        const reqRole = meta.requiredRole.trim().toLowerCase();
+        if (!effectiveRole.includes(reqRole) && reqRole !== effectiveRole) {
+          continue;
+        }
+      }
+
+      // Skill affinity check if requiredSkills is specified
+      let skillScore = 0;
+      if (Array.isArray(meta.requiredSkills) && meta.requiredSkills.length > 0) {
+        let matchedCount = 0;
+        for (const reqSkill of meta.requiredSkills) {
+          if (effectiveSkills.has(String(reqSkill))) {
+            matchedCount += 1;
+          }
+        }
+        // Require at least one matching skill (or all if agent has skills)
+        if (matchedCount === 0) {
+          continue;
+        }
+        skillScore = matchedCount / meta.requiredSkills.length;
+      }
+
+      candidates.push({
+        task,
+        pScore: priorityRank[task.priority] || 2,
+        skillScore,
+        createdMs: new Date(task.createdAt || 0).getTime(),
+      });
+    }
+
+    if (candidates.length === 0) {
+      return err(
+        ErrorCodes.TASK_NO_MATCHING_TASK_013,
+        `No matching unblocked TODO task found for agent '${agentId}' within token budget (${tokenBudget})`,
+      );
+    }
+
+    candidates.sort((a, b) => {
+      if (b.pScore !== a.pScore) return b.pScore - a.pScore;
+      if (b.skillScore !== a.skillScore) return b.skillScore - a.skillScore;
+      return a.createdMs - b.createdMs;
+    });
+
+    const chosen = candidates[0].task;
+    return this.claimTask(
+      chosen.id,
+      agentId,
+      typeof options.leaseDurationMs === 'number'
+        ? options.leaseDurationMs
+        : this.defaultLeaseDurationMs,
+    );
   }
 
   /**

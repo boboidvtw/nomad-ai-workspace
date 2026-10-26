@@ -27,6 +27,10 @@ const {
   ApprovalGate,
   RecurringScheduler,
   TaskRunner,
+  WorktreeManager,
+  P2PBus,
+  SharedContextPool,
+  handleAgenshRequest,
   resolveAuthToken,
   isLoopbackModelTarget,
   applyCorsHeaders,
@@ -127,6 +131,31 @@ class NomadDaemonServer {
       });
     this.scheduler.loadFromDisk();
     this.botServices.scheduler = this.scheduler;
+
+    // Agensh Decentralized Swarm Services (RFC-0002)
+    this.worktreeManager = new WorktreeManager({
+      onEvent: (/** @type {string} */ eventType, /** @type {unknown} */ data) => {
+        this.broadcast(eventType, data);
+      },
+    });
+    this.p2pBus = new P2PBus({
+      onEvent: (/** @type {string} */ eventType, /** @type {unknown} */ data) => {
+        this.broadcast(eventType, data);
+      },
+    });
+    this.sharedContext = new SharedContextPool({
+      p2pBus: this.p2pBus,
+      onEvent: (/** @type {string} */ eventType, /** @type {unknown} */ data) => {
+        this.broadcast(eventType, data);
+      },
+    });
+    /** @type {import('@nomad/core').AgenshServices} */
+    this.agenshServices = {
+      dispatcher: this.dispatcher,
+      worktreeManager: this.worktreeManager,
+      p2pBus: this.p2pBus,
+      sharedContext: this.sharedContext,
+    };
   }
 
   start() {
@@ -572,6 +601,16 @@ class NomadDaemonServer {
       });
       if (botRes) return this.sendJson(res, botRes.status, botRes.payload);
 
+      // Agensh Decentralized Swarm (RFC-0002): /api/agensh/*
+      const agenshRes = await handleAgenshRequest({
+        method: req.method || 'GET',
+        pathname,
+        searchParams: url.searchParams,
+        readBody: () => this.readJsonBody(req),
+        services: this.agenshServices,
+      });
+      if (agenshRes) return this.sendJson(res, agenshRes.status, agenshRes.payload);
+
       // 3.9. Task Control Plane & Agent Dispatcher Endpoints (Paperclip Native Integration)
       if (pathname === '/api/roster' && req.method === 'GET') {
         return this.sendJson(res, 200, ok(this.roster.listAgents()));
@@ -654,7 +693,9 @@ class NomadDaemonServer {
 
       if (pathname === '/api/tasks/claim' && req.method === 'POST') {
         const body = await this.readJsonBody(req);
-        const claimRes = this.dispatcher.claimTask(body.taskId, body.agentId, body.leaseDurationMs);
+        const claimRes = body.taskId
+          ? this.dispatcher.claimTask(body.taskId, body.agentId, body.leaseDurationMs)
+          : this.dispatcher.claimNextTask(body);
         return this.sendJson(res, claimRes.success ? 200 : 400, claimRes);
       }
 

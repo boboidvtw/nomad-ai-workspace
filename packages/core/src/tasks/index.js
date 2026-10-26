@@ -19,6 +19,10 @@ const {
   routineLabel,
   WEBVIEW_PLATFORMS,
 } = require('./recurring-scheduler');
+const { DEFAULT_MAX_CONCURRENT_WORKTREES, WorktreeManager } = require('./worktree-manager');
+const { CONTRACT_LOCKED_REGEX, P2PBus } = require('./p2p-bus');
+const { SharedContextPool } = require('./shared-context-pool');
+const { handleAgenshRequest } = require('./agensh-routes');
 
 module.exports = {
   TASK_STATUS,
@@ -36,4 +40,10 @@ module.exports = {
   DEFAULT_SCHEDULES_PATH,
   routineLabel,
   WEBVIEW_PLATFORMS,
+  DEFAULT_MAX_CONCURRENT_WORKTREES,
+  WorktreeManager,
+  CONTRACT_LOCKED_REGEX,
+  P2PBus,
+  SharedContextPool,
+  handleAgenshRequest,
 };

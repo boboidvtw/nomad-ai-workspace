@@ -22,6 +22,7 @@
 /** @typedef {import('./src/error-codes').ErrorCode} ErrorCode */
 /** @typedef {import('./src/bots/bot-roster').Bot} Bot */
 /** @typedef {import('./src/bots/bot-routes').BotServices} BotServices */
+/** @typedef {import('./src/tasks/agensh-routes').AgenshServices} AgenshServices */
 /** @typedef {import('./src/constants').MonitoredService} MonitoredService */
 /** @typedef {import('./src/theme/theme-presets').ThemePreset} ThemePreset */
 /** @typedef {import('./src/constants').PlatformConfig} PlatformConfig */
@@ -106,7 +107,7 @@ const {
 // P3: Local Knowledge Base & RAG Pipeline
 const { KnowledgeBase } = require('./src/rag/knowledge-base');
 
-// Task Control Plane (Paperclip Native Integration)
+// Task Control Plane (Paperclip Native Integration & Agensh Decentralized Swarm RFC-0002)
 const {
   TASK_STATUS,
   TASK_PRIORITY,
@@ -122,6 +123,12 @@ const {
   DEFAULT_PRESET_SCHEDULES,
   routineLabel,
   WEBVIEW_PLATFORMS,
+  DEFAULT_MAX_CONCURRENT_WORKTREES,
+  WorktreeManager,
+  CONTRACT_LOCKED_REGEX,
+  P2PBus,
+  SharedContextPool,
+  handleAgenshRequest,
 } = require('./src/tasks/index');
 
 // Bots (SPEC-AGENT-BOTS)
@@ -264,6 +271,12 @@ module.exports = {
   DEFAULT_PRESET_SCHEDULES,
   routineLabel,
   WEBVIEW_PLATFORMS,
+  DEFAULT_MAX_CONCURRENT_WORKTREES,
+  WorktreeManager,
+  CONTRACT_LOCKED_REGEX,
+  P2PBus,
+  SharedContextPool,
+  handleAgenshRequest,
   // Bots
   BOT_STATE,
   DEFAULT_ROSTER_PATH,

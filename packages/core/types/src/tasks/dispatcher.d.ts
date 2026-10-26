@@ -102,13 +102,35 @@ export class TaskDispatcher {
         blockedCount: number;
     };
     /**
-     * Atomically claims a task for an agent with an exclusive lease
-     * @param {string} taskId
-     * @param {string} agentId
+     * Atomically claims a task for an agent with an exclusive lease.
+     * When taskId is null/omitted (or an options object is passed as the first argument),
+     * delegates to decentralized self-claiming (`claimNextTask`).
+     * @param {string | null | undefined | Object} taskId
+     * @param {string} [agentId]
      * @param {number} [leaseDurationMs]
+     * @param {Object} [claimOptions]
      * @returns {import('../result').UnitResult<import('./task-model').Task>}
      */
-    claimTask(taskId: string, agentId: string, leaseDurationMs?: number): import("../result").UnitResult<import("./task-model").Task>;
+    claimTask(taskId: string | null | undefined | Object, agentId?: string, leaseDurationMs?: number, claimOptions?: Object): import("../result").UnitResult<import("./task-model").Task>;
+    /**
+     * Decentralized Self-Claiming Loop (Agensh RFC-0002 Module 1):
+     * Sweeps expired leases, filters unblocked TODO tasks by agent skill/role affinity
+     * and remaining token budget, and atomically claims the highest-priority task.
+     * @param {Object} options
+     * @param {string} options.agentId
+     * @param {string[]} [options.skills]
+     * @param {string} [options.role]
+     * @param {number} [options.remainingTokenBudget]
+     * @param {number} [options.leaseDurationMs]
+     * @returns {import('../result').UnitResult<import('./task-model').Task>}
+     */
+    claimNextTask(options?: {
+        agentId: string;
+        skills?: string[] | undefined;
+        role?: string | undefined;
+        remainingTokenBudget?: number | undefined;
+        leaseDurationMs?: number | undefined;
+    }): import("../result").UnitResult<import("./task-model").Task>;
     /**
      * Renews the heartbeat lease on an in-progress task
      * @param {string} taskId
