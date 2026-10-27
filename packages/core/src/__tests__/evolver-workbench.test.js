@@ -13,7 +13,6 @@ const {
   autoRepairSkillTriggers,
   validateHarnessSurface,
   selectCandidateAnonymously,
-  distillDomainExperience,
   EvolverWorkbench,
 } = require('../../index.js');
 
