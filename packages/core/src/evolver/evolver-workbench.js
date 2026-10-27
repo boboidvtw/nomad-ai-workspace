@@ -337,7 +337,11 @@ function syncGenesToThreeRepos(genes, customPaths = {}) {
       const yamlPath = path.join(paths.experienceDbGenesDir, `${gene.geneId}.yaml`);
       const jsonPath = path.join(paths.experienceDbGenesDir, `${gene.geneId}.json`);
       fs.writeFileSync(yamlPath, compiled.data.experienceDbYaml + '\n', 'utf8');
-      fs.writeFileSync(jsonPath, JSON.stringify(compiled.data.experienceDbJson, null, 2) + '\n', 'utf8');
+      fs.writeFileSync(
+        jsonPath,
+        JSON.stringify(compiled.data.experienceDbJson, null, 2) + '\n',
+        'utf8',
+      );
       writtenFiles.push(yamlPath, jsonPath);
     }
 
@@ -497,8 +501,7 @@ function recommendComponentForm(spec) {
       'High-volume exploration or specialist isolation should be delegated to an isolated SUBAGENT.';
   } else if (spec.hardGate === true || spec.preToolIntercept === true) {
     recommendedForm = 'HOOK';
-    rationale =
-      'Hard tool-execution guardrails require a PreToolUse/PostToolUse command HOOK.';
+    rationale = 'Hard tool-execution guardrails require a PreToolUse/PostToolUse command HOOK.';
   } else if (
     spec.universalInvariant === true &&
     spec.cannotBeTriggeredOnDemand === true &&
@@ -856,10 +859,15 @@ function validateHarnessSurface(surfaceTree, options = {}) {
         }
 
         for (const item of entries) {
-          const leafHooks =
-            item && Array.isArray(item.hooks) ? item.hooks : [item];
+          const leafHooks = item && Array.isArray(item.hooks) ? item.hooks : [item];
           for (const h of leafHooks) {
-            if (!h || typeof h !== 'object' || h.type !== 'command' || typeof h.command !== 'string' || !h.command.trim()) {
+            if (
+              !h ||
+              typeof h !== 'object' ||
+              h.type !== 'command' ||
+              typeof h.command !== 'string' ||
+              !h.command.trim()
+            ) {
               return err(
                 ErrorCodes.EVOLVER_SURFACE_HOOK_SCHEMA_008,
                 `Hook entry under "${eventName}" must specify type: "command" and a non-empty command string`,
@@ -914,7 +922,12 @@ function selectCandidateAnonymously(candidates, options = {}) {
   }
 
   for (const cand of candidates) {
-    if (!cand || typeof cand !== 'object' || !cand.candidateId || typeof cand.trajectorySummary !== 'string') {
+    if (
+      !cand ||
+      typeof cand !== 'object' ||
+      !cand.candidateId ||
+      typeof cand.trajectorySummary !== 'string'
+    ) {
       return err(
         ErrorCodes.EVOLVER_SELECT_CANDIDATE_INVALID_011,
         'Each candidate must include a valid candidateId and trajectorySummary string',
@@ -1020,8 +1033,7 @@ function distillDomainExperience(entry, options = {}) {
   }
 
   const libraryRoot =
-    options.libraryRoot ||
-    path.join(os.homedir(), '.gemini', 'memory', 'experience-db', 'domains');
+    options.libraryRoot || path.join(os.homedir(), '.gemini', 'memory', 'experience-db', 'domains');
   const domainDir = path.join(libraryRoot, entry.domain);
   const experiencePath = path.join(domainDir, 'harnesses', entry.taskId, 'EXPERIENCE.md');
   const indexPath = path.join(domainDir, 'INDEX.md');
@@ -1102,7 +1114,8 @@ function verifyGeneInShadowSandbox(gene, options = {}) {
     typeof gene.verification?.tokenDelta === 'number'
       ? gene.verification.tokenDelta
       : estimateTokens(gene.ruleDirective);
-  const passRate = typeof gene.verification?.passRate === 'number' ? gene.verification.passRate : 1.0;
+  const passRate =
+    typeof gene.verification?.passRate === 'number' ? gene.verification.passRate : 1.0;
 
   if (passRate < 1.0) {
     return err(
@@ -1405,9 +1418,7 @@ function loadAndMergeGenesFromDisk(experienceDbGenesDir, seedGenes) {
         .sort();
       for (const file of files) {
         try {
-          const raw = JSON.parse(
-            fs.readFileSync(path.join(experienceDbGenesDir, file), 'utf8'),
-          );
+          const raw = JSON.parse(fs.readFileSync(path.join(experienceDbGenesDir, file), 'utf8'));
           if (!raw || !raw.gene_id || !raw.rule_directive) continue;
           /** @type {HarnessGene} */
           const hydrated = {
@@ -1566,7 +1577,11 @@ class EvolverWorkbench {
         },
       ],
       fileTree: [
-        { path: 'packages/core/src/evolver/evolver-workbench.js', status: 'A', folder: 'packages/core' },
+        {
+          path: 'packages/core/src/evolver/evolver-workbench.js',
+          status: 'A',
+          folder: 'packages/core',
+        },
         { path: 'packages/desktop/src/layout-engine.js', status: 'M', folder: 'packages/desktop' },
         { path: 'packages/desktop/src/injectors.js', status: 'M', folder: 'packages/desktop' },
         { path: 'packages/desktop/index.html', status: 'M', folder: 'packages/desktop' },
@@ -1611,10 +1626,11 @@ class EvolverWorkbench {
     }
 
     const indexSuffix = String(this.genes.length + 1).padStart(3, '0');
-    const domainTag = String(input.domain || 'CORE')
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '')
-      .slice(0, 8) || 'CORE';
+    const domainTag =
+      String(input.domain || 'CORE')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 8) || 'CORE';
     const geneId = input.geneId || `GEN_${domainTag}_AUTO_${indexSuffix}`;
     const tokenDelta = estimateTokens(input.ruleDirective);
 
@@ -1776,7 +1792,10 @@ class EvolverWorkbench {
 
     const patch = this.patches.find((p) => p.patchId === patchId);
     if (!patch) {
-      return err(ErrorCodes.EVOLVER_PATCH_TARGET_INVALID_004, `Surgical patch not found: ${patchId}`);
+      return err(
+        ErrorCodes.EVOLVER_PATCH_TARGET_INVALID_004,
+        `Surgical patch not found: ${patchId}`,
+      );
     }
 
     patch.status = action === 'REJECT' ? 'REJECTED' : 'MERGED';

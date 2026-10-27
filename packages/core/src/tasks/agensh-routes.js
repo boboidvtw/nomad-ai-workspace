@@ -93,7 +93,8 @@ async function handleAgenshRequest(req) {
   if (parts[0] === 'worktrees') {
     if (parts.length === 1) {
       if (method === 'GET') return respond(ok(worktreeManager.listWorktrees()));
-      if (method === 'POST') return respond(worktreeManager.createWorktree((await readBody()) || {}));
+      if (method === 'POST')
+        return respond(worktreeManager.createWorktree((await readBody()) || {}));
       return null;
     }
     if (parts[1] === 'verify' && method === 'POST') {
@@ -130,7 +131,8 @@ async function handleAgenshRequest(req) {
     if (parts[1] === 'contracts') {
       if (parts.length === 2) {
         if (method === 'GET') return respond(ok(p2pBus.getContracts()));
-        if (method === 'POST') return respond(p2pBus.lockInterfaceContract((await readBody()) || {}));
+        if (method === 'POST')
+          return respond(p2pBus.lockInterfaceContract((await readBody()) || {}));
       }
       if (parts[2] === 'unlock' && method === 'POST') {
         return respond(p2pBus.unlockInterfaceContract((await readBody()) || {}));
@@ -171,7 +173,9 @@ async function handleAgenshRequest(req) {
     return null;
   }
 
-  return respond(err(ErrorCodes.BRIDGE_ROUTE_NOT_FOUND_001, `Unknown Agensh endpoint: ${pathname}`));
+  return respond(
+    err(ErrorCodes.BRIDGE_ROUTE_NOT_FOUND_001, `Unknown Agensh endpoint: ${pathname}`),
+  );
 }
 
 module.exports = {

@@ -13,7 +13,6 @@ const {
   autoRepairSkillTriggers,
   validateHarnessSurface,
   selectCandidateAnonymously,
-  distillDomainExperience,
   EvolverWorkbench,
 } = require('../../index.js');
 
@@ -62,8 +61,14 @@ test('EvolverWorkbench: compileGeneToThreeRepos generates antigravity-experience
 
   assert.strictEqual(res.success, true);
   assert.match(res.data.experienceDbYaml, /gene_id: GEN_TEST_COMPILER_001/);
-  assert.match(res.data.claudeConfigPatch, /\[claude-config\] Auto-Compiled Gene: GEN_TEST_COMPILER_001/);
-  assert.match(res.data.geminiConfigPatch, /\[MacStudio-gemini-config\] Auto-Compiled Gene: GEN_TEST_COMPILER_001/);
+  assert.match(
+    res.data.claudeConfigPatch,
+    /\[claude-config\] Auto-Compiled Gene: GEN_TEST_COMPILER_001/,
+  );
+  assert.match(
+    res.data.geminiConfigPatch,
+    /\[MacStudio-gemini-config\] Auto-Compiled Gene: GEN_TEST_COMPILER_001/,
+  );
 });
 
 test('EvolverWorkbench: verifyGeneInShadowSandbox enforces passRate=1.0 and token budget cap', () => {
@@ -220,7 +225,8 @@ test('Harness² Capability 1: validateHarnessSurface & autoRepairSkillTriggers e
   // 1. Untriggered skill fails with EVOLVER_SURFACE_UNTRIGGERED_SKILL_006, then passes after autoRepairSkillTriggers
   const untriggeredTree = {
     'guardrails.md': '# Core Guardrails\n- Keep changes surgical.\n',
-    'skills/sql-audit/SKILL.md': '---\nname: sql-audit\ndescription: Audit SQL migrations\n---\nRun `scripts/check_sql.py`.\n',
+    'skills/sql-audit/SKILL.md':
+      '---\nname: sql-audit\ndescription: Audit SQL migrations\n---\nRun `scripts/check_sql.py`.\n',
     'scripts/check_sql.py': 'def main():\n    return True\n',
     'agents/reviewer.toml': 'name = "reviewer"\n',
     '.codex/hooks.json': JSON.stringify({
@@ -392,7 +398,8 @@ test('Harness² Capability 3: selectCandidateAnonymously & verifyGeneInShadowSan
     },
     {
       candidateId: 'GEN_SQL_FK_009',
-      trajectorySummary: 'Loaded skills/sql-audit/SKILL.md and verified all foreign keys via scripts/check_sql.py.',
+      trajectorySummary:
+        'Loaded skills/sql-audit/SKILL.md and verified all foreign keys via scripts/check_sql.py.',
       checksPassed: 4,
       errorsEncountered: 0,
       alwaysOnCharsDelta: 45,
@@ -449,8 +456,19 @@ test('Harness² Capability 3: selectCandidateAnonymously & verifyGeneInShadowSan
     },
     {
       contrastiveCandidates: [
-        { candidateId: 'base', isBase: true, trajectorySummary: 'Base', checksPassed: 3, errorsEncountered: 0 },
-        { candidateId: 'GEN_NOOP_010', trajectorySummary: 'Noop', checksPassed: 3, errorsEncountered: 0 },
+        {
+          candidateId: 'base',
+          isBase: true,
+          trajectorySummary: 'Base',
+          checksPassed: 3,
+          errorsEncountered: 0,
+        },
+        {
+          candidateId: 'GEN_NOOP_010',
+          trajectorySummary: 'Noop',
+          checksPassed: 3,
+          errorsEncountered: 0,
+        },
       ],
     },
   );
@@ -479,8 +497,19 @@ test('Harness² Capability 4: distillDomainExperience writes EXPERIENCE.md and u
     assert.strictEqual(surfaceRes.data.valid, true);
 
     const selectRes = wb.selectCandidate([
-      { candidateId: 'base', isBase: true, trajectorySummary: 'Base run', checksPassed: 1, errorsEncountered: 1 },
-      { candidateId: 'cand-2', trajectorySummary: 'Improved run', checksPassed: 3, errorsEncountered: 0 },
+      {
+        candidateId: 'base',
+        isBase: true,
+        trajectorySummary: 'Base run',
+        checksPassed: 1,
+        errorsEncountered: 1,
+      },
+      {
+        candidateId: 'cand-2',
+        trajectorySummary: 'Improved run',
+        checksPassed: 3,
+        errorsEncountered: 0,
+      },
     ]);
     assert.strictEqual(selectRes.success, true);
     assert.strictEqual(selectRes.data.winnerId, 'cand-2');
@@ -490,7 +519,8 @@ test('Harness² Capability 4: distillDomainExperience writes EXPERIENCE.md and u
         domain: 'webview-automation',
         taskId: 'lexical-editor-paste-01',
         cue: 'Lexical editor drops text when execCommand("insertText") is invoked without prior selectionchange',
-        lesson: 'Use a dedicated skill with pre-focus and selectAll verification script before submitting',
+        lesson:
+          'Use a dedicated skill with pre-focus and selectAll verification script before submitting',
         evidence: 'Saved 3 consecutive silent drops across Copilot and Perplexity webviews',
         confidence: 0.96,
       },

@@ -262,12 +262,10 @@ class SharedContextPool {
       }
 
       // Priority 2: Failure Immunizations (most recent first)
-      const matchingImmunizations = [...this.immunizations]
-        .reverse()
-        .filter((imm) => {
-          if (!domainFilter) return true;
-          return imm.domain.toLowerCase() === domainFilter || imm.domain === 'general';
-        });
+      const matchingImmunizations = [...this.immunizations].reverse().filter((imm) => {
+        if (!domainFilter) return true;
+        return imm.domain.toLowerCase() === domainFilter || imm.domain === 'general';
+      });
 
       /** @type {FailureImmunization[]} */
       const selectedImmunizations = [];
@@ -281,22 +279,20 @@ class SharedContextPool {
       }
 
       // Priority 3: Shared Peer Findings (most recent first)
-      const matchingFindings = [...this.findings]
-        .reverse()
-        .filter((f) => {
-          if (
-            domainFilter &&
-            f.domain.toLowerCase() !== domainFilter &&
-            f.domain.toLowerCase() !== 'general'
-          ) {
-            return false;
-          }
-          if (tagSet) {
-            const hasTag = f.tags.some((t) => tagSet.has(t.toLowerCase()));
-            if (!hasTag) return false;
-          }
-          return true;
-        });
+      const matchingFindings = [...this.findings].reverse().filter((f) => {
+        if (
+          domainFilter &&
+          f.domain.toLowerCase() !== domainFilter &&
+          f.domain.toLowerCase() !== 'general'
+        ) {
+          return false;
+        }
+        if (tagSet) {
+          const hasTag = f.tags.some((t) => tagSet.has(t.toLowerCase()));
+          if (!hasTag) return false;
+        }
+        return true;
+      });
 
       /** @type {SharedFinding[]} */
       const selectedFindings = [];

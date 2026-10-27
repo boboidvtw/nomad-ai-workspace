@@ -1240,7 +1240,11 @@
         margin-left: 2px;
       }
       .btn-mode-evolver.active {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.32), rgba(56, 189, 248, 0.25)) !important;
+        background: linear-gradient(
+          135deg,
+          rgba(139, 92, 246, 0.32),
+          rgba(var(--accent-rgb), 0.25)
+        ) !important;
         color: var(--text-strong) !important;
         border-color: var(--accent-color) !important;
         box-shadow: 0 0 14px rgba(139, 92, 246, 0.35) !important;
@@ -1464,7 +1468,7 @@
         line-height: 1.45;
         padding: 8px 10px;
         border-radius: 6px;
-        background: rgba(0, 0, 0, 0.45);
+        background: rgba(var(--well-rgb), 0.55);
         border: 1px solid rgba(var(--fg-rgb), 0.08);
         color: var(--tint-emerald-300);
         white-space: pre-wrap;
@@ -3082,9 +3086,7 @@
               <span style="color: var(--tint-emerald-400)">🌿 影子沙盒 Worktree</span>
               <span style="font-size: 10px; color: var(--text-muted)">隔離保護中</span>
             </div>
-            <code
-              id="evo-worktree-label"
-              style="font-size: 10.5px; color: var(--text-strong)"
+            <code id="evo-worktree-label" style="font-size: 10.5px; color: var(--text-strong)"
               >shadow/evo-ide-workbench</code
             >
           </div>
@@ -3135,9 +3137,22 @@
                 "
               ></div>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted)">
-              <span>啟用中基因: <b id="evo-stat-active-genes" style="color: var(--tint-violet-300)">3</b></span>
-              <span>已攔截錯誤: <b id="evo-stat-saved-errors" style="color: var(--tint-emerald-400)">54</b> 次</span>
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                font-size: 10px;
+                color: var(--text-muted);
+              "
+            >
+              <span
+                >啟用中基因:
+                <b id="evo-stat-active-genes" style="color: var(--tint-violet-300)">3</b></span
+              >
+              <span
+                >已攔截錯誤:
+                <b id="evo-stat-saved-errors" style="color: var(--tint-emerald-400)">54</b> 次</span
+              >
             </div>
           </div>
         </div>
@@ -3146,12 +3161,7 @@
         <div class="evo-pane-center">
           <div class="evo-center-header">
             <div style="display: flex; align-items: center; gap: 8px">
-              <span
-                style="
-                  font-size: 12px;
-                  font-weight: 700;
-                  color: var(--text-strong);
-                "
+              <span style="font-size: 12px; font-weight: 700; color: var(--text-strong)"
                 >🧠 Nomad Evolver Agent (Claude Desktop × Antigravity IDE)</span
               >
               <span
@@ -3227,7 +3237,10 @@
               id="evo-patch-chips"
               style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px"
             ></div>
-            <div id="evo-active-patch-view" style="display: flex; flex-direction: column; gap: 8px"></div>
+            <div
+              id="evo-active-patch-view"
+              style="display: flex; flex-direction: column; gap: 8px"
+            ></div>
           </div>
 
           <!-- RIGHT SUB-PANEL 2: EVOLUTION HUD (AUTO-GUARDED APPROVAL & 3-REPO SYNC) -->
@@ -3236,26 +3249,43 @@
               <span>🧬 待審批新基因 (Auto-Guarded Approval Queue)</span>
               <span style="color: var(--tint-amber-400)">需人類一鍵確認</span>
             </div>
-            <div id="evo-pending-genes-list" style="display: flex; flex-direction: column; gap: 10px"></div>
+            <div
+              id="evo-pending-genes-list"
+              style="display: flex; flex-direction: column; gap: 10px"
+            ></div>
 
             <div class="evo-section-label" style="margin-top: 8px">
               <span>🛡️ 啟用中 Harness 基因圖譜 (Active Genome)</span>
               <span style="color: var(--tint-emerald-400)">支援 1 秒回滾</span>
             </div>
-            <div id="evo-active-genes-list" style="display: flex; flex-direction: column; gap: 8px"></div>
+            <div
+              id="evo-active-genes-list"
+              style="display: flex; flex-direction: column; gap: 8px"
+            ></div>
 
-            <div class="evo-section-label" style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div
+              class="evo-section-label"
+              style="
+                margin-top: 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
               <span>⏱️ 三庫同步時光機 (Physical 3-Repo Sync)</span>
               <button
                 class="btn-ws-op"
                 onclick="handleManualSyncThreeRepos()"
-                style="padding: 2px 8px; font-size: 10px; color: var(--tint-emerald-400);"
+                style="padding: 2px 8px; font-size: 10px; color: var(--tint-emerald-400)"
                 title="立即強制將目前活躍基因重新編譯寫入 experience-db、~/.claude 與 ~/.gemini"
               >
                 🔄 立即寫入三庫實體檔
               </button>
             </div>
-            <div id="evo-sync-history-list" style="display: flex; flex-direction: column; gap: 6px"></div>
+            <div
+              id="evo-sync-history-list"
+              style="display: flex; flex-direction: column; gap: 6px"
+            ></div>
           </div>
 
           <!-- RIGHT SUB-PANEL 3: SHADOW SANDBOX TEST GATE -->
@@ -3265,7 +3295,12 @@
               <button
                 class="btn-ws-op"
                 onclick="handleRunEvoSandboxTests()"
-                style="padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--tint-emerald-400)"
+                style="
+                  padding: 4px 10px;
+                  font-size: 11px;
+                  font-weight: 600;
+                  color: var(--tint-emerald-400);
+                "
               >
                 ▶️ 重新執行回歸測試
               </button>
@@ -5357,7 +5392,11 @@
             role: 'agent',
             cot: '1. [Laya Router 0.08ms] 分類為 debugging + harness-evolution 任務\n2. [Headroom Budget] 檢索 ~/.gemini/memory/lessons_learned-ZH.md 命中 Lexical selectionchange 邊界案例\n3. [Shadow Sandbox] 於分支 shadow/evo-ide-workbench 啟動 surgical-code-editor 修改 packages/desktop/src/injectors.js\n4. [Trajectory Reflector] 萃取 Error -> Fix 對比樣本，自動編譯為 GEN_DOM_LEXICAL_INSERT_005 待審批基因',
             tools: [
-              { label: '🔧 surgical-code-editor · injectors.js (+8/-4)', tab: 'diff', patchId: 'PATCH_LEXICAL_INJECTOR_002' },
+              {
+                label: '🔧 surgical-code-editor · injectors.js (+8/-4)',
+                tab: 'diff',
+                patchId: 'PATCH_LEXICAL_INJECTOR_002',
+              },
               { label: '🧪 shadow-sandbox · 74/74 Tests PASS', tab: 'gate' },
               { label: '🧬 harness-compiler · 3-Repo Patch Ready', tab: 'hud' },
             ],
@@ -5442,7 +5481,10 @@
               role: 'agent',
               cot: `Auto-Guarded 審批通過：\n1. 已寫入 ~/.gemini/memory/experience-db/genes/evolver/${geneId}.yaml + .json\n2. 已編譯至 ~/.claude/rules/common/evolver-genes.md 與 ~/.claude/hooks/evolver-guard-rules.json\n3. 已注入 ~/.gemini/memory/coding/dynamic_rules.md (共寫入 ${writtenCount} 個實體檔案)`,
               tools: [
-                { label: `✅ 已寫入三庫 (${writtenCount} files) · ${res.data.syncRecord.syncId}`, tab: 'hud' },
+                {
+                  label: `✅ 已寫入三庫 (${writtenCount} files) · ${res.data.syncRecord.syncId}`,
+                  tab: 'hud',
+                },
               ],
               text: `⚡ 基因 **\`${geneId}\`** 已通過 Auto-Guarded 護欄並寫入本機三庫實體檔案（共更新 ${writtenCount} 個配置檔）！Claude Code 與 Gemini/Antigravity 規則已即時生效。`,
             });
@@ -5484,8 +5526,10 @@
           {
             domain: 'sqlite-wal',
             title: 'SQLite 併發寫入 WAL 鎖定防呆基因',
-            triggerSymptom: 'SQLITE_BUSY: database is locked when background subagent writes telemetry concurrently',
-            ruleDirective: '建立 SQLite 連線時必須立即執行 PRAGMA journal_mode=WAL; 與 PRAGMA busy_timeout=5000; 防止併發鎖死。',
+            triggerSymptom:
+              'SQLITE_BUSY: database is locked when background subagent writes telemetry concurrently',
+            ruleDirective:
+              '建立 SQLite 連線時必須立即執行 PRAGMA journal_mode=WAL; 與 PRAGMA busy_timeout=5000; 防止併發鎖死。',
             mutationType: 'HYBRID',
             targetTool: 'edit_file|run_command',
             matchRegex: 'sqlite3\\.connect|new\\s+Database\\(',
@@ -5494,7 +5538,8 @@
             domain: 'macos-launchd',
             title: 'macOS LaunchAgent 變更同步 install-launchd.sh 基因',
             triggerSymptom: '直接手改 ~/Library/LaunchAgents/*.plist 後被下次部署覆蓋失效',
-            ruleDirective: '修改 macOS launchd 排程時，必須同步更新 install-launchd.sh JOBS 表並以 launchctl kickstart 重新載入。',
+            ruleDirective:
+              '修改 macOS launchd 排程時，必須同步更新 install-launchd.sh JOBS 表並以 launchctl kickstart 重新載入。',
             mutationType: 'RULE',
             targetTool: 'edit_file',
             matchRegex: 'LaunchAgents\\/.*\\.plist',
@@ -5628,7 +5673,8 @@
         const actStatEl = document.getElementById('evo-stat-active-genes');
         const errStatEl = document.getElementById('evo-stat-saved-errors');
         if (pctEl) pctEl.textContent = pct + '%';
-        if (tokEl) tokEl.textContent = `${(used / 1000).toFixed(1)}K / ${(total / 1000).toFixed(1)}K`;
+        if (tokEl)
+          tokEl.textContent = `${(used / 1000).toFixed(1)}K / ${(total / 1000).toFixed(1)}K`;
         if (barEl) barEl.style.width = pct + '%';
         if (actStatEl) actStatEl.textContent = String(wb.telemetrySummary?.totalActiveGenes || 0);
         if (errStatEl) errStatEl.textContent = String(wb.telemetrySummary?.totalSavedErrors || 0);
@@ -5637,11 +5683,13 @@
         const streamEl = document.getElementById('evo-chat-stream');
         if (streamEl) {
           const allGenesMap = {};
-          [...(wb.pendingGenes || []), ...(wb.activeGenes || []), ...(wb.revertedGenes || [])].forEach(
-            (g) => {
-              allGenesMap[g.geneId] = g;
-            },
-          );
+          [
+            ...(wb.pendingGenes || []),
+            ...(wb.activeGenes || []),
+            ...(wb.revertedGenes || []),
+          ].forEach((g) => {
+            allGenesMap[g.geneId] = g;
+          });
 
           streamEl.innerHTML = evoState.chatMessages
             .map((m) => {
@@ -5715,7 +5763,8 @@
                       ? `<div class="evo-tool-pills">
                           ${m.tools
                             .map(
-                              (t) => `<span class="evo-tool-pill" onclick="${t.patchId ? `selectEvoPatch('${t.patchId}')` : `switchEvoRightTab('${t.tab || 'diff'}')`}">${escapeHtml(t.label)}</span>`,
+                              (t) =>
+                                `<span class="evo-tool-pill" onclick="${t.patchId ? `selectEvoPatch('${t.patchId}')` : `switchEvoRightTab('${t.tab || 'diff'}')`}">${escapeHtml(t.label)}</span>`,
                             )
                             .join('')}
                         </div>`
