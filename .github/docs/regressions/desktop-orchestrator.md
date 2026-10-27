@@ -85,3 +85,17 @@
 - **Rule:** Read the reply from an off-screen copy with `[data-pplx-citation]` removed;
   never edit the live page, and keep reading `innerText` so paragraph breaks survive.
 - **Guard:** `packages/desktop/src/__tests__/extractors.test.js`
+
+## A new layout button wrapped every top-bar label into vertical text
+
+- **Trap:** The top bar is one flex row whose children could shrink and wrap. Adding the
+  🧬 自進化 IDE layout button pushed the row past the window width at every size, so the
+  layout buttons and the brand wrapped into one character per line, even at 1800px, and
+  the bar still overflowed below 1440px. jsdom has no layout, so no unit test saw it.
+- **Rule:** Top-bar controls never wrap or shrink (`white-space: nowrap; flex-shrink: 0`).
+  Narrow windows drop labels in width tiers instead (layout buttons 單欄專注 -> 單欄 -> 單,
+  platform chips keep a dot, pills keep an icon), each with a tooltip. When a control is
+  added to the top bar, re-run the width sweep and retune the tier thresholds.
+- **Guard:** `packages/desktop/src/__tests__/top-bar-labels.test.js` (structure),
+  `npx electron packages/desktop/scripts/measure-top-bar.js` (real layout, 960-2400px,
+  exits 1 on overflow or wrap)

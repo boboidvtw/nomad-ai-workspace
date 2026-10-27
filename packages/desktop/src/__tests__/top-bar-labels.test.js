@@ -78,5 +78,45 @@ test('Top bar: pills that drop their label on narrow windows keep an icon and a 
     const rest = pill.textContent.replace(label.textContent, '').trim();
     assert.ok(rest.length > 0, `${pill.id} keeps an icon outside the label`);
   }
-  assert.match(HTML, /\.top-bar \.pill-info \{\s*white-space: nowrap;\s*flex-shrink: 0;/);
+  assert.match(HTML, /\.top-bar \.pill-info,[^{]*\{\s*white-space: nowrap;\s*flex-shrink: 0;/);
+});
+
+test('Top bar: brand, layout buttons and platform chips never wrap or shrink', () => {
+  const rule = HTML.match(
+    /((?:\s*\.top-bar [.\w-]+,?)+)\s*\{\s*white-space: nowrap;\s*flex-shrink: 0;/,
+  );
+  assert.ok(rule, 'nowrap rule exists');
+  for (const sel of ['.brand', '.btn-group', '.platform-chips', '.btn-mode', '.chip']) {
+    assert.ok(rule[1].includes(`.top-bar ${sel}`), `${sel} is covered`);
+  }
+});
+
+test('Top bar: layout buttons keep their full name while showing a short label', async () => {
+  const win = await loadShell();
+  const expected = {
+    'btn-focus': '單欄專注',
+    'btn-dual': '雙欄並排',
+    'btn-triple': '三欄對比',
+    'btn-quad': '四宮格競技',
+    'btn-hexa': '六宮格矩陣',
+    'btn-evolver': '🧬 自進化 IDE',
+  };
+  for (const [id, name] of Object.entries(expected)) {
+    const btn = win.document.getElementById(id);
+    assert.strictEqual(btn.textContent.replace(/\s+/g, ' ').trim(), name, id);
+    assert.ok(btn.title.includes(name.replace('🧬 ', '')), `${id} tooltip names the layout`);
+    assert.ok(btn.querySelector('.lbl-full'), `${id} has a part to drop on narrow windows`);
+  }
+});
+
+test('Top bar: platform chips keep a dot and a tooltip when the name is hidden', async () => {
+  const win = await loadShell();
+  const chips = [...win.document.querySelectorAll('.top-bar .platform-chips .chip')];
+  assert.strictEqual(chips.length, 6);
+  for (const chip of chips) {
+    const name = chip.querySelector('.chip-label');
+    assert.ok(name, `${chip.id} wraps its name in .chip-label`);
+    assert.ok(chip.querySelector('.dot'), `${chip.id} keeps its dot`);
+    assert.strictEqual(chip.title, name.textContent.trim(), `${chip.id} tooltip`);
+  }
 });
