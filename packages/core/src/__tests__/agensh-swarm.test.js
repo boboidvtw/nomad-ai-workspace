@@ -163,7 +163,10 @@ describe('Agensh Decentralized Multi-Agent Swarm Architecture (RFC-0002)', () =>
       execFileSync('git', ['config', 'user.email', 'test@nomad.local'], { cwd: repoDir });
       execFileSync('git', ['config', 'user.name', 'Nomad Test Worker'], { cwd: repoDir });
 
-      fs.writeFileSync(path.join(repoDir, 'math.js'), 'module.exports = { add: (a, b) => a + b };\n');
+      fs.writeFileSync(
+        path.join(repoDir, 'math.js'),
+        'module.exports = { add: (a, b) => a + b };\n',
+      );
       execFileSync('git', ['add', '.'], { cwd: repoDir });
       execFileSync('git', ['commit', '-m', 'chore: initial commit'], { cwd: repoDir });
     });
@@ -245,7 +248,10 @@ describe('Agensh Decentralized Multi-Agent Swarm Architecture (RFC-0002)', () =>
       assert.equal(wt2.errorCode, ErrorCodes.WORKTREE_CONCURRENCY_EXCEEDED_002);
 
       // Create conflicting commit on main and in wt1
-      fs.writeFileSync(path.join(repoDir, 'math.js'), 'module.exports = { add: (a, b) => a + b + 1 };\n');
+      fs.writeFileSync(
+        path.join(repoDir, 'math.js'),
+        'module.exports = { add: (a, b) => a + b + 1 };\n',
+      );
       execFileSync('git', ['add', '.'], { cwd: repoDir });
       execFileSync('git', ['commit', '-m', 'main conflicting edit'], { cwd: repoDir });
 
@@ -327,8 +333,14 @@ describe('Agensh Decentralized Multi-Agent Swarm Architecture (RFC-0002)', () =>
       assert.equal(invalidCheck.errorCode, ErrorCodes.P2P_CONTRACT_CONFLICT_003);
 
       // Events emitted include agent:direct_message and contract:locked
-      assert.equal(events.some((e) => e.type === 'agent:direct_message'), true);
-      assert.equal(events.some((e) => e.type === 'contract:locked'), true);
+      assert.equal(
+        events.some((e) => e.type === 'agent:direct_message'),
+        true,
+      );
+      assert.equal(
+        events.some((e) => e.type === 'contract:locked'),
+        true,
+      );
     });
   });
 

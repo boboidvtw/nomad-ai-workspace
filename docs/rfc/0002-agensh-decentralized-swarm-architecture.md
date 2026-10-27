@@ -8,7 +8,7 @@
 
 Traditional multi-agent systems rely on a centralized orchestrator (Master/Lead Agent) to decompose, assign, and merge tasks. As the number of concurrent agents grows, this creates an **Orchestrator Ceiling** (context window exhaustion, single point of failure, and sequential bottlenecking).
 
-Inspired by Microsoft Research's **Agensh** (*Scaling Organizational Intelligence to 1,024 Agents*, arXiv:2609.26781), we upgrade the Nomad AI Workspace & Paperclip Task Control Plane from a centralized dispatch model into a **Decentralized Self-Organizing Swarm** tailored for local Mac Studio constraints (3–6 concurrent workers, strict token budget caps, and atomic `UnitResult<T, E>` contracts).
+Inspired by Microsoft Research's **Agensh** (_Scaling Organizational Intelligence to 1,024 Agents_, arXiv:2609.26781), we upgrade the Nomad AI Workspace & Paperclip Task Control Plane from a centralized dispatch model into a **Decentralized Self-Organizing Swarm** tailored for local Mac Studio constraints (3–6 concurrent workers, strict token budget caps, and atomic `UnitResult<T, E>` contracts).
 
 ---
 
@@ -16,13 +16,13 @@ Inspired by Microsoft Research's **Agensh** (*Scaling Organizational Intelligenc
 
 ### 2.1 Phase 0 Capability Map
 
-| Module ID | Responsibility | Depends On | Order |
-| :--- | :--- | :--- | :--- |
-| `self-claim` | Decentralized task claiming (`claimNextTask`) with skill/role affinity, token budget guard, and heartbeat lease locks | `dispatcher` | 1 |
-| `worktree-sandbox` | Physical Git Worktree lifecycle (`WorktreeManager`) with concurrency caps (`3..6`), Verify Gate (`100%` test pass before merge), and conflict rollback | `result`, `error-codes` | 2 |
-| `p2p-bus` | Peer-to-peer direct negotiation (`agent:direct_message`) and `[CONTRACT_LOCKED]` interface lock registry (`P2PBus`) | `result`, `error-codes` | 3 |
-| `shared-context` | Shared findings & Failure Log immunization pool (`SharedContextPool`) bridged to `Headroom` token compression and `EvolverWorkbench` / Experience-DB | `headroom`, `evolver` | 4 |
-| `agensh-routes` | Unified HTTP & SSE gateway (`/api/agensh/*`, `/api/tasks/claim`) mounted identically on `@nomad/daemon` and `@nomad/desktop` + Dashboard UI | `self-claim`, `worktree-sandbox`, `p2p-bus`, `shared-context` | 5 |
+| Module ID          | Responsibility                                                                                                                                         | Depends On                                                    | Order |
+| :----------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------ | :---- |
+| `self-claim`       | Decentralized task claiming (`claimNextTask`) with skill/role affinity, token budget guard, and heartbeat lease locks                                  | `dispatcher`                                                  | 1     |
+| `worktree-sandbox` | Physical Git Worktree lifecycle (`WorktreeManager`) with concurrency caps (`3..6`), Verify Gate (`100%` test pass before merge), and conflict rollback | `result`, `error-codes`                                       | 2     |
+| `p2p-bus`          | Peer-to-peer direct negotiation (`agent:direct_message`) and `[CONTRACT_LOCKED]` interface lock registry (`P2PBus`)                                    | `result`, `error-codes`                                       | 3     |
+| `shared-context`   | Shared findings & Failure Log immunization pool (`SharedContextPool`) bridged to `Headroom` token compression and `EvolverWorkbench` / Experience-DB   | `headroom`, `evolver`                                         | 4     |
+| `agensh-routes`    | Unified HTTP & SSE gateway (`/api/agensh/*`, `/api/tasks/claim`) mounted identically on `@nomad/daemon` and `@nomad/desktop` + Dashboard UI            | `self-claim`, `worktree-sandbox`, `p2p-bus`, `shared-context` | 5     |
 
 ### 2.2 Architecture Topology
 

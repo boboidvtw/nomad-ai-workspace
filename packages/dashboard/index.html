@@ -1802,7 +1802,13 @@
               "
               >⚡ SSE 實時連線中</span
             >
-            <button class="btn-refresh-task" onclick="triggerAgenshAutoClaim()" title="由閒置 Worker 依據技能與 Token 預算自律認領最高優先級待辦任務">🐝 自律認領</button>
+            <button
+              class="btn-refresh-task"
+              onclick="triggerAgenshAutoClaim()"
+              title="由閒置 Worker 依據技能與 Token 預算自律認領最高優先級待辦任務"
+            >
+              🐝 自律認領
+            </button>
             <button class="btn-refresh-task" onclick="loadTaskPlaneData()">🔄 刷新狀態</button>
             <button class="btn-create-task" onclick="openCreateTaskModal()">➕ 建立新任務</button>
           </div>
@@ -1818,39 +1824,54 @@
             margin-bottom: 1.25rem;
           "
         >
-          <div class="schedule-card" style="padding: 0.75rem;">
+          <div class="schedule-card" style="padding: 0.75rem">
             <div class="schedule-card-header">
               <span class="schedule-title">📦 Git Worktree 沙盒</span>
               <span class="status-badge online" id="agensh-wt-count">0 / 6</span>
             </div>
-            <div id="agensh-wt-summary" style="font-size: 0.74rem; color: var(--text-muted);">
+            <div id="agensh-wt-summary" style="font-size: 0.74rem; color: var(--text-muted)">
               實體隔離分支 · Verify Gate 100% 門禁
             </div>
           </div>
-          <div class="schedule-card" style="padding: 0.75rem;">
+          <div class="schedule-card" style="padding: 0.75rem">
             <div class="schedule-card-header">
               <span class="schedule-title">🔒 介面合約鎖 (Contract Lock)</span>
-              <span class="status-badge" style="background: rgba(var(--primary-rgb), 0.15); color: var(--tint-indigo);" id="agensh-contract-count">0 已鎖定</span>
+              <span
+                class="status-badge"
+                style="background: rgba(var(--primary-rgb), 0.15); color: var(--tint-indigo)"
+                id="agensh-contract-count"
+                >0 已鎖定</span
+              >
             </div>
-            <div id="agensh-contract-summary" style="font-size: 0.74rem; color: var(--text-muted);">
+            <div id="agensh-contract-summary" style="font-size: 0.74rem; color: var(--text-muted)">
               [CONTRACT_LOCKED] 零衝突保護中
             </div>
           </div>
-          <div class="schedule-card" style="padding: 0.75rem;">
+          <div class="schedule-card" style="padding: 0.75rem">
             <div class="schedule-card-header">
               <span class="schedule-title">⚡ P2P 點對點協商</span>
-              <span class="status-badge" style="background: rgba(139, 92, 246, 0.15); color: var(--tint-violet);" id="agensh-p2p-count">0 訊息</span>
+              <span
+                class="status-badge"
+                style="background: rgba(139, 92, 246, 0.15); color: var(--tint-violet)"
+                id="agensh-p2p-count"
+                >0 訊息</span
+              >
             </div>
-            <div id="agensh-p2p-summary" style="font-size: 0.74rem; color: var(--text-muted);">
+            <div id="agensh-p2p-summary" style="font-size: 0.74rem; color: var(--text-muted)">
               無需中央 Master · 同儕直接交涉
             </div>
           </div>
-          <div class="schedule-card" style="padding: 0.75rem;">
+          <div class="schedule-card" style="padding: 0.75rem">
             <div class="schedule-card-header">
               <span class="schedule-title">🧬 踩坑免疫與共享脈絡</span>
-              <span class="status-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--tint-green);" id="agensh-ctx-count">0 免疫 / 0 發現</span>
+              <span
+                class="status-badge"
+                style="background: rgba(16, 185, 129, 0.15); color: var(--tint-green)"
+                id="agensh-ctx-count"
+                >0 免疫 / 0 發現</span
+              >
             </div>
-            <div id="agensh-ctx-summary" style="font-size: 0.74rem; color: var(--text-muted);">
+            <div id="agensh-ctx-summary" style="font-size: 0.74rem; color: var(--text-muted)">
               Headroom 預算控制 · 連結 Experience-DB
             </div>
           </div>
@@ -4677,7 +4698,8 @@
           }
           if (ctxSumEl && Array.isArray(d.immunizations) && d.immunizations.length > 0) {
             const latestImm = d.immunizations[d.immunizations.length - 1];
-            ctxSumEl.innerText = '[' + latestImm.errorCode + '] ' + latestImm.mitigation.slice(0, 28);
+            ctxSumEl.innerText =
+              '[' + latestImm.errorCode + '] ' + latestImm.mitigation.slice(0, 28);
           }
         } catch (err) {
           console.warn('Failed to load Agensh swarm status:', err);
@@ -4687,10 +4709,8 @@
       async function triggerAgenshAutoClaim() {
         try {
           const base = await getApiBase();
-          const idleAgent =
-            (cachedRoster || []).find((a) => a.status === 'idle') ||
-            (cachedRoster && cachedRoster[0]) ||
-            { id: 'agent-claude' };
+          const idleAgent = (cachedRoster || []).find((a) => a.status === 'idle') ||
+            (cachedRoster && cachedRoster[0]) || { id: 'agent-claude' };
           const res = await fetch(base + '/api/agensh/claim', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

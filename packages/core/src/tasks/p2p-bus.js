@@ -125,7 +125,9 @@ class P2PBus {
     const now = new Date().toISOString();
     /** @type {InterfaceContractLock} */
     const contract = {
-      id: existing ? existing.id : `contract_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      id: existing
+        ? existing.id
+        : `contract_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       modulePath,
       signature,
       ownerAgentId: agentId,
@@ -295,9 +297,7 @@ class P2PBus {
     let list = [...this.messages];
     if (filter.agentId) {
       const a = String(filter.agentId).trim();
-      list = list.filter(
-        (m) => m.fromAgentId === a || m.toAgentId === a || m.toAgentId === '*',
-      );
+      list = list.filter((m) => m.fromAgentId === a || m.toAgentId === a || m.toAgentId === '*');
     }
     if (filter.taskId) {
       const t = String(filter.taskId).trim();
