@@ -185,22 +185,35 @@
         cursor: pointer;
         transition: all 0.15s;
       }
-      .top-bar .pill-info {
+      .top-bar .pill-info,
+      .top-bar .brand,
+      .top-bar .btn-group,
+      .top-bar .platform-chips,
+      .top-bar .btn-mode,
+      .top-bar .chip {
         white-space: nowrap;
         flex-shrink: 0;
       }
-      /* The top bar needs ~1720px with every label; narrower windows drop secondary labels
-         (the icon and tooltip stay) instead of squeezing pills into vertical text. */
-      @media (max-width: 1760px) {
+      /* The top bar needs ~2190px with every label. Narrower windows drop labels in tiers
+         (each element keeps an icon or dot plus a tooltip) so nothing wraps into vertical
+         text and the bar fits down to the 960px minimum window width. Thresholds are
+         measured with scripts/measure-top-bar.js. */
+      .pill-icon-narrow {
+        display: none;
+      }
+      @media (max-width: 2320px) {
         .pill-compact .pill-label,
         #shortcut-pill {
           display: none;
         }
       }
-      .pill-icon-narrow {
-        display: none;
+      @media (max-width: 2000px) {
+        .top-bar .btn-mode .lbl-full,
+        .top-bar .badge-super {
+          display: none;
+        }
       }
-      @media (max-width: 1420px) {
+      @media (max-width: 1700px) {
         .pill-compact-narrow .pill-label {
           display: none;
         }
@@ -209,6 +222,37 @@
         }
         .top-bar .controls {
           gap: 6px;
+        }
+      }
+      @media (max-width: 1540px) {
+        .top-bar .brand-name {
+          display: none;
+        }
+      }
+      @media (max-width: 1420px) {
+        .top-bar .chip-label {
+          display: none;
+        }
+        .top-bar .chip {
+          padding: 4px 7px;
+        }
+      }
+      @media (max-width: 1120px) {
+        .top-bar .btn-mode .lbl-short,
+        .pill-compact-tight .pill-label {
+          display: none;
+        }
+        .top-bar .btn-mode {
+          padding: 5px 8px;
+        }
+        #top-workspace-title {
+          max-width: 72px !important;
+        }
+        .top-bar {
+          padding-right: 8px;
+        }
+        .top-bar .controls {
+          gap: 4px;
         }
       }
       .pill-info:hover {
@@ -1482,35 +1526,61 @@
     <!-- Top Bar -->
     <div class="top-bar">
       <div class="brand">
-        <span>🌐 Nomad AI Studio</span>
+        <span>🌐<span class="brand-name"> Nomad AI Studio</span></span>
         <span class="badge-super">SUPER STATION</span>
       </div>
 
       <div class="controls">
         <!-- Layout Modes -->
         <div class="btn-group">
-          <button class="btn-mode active" id="btn-focus" onclick="handleLayoutClick('focus')">
-            單欄專注
+          <!-- Labels shrink on narrow windows: full (單欄專注) -> short (單欄) -> mini (單) -->
+          <button
+            class="btn-mode active"
+            id="btn-focus"
+            onclick="handleLayoutClick('focus')"
+            title="單欄專注"
+          >
+            單<span class="lbl-short">欄</span><span class="lbl-full">專注</span>
           </button>
-          <button class="btn-mode" id="btn-dual" onclick="handleLayoutClick('dual')">
-            雙欄並排
+          <button
+            class="btn-mode"
+            id="btn-dual"
+            onclick="handleLayoutClick('dual')"
+            title="雙欄並排"
+          >
+            雙<span class="lbl-short">欄</span><span class="lbl-full">並排</span>
           </button>
-          <button class="btn-mode" id="btn-triple" onclick="handleLayoutClick('triple')">
-            三欄對比
+          <button
+            class="btn-mode"
+            id="btn-triple"
+            onclick="handleLayoutClick('triple')"
+            title="三欄對比"
+          >
+            三<span class="lbl-short">欄</span><span class="lbl-full">對比</span>
           </button>
-          <button class="btn-mode" id="btn-quad" onclick="handleLayoutClick('quad')">
-            四宮格競技
+          <button
+            class="btn-mode"
+            id="btn-quad"
+            onclick="handleLayoutClick('quad')"
+            title="四宮格競技"
+          >
+            四<span class="lbl-short">宮</span><span class="lbl-full">格競技</span>
           </button>
-          <button class="btn-mode" id="btn-hexa" onclick="handleLayoutClick('hexa')">
-            六宮格矩陣
+          <button
+            class="btn-mode"
+            id="btn-hexa"
+            onclick="handleLayoutClick('hexa')"
+            title="六宮格矩陣"
+          >
+            六<span class="lbl-short">宮</span><span class="lbl-full">格矩陣</span>
           </button>
           <button
             class="btn-mode btn-mode-evolver"
             id="btn-evolver"
             onclick="handleLayoutClick('evolver')"
-            title="切換至 Antigravity IDE + Claude Desktop 自進化工作台 (RFC-0001)"
+            title="自進化 IDE：切換至 Antigravity IDE + Claude Desktop 自進化工作台 (RFC-0001)"
           >
-            🧬 自進化 IDE
+            🧬<span class="lbl-full"> 自進化</span><span class="lbl-short"> IDE</span>
           </button>
         </div>
 
@@ -1520,27 +1590,44 @@
             class="chip chip-chatgpt active"
             id="chip-chatgpt"
             onclick="togglePlatform('chatgpt')"
+            title="ChatGPT"
           >
-            <span class="dot dot-chatgpt"></span>ChatGPT
+            <span class="dot dot-chatgpt"></span><span class="chip-label">ChatGPT</span>
           </div>
-          <div class="chip chip-claude" id="chip-claude" onclick="togglePlatform('claude')">
-            <span class="dot dot-claude"></span>Claude
+          <div
+            class="chip chip-claude"
+            id="chip-claude"
+            onclick="togglePlatform('claude')"
+            title="Claude"
+          >
+            <span class="dot dot-claude"></span><span class="chip-label">Claude</span>
           </div>
-          <div class="chip chip-gemini" id="chip-gemini" onclick="togglePlatform('gemini')">
-            <span class="dot dot-gemini"></span>Gemini
+          <div
+            class="chip chip-gemini"
+            id="chip-gemini"
+            onclick="togglePlatform('gemini')"
+            title="Gemini"
+          >
+            <span class="dot dot-gemini"></span><span class="chip-label">Gemini</span>
           </div>
-          <div class="chip chip-grok" id="chip-grok" onclick="togglePlatform('grok')">
-            <span class="dot dot-grok"></span>Grok
+          <div class="chip chip-grok" id="chip-grok" onclick="togglePlatform('grok')" title="Grok">
+            <span class="dot dot-grok"></span><span class="chip-label">Grok</span>
           </div>
-          <div class="chip chip-copilot" id="chip-copilot" onclick="togglePlatform('copilot')">
-            <span class="dot dot-copilot"></span>Copilot
+          <div
+            class="chip chip-copilot"
+            id="chip-copilot"
+            onclick="togglePlatform('copilot')"
+            title="Copilot"
+          >
+            <span class="dot dot-copilot"></span><span class="chip-label">Copilot</span>
           </div>
           <div
             class="chip chip-perplexity"
             id="chip-perplexity"
             onclick="togglePlatform('perplexity')"
+            title="Perplexity"
           >
-            <span class="dot dot-perplexity"></span>Perplexity
+            <span class="dot dot-perplexity"></span><span class="chip-label">Perplexity</span>
           </div>
         </div>
 
@@ -1585,13 +1672,13 @@
 
         <!-- AI Round-Table Orchestration Trigger Button -->
         <div
-          class="pill-info btn-roundtable"
+          class="pill-info btn-roundtable pill-compact-tight"
           id="btn-roundtable"
           onclick="openSidebarTab('orch')"
           title="AI 圓桌協作：讓多個 AI 任務接力、交叉辯論或主控分工"
         >
           <span class="pulse-dot pulse-purple"></span>
-          <span>🤝 圓桌</span>
+          <span>🤝<span class="pill-label"> 圓桌</span></span>
         </div>
 
         <!-- Zoom Popover Toggle -->
