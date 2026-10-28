@@ -284,7 +284,7 @@ The workspace includes a high-performance historical conversation retrieval and 
 
 ### 7.10 Bots: Persistent Identity, Canonical Chats & Multi-Bot Collaboration
 
-A Bot is an Agent Roster member with an identity (`@handle`, name, avatar, persona) and one bound AI conversation. Design and API details: [SPEC-AGENT-BOTS](../SPEC-AGENT-BOTS.md) (Traditional Chinese).
+A Bot is an Agent Roster member with an identity (`@handle`, name, avatar, persona) and one bound AI conversation. Design and API details: [SPEC-AGENT-BOTS](https://github.com/boboidvtw/nomad-ai-workspace/blob/main/SPEC-AGENT-BOTS.md) (Traditional Chinese).
 
 **Where**: the Dashboard **🤖 Bots** tab (or open `http://127.0.0.1:8765/dashboard#bots`).
 

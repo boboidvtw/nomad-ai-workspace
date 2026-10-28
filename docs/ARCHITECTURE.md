@@ -252,7 +252,7 @@ Nomad AI Workspace 嚴格建立並維護以下雲端階層：
 
 ## 🤖 5. Bots 層 (SPEC-AGENT-BOTS)
 
-Bots 疊加在 Task Control Plane 上，不取代它：Bot 就是多了身分欄位的 roster agent，dispatcher、lease、approval 照舊運作。完整規格與實作紀錄見 [SPEC-AGENT-BOTS](../SPEC-AGENT-BOTS.md)。
+Bots 疊加在 Task Control Plane 上，不取代它：Bot 就是多了身分欄位的 roster agent，dispatcher、lease、approval 照舊運作。完整規格與實作紀錄見 [SPEC-AGENT-BOTS](https://github.com/boboidvtw/nomad-ai-workspace/blob/main/SPEC-AGENT-BOTS.md)。
 
 ### 5.1 模組
 

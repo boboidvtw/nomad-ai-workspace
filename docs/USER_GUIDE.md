@@ -289,7 +289,7 @@ Nomad AI Studio 領先業界實現**四大頂級 AI 互相對話、接力推理�
 
 ### 7.10 Bots：持久身分、永久對話與多 Bot 協作 (Bots)
 
-Bot 就是 Agent Roster 裡的一位成員，多了身分（`@handle`、名稱、頭像、persona）和一個固定綁定的 AI 對話。設計與 API 細節見 [SPEC-AGENT-BOTS](../SPEC-AGENT-BOTS.md)。
+Bot 就是 Agent Roster 裡的一位成員，多了身分（`@handle`、名稱、頭像、persona）和一個固定綁定的 AI 對話。設計與 API 細節見 [SPEC-AGENT-BOTS](https://github.com/boboidvtw/nomad-ai-workspace/blob/main/SPEC-AGENT-BOTS.md)。
 
 **開啟方式**：Studio 頂部的 Dashboard 連結 →「🤖 Bots」分頁（或直接開 `http://127.0.0.1:8765/dashboard#bots`）。
 

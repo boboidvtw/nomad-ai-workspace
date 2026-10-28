@@ -10,27 +10,32 @@ if (!fs.existsSync(distDir)) {
   throw new Error('dist_safari does not exist; run the Safari web build first');
 }
 
-const project = fs.readFileSync(projectPath, 'utf8');
-const topLevelEntries = fs
-  .readdirSync(distDir)
-  .filter((name) => !name.startsWith('.'))
-  .sort();
+// This repo does not ship the Safari Xcode project, so the Xcode checks only run when it exists.
+if (fs.existsSync(projectPath)) {
+  const project = fs.readFileSync(projectPath, 'utf8');
+  const topLevelEntries = fs
+    .readdirSync(distDir)
+    .filter((name) => !name.startsWith('.'))
+    .sort();
 
-const missingReferences = topLevelEntries.filter(
-  (name) => !project.includes(`../../dist_safari/${name}`),
-);
-const missingBuildResources = topLevelEntries.filter(
-  (name) => !project.includes(`/* ${name} in Resources */`),
-);
+  const missingReferences = topLevelEntries.filter(
+    (name) => !project.includes(`../../dist_safari/${name}`),
+  );
+  const missingBuildResources = topLevelEntries.filter(
+    (name) => !project.includes(`/* ${name} in Resources */`),
+  );
 
-if (missingReferences.length || missingBuildResources.length) {
-  if (missingReferences.length) {
-    console.error(`Missing Xcode file references: ${missingReferences.join(', ')}`);
+  if (missingReferences.length || missingBuildResources.length) {
+    if (missingReferences.length) {
+      console.error(`Missing Xcode file references: ${missingReferences.join(', ')}`);
+    }
+    if (missingBuildResources.length) {
+      console.error(`Missing Xcode resource entries: ${missingBuildResources.join(', ')}`);
+    }
+    process.exit(1);
   }
-  if (missingBuildResources.length) {
-    console.error(`Missing Xcode resource entries: ${missingBuildResources.join(', ')}`);
-  }
-  process.exit(1);
+} else {
+  console.log(`Skipping Xcode resource checks: ${path.relative(rootDir, projectPath)} not found`);
 }
 
 function listFiles(directory, prefix = '') {
@@ -90,5 +95,5 @@ if (bundleResourcesDir) {
 console.log(
   bundleResourcesDir
     ? 'Safari Xcode resources and extension bundle are complete.'
-    : 'Safari Xcode resource wiring is complete.',
+    : 'Safari build output checks passed.',
 );
