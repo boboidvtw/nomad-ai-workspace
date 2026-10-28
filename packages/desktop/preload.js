@@ -121,4 +121,5 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
   evolverResolvePatch: (/** @type {unknown} */ options) =>
     ipcRenderer.invoke('nomad:evolver-resolve-patch', options),
   evolverSyncRepos: () => ipcRenderer.invoke('nomad:evolver-sync-repos'),
+  evolverRunSandboxTests: () => ipcRenderer.invoke('nomad:evolver-run-sandbox-tests'),
 });

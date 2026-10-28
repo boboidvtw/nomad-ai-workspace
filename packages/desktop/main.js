@@ -77,6 +77,7 @@ const mcpGateway = new McpGateway({
 });
 const knowledgeBase = new KnowledgeBase();
 const { SessionManager } = require('./src/session-manager');
+const { runSandboxTests } = require('./src/sandbox-gate');
 
 const EXTENSION_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'dist_chrome')
@@ -342,9 +343,10 @@ async function createMainWindow() {
   await loadNomadExtension();
 
   const isMac = process.platform === 'darwin';
-  const iconPath = isMac
-    ? path.join(__dirname, 'nomad.icns')
-    : process.platform === 'win32'
+  // macOS ignores BrowserWindow's icon (the Dock icon comes from the app bundle), and Electron
+  // cannot load an .icns from a path, so only Windows and Linux get one.
+  const iconPath =
+    process.platform === 'win32'
       ? path.join(__dirname, 'nomad.ico')
       : path.join(__dirname, 'nomad.png');
 
@@ -356,7 +358,7 @@ async function createMainWindow() {
     title: 'Nomad AI Studio',
     titleBarStyle: isMac ? 'hiddenInset' : 'default',
     backgroundColor: windowBackgroundFor(store.get('appearance')),
-    icon: iconPath,
+    ...(isMac ? {} : { icon: iconPath }),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -1190,6 +1192,10 @@ ipcMain.handle('nomad:evolver-resolve-patch', (_event, { patchId, action }) => {
 
 ipcMain.handle('nomad:evolver-sync-repos', () => {
   return evolverWorkbench.syncToThreeRepos();
+});
+
+ipcMain.handle('nomad:evolver-run-sandbox-tests', () => {
+  return runSandboxTests({ root: path.join(__dirname, '..') });
 });
 
 // App Lifecycle

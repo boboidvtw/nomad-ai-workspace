@@ -228,4 +228,21 @@ describe('Universal FloatBall (Flagship Super Orb)', () => {
 
     grokComposer.remove();
   });
+
+  it('does not touch the document from a position-sync timer that fires after unmount', async () => {
+    vi.useFakeTimers();
+    try {
+      await act(async () => {
+        root.render(<FloatBall platform="gemini" />);
+      });
+      act(() => root.unmount());
+
+      const getById = vi.spyOn(document, 'getElementById');
+      vi.advanceTimersByTime(500);
+
+      expect(getById).not.toHaveBeenCalledWith('gv-pm-trigger');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

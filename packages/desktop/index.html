@@ -5484,7 +5484,7 @@
                 tab: 'diff',
                 patchId: 'PATCH_LEXICAL_INJECTOR_002',
               },
-              { label: '🧪 shadow-sandbox · 74/74 Tests PASS', tab: 'gate' },
+              { label: '🧪 shadow-sandbox · 回歸測試閘門', tab: 'gate' },
               { label: '🧬 harness-compiler · 3-Repo Patch Ready', tab: 'hud' },
             ],
             text: '我已在隔離分支 `shadow/evo-ide-workbench` 完成 `injectLexicalPrompt` 的外科手術修補（加入 `focus -> selectAll -> insertText` 與寫入後內文驗核），並將此經驗提煉為跨平台基因 **`GEN_DOM_LEXICAL_INSERT_005`**。請在下方進化膠囊或右側工作台一鍵審查！',
@@ -5677,7 +5677,7 @@
             evoState.chatMessages.push({
               id: 'msg-a-' + Date.now(),
               role: 'agent',
-              cot: `1. [HITL Detector] 識別到人類明確工程規範糾正\n2. [Shadow Sandbox] 驗證規則 Token 增量 (+${g.verification.tokenDelta} tokens) 符合預算，74/74 測試綠燈\n3. [Harness Compiler] 已預編譯 antigravity-experience-db YAML、~/.claude Hook 與 ~/.gemini Rule`,
+              cot: `1. [HITL Detector] 識別到人類明確工程規範糾正\n2. [Shadow Sandbox] 驗證規則 Token 增量 (+${g.verification.tokenDelta} tokens) 符合預算\n3. [Harness Compiler] 已預編譯 antigravity-experience-db YAML、~/.claude Hook 與 ~/.gemini Rule`,
               tools: [{ label: `🧬 HITL 基因: ${g.geneId}`, tab: 'hud' }],
               text: `收到！我已將你的指令轉化為結構化 Harness 基因 **\`${g.geneId}\`** 並完成影子沙盒測試。點擊下方膠囊即可一鍵寫入三庫永久生效：`,
               capsuleGeneId: g.geneId,
@@ -5700,31 +5700,41 @@
         renderEvolverWorkbench();
       }
 
-      function handleRunEvoSandboxTests() {
+      async function handleRunEvoSandboxTests() {
         const term = document.getElementById('evo-sandbox-terminal-output');
         if (!term) return;
+        term.textContent = '$ node --test (running…)';
+        let res = null;
+        try {
+          if (window.nomadDesktop && window.nomadDesktop.evolverRunSandboxTests) {
+            res = await window.nomadDesktop.evolverRunSandboxTests();
+          }
+        } catch (err) {
+          term.textContent = `Sandbox gate failed to run: ${err && err.message ? err.message : err}`;
+          return;
+        }
+        if (!res || !res.available) {
+          term.textContent = `Sandbox gate unavailable: ${res ? res.reason : 'desktop bridge missing'}`;
+          return;
+        }
         const wb = evoState.workbench;
-        const activeCount = wb ? wb.activeGenes.length : 3;
-        const pendingCount = wb ? wb.pendingGenes.length : 1;
+        const s = res.summary;
+        const verdict = res.passed ? 'GREEN' : 'FAILED';
+        const counts = s
+          ? `${s.pass} / ${s.total} passed, ${s.fail} failed`
+          : 'no test summary found';
         term.textContent = [
-          `$ git worktree list`,
-          `/Users/liyungchih-macstudio/Developer/nomad-ai-workspace  c3d54cbb [main]`,
-          `/tmp/nomad-shadow-worktree-01                             e8a91f02 [shadow/evo-ide-workbench]`,
-          ``,
-          `$ node --test packages/core/src/__tests__/evolver-workbench.test.js packages/desktop/src/__tests__/layout-engine.test.js`,
-          `✔ EvolverWorkbench: getWorkbenchState returns initial three-pane IDE state (1.4ms)`,
-          `✔ EvolverWorkbench: compileGeneToThreeRepos generates 3-repo payloads (0.9ms)`,
-          `✔ EvolverWorkbench: verifyGeneInShadowSandbox enforces passRate=1.0 & token cap (0.6ms)`,
-          `✔ EvolverWorkbench: synthesizeCandidateGene -> approveGene -> revertGene (1.1ms)`,
-          `✔ EvolverWorkbench: resolveSurgicalPatch merges or rejects Shadow Worktree diffs (0.5ms)`,
-          `✔ Layout Engine: Evolver IDE mode hides WebContentsViews without 0x0 throttling (0.8ms)`,
+          res.output.trimEnd(),
           ``,
           `--------------------------------------------------------------------------------`,
-          `🧪 Shadow Sandbox Gate Summary:`,
-          `   • Regression Suite : 80 / 80 Passed (100.0% Green)`,
-          `   • Active Genes     : ${activeCount} active (${pendingCount} pending Auto-Guarded approval)`,
-          `   • Headroom Budget  : ${wb ? wb.contextBudget.usedTokens : 13940} / 28,000 tokens (OK)`,
-          `   • Safety Kernel    : IMMUTABLE (autonomy.json verified)`,
+          `🧪 Shadow Sandbox Gate Summary (${res.ranAt}):`,
+          `   • Regression Suite : ${counts} → ${verdict}`,
+          ...(wb
+            ? [
+                `   • Active Genes     : ${wb.activeGenes.length} active (${wb.pendingGenes.length} pending Auto-Guarded approval)`,
+                `   • Headroom Budget  : ${wb.contextBudget.usedTokens} / ${wb.contextBudget.budgetTokens} tokens`,
+              ]
+            : []),
         ].join('\n');
       }
 
@@ -5927,7 +5937,9 @@
                 })
                 .join('')}
             </div>
-            <div style="display: flex; gap: 8px;">
+            ${
+              activePatch.status === 'PENDING'
+                ? `<div style="display: flex; gap: 8px;">
               <button
                 class="btn-ws-op"
                 onclick="handleResolveEvoPatch('${activePatch.patchId}', 'MERGE')"
@@ -5942,7 +5954,11 @@
               >
                 ❌ 退回重修
               </button>
-            </div>
+            </div>`
+                : `<div id="evo-patch-resolved" style="padding: 7px; text-align: center; font-weight: 700; color: var(--text-soft);">${
+                    activePatch.status === 'MERGED' ? '✅ 已合併' : '❌ 已退回'
+                  }</div>`
+            }
           `;
         }
 

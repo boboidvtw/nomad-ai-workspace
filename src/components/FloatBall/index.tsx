@@ -279,9 +279,11 @@ export default function FloatBall({ platform: platformProp }: FloatBallProps) {
   }, [getSize, platform, defaultPosition]);
 
   const syncTriggerPosition = useCallback(() => {
-    const trigger = document.getElementById('gv-pm-trigger');
+    // Delayed callers can fire after unmount, when there is nothing left to sync.
     const el = rootRef.current;
-    if (trigger && el) {
+    if (!el) return;
+    const trigger = document.getElementById('gv-pm-trigger');
+    if (trigger) {
       const rect = el.getBoundingClientRect();
       trigger.style.position = 'fixed';
       trigger.style.left = `${Math.round(rect.left + rect.width / 2 - 23)}px`;
