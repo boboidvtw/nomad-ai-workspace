@@ -179,7 +179,7 @@ Nomad AI Workspace establishes and strictly maintains the following structure:
 
 ## 🤖 5. Bots Layer (SPEC-AGENT-BOTS)
 
-Bots sit on top of the Task Control Plane rather than replacing it: a Bot is a roster agent with identity fields, and the dispatcher, leases and approvals work as before. Full spec and implementation notes: [SPEC-AGENT-BOTS](../SPEC-AGENT-BOTS.md) (Traditional Chinese).
+Bots sit on top of the Task Control Plane rather than replacing it: a Bot is a roster agent with identity fields, and the dispatcher, leases and approvals work as before. Full spec and implementation notes: [SPEC-AGENT-BOTS](https://github.com/boboidvtw/nomad-ai-workspace/blob/main/SPEC-AGENT-BOTS.md) (Traditional Chinese).
 
 ### 5.1 Modules
 
