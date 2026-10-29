@@ -34,3 +34,6 @@ pnpm-debug.log*
 
 # Release archives
 *.zip
+
+# Vitest coverage reports
+coverage/

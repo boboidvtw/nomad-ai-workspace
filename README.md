@@ -178,15 +178,16 @@ graph TD
 
 ## 🧭 完整文件索引 (Documentation Index)
 
-| 文件名稱                                                                        | 內容摘要                                                                   |
-| :------------------------------------------------------------------------------ | :------------------------------------------------------------------------- |
-| 📖 [使用者手冊與教學 (User Manual & Tutorial)](docs/USER_GUIDE.md)              | 跨平台實機教學、側邊欄操作、提示詞管理器、快捷鍵完整對照表與排版匯出指南。 |
-| ☁️ [Google Drive 授權設定指南 (Google Drive Setup)](docs/GOOGLE_DRIVE_SETUP.md) | GCP 專案建立、OAuth 2.0 Client ID 取得、子目錄隔離備份與還原實務。         |
-| 📦 [端對端安裝與編譯指南 (Installation Guide)](docs/INSTALLATION.md)            | Chrome、Edge、Firefox 與 Safari 從原始碼編譯與載入擴充功能步驟。           |
-| 🚀 [發布與打包指南 (Release & Packaging)](docs/RELEASE_PACKAGING.md)            | Chrome Web Store 審查文案、單一用途宣告、權限依據與 GitHub Release 流程。  |
-| 🏛️ [深入架構規格文件 (Architecture Overview)](docs/ARCHITECTURE.md)             | 系統分層架構、動態適配器、資料模型與安全性零信任設計原則。                 |
-| 🤖 [Bots 整合規格 (SPEC-AGENT-BOTS)](SPEC-AGENT-BOTS.md)                        | Bots 的設計、資料模型、API、Milestone 與實作紀錄。                         |
-| 📝 [版本變更日誌 (Changelog)](CHANGELOG.md)                                     | 遵循 Keep a Changelog 規範之版本歷程記錄。                                 |
+| 文件名稱                                                                        | 內容摘要                                                                                |
+| :------------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------- |
+| 📖 [使用者手冊與教學 (User Manual & Tutorial)](docs/USER_GUIDE.md)              | 跨平台實機教學、側邊欄操作、提示詞管理器、快捷鍵完整對照表與排版匯出指南。              |
+| ☁️ [Google Drive 授權設定指南 (Google Drive Setup)](docs/GOOGLE_DRIVE_SETUP.md) | GCP 專案建立、OAuth 2.0 Client ID 取得、子目錄隔離備份與還原實務。                      |
+| 🐙 [GitHub 私人 Repo 同步 (GitHub Sync)](docs/GITHUB_SYNC_SETUP.md)             | 以私人 repo 存放同步資料：每次變更一個 commit、刪除標記、讓其他 AI 工具讀取同一份資料。 |
+| 📦 [端對端安裝與編譯指南 (Installation Guide)](docs/INSTALLATION.md)            | Chrome、Edge、Firefox 與 Safari 從原始碼編譯與載入擴充功能步驟。                        |
+| 🚀 [發布與打包指南 (Release & Packaging)](docs/RELEASE_PACKAGING.md)            | Chrome Web Store 審查文案、單一用途宣告、權限依據與 GitHub Release 流程。               |
+| 🏛️ [深入架構規格文件 (Architecture Overview)](docs/ARCHITECTURE.md)             | 系統分層架構、動態適配器、資料模型與安全性零信任設計原則。                              |
+| 🤖 [Bots 整合規格 (SPEC-AGENT-BOTS)](SPEC-AGENT-BOTS.md)                        | Bots 的設計、資料模型、API、Milestone 與實作紀錄。                                      |
+| 📝 [版本變更日誌 (Changelog)](CHANGELOG.md)                                     | 遵循 Keep a Changelog 規範之版本歷程記錄。                                              |
 
 ---
 

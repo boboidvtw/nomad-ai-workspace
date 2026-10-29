@@ -7,6 +7,7 @@ import {
   extractRouteUserIdFromUrl,
 } from '@/core/services/AccountIsolationService';
 import { restoreBackupableSyncSettings } from '@/core/services/SettingsBackupService';
+import { syncWriteMarker } from '@/core/services/syncTombstoneStore';
 import { StorageKeys } from '@/core/types/common';
 import type { FolderData } from '@/core/types/folder';
 import type {
@@ -50,7 +51,9 @@ import {
   mergeStarredMessages,
   mergeTimelineHierarchy,
 } from '../../../utils/merge';
-import { MultiPlatformSyncDashboard } from './MultiPlatformSyncDashboard';
+import { applyMergeTombstones, reconcileSyncTombstones } from '../utils/syncTombstones';
+import { GitHubSyncSettings } from './GitHubSyncSettings';
+import { MultiPlatformSyncDashboard, PROVIDER_LABEL_KEYS } from './MultiPlatformSyncDashboard';
 import { SyncPlatformSummary } from './SyncPlatformSummary';
 
 type DownloadMode = 'merge' | 'overwrite';
@@ -66,6 +69,9 @@ interface CloudSyncSettingsProps {
 export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) {
   const { t } = useLanguage();
   const supportsICloud = getVoyagerBuildTarget() === 'safari' || isSafari();
+  const providers: SyncProvider[] = supportsICloud
+    ? ['googleDrive', 'icloud', 'github']
+    : ['googleDrive', 'github'];
 
   const [syncState, setSyncState] = useState<SyncState>(DEFAULT_SYNC_STATE);
   const [statusMessage, setStatusMessage] = useState<{
@@ -515,6 +521,8 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
       }
 
       if (response?.ok) {
+        // Tell other devices which items this one deleted.
+        void reconcileSyncTombstones();
         setStatusMessage({
           text: t(response.highlights?.skipped ? 'syncSuccessHighlightsSkipped' : 'syncSuccess'),
           kind: response.highlights?.skipped ? 'warn' : 'ok',
@@ -713,19 +721,39 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
           return;
         }
 
+        const rawInputs = {
+          localFolders,
+          cloudFolders: cloudFolderData,
+          localPrompts,
+          cloudPrompts: cloudPromptItems,
+          localStarred,
+          cloudStarred: cloudStarredData,
+        };
+        // A merge must not bring back items deleted here or on another device.
+        const inputs = shouldOverwrite
+          ? rawInputs
+          : applyMergeTombstones(
+              await reconcileSyncTombstones(),
+              {
+                folders: folderStorageKey,
+                prompts: StorageKeys.PROMPT_ITEMS,
+                starred: StorageKeys.TIMELINE_STARRED_MESSAGES,
+              },
+              rawInputs,
+            );
         const nextFolders = shouldOverwrite
           ? cloudFolderData
-          : mergeFolderData(localFolders, cloudFolderData);
+          : mergeFolderData(inputs.localFolders, inputs.cloudFolders);
         const promptMerge = shouldOverwrite
           ? {
               items: cloudPromptItems,
               nameConflicts: getPromptNameConflictIds(cloudPromptItems).size,
             }
-          : mergePromptsWithStats(localPrompts, cloudPromptItems);
+          : mergePromptsWithStats(inputs.localPrompts, inputs.cloudPrompts);
         const nextPrompts = promptMerge.items;
         const nextStarred = shouldOverwrite
           ? cloudStarredData
-          : mergeStarredMessages(localStarred, cloudStarredData);
+          : mergeStarredMessages(inputs.localStarred, inputs.cloudStarred);
         const nextTimelineHierarchy = shouldOverwrite
           ? cloudTimelineHierarchyData
           : mergeTimelineHierarchy(localTimelineHierarchy, cloudTimelineHierarchyData);
@@ -744,6 +772,7 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
         // Save merged data to storage (platform-specific storage key for folders)
         const storageUpdate: Record<string, unknown> = {
           [folderStorageKey]: nextFolders,
+          ...syncWriteMarker(),
         };
 
         // Only save prompts and starred for Gemini platform
@@ -825,27 +854,27 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
           )}
         </p>
 
-        {supportsICloud && (
-          <div className="grid grid-cols-[auto_1fr] items-center gap-3">
-            <Label className="text-sm font-medium">{t('syncProvider')}</Label>
-            <div className="bg-secondary/60 grid grid-cols-2 gap-1 rounded-xl p-1">
-              {(['googleDrive', 'icloud'] as const).map((provider) => (
-                <button
-                  key={provider}
-                  className={`rounded-lg px-2 py-1.5 text-xs font-bold transition-colors ${
-                    syncState.provider === provider
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  onClick={() => void handleProviderChange(provider)}
-                  aria-pressed={syncState.provider === provider}
-                >
-                  {provider === 'icloud' ? t('syncProviderICloud') : t('syncProviderGoogleDrive')}
-                </button>
-              ))}
-            </div>
+        <div className="grid grid-cols-[auto_1fr] items-center gap-3">
+          <Label className="text-sm font-medium">{t('syncProvider')}</Label>
+          <div
+            className={`bg-secondary/60 grid gap-1 rounded-xl p-1 ${supportsICloud ? 'grid-cols-3' : 'grid-cols-2'}`}
+          >
+            {providers.map((provider) => (
+              <button
+                key={provider}
+                className={`rounded-lg px-2 py-1.5 text-xs font-bold transition-colors ${
+                  syncState.provider === provider
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => void handleProviderChange(provider)}
+                aria-pressed={syncState.provider === provider}
+              >
+                {t(PROVIDER_LABEL_KEYS[provider])}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
         {supportsICloud && syncState.provider === 'googleDrive' && !syncState.isAuthenticated && (
           <a
@@ -917,7 +946,8 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
         {syncState.mode !== 'disabled' && (
           <>
             {/* Custom Google Drive Client ID */}
-            {syncState.provider !== 'icloud' && (
+            {syncState.provider === 'github' && <GitHubSyncSettings onStateChange={setSyncState} />}
+            {syncState.provider === 'googleDrive' && (
               <div>
                 <Label className="mb-2 block text-sm font-medium">Google Drive Client ID</Label>
                 <div className="flex gap-2">
@@ -979,8 +1009,7 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
                     <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
                   </svg>
                 )}
-                {(t as (k: string) => string)('syncAllPlatforms') ||
-                  '一鍵全平台同步 (All Platforms)'}
+                {t('syncAllPlatforms')}
               </span>
             </Button>
 
@@ -1135,14 +1164,14 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
             />
 
             {/* Sign Out Button - Only show if authenticated */}
-            {syncState.provider === 'googleDrive' && syncState.isAuthenticated && (
+            {syncState.provider !== 'icloud' && syncState.isAuthenticated && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-muted-foreground hover:text-destructive w-full text-xs"
                 onClick={handleSignOut}
               >
-                {t('signOut')}
+                {t(syncState.provider === 'github' ? 'githubSyncRemoveToken' : 'signOut')}
               </Button>
             )}
           </>

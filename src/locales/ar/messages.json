@@ -3117,5 +3117,41 @@
   "popupPinHintDismiss": {
     "message": "إغلاق",
     "description": "Popup: dismiss the pin reminder"
+  },
+  "syncProviderGitHub": {
+    "message": "GitHub"
+  },
+  "githubSyncDescription": {
+    "message": "يحفظ ملفات المزامنة في مستودع GitHub خاص بك؛ كل تغيير هو commit، لذا يمكنك عرض الإصدارات السابقة واستعادتها. استخدم رمز fine-grained مقيدًا بهذا المستودع مع صلاحية Contents: قراءة وكتابة."
+  },
+  "githubSyncOwner": {
+    "message": "المالك"
+  },
+  "githubSyncRepo": {
+    "message": "المستودع"
+  },
+  "githubSyncBranch": {
+    "message": "الفرع"
+  },
+  "githubSyncToken": {
+    "message": "رمز الوصول"
+  },
+  "githubSyncTokenSaved": {
+    "message": "تم الحفظ. اتركه فارغًا للإبقاء عليه."
+  },
+  "githubSyncSave": {
+    "message": "حفظ واختبار"
+  },
+  "githubSyncConnected": {
+    "message": "متصل بـ {repo}"
+  },
+  "githubSyncRemoveToken": {
+    "message": "إزالة الرمز"
+  },
+  "multiPlatformSyncOverview": {
+    "message": "حالة مزامنة الذكاء الاصطناعي المتعدد"
+  },
+  "syncAllPlatforms": {
+    "message": "مزامنة جميع المنصات"
   }
 }

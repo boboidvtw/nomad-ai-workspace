@@ -3117,5 +3117,41 @@
   "popupPinHintDismiss": {
     "message": "閉じる",
     "description": "Popup: dismiss the pin reminder"
+  },
+  "syncProviderGitHub": {
+    "message": "GitHub"
+  },
+  "githubSyncDescription": {
+    "message": "同期ファイルを自分のプライベート GitHub リポジトリに保存します。変更ごとにコミットされ、以前のバージョンを確認・復元できます。そのリポジトリに限定し Contents の読み書きを許可した fine-grained トークンを使ってください。"
+  },
+  "githubSyncOwner": {
+    "message": "オーナー"
+  },
+  "githubSyncRepo": {
+    "message": "リポジトリ"
+  },
+  "githubSyncBranch": {
+    "message": "ブランチ"
+  },
+  "githubSyncToken": {
+    "message": "アクセストークン"
+  },
+  "githubSyncTokenSaved": {
+    "message": "保存済み。空欄のままで再利用します。"
+  },
+  "githubSyncSave": {
+    "message": "保存してテスト"
+  },
+  "githubSyncConnected": {
+    "message": "{repo} に接続しました"
+  },
+  "githubSyncRemoveToken": {
+    "message": "トークンを削除"
+  },
+  "multiPlatformSyncOverview": {
+    "message": "マルチ AI 同期状況"
+  },
+  "syncAllPlatforms": {
+    "message": "すべてのプラットフォームを同期"
   }
 }

@@ -1,6 +1,20 @@
 import type { GoogleDriveSyncService } from '@/core/services/GoogleDriveSyncService';
 import type { PlatformFolderPayload } from '@/core/services/platformFolderFiles';
+import {
+  type TombstoneLedger,
+  loadTombstoneLedger,
+  mergeTombstoneLedgers,
+  saveTombstoneLedger,
+  syncWriteMarker,
+} from '@/core/services/syncTombstoneStore';
 import type { FolderData } from '@/core/types/folder';
+import {
+  TOMBSTONE_FILE_FORMAT,
+  type Tombstones,
+  applyTombstonesToFlatFolders,
+  applyTombstonesToFolderData,
+  pruneTombstones,
+} from '@/core/utils/syncTombstones';
 import { type FlatSyncFolder, mergeFlatFolders, mergeFolderData } from '@/utils/merge';
 
 /** The slice of GoogleDriveSyncService the per-platform folder sync needs. */
@@ -15,6 +29,8 @@ export type PlatformFolderSyncService = Pick<
   | 'downloadGeminiFolders'
   | 'uploadGrokFolders'
   | 'downloadGrokFolders'
+  | 'downloadTombstones'
+  | 'uploadTombstones'
 >;
 
 type UploadMethod =
@@ -99,8 +115,54 @@ function toFolderData(raw: unknown): FolderData {
       };
 }
 
-function mergeFlat(local: FlatSyncFolder[], cloud: PlatformFolderPayload | null): FlatSyncFolder[] {
-  return cloud !== null ? mergeFlatFolders(local, extractFlatFolders(cloud)) : local;
+function mergeFlat(
+  local: FlatSyncFolder[],
+  cloud: PlatformFolderPayload | null,
+  tombstones: Tombstones,
+): FlatSyncFolder[] {
+  const kept = applyTombstonesToFlatFolders(local, tombstones);
+  if (cloud === null) return kept;
+  return mergeFlatFolders(
+    kept,
+    applyTombstonesToFlatFolders(extractFlatFolders(cloud), tombstones),
+  );
+}
+
+function mergeGemini(
+  local: FolderData,
+  cloud: PlatformFolderPayload | null,
+  tombstones: Tombstones,
+): FolderData {
+  const kept = applyTombstonesToFolderData(local, tombstones);
+  if (cloud === null) return kept;
+  return mergeFolderData(kept, applyTombstonesToFolderData(toFolderData(cloud), tombstones));
+}
+
+function prunedLedger(ledger: TombstoneLedger, now: number): TombstoneLedger {
+  return Object.fromEntries(
+    Object.entries(ledger)
+      .map(([key, set]) => [key, pruneTombstones(set, now)] as const)
+      .filter(([, set]) => Object.keys(set).length > 0),
+  );
+}
+
+/**
+ * Combine this device's deletion tombstones with the cloud copy, save the
+ * result locally and upload it, so every device learns every deletion.
+ */
+export async function reconcileTombstoneLedger(
+  service: Pick<PlatformFolderSyncService, 'downloadTombstones' | 'uploadTombstones'>,
+  interactive: boolean,
+): Promise<TombstoneLedger> {
+  const cloud = await service.downloadTombstones(interactive);
+  const now = Date.now();
+  const ledger = prunedLedger(
+    mergeTombstoneLedgers(await loadTombstoneLedger(), cloud?.datasets ?? null),
+    now,
+  );
+  await saveTombstoneLedger(ledger, now);
+  await service.uploadTombstones({ format: TOMBSTONE_FILE_FORMAT, datasets: ledger }, interactive);
+  return ledger;
 }
 
 /**
@@ -112,12 +174,14 @@ export async function syncAllPlatformFolders(
   service: PlatformFolderSyncService,
   interactive: boolean,
 ) {
-  const [claudeCloud, chatgptCloud, geminiCloud, grokCloud] = await Promise.all([
+  const [claudeCloud, chatgptCloud, geminiCloud, grokCloud, ledger] = await Promise.all([
     service.downloadClaudeFolders(interactive),
     service.downloadChatGPTFolders(interactive),
     service.downloadGeminiFolders(interactive),
     service.downloadGrokFolders(interactive),
+    reconcileTombstoneLedger(service, interactive),
   ]);
+  const tombstonesFor = (key: string): Tombstones => ledger[key] ?? {};
 
   const localStore = await chrome.storage.local.get([
     'claude_nexus_folders',
@@ -130,17 +194,26 @@ export async function syncAllPlatformFolders(
   const claude = mergeFlat(
     (localStore.claude_nexus_folders || []) as FlatSyncFolder[],
     claudeCloud,
+    tombstonesFor('claude_nexus_folders'),
   );
-  const chatgpt = mergeFlat((localStore.chatgpt_folders || []) as FlatSyncFolder[], chatgptCloud);
-  const grok = mergeFlat((localStore.grok_folders || []) as FlatSyncFolder[], grokCloud);
-  const gemini =
-    geminiCloud !== null ? mergeFolderData(localGemini, toFolderData(geminiCloud)) : localGemini;
+  const chatgpt = mergeFlat(
+    (localStore.chatgpt_folders || []) as FlatSyncFolder[],
+    chatgptCloud,
+    tombstonesFor('chatgpt_folders'),
+  );
+  const grok = mergeFlat(
+    (localStore.grok_folders || []) as FlatSyncFolder[],
+    grokCloud,
+    tombstonesFor('grok_folders'),
+  );
+  const gemini = mergeGemini(localGemini, geminiCloud, tombstonesFor('gvFolderData'));
 
   await chrome.storage.local.set({
     claude_nexus_folders: claude,
     chatgpt_folders: chatgpt,
     grok_folders: grok,
     gvFolderData: gemini,
+    ...syncWriteMarker(),
   });
 
   await Promise.all([

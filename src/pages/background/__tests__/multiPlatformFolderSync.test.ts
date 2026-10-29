@@ -6,11 +6,18 @@ import {
   syncAllPlatformFolders,
 } from '../multiPlatformFolderSync';
 
+/** A deletion time inside the 180-day tombstone window. */
+const RECENT = Date.now() - 1000;
+
 const STATE = { mode: 'manual' } as unknown as Awaited<
   ReturnType<PlatformFolderSyncService['getState']>
 >;
 
-function createService(cloud: Partial<Record<string, unknown[] | null>> = {}) {
+type CloudFolders = Partial<Record<'claude' | 'chatgpt' | 'gemini' | 'grok', unknown[] | null>> & {
+  tombstones?: unknown;
+};
+
+function createService(cloud: CloudFolders = {}) {
   const service = {
     getState: vi.fn().mockResolvedValue(STATE),
     uploadClaudeFolders: vi.fn().mockResolvedValue(true),
@@ -21,6 +28,8 @@ function createService(cloud: Partial<Record<string, unknown[] | null>> = {}) {
     downloadChatGPTFolders: vi.fn().mockResolvedValue(cloud.chatgpt ?? null),
     downloadGeminiFolders: vi.fn().mockResolvedValue(cloud.gemini ?? null),
     downloadGrokFolders: vi.fn().mockResolvedValue(cloud.grok ?? null),
+    downloadTombstones: vi.fn().mockResolvedValue(cloud.tombstones ?? null),
+    uploadTombstones: vi.fn().mockResolvedValue(true),
   };
   return service satisfies PlatformFolderSyncService;
 }
@@ -196,5 +205,60 @@ describe('syncAllPlatformFolders', () => {
 
     expect(result.chatgpt).toEqual([{ id: 'keep', name: 'K', updatedAt: 1 }]);
     expect(result.gemini).toEqual({ folders: [], folderContents: {} });
+  });
+
+  it('drops a folder this device deleted instead of restoring it from the cloud', async () => {
+    local = {
+      claude_nexus_folders: [{ id: 'keep', name: 'K', updatedAt: 1 }],
+      nomadSyncTombstones: { claude_nexus_folders: { 'folder:gone': RECENT } },
+    };
+    const service = createService({
+      claude: [
+        { id: 'keep', name: 'K', updatedAt: 1 },
+        { id: 'gone', name: 'G', updatedAt: 1 },
+      ],
+    });
+
+    const result = await syncAllPlatformFolders(service, false);
+
+    expect((result.claude as { id: string }[]).map((f) => f.id)).toEqual(['keep']);
+    expect(service.uploadTombstones).toHaveBeenCalledWith(
+      {
+        format: 'nomad.sync.tombstones.v1',
+        datasets: { claude_nexus_folders: { 'folder:gone': RECENT } },
+      },
+      false,
+    );
+  });
+
+  it('applies deletions recorded by another device to local data', async () => {
+    local = {
+      gvFolderData: {
+        folders: [
+          { id: 'g1', name: 'Keep', updatedAt: 1 },
+          { id: 'g2', name: 'Deleted elsewhere', updatedAt: 1 },
+        ],
+        folderContents: {},
+      },
+    };
+    const service = createService({
+      tombstones: {
+        format: 'nomad.sync.tombstones.v1',
+        datasets: { gvFolderData: { 'folder:g2': RECENT } },
+      },
+    });
+
+    const result = await syncAllPlatformFolders(service, false);
+
+    expect(result.gemini.folders.map((f) => f.id)).toEqual(['g1']);
+    expect(local.nomadSyncTombstones).toEqual({ gvFolderData: { 'folder:g2': RECENT } });
+  });
+
+  it('marks its own storage write so merge removals are not recorded as user deletions', async () => {
+    const service = createService();
+
+    await syncAllPlatformFolders(service, false);
+
+    expect(typeof local.nomadSyncWriteMarker).toBe('number');
   });
 });

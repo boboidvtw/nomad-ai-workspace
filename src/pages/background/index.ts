@@ -32,6 +32,7 @@ import {
 } from '@/core/services/HighlightAnnotationService';
 import { highlightDriveSyncCoordinator } from '@/core/services/HighlightDriveSyncCoordinator';
 import { exportBackupableSyncSettings } from '@/core/services/SettingsBackupService';
+import { startSyncTombstoneRecorder } from '@/core/services/syncTombstoneStore';
 import { StorageKeys } from '@/core/types/common';
 import type { FolderData } from '@/core/types/folder';
 import type {
@@ -117,6 +118,7 @@ import type { TranslationKey } from '@/utils/translations';
 
 import { unregisterRegisteredContentScripts } from './contentScriptRegistration';
 import { ForkNodesManager } from './forkNodesManager';
+import { handleGitHubSyncMessage } from './githubSyncMessages';
 import { resolveOptionalHighlightSetting } from './highlightOptionalSetting';
 import { handlePlatformFolderSyncMessage, syncAllPlatformFolders } from './multiPlatformFolderSync';
 import { addPermissionChangeListeners } from './permissionEvents';
@@ -1345,6 +1347,9 @@ void refreshPluginSiteDomains().then(() => {
 // Initial fetch interceptor registration
 void registerFetchInterceptor();
 
+// Record deletions of synced items so merges do not bring them back.
+startSyncTombstoneRecorder();
+
 // Initial response completion observer registration
 void syncResponseCompleteObserverRegistration();
 
@@ -2230,6 +2235,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse(await handlePlatformFolderSyncMessage(googleDriveSyncService, message));
             return;
           }
+          case 'nomad.sync.github.getConfig':
+          case 'nomad.sync.github.setConfig':
+          case 'nomad.sync.reconcileTombstones':
+            sendResponse(await handleGitHubSyncMessage(googleDriveSyncService, message));
+            return;
           case 'nomad.sync.syncAll': {
             const interactive = message.payload?.interactive !== false;
             const data = await syncAllPlatformFolders(googleDriveSyncService, interactive);
@@ -2529,7 +2539,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
           case 'gv.sync.setProvider': {
             const provider = message.payload?.provider as SyncProvider;
-            if (provider === 'googleDrive' || provider === 'icloud') {
+            if (provider === 'googleDrive' || provider === 'icloud' || provider === 'github') {
               await googleDriveSyncService.setProvider(provider);
             }
             sendResponse({ ok: true, state: await googleDriveSyncService.getState() });

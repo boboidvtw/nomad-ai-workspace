@@ -3117,5 +3117,41 @@
   "popupPinHintDismiss": {
     "message": "Fechar",
     "description": "Popup: dismiss the pin reminder"
+  },
+  "syncProviderGitHub": {
+    "message": "GitHub"
+  },
+  "githubSyncDescription": {
+    "message": "Guarda os arquivos de sincronização no seu próprio repositório privado do GitHub; cada alteração é um commit, então você pode ver e restaurar versões anteriores. Use um token fine-grained limitado a esse repositório com Contents: leitura e escrita."
+  },
+  "githubSyncOwner": {
+    "message": "Proprietário"
+  },
+  "githubSyncRepo": {
+    "message": "Repositório"
+  },
+  "githubSyncBranch": {
+    "message": "Branch"
+  },
+  "githubSyncToken": {
+    "message": "Token de acesso"
+  },
+  "githubSyncTokenSaved": {
+    "message": "Salvo. Deixe vazio para mantê-lo."
+  },
+  "githubSyncSave": {
+    "message": "Salvar e testar"
+  },
+  "githubSyncConnected": {
+    "message": "Conectado a {repo}"
+  },
+  "githubSyncRemoveToken": {
+    "message": "Remover token"
+  },
+  "multiPlatformSyncOverview": {
+    "message": "Status de sincronização multi-IA"
+  },
+  "syncAllPlatforms": {
+    "message": "Sincronizar todas as plataformas"
   }
 }
