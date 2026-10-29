@@ -83,10 +83,11 @@ describe('MultiPlatformSyncDashboard', () => {
     expect(texts[3]).toBe('Grok↑ up:never↓ down:never');
   });
 
-  it('falls back to the built-in title when the translation key is missing', () => {
-    const dashboard = render(DEFAULT_SYNC_STATE);
-
-    expect(dashboard.textContent).toContain('multiPlatformSyncOverview');
-    expect(dashboard.textContent).toContain('Google Drive');
+  it('shows the translated title and the active provider instead of always Google Drive', () => {
+    expect(render(DEFAULT_SYNC_STATE).textContent).toContain('multiPlatformSyncOverview');
+    expect(render(DEFAULT_SYNC_STATE).textContent).toContain('syncProviderGoogleDrive');
+    expect(render({ ...DEFAULT_SYNC_STATE, provider: 'github' }).textContent).toContain(
+      'syncProviderGitHub',
+    );
   });
 });

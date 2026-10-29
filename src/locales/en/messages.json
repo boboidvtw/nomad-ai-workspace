@@ -3117,5 +3117,41 @@
   "popupPinHintDismiss": {
     "message": "Dismiss",
     "description": "Popup: dismiss the pin reminder"
+  },
+  "syncProviderGitHub": {
+    "message": "GitHub"
+  },
+  "githubSyncDescription": {
+    "message": "Keeps the sync files in your own private GitHub repository; every change is a commit, so you can see and restore earlier versions. Use a fine-grained token limited to that repository with Contents: read and write."
+  },
+  "githubSyncOwner": {
+    "message": "Owner"
+  },
+  "githubSyncRepo": {
+    "message": "Repository"
+  },
+  "githubSyncBranch": {
+    "message": "Branch"
+  },
+  "githubSyncToken": {
+    "message": "Access token"
+  },
+  "githubSyncTokenSaved": {
+    "message": "Saved. Leave empty to keep it."
+  },
+  "githubSyncSave": {
+    "message": "Save and test"
+  },
+  "githubSyncConnected": {
+    "message": "Connected to {repo}"
+  },
+  "githubSyncRemoveToken": {
+    "message": "Remove token"
+  },
+  "multiPlatformSyncOverview": {
+    "message": "Multi-AI sync status"
+  },
+  "syncAllPlatforms": {
+    "message": "Sync all platforms"
   }
 }

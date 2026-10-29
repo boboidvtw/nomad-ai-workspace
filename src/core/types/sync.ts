@@ -16,7 +16,8 @@ import type { HighlightExportPayloadV1 } from './highlight';
  */
 export type SyncMode = 'disabled' | 'manual' | 'auto';
 
-export type SyncProvider = 'googleDrive' | 'icloud';
+/** `github` stores the same files in a private GitHub repo the user owns. */
+export type SyncProvider = 'googleDrive' | 'icloud' | 'github';
 
 /**
  * Platform identifier for sync operations

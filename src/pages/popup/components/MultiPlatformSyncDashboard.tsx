@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { SyncState } from '@/core/types/sync';
+import type { SyncProvider, SyncState } from '@/core/types/sync';
 
 import { useLanguage } from '../../../contexts/LanguageContext';
 
@@ -11,6 +11,13 @@ interface MultiPlatformSyncDashboardProps {
   formatLastUpload: FormatTime;
   formatLastSync: FormatTime;
 }
+
+/** Display-name translation key for each sync provider. */
+export const PROVIDER_LABEL_KEYS = {
+  googleDrive: 'syncProviderGoogleDrive',
+  icloud: 'syncProviderICloud',
+  github: 'syncProviderGitHub',
+} as const satisfies Record<SyncProvider, string>;
 
 /** Which SyncState fields hold each platform's last upload (↑) and download (↓) time. */
 const PLATFORM_TILES: ReadonlyArray<{
@@ -55,12 +62,11 @@ export function MultiPlatformSyncDashboard({
     >
       <div className="flex items-center justify-between px-0.5">
         <span className="text-foreground/80 text-[11px] font-semibold tracking-wide uppercase">
-          {(t as (k: string) => string)('multiPlatformSyncOverview') ||
-            '多平台雲端同步狀態 (Multi-AI Status)'}
+          {t('multiPlatformSyncOverview')}
         </span>
         <span className="text-muted-foreground flex items-center gap-1 text-[10px]">
           <span className="inline-block size-1.5 animate-pulse rounded-full bg-emerald-500" />
-          Google Drive
+          {t(PROVIDER_LABEL_KEYS[syncState.provider])}
         </span>
       </div>
 

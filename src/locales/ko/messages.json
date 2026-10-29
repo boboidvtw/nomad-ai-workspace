@@ -3117,5 +3117,41 @@
   "popupPinHintDismiss": {
     "message": "닫기",
     "description": "Popup: dismiss the pin reminder"
+  },
+  "syncProviderGitHub": {
+    "message": "GitHub"
+  },
+  "githubSyncDescription": {
+    "message": "동기화 파일을 내 비공개 GitHub 저장소에 보관합니다. 변경할 때마다 커밋되므로 이전 버전을 확인하고 복원할 수 있습니다. 해당 저장소로 제한하고 Contents 읽기/쓰기를 허용한 fine-grained 토큰을 사용하세요."
+  },
+  "githubSyncOwner": {
+    "message": "소유자"
+  },
+  "githubSyncRepo": {
+    "message": "저장소"
+  },
+  "githubSyncBranch": {
+    "message": "브랜치"
+  },
+  "githubSyncToken": {
+    "message": "액세스 토큰"
+  },
+  "githubSyncTokenSaved": {
+    "message": "저장됨. 비워 두면 그대로 사용합니다."
+  },
+  "githubSyncSave": {
+    "message": "저장 후 테스트"
+  },
+  "githubSyncConnected": {
+    "message": "{repo}에 연결됨"
+  },
+  "githubSyncRemoveToken": {
+    "message": "토큰 제거"
+  },
+  "multiPlatformSyncOverview": {
+    "message": "멀티 AI 동기화 상태"
+  },
+  "syncAllPlatforms": {
+    "message": "모든 플랫폼 동기화"
   }
 }

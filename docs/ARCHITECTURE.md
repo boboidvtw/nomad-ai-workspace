@@ -228,10 +228,14 @@ Nomad AI Workspace 嚴格建立並維護以下雲端階層：
         └── 📄 nomad_settings.json                <-- 全域偏好與快捷鍵配置
 ```
 
+> 同一套檔案結構也可以改存到使用者自己的**私人 GitHub repo**（`SyncProvider = 'github'`，`GitHubRepoClient.ts`）：路徑相同，內容有變才 commit，git 歷史即版本紀錄。設定見 [GITHUB_SYNC_SETUP](./GITHUB_SYNC_SETUP.md)。
+
 ### 3.3 同步協同與衝突解決 (`GoogleDriveSyncService.ts`)
 
 - **多帳號租戶隔離 (`AccountIsolationService.ts`)**：
   - 根據目前登入的 Google 帳號與路徑命名空間（例如 `/u/0/`、`/u/1/`）隔離儲存鍵名。
+- **刪除標記 (`syncTombstones.ts`、`syncTombstoneStore.ts`)**：
+  - 背景監聽 `storage.local` 變更，記錄被刪除的項目 id；同步時與雲端的 `Shared/sync-tombstones.json` 合併，合併前先從兩邊移除已刪除的項目，避免聯集合併把刪除的資料補回來。
 - **智慧合併演算法 (`merge.ts`)**：
   - **資料夾合併**：依據資料夾唯一 UUID 識別，若雙端皆修改同名資料夾，保留子項目並以最新更新時間戳記（`updatedAt`）為準。
   - **提示詞合併**：若內容相異則自動建立副本或提示衝突，避免使用者珍貴精心編寫的 Prompt 被抹除。

@@ -27,6 +27,10 @@ describe('background runtime message routing', () => {
     expect(isHandledBackgroundRuntimeMessage({ type: 'gv.account.resolve' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: 'gv.openConversation' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.uploadChatGPT' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.github.setConfig' })).toBe(true);
+    expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.reconcileTombstones' })).toBe(
+      true,
+    );
     expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.downloadChatGPT' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.uploadClaude' })).toBe(true);
     expect(isHandledBackgroundRuntimeMessage({ type: 'nomad.sync.downloadClaude' })).toBe(true);

@@ -17,6 +17,14 @@
 
 ### ✨ 新增 (Added)
 
+- **雲端同步新增 GitHub 私人 repo**：「同步方式」多了 GitHub，與 Google Drive、iCloud 並存。檔案結構和 Drive 相同（根目錄放 `gemini-voyager-*.json`，`Claude/`、`ChatGPT/`、`Gemini/`、`Grok/`、`Shared/` 子資料夾），內容有變才 commit，git 歷史就是版本紀錄。
+  - 用只授權單一 repo 的 fine-grained token（Contents 讀寫）連線；公開 repo 或沒有寫入權限的 token 一律拒絕。Token 只存在本機，設定畫面不回顯。
+  - `api.github.com` 是選用權限，按「儲存並測試」時才請求，既有安裝不會因為新權限被停用。
+  - 寫入依序執行，遇到別台裝置先 commit（409/422）會重讀 sha 再試；超過 1 MB 的檔案改用 raw 讀取。
+  - 第一次連線會在 repo 寫入說明檔案結構的 `README.md`，讓 Claude Code、Codex、ChatGPT 等工具讀得懂。設定步驟見 [docs/GITHUB_SYNC_SETUP.md](docs/GITHUB_SYNC_SETUP.md)。
+
+- **同步刪除標記**：合併還原原本是取聯集，在一台裝置刪掉的資料夾、對話歸屬、提示詞與星標，下次合併會被補回來。現在背景會從 `storage.local` 的變更記錄刪除，同步時合併並上傳到 `Shared/sync-tombstones.json`，「全部同步」和 Popup 的「合併還原」都會先套用標記再合併。刪除後又編輯或重新加入的項目會保留；標記 180 天後清除；同步自身的寫入、「覆蓋還原」，以及一次清空 10 筆以上的重置都不會產生標記。Google Drive、iCloud、GitHub 都適用。
+
 - **主程序執行紀錄檔**：打包版 app 沒有終端機，main process 的輸出原本會直接消失。現在 `console.log/info/warn/error` 會同步寫入 `main.log`（macOS 為 `~/Library/Logs/Nomad AI Studio/main.log`，權限 600），超過 1 MB 輪替成 `main.log.1`。
   - 另外記錄未捕捉例外（`fatal`）、未處理的 Promise rejection、renderer 與 child process 異常結束。
   - 托盤選單新增「顯示執行紀錄 (Log)」，在 Finder 中顯示該檔案。

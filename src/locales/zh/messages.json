@@ -3117,5 +3117,41 @@
   "popupPinHintDismiss": {
     "message": "关闭",
     "description": "Popup: dismiss the pin reminder"
+  },
+  "syncProviderGitHub": {
+    "message": "GitHub"
+  },
+  "githubSyncDescription": {
+    "message": "把同步文件存放在你自己的私有 GitHub 仓库，每次变更都是一个 commit，可查看并还原旧版本。请使用仅授权该仓库、Contents 可读写的 fine-grained token。"
+  },
+  "githubSyncOwner": {
+    "message": "所有者"
+  },
+  "githubSyncRepo": {
+    "message": "仓库"
+  },
+  "githubSyncBranch": {
+    "message": "分支"
+  },
+  "githubSyncToken": {
+    "message": "访问 Token"
+  },
+  "githubSyncTokenSaved": {
+    "message": "已保存，留空即沿用。"
+  },
+  "githubSyncSave": {
+    "message": "保存并测试"
+  },
+  "githubSyncConnected": {
+    "message": "已连接到 {repo}"
+  },
+  "githubSyncRemoveToken": {
+    "message": "移除 Token"
+  },
+  "multiPlatformSyncOverview": {
+    "message": "多平台同步状态"
+  },
+  "syncAllPlatforms": {
+    "message": "同步所有平台"
   }
 }

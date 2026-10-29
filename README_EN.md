@@ -154,15 +154,16 @@ See [User Guide §7.10](docs/USER_GUIDE_EN.md#710-bots-persistent-identity-canon
 
 ## 🧭 Documentation Index
 
-| Document                                                  | Description                                                                                                        |
-| :-------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
-| 📖 [User Manual & Tutorial](docs/USER_GUIDE.md)           | Multi-platform guide, sidebar operations, prompt manager, keyboard shortcuts, and export tutorial.                 |
-| ☁️ [Google Drive Setup Guide](docs/GOOGLE_DRIVE_SETUP.md) | Google Cloud project creation, OAuth 2.0 Client ID generation, and backup/restore workflows.                       |
-| 📦 [Installation & Build Guide](docs/INSTALLATION.md)     | Step-by-step instructions for building and loading unpacked extensions on Chrome, Edge, Firefox, and Safari.       |
-| 🚀 [Release & Packaging Guide](docs/RELEASE_PACKAGING.md) | Chrome Web Store review descriptions, single-purpose declarations, permission justifications, and GitHub Releases. |
-| 🏛️ [Architecture Specification](docs/ARCHITECTURE.md)     | Multi-layer architecture, dynamic adapters, data models, and zero-trust security design.                           |
-| 🤖 [Bots Spec (SPEC-AGENT-BOTS)](SPEC-AGENT-BOTS.md)      | Bots design, data model, API, milestones and implementation notes (Traditional Chinese).                           |
-| 📝 [Changelog](CHANGELOG.md)                              | Version history following the Keep a Changelog standard.                                                           |
+| Document                                                           | Description                                                                                                             |
+| :----------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| 📖 [User Manual & Tutorial](docs/USER_GUIDE.md)                    | Multi-platform guide, sidebar operations, prompt manager, keyboard shortcuts, and export tutorial.                      |
+| ☁️ [Google Drive Setup Guide](docs/GOOGLE_DRIVE_SETUP.md)          | Google Cloud project creation, OAuth 2.0 Client ID generation, and backup/restore workflows.                            |
+| 🐙 [GitHub Private Repo Sync (Chinese)](docs/GITHUB_SYNC_SETUP.md) | Store sync data in a private repo: one commit per change, deletion marks, and the same data readable by other AI tools. |
+| 📦 [Installation & Build Guide](docs/INSTALLATION.md)              | Step-by-step instructions for building and loading unpacked extensions on Chrome, Edge, Firefox, and Safari.            |
+| 🚀 [Release & Packaging Guide](docs/RELEASE_PACKAGING.md)          | Chrome Web Store review descriptions, single-purpose declarations, permission justifications, and GitHub Releases.      |
+| 🏛️ [Architecture Specification](docs/ARCHITECTURE.md)              | Multi-layer architecture, dynamic adapters, data models, and zero-trust security design.                                |
+| 🤖 [Bots Spec (SPEC-AGENT-BOTS)](SPEC-AGENT-BOTS.md)               | Bots design, data model, API, milestones and implementation notes (Traditional Chinese).                                |
+| 📝 [Changelog](CHANGELOG.md)                                       | Version history following the Keep a Changelog standard.                                                                |
 
 ---
 

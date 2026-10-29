@@ -3117,5 +3117,41 @@
   "popupPinHintDismiss": {
     "message": "Fermer",
     "description": "Popup: dismiss the pin reminder"
+  },
+  "syncProviderGitHub": {
+    "message": "GitHub"
+  },
+  "githubSyncDescription": {
+    "message": "Conserve les fichiers de synchronisation dans votre propre dépôt GitHub privé ; chaque modification est un commit, vous pouvez donc consulter et restaurer les versions précédentes. Utilisez un jeton fine-grained limité à ce dépôt avec Contents : lecture et écriture."
+  },
+  "githubSyncOwner": {
+    "message": "Propriétaire"
+  },
+  "githubSyncRepo": {
+    "message": "Dépôt"
+  },
+  "githubSyncBranch": {
+    "message": "Branche"
+  },
+  "githubSyncToken": {
+    "message": "Jeton d'accès"
+  },
+  "githubSyncTokenSaved": {
+    "message": "Enregistré. Laissez vide pour le conserver."
+  },
+  "githubSyncSave": {
+    "message": "Enregistrer et tester"
+  },
+  "githubSyncConnected": {
+    "message": "Connecté à {repo}"
+  },
+  "githubSyncRemoveToken": {
+    "message": "Supprimer le jeton"
+  },
+  "multiPlatformSyncOverview": {
+    "message": "État de synchronisation multi-IA"
+  },
+  "syncAllPlatforms": {
+    "message": "Synchroniser toutes les plateformes"
   }
 }

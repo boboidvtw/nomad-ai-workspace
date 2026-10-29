@@ -55,9 +55,16 @@ import {
   readSafariICloudFile,
   writeSafariICloudFile,
 } from '@/core/utils/safariICloudSync';
+import { type TombstoneFile, isTombstoneFile } from '@/core/utils/syncTombstones';
 import { EXTENSION_VERSION } from '@/core/utils/version';
 import type { PluginStateMap } from '@/features/plugins/storage/pluginState';
 
+import {
+  GitHubRepoClient,
+  clearGitHubSyncToken,
+  isGitHubAuthError,
+  loadGitHubSyncConfig,
+} from './GitHubRepoClient';
 import {
   type FolderSyncPlatform,
   PLATFORM_FOLDER_FILES,
@@ -76,6 +83,8 @@ const TIMELINE_HIERARCHY_FILE_NAME = 'gemini-voyager-timeline-hierarchy.json';
 const HIGHLIGHTS_FILE_NAME = 'gemini-voyager-highlights.json';
 const BACKUP_FOLDER_NAME = 'Nomad Workspace Data';
 const LEGACY_VOYAGER_FOLDER_NAME = 'Voyager Data';
+const TOMBSTONES_FOLDER_NAME = 'Shared';
+const TOMBSTONES_FILE_NAME = 'sync-tombstones.json';
 const LEGACY_BACKUP_FOLDER_NAME = 'Gemini Voyager Data';
 const BACKUP_FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
 const BACKUP_FOLDER_MARKER_KEY = 'voyagerDataFolder';
@@ -145,6 +154,7 @@ export class GoogleDriveSyncService {
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
   private stateLoadPromise: Promise<void> | null = null;
+  private githubClient: GitHubRepoClient | null = null;
 
   constructor() {
     this.stateLoadPromise = this.loadState();
@@ -208,7 +218,9 @@ export class GoogleDriveSyncService {
   }
 
   async signOut(): Promise<void> {
-    if (this.state.provider === 'icloud') {
+    if (this.state.provider === 'icloud' || this.state.provider === 'github') {
+      if (this.state.provider === 'github') await clearGitHubSyncToken();
+      this.githubClient = null;
       this.updateState({ isAuthenticated: false, error: null });
       await this.saveState();
       return;
@@ -914,6 +926,13 @@ export class GoogleDriveSyncService {
   }
 
   private async getAuthToken(interactive: boolean): Promise<string | null> {
+    if (this.state.provider === 'github') {
+      const config = await loadGitHubSyncConfig();
+      this.githubClient = config ? new GitHubRepoClient(config) : null;
+      if (!config && interactive) throw new Error('Set up the GitHub repository and token first');
+      return config ? 'github' : null;
+    }
+
     if (this.state.provider === 'icloud') {
       await checkSafariICloudAccount();
       return 'icloud';
@@ -983,7 +1002,7 @@ export class GoogleDriveSyncService {
   }
 
   private async findFile(token: string, fileName: string): Promise<string | null> {
-    if (this.state.provider === 'icloud') {
+    if (this.state.provider === 'icloud' || this.state.provider === 'github') {
       return fileName;
     }
 
@@ -1084,7 +1103,7 @@ export class GoogleDriveSyncService {
       | 'timeline-hierarchy'
       | 'highlights',
   ): Promise<string> {
-    if (this.state.provider === 'icloud') {
+    if (this.state.provider === 'icloud' || this.state.provider === 'github') {
       return fileName;
     }
 
@@ -1311,7 +1330,7 @@ export class GoogleDriveSyncService {
   }
 
   private async migrateBackupFolderIfPresent(token: string): Promise<void> {
-    if (this.state.provider === 'icloud' || isSafariRuntime()) return;
+    if (this.state.provider !== 'googleDrive' || isSafariRuntime()) return;
 
     try {
       await this.resolveBackupFolder(token, false);
@@ -1562,6 +1581,11 @@ export class GoogleDriveSyncService {
           return;
         }
 
+        if (this.state.provider === 'github') {
+          await this.requireGitHubClient().writeJson(fileId, data);
+          return;
+        }
+
         if (isSafariRuntime()) {
           await uploadSafariGoogleDriveFile(fileId, data);
           return;
@@ -1601,6 +1625,10 @@ export class GoogleDriveSyncService {
           return await readSafariICloudFile<T>(fileId);
         }
 
+        if (this.state.provider === 'github') {
+          return await this.requireGitHubClient().readJson<T>(fileId);
+        }
+
         if (isSafariRuntime()) {
           return await downloadSafariGoogleDriveFile<T>(fileId);
         }
@@ -1628,7 +1656,7 @@ export class GoogleDriveSyncService {
    * and flip the authenticated flag so the UI offers reconnecting.
    */
   private markAuthLostIfNeeded(error: unknown): boolean {
-    if (!isSafariGoogleDriveAuthError(error)) return false;
+    if (!isSafariGoogleDriveAuthError(error) && !isGitHubAuthError(error)) return false;
     this.updateState({ isAuthenticated: false });
     return true;
   }
@@ -1646,7 +1674,11 @@ export class GoogleDriveSyncService {
       ]);
       this.state = {
         provider:
-          result.gvSyncProvider === 'icloud' && isSafariRuntime() ? 'icloud' : 'googleDrive',
+          result.gvSyncProvider === 'icloud' && isSafariRuntime()
+            ? 'icloud'
+            : result.gvSyncProvider === 'github'
+              ? 'github'
+              : 'googleDrive',
         mode: (result.gvSyncMode as SyncMode) || 'disabled',
         lastSyncTime: getNumberValue(result.gvLastSyncTime),
         lastUploadTime: getNumberValue(result.gvLastUploadTime),
@@ -1707,6 +1739,11 @@ export class GoogleDriveSyncService {
     this.fileIdByName = {};
   }
 
+  private requireGitHubClient(): GitHubRepoClient {
+    if (!this.githubClient) throw new Error('GitHub sync is not set up');
+    return this.githubClient;
+  }
+
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -1716,6 +1753,7 @@ export class GoogleDriveSyncService {
    * exists inside the root Nomad Workspace backup folder on Google Drive.
    */
   public async ensurePlatformSubfolder(token: string, platformName: string): Promise<string> {
+    if (this.state.provider === 'github') return platformName;
     const rootFolderId = await this.ensureBackupFolder(token);
     if (!rootFolderId) throw new Error('Could not find or create root backup folder');
 
@@ -1772,6 +1810,10 @@ export class GoogleDriveSyncService {
     folderId: string,
     fileName: string,
   ): Promise<string | null> {
+    if (this.state.provider === 'github') {
+      const path = folderId ? `${folderId}/${fileName}` : fileName;
+      return (await this.requireGitHubClient().readJson(path)) === null ? null : path;
+    }
     const query =
       "'" +
       folderId +
@@ -1797,6 +1839,7 @@ export class GoogleDriveSyncService {
     folderId: string,
     fileName: string,
   ): Promise<string> {
+    if (this.state.provider === 'github') return `${folderId}/${fileName}`;
     const existing = await this.findFileInFolder(token, folderId, fileName);
     if (existing) return existing;
 
@@ -1816,6 +1859,48 @@ export class GoogleDriveSyncService {
     if (!response.ok) throw new Error('Failed to create file ' + fileName + ': ' + response.status);
     const created = await response.json();
     return created.id;
+  }
+
+  /** Deletion tombstones shared by every device, at `Shared/sync-tombstones.json`. */
+  async downloadTombstones(interactive = false): Promise<TombstoneFile | null> {
+    try {
+      const token = await this.getAuthToken(interactive);
+      if (!token) return null;
+      const fileId = await this.resolveTombstonesFileId(token, false);
+      if (!fileId) return null;
+      const payload = await this.downloadFileWithRetry<unknown>(token, fileId);
+      return isTombstoneFile(payload) ? payload : null;
+    } catch (error) {
+      console.warn('[GoogleDriveSyncService] Tombstone download failed:', error);
+      return null;
+    }
+  }
+
+  async uploadTombstones(file: TombstoneFile, interactive = false): Promise<boolean> {
+    try {
+      const token = await this.getAuthToken(interactive);
+      if (!token) return false;
+      const fileId = await this.resolveTombstonesFileId(token, true);
+      if (!fileId) return false;
+      await this.uploadFileWithRetry(token, fileId, file);
+      return true;
+    } catch (error) {
+      console.warn('[GoogleDriveSyncService] Tombstone upload failed:', error);
+      return false;
+    }
+  }
+
+  private async resolveTombstonesFileId(token: string, create: boolean): Promise<string | null> {
+    if (this.state.provider === 'icloud') return TOMBSTONES_FILE_NAME;
+    if (this.state.provider === 'googleDrive' && isSafariRuntime()) {
+      return create
+        ? ensureSafariGoogleDriveFile(TOMBSTONES_FILE_NAME, null)
+        : findSafariGoogleDriveFile(TOMBSTONES_FILE_NAME);
+    }
+    const folderId = await this.ensurePlatformSubfolder(token, TOMBSTONES_FOLDER_NAME);
+    return create
+      ? this.ensureSubfolderFileId(token, folderId, TOMBSTONES_FILE_NAME)
+      : this.findFileInFolder(token, folderId, TOMBSTONES_FILE_NAME);
   }
 
   public uploadClaudeFolders(folders: unknown[], interactive = true): Promise<boolean> {
@@ -1926,7 +2011,8 @@ export class GoogleDriveSyncService {
 
   /** Gemini folders predate the per-platform subfolders and may still sit in the root file. */
   private async downloadLegacyGeminiFolders(token: string): Promise<PlatformFolderPayload | null> {
-    const rootFolderId = await this.ensureBackupFolder(token);
+    const rootFolderId =
+      this.state.provider === 'github' ? '' : await this.ensureBackupFolder(token);
     const legacyFileId = await this.findFileInFolder(token, rootFolderId, FOLDERS_FILE_NAME);
     if (!legacyFileId) {
       this.updateState({ isSyncing: false });
@@ -1943,6 +2029,14 @@ export class GoogleDriveSyncService {
     fileId: string,
     failurePrefix: string,
   ): Promise<{ data?: PlatformFolderPayload; folders?: unknown[] }> {
+    if (this.state.provider === 'github') {
+      const payload = await this.requireGitHubClient().readJson<{
+        data?: PlatformFolderPayload;
+        folders?: unknown[];
+      }>(fileId);
+      if (!payload) throw new Error(`${failurePrefix}: ${fileId} not found`);
+      return payload;
+    }
     const response = await fetch(DRIVE_API_BASE + '/files/' + fileId + '?alt=media', {
       headers: { Authorization: 'Bearer ' + token },
     });
