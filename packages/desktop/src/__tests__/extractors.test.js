@@ -65,6 +65,36 @@ test('Extractors: Claude reads only the markdown of the last reply, not its row 
   assert.match(reply.text, /^CODE-1\s*line two$/);
 });
 
+test('Extractors: Claude reads nothing while it is still thinking', () => {
+  const { JSDOM } = require('jsdom');
+  // No markdown exists yet: the row holds only the thinking summary and its timer.
+  const dom = new JSDOM(
+    '<!doctype html><body><div data-testid="assistant-message" data-is-streaming="true">' +
+      '<button>正在撰寫審查回覆。</button><span>9 秒</span><span>執行中</span></div></body>',
+    { runScripts: 'outside-only' },
+  );
+
+  const reply = dom.window.eval(PLATFORM_EXTRACTORS.claude.getLatestResponse());
+
+  assert.strictEqual(reply.ok, true);
+  assert.strictEqual(reply.text, '');
+});
+
+test('Extractors: Claude counts as streaming while its reply row says so', () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(
+    '<!doctype html><body><div data-is-streaming="true"></div>' +
+      '<button aria-label="Send message">↑</button></body>',
+    { runScripts: 'outside-only' },
+  );
+  const send = /** @type {HTMLElement} */ (dom.window.document.querySelector('button'));
+  send.getBoundingClientRect = () => /** @type {DOMRect} */ ({ height: 20 });
+
+  const status = dom.window.eval(PLATFORM_EXTRACTORS.claude.checkStatus());
+
+  assert.strictEqual(status.isStreaming, true);
+});
+
 test('Extractors: Perplexity drops inline citation chips from the reply', () => {
   const { JSDOM } = require('jsdom');
   // Live perplexity.ai markup (2026-10-14): each source is an inline chip "<site> +N".

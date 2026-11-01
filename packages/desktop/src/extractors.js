@@ -25,6 +25,9 @@ const PLATFORM_EXTRACTORS = {
           }
         }
         if (!target) return { ok: false, error: "No Claude assistant response found" };
+        // While Claude thinks the row holds only the thinking summary and its timer, no reply yet.
+        const isThinking = target.closest('[data-is-streaming="true"]') && !target.querySelector('.standard-markdown') && !target.matches('.standard-markdown');
+        if (isThinking) return { ok: true, text: "", length: 0 };
         // A message row also holds a screen-reader label and the action bar; read its markdown.
         const blocks = target.matches('.standard-markdown')
           ? [target]
@@ -39,10 +42,14 @@ const PLATFORM_EXTRACTORS = {
 
     checkStatus: () => `(function() {
       try {
+        if (document.querySelector('[data-is-streaming="true"]')) {
+          return { ok: true, isStreaming: true };
+        }
+
         const stopBtn = document.querySelector('button[aria-label*="Stop"], button[aria-label*="停止"], button:has(svg.lucide-square)');
         const isStopVisible = Boolean(stopBtn && !stopBtn.disabled && (stopBtn.offsetParent !== null || stopBtn.getBoundingClientRect().height > 0));
         
-        const sendBtn = document.querySelector('button[aria-label*="Send"], button[aria-label*="發送"], button[aria-label*="发送"], button:has(svg.lucide-arrow-up)');
+        const sendBtn = document.querySelector('button[aria-label*="Send"], button[aria-label*="傳送"], button[aria-label*="發送"], button[aria-label*="发送"], button:has(svg.lucide-arrow-up)');
         const isSendActive = Boolean(sendBtn && !sendBtn.disabled && (sendBtn.offsetParent !== null || sendBtn.getBoundingClientRect().height > 0));
 
         if (isSendActive && !isStopVisible) {

@@ -4349,28 +4349,36 @@
           speakerLabel.textContent = `✅ ${event.speaker.toUpperCase()} 完成，準備接力給 ${event.nextSpeaker ? event.nextSpeaker.toUpperCase() : ''}...`;
 
           // Add log entry
-          const card = document.createElement('div');
-          card.className = 'orch-log-item';
-          card.innerHTML = `
-          <div class="orch-log-header">
-            <span style="color: var(--accent-color);">【第 ${event.round} 輪】${event.speaker.toUpperCase()}</span>
-            <span style="color: var(--text-dim);">${new Date().toLocaleTimeString()}</span>
-          </div>
-          <div style="color: var(--text); max-height: 80px; overflow-y: auto; white-space: pre-wrap;">${escapeHtml(event.responseSnippet)}...</div>
-        `;
-          // Clear placeholder if first
-          if (
-            logContainer.children.length === 1 &&
-            logContainer.children[0].innerText.includes('尚未啟動')
-          ) {
-            logContainer.innerHTML = '';
-          }
-          logContainer.prepend(card);
+          addOrchLogCard(event, event.incomplete ? '⚠️ 等待逾時，可能不完整' : '', event.content);
+        } else if (event.type === 'turn-failed') {
+          speakerLabel.textContent = `⚠️ ${event.speaker.toUpperCase()} 未回覆，略過這一棒...`;
+          addOrchLogCard(event, '⚠️ 已略過', event.error);
         } else if (event.type === 'completed' || event.type === 'stopped') {
           handleOrchStopUI();
           speakerLabel.textContent =
             event.type === 'completed' ? '🎉 多 AI 協作全數達成！' : '協作已終止';
         }
+      }
+
+      function addOrchLogCard(event, badge, text) {
+        const logContainer = document.getElementById('orch-log-container');
+        const card = document.createElement('div');
+        card.className = 'orch-log-item';
+        card.innerHTML = `
+          <div class="orch-log-header">
+            <span style="color: var(--accent-color);">【第 ${event.round} 輪】${event.speaker.toUpperCase()} ${escapeHtml(badge)}</span>
+            <span style="color: var(--text-dim);">${new Date().toLocaleTimeString()}</span>
+          </div>
+          <div style="color: var(--text); max-height: 80px; overflow-y: auto; white-space: pre-wrap;">${escapeHtml(text)}</div>
+        `;
+        // Clear placeholder if first
+        if (
+          logContainer.children.length === 1 &&
+          logContainer.children[0].innerText.includes('尚未啟動')
+        ) {
+          logContainer.innerHTML = '';
+        }
+        logContainer.prepend(card);
       }
 
       function escapeHtml(str) {

@@ -41,17 +41,6 @@ test('awaitSettled is not cut short by a previously stopped relay', async () => 
   assert.strictEqual(res.settled, true);
 });
 
-test('waitForSettledResponse keeps its placeholder on timeout', async () => {
-  const orch = makeOrchestrator(
-    async () => ({ ok: true, text: '' }),
-    async () => ({ ok: true, isStreaming: true }),
-  );
-
-  const text = await orch.waitForSettledResponse('grok');
-
-  assert.match(text, /grok 回應擷取超時/);
-});
-
 test('awaitSettled stops early and reports why when the page is blocked', async () => {
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
