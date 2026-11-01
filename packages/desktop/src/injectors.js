@@ -118,6 +118,20 @@ const SEND_CONFIRM_SOURCE = `
         return { ok: false, error: label + ' did not send the prompt (it is still in the input box)' };
       };`;
 
+/**
+ * Source of `editorTook(value, text)`, spliced into Lexical injectors. The editor rewrites a few
+ * characters of a long prompt (Perplexity changed about 4 in 2,770), so an exact match would
+ * refuse real sends. Same start and a length within 1% still catches kept or cut-off text.
+ */
+const EDITOR_TOOK_SOURCE = `
+      const squash = (value) => String(value || '').replace(/[\\u200b-\\u200d\\ufeff\\s]/g, '');
+      const editorTook = (value, text) => {
+        const got = squash(value);
+        const want = squash(text);
+        const allowed = Math.max(4, Math.floor(want.length * 0.01));
+        return Math.abs(got.length - want.length) <= allowed && got.slice(0, 20) === want.slice(0, 20);
+      };`;
+
 /** @type {Record<string, (text: string) => string>} Returns a script to run in the platform webview */
 const RAW_PLATFORM_INJECTORS = {
   claude: (/** @type {string} */ text) => `(function() {
@@ -158,10 +172,15 @@ ${SEND_CONFIRM_SOURCE}
   chatgpt: (/** @type {string} */ text) => `(function() {
     try {
       const text = ${JSON.stringify(text)};
-      const input = document.querySelector('div.ProseMirror[contenteditable="true"]') ||
-                    document.querySelector('#prompt-textarea') ||
-                    document.querySelector('div[contenteditable="true"][role="textbox"]') ||
-                    document.querySelector('div[contenteditable="true"]');
+      // The home page keeps hidden composers before the visible one; text typed there never sends.
+      const inputs = [
+        'div.ProseMirror[contenteditable="true"]',
+        '#prompt-textarea',
+        'div[contenteditable="true"][role="textbox"]',
+        'div[contenteditable="true"]',
+      ].flatMap((sel) => [...document.querySelectorAll(sel)]);
+      const isShown = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+      const input = inputs.find(isShown) || inputs[0];
       if (!input) return { ok: false, error: 'ChatGPT input not found' };
       input.focus();
 
@@ -454,14 +473,14 @@ ${SEND_CONFIRM_SOURCE}
 
       // Replace anything left in the box. Lexical only honours the selection after it has seen
       // the selectionchange, and otherwise restores its own state over the inserted text.
-      const squash = (value) => String(value || '').replace(/[\\u200b-\\u200d\\ufeff\\s]/g, '');
+${EDITOR_TOOK_SOURCE}
       input.focus();
       await sleep(100);
       document.execCommand('selectAll');
       await sleep(150);
       document.execCommand('insertText', false, text);
       await sleep(150);
-      if (squash(input.innerText) !== squash(text)) {
+      if (!editorTook(input.innerText, text)) {
         return { ok: false, error: 'Copilot input did not take the prompt' };
       }
 
@@ -505,13 +524,13 @@ ${SEND_CONFIRM_SOURCE}
       } else {
         // Lexical only honours the selection after it has seen the selectionchange, and
         // otherwise restores its own state over the inserted text (same as Copilot).
-        const squash = (value) => String(value || '').replace(/[\\u200b-\\u200d\\ufeff\\s]/g, '');
+${EDITOR_TOOK_SOURCE}
         await sleep(100);
         document.execCommand('selectAll');
         await sleep(150);
         document.execCommand('insertText', false, text);
         await sleep(150);
-        if (squash(input.innerText) !== squash(text)) {
+        if (!editorTook(input.innerText, text)) {
           return { ok: false, error: 'Perplexity input did not take the prompt' };
         }
       }

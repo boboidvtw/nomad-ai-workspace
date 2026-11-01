@@ -119,7 +119,7 @@ test('an injector failure skips the turn at once instead of waiting for a reply'
     maxWaitMs: 60000,
     silentWaitMs: 60000,
     injectPrompt: async (/** @type {string} */ platform, /** @type {string} */ text) => {
-      if (platform === 'gemini') return { ok: false, error: 'Gemini input element not found' };
+      if (platform === 'gemini') return { ok: false, error: 'Gemini did not send the prompt' };
       if (platform === 'claude') claudePrompts.push(text);
       return { ok: true };
     },
@@ -144,7 +144,7 @@ test('an injector failure skips the turn at once instead of waiting for a reply'
   assert.strictEqual(orch.status, 'completed');
   const failed = events.find((e) => e.type === 'turn-failed');
   assert.strictEqual(failed.speaker, 'gemini');
-  assert.match(failed.error, /Gemini input element not found/);
+  assert.match(failed.error, /Gemini did not send the prompt/);
 });
 
 test('an injector that never returns does not hang the relay', async () => {
@@ -209,4 +209,133 @@ test('task runs keep waiting through silence: silentWaitMs is for relays only', 
   await orch.awaitSettled('claude');
 
   assert.ok(Date.now() - startedAt >= 55);
+});
+
+test('the old reply is not taken as the answer while the new one has not started', async () => {
+  const oldReply = '上一輪的舊回覆'.repeat(10);
+  const newReply = '這一輪真正的新回覆'.repeat(10);
+  let polls = 0;
+  const orch = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    pollIntervalMs: 2,
+    maxWaitMs: 1000,
+    stuckStreamingMs: 10,
+    extractResponse: async () => ({ ok: true, text: ++polls < 40 ? oldReply : newReply }),
+    checkStreaming: async () => ({ ok: true, isStreaming: polls < 45 }),
+  });
+
+  const { text } = await orch.awaitSettled('gemini', { previousText: oldReply });
+
+  assert.strictEqual(text, newReply);
+});
+
+test('a time-out never hands on the old reply as a partial answer', async () => {
+  const oldReply = '上一輪的舊回覆'.repeat(10);
+  const orch = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    pollIntervalMs: 2,
+    maxWaitMs: 30,
+    extractResponse: async () => ({ ok: true, text: oldReply }),
+    checkStreaming: async () => ({ ok: true, isStreaming: true }),
+  });
+
+  const { settled, text } = await orch.awaitSettled('gemini', { previousText: oldReply });
+
+  assert.deepStrictEqual({ settled, text }, { settled: false, text: '' });
+});
+
+test('a composer still mounting after a cold load gets more chances', async () => {
+  let attempts = 0;
+  /** @type {string[]} */
+  const delivered = [];
+  const { events } = await runRelay(
+    { copilot: 'Copilot 的回覆', claude: 'ok' },
+    {
+      composerWaitMs: 200,
+      composerRetryMs: 2,
+      injectPrompt: async (/** @type {string} */ platform) => {
+        if (platform === 'copilot' && ++attempts < 3) {
+          return { ok: false, error: 'Copilot input not found' };
+        }
+        delivered.push(platform);
+        return { ok: true };
+      },
+      extractResponse: async (/** @type {string} */ platform) => ({
+        ok: true,
+        text: delivered.includes(platform) ? `${platform} 的回覆` : '',
+      }),
+    },
+  );
+
+  assert.strictEqual(attempts, 3);
+  assert.ok(!events.some((e) => e.type === 'turn-failed'));
+});
+
+test('other injector failures are not retried: the text may already be in the box', async () => {
+  let attempts = 0;
+  const { events } = await runRelay(
+    { perplexity: '', claude: 'ok' },
+    {
+      composerWaitMs: 50,
+      composerRetryMs: 2,
+      injectPrompt: async (/** @type {string} */ platform) => {
+        if (platform !== 'perplexity') return { ok: true };
+        attempts++;
+        return { ok: false, error: 'Perplexity input did not take the prompt' };
+      },
+      extractResponse: async () => ({ ok: true, text: 'ok' }),
+    },
+  );
+
+  assert.strictEqual(attempts, 1);
+  assert.ok(events.some((e) => e.type === 'turn-failed' && e.speaker === 'perplexity'));
+});
+
+test('a page that says it is working is never settled as stuck', async () => {
+  const preamble = '我先跑一段程式確認這個設計的實際行為，稍後再回來整理結果給你。'.repeat(2);
+  const final = preamble + '這是工具跑完之後的完整回覆。';
+  let polls = 0;
+  const orch = new MultiAiOrchestrator({
+    initialWaitMs: 0,
+    pollIntervalMs: 2,
+    maxWaitMs: 1000,
+    stuckStreamingMs: 10,
+    extractResponse: async () => ({ ok: true, text: ++polls < 40 ? preamble : final }),
+    checkStreaming: async () => ({ ok: true, isStreaming: polls < 45, certain: polls < 45 }),
+  });
+
+  const { text } = await orch.awaitSettled('claude');
+
+  assert.strictEqual(text, final);
+});
+
+test('stuck streaming waits three minutes by default', () => {
+  assert.strictEqual(new MultiAiOrchestrator().stuckStreamingMs, 180000);
+});
+
+test('each speaker is announced before its page is touched, and cleared at the end', async () => {
+  /** @type {string[]} */
+  const calls = [];
+  await runRelay(
+    { gemini: 'Gemini 的回覆', grok: 'Grok 的回覆' },
+    {
+      onSpeakerChange: (/** @type {string | null} */ platform) => calls.push(`speaker:${platform}`),
+      injectPrompt: async (/** @type {string} */ platform) => {
+        calls.push(`inject:${platform}`);
+        return { ok: true };
+      },
+      extractResponse: async (/** @type {string} */ platform) => ({
+        ok: true,
+        text: calls.includes(`inject:${platform}`) ? `${platform} 回覆` : '',
+      }),
+    },
+  );
+
+  assert.deepStrictEqual(calls, [
+    'speaker:gemini',
+    'inject:gemini',
+    'speaker:grok',
+    'inject:grok',
+    'speaker:null',
+  ]);
 });

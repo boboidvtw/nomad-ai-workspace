@@ -93,6 +93,39 @@ test('Extractors: Claude counts as streaming while its reply row says so', () =>
   const status = dom.window.eval(PLATFORM_EXTRACTORS.claude.checkStatus());
 
   assert.strictEqual(status.isStreaming, true);
+  assert.strictEqual(status.certain, true);
+});
+
+test('Extractors: ChatGPT reads the visible reply, not a hidden copy after it', () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(
+    '<!doctype html><body>' +
+      '<div data-markdown-text-style="assistant-message" id="shown">看得到的回覆</div>' +
+      '<div data-markdown-text-style="assistant-message">隱藏的舊內容</div></body>',
+    { runScripts: 'outside-only' },
+  );
+  const shown = /** @type {HTMLElement} */ (dom.window.document.querySelector('#shown'));
+  shown.getBoundingClientRect = () => /** @type {DOMRect} */ ({ height: 200 });
+
+  const reply = dom.window.eval(PLATFORM_EXTRACTORS.chatgpt.getLatestResponse());
+
+  assert.strictEqual(reply.text, '看得到的回覆');
+});
+
+test('Extractors: Grok reads the reply body, not the header of its message bubble', () => {
+  const { JSDOM } = require('jsdom');
+  const bubble = (/** @type {string} */ body) =>
+    '<div class="message-bubble" data-testid="assistant-message"><h2>Grok</h2>' +
+    `<span>運作了6s</span><div class="response-content-markdown">${body}</div></div>`;
+  const dom = new JSDOM(`<!doctype html><body>${bubble('真正的回覆')}${bubble('')}</body>`, {
+    runScripts: 'outside-only',
+  });
+  const script = PLATFORM_EXTRACTORS.grok.getLatestResponse();
+
+  assert.strictEqual(dom.window.eval(script).text, '');
+
+  dom.window.document.querySelector('.message-bubble:last-child')?.remove();
+  assert.strictEqual(dom.window.eval(script).text, '真正的回覆');
 });
 
 test('Extractors: Perplexity drops inline citation chips from the reply', () => {

@@ -183,6 +183,34 @@ test('Injectors: Gemini fails when the send click is swallowed', async () => {
   assert.strictEqual(editor.textContent, 'hello');
 });
 
+test('Injectors: ChatGPT types into the visible composer, not a hidden one', async () => {
+  const { JSDOM } = require('jsdom');
+  // The home page keeps hidden composers ahead of the one the user sees, each in its own form.
+  const dom = new JSDOM(
+    '<!doctype html><body>' +
+      '<form id="hidden"><div class="ProseMirror" contenteditable="true"></div></form>' +
+      '<form id="shown"><div class="ProseMirror" contenteditable="true"></div>' +
+      '<button data-testid="send-button" aria-label="傳送提示">↑</button></form></body>',
+    { runScripts: 'outside-only' },
+  );
+  const doc = dom.window.document;
+  const shown = /** @type {HTMLElement} */ (doc.querySelector('#shown .ProseMirror'));
+  const hidden = /** @type {HTMLElement} */ (doc.querySelector('#hidden .ProseMirror'));
+  shown.getBoundingClientRect = () => /** @type {DOMRect} */ ({ width: 498, height: 26 });
+  /** @type {string[]} */
+  const sent = [];
+  doc.querySelector('button')?.addEventListener('click', () => {
+    sent.push(String(shown.textContent));
+    shown.innerHTML = '<p></p>';
+  });
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.chatgpt('hello'));
+
+  assert.strictEqual(result.ok, true);
+  assert.deepStrictEqual(sent, ['hello']);
+  assert.strictEqual(hidden.textContent, '');
+});
+
 /**
  * Builds a Copilot chat page. jsdom has no execCommand, so insertText is emulated the way
  * Lexical behaves: it replaces the editor's content, unless `ignoresInsert` is set.
@@ -237,7 +265,7 @@ test('Injectors: Copilot refuses to send when the editor kept its old text', asy
  * Builds the current Perplexity page: a Lexical editor (#ask-input) and a 提交 button.
  * jsdom has no execCommand, so insertText is emulated the way Lexical takes it, unless
  * `ignoresInsert` is set.
- * @param {{ ignoresInsert?: boolean }} [opts]
+ * @param {{ ignoresInsert?: boolean, rewrites?: (value: string) => string }} [opts]
  */
 function perplexityPage(opts = {}) {
   const { JSDOM } = require('jsdom');
@@ -250,7 +278,9 @@ function perplexityPage(opts = {}) {
   const editor = /** @type {HTMLElement} */ (doc.getElementById('ask-input'));
   Object.defineProperty(editor, 'innerText', { get: () => editor.textContent });
   /** @type {any} */ (doc).execCommand = (/** @type {string} */ cmd, _ui, value) => {
-    if (cmd === 'insertText' && !opts.ignoresInsert) editor.textContent = String(value);
+    if (cmd === 'insertText' && !opts.ignoresInsert) {
+      editor.textContent = opts.rewrites ? opts.rewrites(String(value)) : String(value);
+    }
     return true;
   };
   /** @type {string[]} */
@@ -261,6 +291,26 @@ function perplexityPage(opts = {}) {
   });
   return { dom, sent };
 }
+
+test('Injectors: Perplexity sends a long prompt the editor changed by a few characters', async () => {
+  const prompt = `${'一段很長的接力內容，下一步。'.repeat(40)}結論 -> 交給下一棒 -> 完成`;
+  const { dom, sent } = perplexityPage({ rewrites: (value) => value.replaceAll('->', '→') });
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.perplexity(prompt));
+
+  assert.strictEqual(result.ok, true);
+  assert.strictEqual(sent.length, 1);
+});
+
+test('Injectors: Perplexity refuses a prompt the editor cut short', async () => {
+  const prompt = '一段很長的接力內容，下一步。'.repeat(40);
+  const { dom, sent } = perplexityPage({ rewrites: (value) => value.slice(0, 300) });
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.perplexity(prompt));
+
+  assert.strictEqual(result.ok, false);
+  assert.deepStrictEqual(sent, []);
+});
 
 test('Injectors: Perplexity types into its Lexical editor and clicks 提交', async () => {
   const { dom, sent } = perplexityPage();

@@ -70,9 +70,12 @@ class MultiAiOrchestrator {
    * @param {number} [options.pollIntervalMs=800] - Polling interval
    * @param {number} [options.maxWaitMs=600000] - Max wait time per AI turn in ms
    * @param {number} [options.silentWaitMs=120000] - Relay only: give up on a page that shows neither text nor streaming for this long
-   * @param {number} [options.stuckStreamingMs=60000] - Settle a reply whose text stopped changing while streaming stays on this long (models pause to think, so this must outlast a thinking pause)
+   * @param {number} [options.stuckStreamingMs=180000] - Settle a reply whose text stopped changing while streaming stays on this long (models pause to think or run tools, so this must outlast those)
    * @param {number} [options.pageCallTimeoutMs=60000] - Max time for one call into a page, which never returns if the page navigates away mid-script
+   * @param {number} [options.composerWaitMs=20000] - How long a just-loaded page may take to mount its input box
+   * @param {number} [options.composerRetryMs=1500] - Delay between looks for that input box
    * @param {(platform: string) => Promise<{ blocked: boolean, reason?: string }>} [options.checkBlocked] - Task runs only: stops waiting when the page needs a human
+   * @param {(platform: string | null) => void} [options.onSpeakerChange] - The platform taking its turn, or null when the relay ends
    * @param {Function} [options.onStep] - (event) => void
    * @param {Function} [options.onComplete] - (summary) => void
    */
@@ -85,9 +88,12 @@ class MultiAiOrchestrator {
     this.pollIntervalMs = options.pollIntervalMs ?? 800;
     this.maxWaitMs = options.maxWaitMs ?? 600000;
     this.silentWaitMs = options.silentWaitMs ?? 120000;
-    this.stuckStreamingMs = options.stuckStreamingMs ?? 60000;
+    this.stuckStreamingMs = options.stuckStreamingMs ?? 180000;
     this.pageCallTimeoutMs = options.pageCallTimeoutMs ?? 60000;
+    this.composerWaitMs = options.composerWaitMs ?? 20000;
+    this.composerRetryMs = options.composerRetryMs ?? 1500;
     this.checkBlocked = options.checkBlocked || null;
+    this.onSpeakerChange = options.onSpeakerChange || (() => {});
     this.onStep = options.onStep || (() => {});
     this.onComplete = options.onComplete || (() => {});
 
@@ -193,11 +199,13 @@ class MultiAiOrchestrator {
     });
 
     // Run execution loop in background
-    this.runLoop(prompt.trim()).catch((err) => {
-      console.error('[Nomad Orchestrator] Execution loop crashed:', err);
-      this.status = 'error';
-      this.emitStep('error', { error: err.message });
-    });
+    this.runLoop(prompt.trim())
+      .catch((err) => {
+        console.error('[Nomad Orchestrator] Execution loop crashed:', err);
+        this.status = 'error';
+        this.emitStep('error', { error: err.message });
+      })
+      .finally(() => this.onSpeakerChange(null));
 
     return {
       success: true,
@@ -295,6 +303,8 @@ class MultiAiOrchestrator {
           nextSpeaker,
           inputSnippet: currentInput.slice(0, 60),
         });
+
+        this.onSpeakerChange(speaker);
 
         // 1. Inject prompt to current speaker, remembering the reply already on the page
         const previousText = await this.readReply(speaker);
@@ -399,10 +409,19 @@ class MultiAiOrchestrator {
    * @returns {Promise<{ ok: boolean, error?: string }>}
    */
   async deliverPrompt(speaker, text) {
+    const composerDeadline = Date.now() + this.composerWaitMs;
     try {
-      const res = await this.withPageTimeout(this.injectPrompt(speaker, text));
-      if (res?.ok !== false) return { ok: true };
-      throw new Error(res.error || 'Injector reported failure');
+      for (;;) {
+        const res = await this.withPageTimeout(this.injectPrompt(speaker, text));
+        if (res?.ok !== false) return { ok: true };
+        // Only a missing input box is safe to retry: any other failure may have left the text
+        // in the box, and sending again would type it twice.
+        const composerMissing = /input (element )?not found/i.test(res.error || '');
+        if (!composerMissing || Date.now() >= composerDeadline) {
+          throw new Error(res.error || 'Injector reported failure');
+        }
+        await this.sleep(this.composerRetryMs);
+      }
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[Nomad Orchestrator] Failed to inject prompt to ${speaker}:`, error);
@@ -516,8 +535,12 @@ class MultiAiOrchestrator {
         }
         const text = sawNewReply ? pageText : '';
 
+        // A streaming page can still show the old reply while the new one has not started: that
+        // text may only settle once streaming ends, and is never kept as a partial answer.
+        const isOldReply = Boolean(previousText) && text === previousText;
+
         // Monotonic text accumulation: never overwrite with shorter/empty text
-        if (text && text.length > baselineText.length) {
+        if (text && !isOldReply && text.length > baselineText.length) {
           baselineText = text;
         }
 
@@ -547,8 +570,10 @@ class MultiAiOrchestrator {
           stableCount = 0;
         }
 
-        // Condition 2: Adaptive completion if isStreaming is erroneously stuck on true
-        if (text.length > 40 && Date.now() - lastChangeAt >= this.stuckStreamingMs) {
+        // Condition 2: Adaptive completion if isStreaming is erroneously stuck on true. A page
+        // that reports certain streaming has a signal that cannot stick, so it is never cut off.
+        const looksStuck = Date.now() - lastChangeAt >= this.stuckStreamingMs;
+        if (text.length > 40 && !isOldReply && !statusRes?.certain && looksStuck) {
           console.log(
             `[Nomad Orchestrator] [${platform}] Settled via adaptive inactivity: length=${text.length}`,
           );
