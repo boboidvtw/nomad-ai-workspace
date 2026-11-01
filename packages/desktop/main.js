@@ -107,6 +107,8 @@ let studioBots = null;
 /** @type {import('./src/session-manager').SessionManager | null} */
 let sessionManager = null;
 let isDrawerOpen = false;
+/** @type {string | null} */
+let relaySpeaker = null;
 /** @type {WebContentsView | null} */
 let dashboardView = null;
 let isDashboardOpen = false;
@@ -177,6 +179,17 @@ async function openPlatformChat(platform, url) {
   return { ok: true };
 }
 
+/**
+ * A hidden page gets no animation frames, and Grok and Gemini draw their replies in them: the
+ * reply never reaches the DOM. So the platform taking its turn stays visible, behind the views
+ * the user is looking at, without changing the layout.
+ * @param {string | null} platform
+ */
+function setRelaySpeaker(platform) {
+  relaySpeaker = platform;
+  updateViewBounds();
+}
+
 function updateViewBounds() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const [winWidth, winHeight] = mainWindow.getContentSize();
@@ -195,6 +208,7 @@ function updateViewBounds() {
     drawerWidth: isDrawerOpen ? DRAWER_WIDTH : 0,
   });
 
+  let behindUserViews = false;
   for (const [key, item] of Object.entries(views)) {
     const b = boundsMap[key];
     if (!b) {
@@ -205,7 +219,21 @@ function updateViewBounds() {
     if (visible) ensurePlatformLoaded(key);
     // Hidden views are sized too, so a page a bot drives in the background still lays out.
     item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
+    if (key === relaySpeaker && !visible) {
+      ensurePlatformLoaded(key);
+      item.view.setVisible(true);
+      behindUserViews = true;
+      continue;
+    }
     item.view.setVisible(visible);
+  }
+
+  // addChildView moves a view to the top, which puts the user's views over the relay speaker.
+  if (behindUserViews) {
+    for (const [key, item] of Object.entries(views)) {
+      if (boundsMap[key]?.visible) mainWindow.contentView.addChildView(item.view);
+    }
+    if (dashboardView) mainWindow.contentView.addChildView(dashboardView);
   }
 
   if (dashboardView) {
@@ -422,6 +450,7 @@ async function createMainWindow() {
       return results[platform] || { ok: false, error: 'Platform view not found' };
     },
     // Scripts run against a page that was never loaded wait forever, so a read loads it first.
+    onSpeakerChange: setRelaySpeaker,
     extractResponse: async (/** @type {string} */ platform) => {
       ensurePlatformLoaded(platform);
       const item = views[platform];

@@ -42,8 +42,9 @@ const PLATFORM_EXTRACTORS = {
 
     checkStatus: () => `(function() {
       try {
+        // The reply row's own flag stays on through thinking and tool runs and cannot stick.
         if (document.querySelector('[data-is-streaming="true"]')) {
-          return { ok: true, isStreaming: true };
+          return { ok: true, isStreaming: true, certain: true };
         }
 
         const stopBtn = document.querySelector('button[aria-label*="Stop"], button[aria-label*="停止"], button:has(svg.lucide-square)');
@@ -77,9 +78,11 @@ const PLATFORM_EXTRACTORS = {
         ];
         let target = null;
         for (const sel of selectors) {
-          const els = document.querySelectorAll(sel);
+          const els = [...document.querySelectorAll(sel)];
           if (els.length > 0) {
-            target = els[els.length - 1];
+            // The page also holds hidden copies of other replies, sometimes after the real one.
+            const shown = els.filter((el) => el.getBoundingClientRect().height > 0);
+            target = shown[shown.length - 1] || els[els.length - 1];
             break;
           }
         }
@@ -162,6 +165,8 @@ const PLATFORM_EXTRACTORS = {
     getLatestResponse: () => `(function() {
       try {
         const selectors = [
+          // The bubble around it holds the "Grok" header and the run time, not the reply.
+          '[data-testid="assistant-message"] .response-content-markdown',
           'div[data-testid*="response"]',
           '.message-bubble:not(:has(textarea))',
           'div[class*="response"]',
