@@ -5,7 +5,7 @@ const { createSemanticTitle } = require('./session-manager');
  * Governed by AGENTS.md Atomic Contract & Result Pattern.
  */
 
-/** @typedef {(from: string, to: string, text: string, title?: string | null) => string} TurnTemplate */
+/** @typedef {(from: string, to: string, text: string, title?: string | null, originalPrompt?: string | null) => string} TurnTemplate */
 
 /**
  * @typedef {Object} OrchestrationTurn
@@ -16,26 +16,43 @@ const { createSemanticTitle } = require('./session-manager');
  * @property {number} round
  */
 
+const INCOMPLETE_REPLY_NOTE = '[注意：這份回覆等待逾時，內容可能不完整]';
+
+/**
+ * What every speaker needs before the previous reply: without the user's question, a later
+ * speaker sees only an answer to something it was never asked.
+ * @param {string | null | undefined} title
+ * @param {string | null | undefined} originalPrompt
+ * @returns {string}
+ */
+function handoffContext(title, originalPrompt) {
+  const titleLine = title ? `【協作專案主題】：${title}\n` : '';
+  const promptBlock = originalPrompt
+    ? `【使用者原始問題】：\n${originalPrompt}\n----------------------------------------\n`
+    : '';
+  return titleLine + promptBlock;
+}
+
 /** @type {Record<string, TurnTemplate>} */
 const DEFAULT_TEMPLATES = {
-  relay: (from, to, text, title) =>
-    `${title ? `【協作專案主題】：${title}\n` : ''}【來自 ${from.toUpperCase()} 的階段性輸出與任務交接】：
+  relay: (from, to, text, title, originalPrompt) =>
+    `${handoffContext(title, originalPrompt)}【來自 ${from.toUpperCase()} 的階段性輸出與任務交接】：
 ----------------------------------------
 ${text}
 ----------------------------------------
 【指派給 ${to.toUpperCase()} 的接續任務】：
 請以你的專業架構視角接續推進上述內容，補充實作細節、優化潛在缺陷，並為下一階段提供明確方向。`,
 
-  debate: (from, to, text, title) =>
-    `${title ? `【協作專案主題】：${title}\n` : ''}【來自 ${from.toUpperCase()} 的方案與論點】：
+  debate: (from, to, text, title, originalPrompt) =>
+    `${handoffContext(title, originalPrompt)}【來自 ${from.toUpperCase()} 的方案與論點】：
 ----------------------------------------
 ${text}
 ----------------------------------------
 【${to.toUpperCase()} 交叉審計與辯駁任務】：
 請嚴格審查上述方案，挑出潛在缺陷、安全性漏洞與邊界條件，並提出更具說服力的改良方案。`,
 
-  master: (from, to, text, title) =>
-    `${title ? `【協作專案主題】：${title}\n` : ''}【協調中樞指派任務】：
+  master: (from, to, text, title, originalPrompt) =>
+    `${handoffContext(title, originalPrompt)}【協調中樞指派任務】：
 ----------------------------------------
 ${text}
 ----------------------------------------
@@ -51,7 +68,10 @@ class MultiAiOrchestrator {
    * @param {Function} [options.checkStreaming] - async (platform) => { ok: boolean, isStreaming: boolean }
    * @param {number} [options.initialWaitMs=2000] - Initial delay before polling
    * @param {number} [options.pollIntervalMs=800] - Polling interval
-   * @param {number} [options.maxWaitMs=45000] - Max wait time per AI turn in ms
+   * @param {number} [options.maxWaitMs=600000] - Max wait time per AI turn in ms
+   * @param {number} [options.silentWaitMs=120000] - Relay only: give up on a page that shows neither text nor streaming for this long
+   * @param {number} [options.stuckStreamingMs=60000] - Settle a reply whose text stopped changing while streaming stays on this long (models pause to think, so this must outlast a thinking pause)
+   * @param {number} [options.pageCallTimeoutMs=60000] - Max time for one call into a page, which never returns if the page navigates away mid-script
    * @param {(platform: string) => Promise<{ blocked: boolean, reason?: string }>} [options.checkBlocked] - Task runs only: stops waiting when the page needs a human
    * @param {Function} [options.onStep] - (event) => void
    * @param {Function} [options.onComplete] - (summary) => void
@@ -63,7 +83,10 @@ class MultiAiOrchestrator {
       options.checkStreaming || (async () => ({ ok: true, isStreaming: false }));
     this.initialWaitMs = options.initialWaitMs ?? 2000;
     this.pollIntervalMs = options.pollIntervalMs ?? 800;
-    this.maxWaitMs = options.maxWaitMs ?? 45000;
+    this.maxWaitMs = options.maxWaitMs ?? 600000;
+    this.silentWaitMs = options.silentWaitMs ?? 120000;
+    this.stuckStreamingMs = options.stuckStreamingMs ?? 60000;
+    this.pageCallTimeoutMs = options.pageCallTimeoutMs ?? 60000;
     this.checkBlocked = options.checkBlocked || null;
     this.onStep = options.onStep || (() => {});
     this.onComplete = options.onComplete || (() => {});
@@ -77,6 +100,8 @@ class MultiAiOrchestrator {
     this.customTemplate = null;
     /** @type {string | null} */
     this.canonicalTitle = null;
+    /** @type {string | null} */
+    this.originalPrompt = null;
 
     this.currentRound = 0;
     this.currentSpeakerIndex = 0;
@@ -151,6 +176,7 @@ class MultiAiOrchestrator {
     this.turnDelayMs = Number.isFinite(delay) ? Math.max(0, delay) : 2500;
     this.customTemplate = customTemplate;
     this.canonicalTitle = canonicalTitle || createSemanticTitle(prompt);
+    this.originalPrompt = prompt.trim();
     this.isAborted = false;
     this.isPaused = false;
     this.currentRound = 1;
@@ -247,6 +273,8 @@ class MultiAiOrchestrator {
     let currentInput = this.canonicalTitle
       ? `【協作專案主題】：${this.canonicalTitle}\n----------------------------------------\n${initialPrompt}`
       : initialPrompt;
+    /** @type {{ speaker: string, text: string } | null} */
+    let lastReply = null;
 
     while (this.currentRound <= this.maxRounds && !this.isAborted) {
       for (let i = 0; i < this.sequence.length; i++) {
@@ -270,42 +298,56 @@ class MultiAiOrchestrator {
 
         // 1. Inject prompt to current speaker, remembering the reply already on the page
         const previousText = await this.readReply(speaker);
-        try {
-          await this.injectPrompt(speaker, currentInput);
-        } catch (err) {
-          console.error(`[Nomad Orchestrator] Failed to inject prompt to ${speaker}:`, err);
-          this.emitStep('inject-error', {
-            speaker,
-            error: err instanceof Error ? err.message : String(err),
+        const delivery = await this.deliverPrompt(speaker, currentInput);
+
+        // 2. Wait for speaker response to generate and settle
+        let reply = { settled: false, text: '' };
+        if (delivery.ok) {
+          this.emitStep('waiting-response', { speaker });
+          reply = await this.pollUntilSettled(speaker, {
+            maxWaitMs: this.maxWaitMs,
+            pollIntervalMs: this.pollIntervalMs,
+            previousText,
+            honorRelayControls: true,
           });
         }
 
-        // 2. Wait for speaker response to generate and settle
-        this.emitStep('waiting-response', { speaker });
-        const responseText = await this.waitForSettledResponse(speaker, { previousText });
-
         if (this.isAborted) break;
 
-        this.history.push({
-          timestamp: new Date().toISOString(),
-          speaker,
-          type: 'assistant-response',
-          content: responseText,
-          round: this.currentRound,
-        });
-
-        this.emitStep('turn-complete', {
-          speaker,
-          nextSpeaker,
-          responseSnippet: responseText.slice(0, 60),
-          responseLength: responseText.length,
-          content: responseText,
-        });
-
         // 3. Format next input for the next speaker
-        const templateFn =
-          this.customTemplate || DEFAULT_TEMPLATES[this.mode] || DEFAULT_TEMPLATES.relay;
-        currentInput = templateFn(speaker, nextSpeaker, responseText, this.canonicalTitle);
+        if (reply.text) {
+          const incomplete = !reply.settled;
+          const responseText = incomplete
+            ? `${reply.text}\n\n${INCOMPLETE_REPLY_NOTE}`
+            : reply.text;
+          this.recordTurn(speaker, 'assistant-response', responseText);
+          this.emitStep('turn-complete', {
+            speaker,
+            nextSpeaker,
+            responseSnippet: responseText.slice(0, 60),
+            responseLength: responseText.length,
+            content: responseText,
+            incomplete,
+          });
+          lastReply = { speaker, text: responseText };
+        } else {
+          // A failed turn hands on what the last speaker said, never a placeholder of its own.
+          const error = delivery.error || `${speaker} 沒有回覆`;
+          this.recordTurn(speaker, 'assistant-failed', `[${speaker} 未取得回覆：${error}]`);
+          this.emitStep('turn-failed', { speaker, nextSpeaker, error });
+        }
+
+        if (lastReply) {
+          const templateFn =
+            this.customTemplate || DEFAULT_TEMPLATES[this.mode] || DEFAULT_TEMPLATES.relay;
+          currentInput = templateFn(
+            lastReply.speaker,
+            nextSpeaker,
+            lastReply.text,
+            this.canonicalTitle,
+            this.originalPrompt,
+          );
+        }
 
         // Turn delay
         if (
@@ -336,6 +378,60 @@ class MultiAiOrchestrator {
   }
 
   /**
+   * @param {string} speaker
+   * @param {string} type
+   * @param {string} content
+   */
+  recordTurn(speaker, type, content) {
+    this.history.push({
+      timestamp: new Date().toISOString(),
+      speaker,
+      type,
+      content,
+      round: this.currentRound,
+    });
+  }
+
+  /**
+   * Sends the prompt and reports whether the page took it, so a failed send is not waited on.
+   * @param {string} speaker
+   * @param {string} text
+   * @returns {Promise<{ ok: boolean, error?: string }>}
+   */
+  async deliverPrompt(speaker, text) {
+    try {
+      const res = await this.withPageTimeout(this.injectPrompt(speaker, text));
+      if (res?.ok !== false) return { ok: true };
+      throw new Error(res.error || 'Injector reported failure');
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      console.error(`[Nomad Orchestrator] Failed to inject prompt to ${speaker}:`, error);
+      this.emitStep('inject-error', { speaker, error });
+      return { ok: false, error };
+    }
+  }
+
+  /**
+   * A script running in a page never settles if the page navigates away under it.
+   * @template T
+   * @param {Promise<T>} call
+   * @returns {Promise<T>}
+   */
+  withPageTimeout(call) {
+    /** @type {NodeJS.Timeout | undefined} */
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`Page did not respond within ${this.pageCallTimeoutMs} ms`)),
+        this.pageCallTimeoutMs,
+      );
+    });
+    return /** @type {Promise<T>} */ (Promise.race([call, timeout])).finally(() =>
+      clearTimeout(timer),
+    );
+  }
+
+  /**
    * The latest reply on the platform's page, or '' when it cannot be read. Taken before a send
    * so the wait that follows can tell the new reply from the one already there.
    * @param {string} platform
@@ -343,7 +439,7 @@ class MultiAiOrchestrator {
    */
   async readReply(platform) {
     try {
-      const res = await this.extractResponse(platform);
+      const res = await this.withPageTimeout(this.extractResponse(platform));
       return (res?.text || '').trim();
     } catch {
       return '';
@@ -351,23 +447,8 @@ class MultiAiOrchestrator {
   }
 
   /**
-   * @param {string} platform
-   * @param {{ previousText?: string, maxWaitMs?: number, pollIntervalMs?: number }} [options]
-   */
-  async waitForSettledResponse(platform, options = {}) {
-    const { text } = await this.pollUntilSettled(platform, {
-      maxWaitMs: options.maxWaitMs ?? this.maxWaitMs,
-      pollIntervalMs: options.pollIntervalMs ?? this.pollIntervalMs,
-      previousText: options.previousText || '',
-      honorRelayControls: true,
-    });
-    return text || `[${platform} 回應擷取超時或已結束]`;
-  }
-
-  /**
    * Waits for one platform's reply outside of a relay run (used by task runners).
-   * Unlike waitForSettledResponse it reports a timeout instead of placeholder text,
-   * and ignores relay pause/stop state.
+   * Unlike a relay turn it ignores relay pause/stop state and the silent-page limit.
    * @param {string} platform
    * @param {{ maxWaitMs?: number, pollIntervalMs?: number, previousText?: string }} [options]
    *   previousText: the reply read before the send (see readReply); it is not taken as the answer.
@@ -396,8 +477,8 @@ class MultiAiOrchestrator {
     const isPaused = () => honorRelayControls && this.isPaused;
     const startTime = Date.now();
     let lastLength = -1;
+    let lastChangeAt = startTime;
     let stableCount = 0;
-    let streamingStableCount = 0;
     let baselineText = '';
     let pollCount = 0;
     // Until the page shows activity (streaming, or text other than the pre-send reply), what
@@ -416,8 +497,8 @@ class MultiAiOrchestrator {
 
       try {
         const [statusRes, responseRes] = await Promise.all([
-          this.checkStreaming(platform),
-          this.extractResponse(platform),
+          this.withPageTimeout(this.checkStreaming(platform)),
+          this.withPageTimeout(this.extractResponse(platform)),
         ]);
 
         if (checkBlocked) {
@@ -447,37 +528,41 @@ class MultiAiOrchestrator {
           isStreaming,
         });
 
+        const textChanged = text.length !== lastLength;
+        if (textChanged) {
+          lastLength = text.length;
+          lastChangeAt = Date.now();
+        }
+
         // Condition 1: Streaming is officially finished AND we have non-empty text
         if (!isStreaming && text.length > 0) {
-          if (text.length === lastLength) {
-            stableCount++;
-            if (stableCount >= 2) {
-              console.log(
-                `[Nomad Orchestrator] [${platform}] Settled cleanly: length=${text.length}`,
-              );
-              return { settled: true, text };
-            }
-          } else {
-            stableCount = 0;
-            lastLength = text.length;
+          stableCount = textChanged ? 0 : stableCount + 1;
+          if (stableCount >= 2) {
+            console.log(
+              `[Nomad Orchestrator] [${platform}] Settled cleanly: length=${text.length}`,
+            );
+            return { settled: true, text };
           }
         } else {
           stableCount = 0;
         }
 
         // Condition 2: Adaptive completion if isStreaming is erroneously stuck on true
-        // If text is substantial (> 40 chars) and hasn't changed for 5 polls (~4s)
-        if (text.length > 40 && text.length === lastLength) {
-          streamingStableCount++;
-          if (streamingStableCount >= 5) {
-            console.log(
-              `[Nomad Orchestrator] [${platform}] Settled via adaptive inactivity: length=${text.length}`,
-            );
-            return { settled: true, text };
-          }
-        } else {
-          streamingStableCount = 0;
-          lastLength = text.length;
+        if (text.length > 40 && Date.now() - lastChangeAt >= this.stuckStreamingMs) {
+          console.log(
+            `[Nomad Orchestrator] [${platform}] Settled via adaptive inactivity: length=${text.length}`,
+          );
+          return { settled: true, text };
+        }
+
+        // Condition 3: A relay does not sit out the full limit on a page that never answers
+        if (
+          honorRelayControls &&
+          !isStreaming &&
+          !text &&
+          Date.now() - startTime >= this.silentWaitMs
+        ) {
+          break;
         }
       } catch (e) {
         console.warn(

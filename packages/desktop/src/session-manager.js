@@ -27,6 +27,17 @@ const TYPE_KEYWORDS = [
   { type: '設計', keywords: ['設計', '架構', '選型', '規範', '拓撲', 'blueprint'] },
 ];
 
+const PLACEHOLDER_WORKSPACE_TITLES = ['新協作對話', '協作會話', '未命名工作區'];
+
+/**
+ * Default workspace names say nothing about the task, so they must not stand in for its topic.
+ * @param {string | null | undefined} title
+ * @returns {boolean}
+ */
+function isPlaceholderTitle(title) {
+  return !title || PLACEHOLDER_WORKSPACE_TITLES.includes(title.trim());
+}
+
 /**
  * Generate standardized Taiwan-time date MMDD (e.g. 1003)
  */
@@ -790,5 +801,6 @@ module.exports = {
   getWorkspaceType,
   extractMatchSnippet,
   createSemanticTitle,
+  isPlaceholderTitle,
   SessionManager,
 };

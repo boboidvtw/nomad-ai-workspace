@@ -5,6 +5,7 @@ const {
   inferType,
   extractTopic,
   createSemanticTitle,
+  isPlaceholderTitle,
   SessionManager,
 } = require('../session-manager.js');
 
@@ -352,4 +353,11 @@ test('SessionManager: searchWorkspaces uses VectorMemoryLite BM25 to score seman
   assert.strictEqual(res.success, true);
   assert.strictEqual(res.matchCount, 1);
   assert.ok(res.results[0].score > 30);
+});
+
+test('isPlaceholderTitle: default workspace names are not a topic', () => {
+  for (const title of ['新協作對話', '協作會話', '未命名工作區', '', undefined]) {
+    assert.strictEqual(isPlaceholderTitle(title), true, String(title));
+  }
+  assert.strictEqual(isPlaceholderTitle('1101 | 設計 | 可程式化推理'), false);
 });

@@ -123,16 +123,17 @@ test('Orchestrator: Settles via adaptive inactivity even if isStreaming remains 
     initialWaitMs: 0,
     pollIntervalMs: 5,
     maxWaitMs: 1000,
+    stuckStreamingMs: 20,
     extractResponse: async () => ({ ok: true, text: longText }),
     checkStreaming: async () => ({ ok: true, isStreaming: true }), // Intentionally stuck on streaming
   });
 
   const startTime = Date.now();
-  const text = await orch.waitForSettledResponse('chatgpt', 1000, 5);
+  const { settled, text } = await orch.awaitSettled('chatgpt');
   const elapsed = Date.now() - startTime;
 
+  assert.strictEqual(settled, true);
   assert.strictEqual(text, longText);
-  // Should settle in ~5 polls * 5ms = ~25-50ms, much faster than 1000ms maxWaitMs
   assert.ok(elapsed < 400, 'Should settle via adaptive inactivity before maxWaitMs');
 });
 
@@ -151,7 +152,7 @@ test('Orchestrator: Retains monotonic baseline text if subsequent extract poll g
     checkStreaming: async () => ({ ok: true, isStreaming: false }),
   });
 
-  const text = await orch.waitForSettledResponse('gemini', 50, 5);
+  const { text } = await orch.awaitSettled('gemini');
   assert.strictEqual(text, goodText);
 });
 

@@ -76,7 +76,7 @@ const mcpGateway = new McpGateway({
   }),
 });
 const knowledgeBase = new KnowledgeBase();
-const { SessionManager } = require('./src/session-manager');
+const { SessionManager, isPlaceholderTitle } = require('./src/session-manager');
 const { runSandboxTests } = require('./src/sandbox-gate');
 
 const EXTENSION_PATH = app.isPackaged
@@ -418,9 +418,12 @@ async function createMainWindow() {
   // 4. Initialize Multi-AI Orchestrator Engine
   orchestrator = new MultiAiOrchestrator({
     injectPrompt: async (/** @type {string} */ platform, /** @type {string} */ text) => {
-      return await dispatchPromptToTargets(text, [platform]);
+      const results = await dispatchPromptToTargets(text, [platform]);
+      return results[platform] || { ok: false, error: 'Platform view not found' };
     },
+    // Scripts run against a page that was never loaded wait forever, so a read loads it first.
     extractResponse: async (/** @type {string} */ platform) => {
+      ensurePlatformLoaded(platform);
       const item = views[platform];
       if (!item) return { ok: false, error: 'Platform view not found' };
       const extractorScript = PLATFORM_EXTRACTORS[platform]?.getLatestResponse();
@@ -433,6 +436,7 @@ async function createMainWindow() {
       }
     },
     checkStreaming: async (/** @type {string} */ platform) => {
+      ensurePlatformLoaded(platform);
       const item = views[platform];
       if (!item) return { ok: false, isStreaming: false };
       const statusScript = PLATFORM_EXTRACTORS[platform]?.checkStatus();
@@ -873,7 +877,7 @@ ipcMain.handle('nomad:orchestration-start', async (event, options) => {
   }
   return await orchestrator.start({
     ...options,
-    canonicalTitle: ws?.title,
+    canonicalTitle: isPlaceholderTitle(ws?.title) ? null : ws?.title,
   });
 });
 
