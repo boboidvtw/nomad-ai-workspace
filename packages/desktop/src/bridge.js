@@ -56,6 +56,7 @@ class LocalSyncBridge {
    * @param {Function} [options.onToggleWindow] - Callback for window summon/hide
    * @param {import('./orchestrator').MultiAiOrchestrator | null} [options.orchestrator]
    * @param {string} [options.authToken] - Shared gateway token (defaults to ~/.nomad/daemon-token)
+   * @param {import('@nomad/core').ServiceController} [options.serviceController] - Dashboard service control (tests inject a fake)
    * @param {Function} [options.onInspectPlatform] - Debug hook: inspect a platform webview
    * @param {Function} [options.onEvalScript] - Debug hook: run a script in a platform webview
    * @param {boolean} [options.debugEndpoints=false] - Serve /api/debug/* (they run scripts inside logged-in AI sessions); 404 otherwise

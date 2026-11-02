@@ -62,6 +62,7 @@ class NomadDaemonServer {
    * @param {number} [options.port] - Defaults to $NOMAD_PORT or 8765
    * @param {string} [options.host] - Defaults to $NOMAD_HOST or 127.0.0.1
    * @param {string} [options.authToken] - Shared gateway token (defaults to ~/.nomad/daemon-token)
+   * @param {import('@nomad/core').ServiceController} [options.serviceController] - Dashboard service control (tests inject a fake)
    * @param {() => any} [options.getStatus] - Studio status fallback when no Studio is registered
    * @param {Function} [options.onDispatchPrompt]
    * @param {Function} [options.onSetLayout]
