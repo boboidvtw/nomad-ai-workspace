@@ -88,18 +88,19 @@ test('a failed run does not block the next one on the same platform', async () =
 const { BotRoster } = require('@nomad/core');
 
 /**
- * @param {{ currentUrls?: string[], settle?: { settled: boolean, text: string } }} [opts]
+ * @param {{ currentUrls?: string[], settle?: { settled: boolean, text: string }, injectResults?: { ok: boolean, error?: string }[] }} [opts]
  */
 function botHarness(opts = {}) {
   const roster = new BotRoster();
   /** @type {any[]} */
   const calls = [];
   const urls = [...(opts.currentUrls || ['https://claude.ai/chat/new-1'])];
+  const injectResults = [...(opts.injectResults || [])];
   const runner = createWebviewTaskRunner({
     roster,
     inject: async (platform, text) => {
       calls.push({ op: 'inject', text });
-      return { [platform]: { ok: true } };
+      return { [platform]: injectResults.shift() || { ok: true } };
     },
     awaitSettled: async () => opts.settle || { settled: true, text: 'reply' },
     openChat: async (platform, url) => {
@@ -161,6 +162,40 @@ test('M2: a deleted conversation is rebound to a fresh chat and logged', async (
   );
   assert.strictEqual(h.bot().canonicalChat.url, 'https://claude.ai/chat/fresh');
   assert.ok(h.bot().timeline.some((e) => e.type === 'chat-rebound'));
+});
+
+test('M2: a conversation that opens without an input box is rebound to a fresh chat', async () => {
+  // Grok keeps the URL of a conversation the account cannot see ("你需要存取權限"), so the
+  // open looks fine and only the missing composer gives it away.
+  const h = botHarness({
+    currentUrls: ['https://claude.ai/chat/private', 'https://claude.ai/chat/fresh'],
+    injectResults: [{ ok: false, error: 'Claude input not found' }],
+  });
+  h.roster.updateBot('agent-claude', { persona: 'Persona' });
+  h.roster.bindCanonicalChat('agent-claude', {
+    platform: 'claude',
+    url: 'https://claude.ai/chat/private',
+  });
+
+  const res = await h.run('Task');
+
+  assert.strictEqual(res.success, true);
+  assert.deepStrictEqual(
+    h.calls.filter((c) => c.op === 'open').map((c) => c.url),
+    ['https://claude.ai/chat/private', null],
+  );
+  assert.match(h.calls.filter((c) => c.op === 'inject')[1].text, /^Persona[\s\S]*Task$/);
+  assert.strictEqual(h.bot().canonicalChat.url, 'https://claude.ai/chat/fresh');
+  assert.ok(h.bot().timeline.some((e) => e.type === 'chat-rebound'));
+});
+
+test('M2: a fresh chat without an input box fails instead of retrying', async () => {
+  const h = botHarness({ injectResults: [{ ok: false, error: 'Claude input not found' }] });
+
+  const res = await h.run();
+
+  assert.strictEqual(res.success, false);
+  assert.strictEqual(h.calls.filter((c) => c.op === 'open').length, 1);
 });
 
 test('M2: never binds a home page as the canonical chat', async () => {

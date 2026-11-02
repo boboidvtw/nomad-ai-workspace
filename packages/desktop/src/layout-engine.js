@@ -150,7 +150,42 @@ function calculateLayoutBounds({
   return bounds;
 }
 
+/**
+ * Decides which platform views show, and which must be raised over the views kept rendering. A
+ * hidden page gets no animation frames, and Grok and Gemini draw their replies in them, so a
+ * platform whose reply is awaited (the relay speaker, a bot's target) stays visible behind the
+ * views the user is looking at.
+ * @param {object} params
+ * @param {Record<string, { visible: boolean } | undefined>} params.boundsMap
+ * @param {string[]} params.keys - every platform view, in creation order
+ * @param {string[]} params.keepRendering - platforms whose reply is awaited
+ * @param {boolean} params.dashboardOpen
+ * @returns {{ views: Record<string, { visible: boolean, load: boolean }>, raise: string[], stackKey: string | null }}
+ *   stackKey is null when nothing needs restacking, and otherwise changes only when the stacking does.
+ */
+function planViewStacking({ boundsMap, keys, keepRendering, dashboardOpen }) {
+  /** @type {Record<string, { visible: boolean, load: boolean }>} */
+  const views = {};
+  /** @type {string[]} */
+  const behind = [];
+  for (const key of keys) {
+    const b = boundsMap[key];
+    const visible = Boolean(b?.visible) && !dashboardOpen;
+    if (b && !visible && keepRendering.includes(key)) {
+      views[key] = { visible: true, load: true };
+      behind.push(key);
+      continue;
+    }
+    views[key] = { visible, load: visible };
+  }
+  if (behind.length === 0) return { views, raise: [], stackKey: null };
+  const raise = keys.filter((key) => !behind.includes(key) && views[key].visible);
+  const stackKey = `${behind.join(',')}<${raise.join(',')}${dashboardOpen ? '<dashboard' : ''}`;
+  return { views, raise, stackKey };
+}
+
 module.exports = {
   ALL_PLATFORMS,
   calculateLayoutBounds,
+  planViewStacking,
 };

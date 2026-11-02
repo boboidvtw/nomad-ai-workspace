@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { calculateLayoutBounds, ALL_PLATFORMS } = require('../layout-engine.js');
+const { calculateLayoutBounds, planViewStacking, ALL_PLATFORMS } = require('../layout-engine.js');
 
 test('Layout Engine: Focus mode gives 100% width and height to selected platform', () => {
   const bounds = calculateLayoutBounds({
@@ -226,4 +226,99 @@ test('Layout Engine: Evolver IDE mode hides all WebContentsViews while retaining
     assert.strictEqual(bounds[p].width, 1440);
     assert.strictEqual(bounds[p].height, 780);
   }
+});
+
+const KEYS = ['chatgpt', 'claude', 'gemini', 'grok'];
+const SHOWN = { visible: true };
+const HIDDEN = { visible: false };
+
+test('planViewStacking: without a relay speaker views follow the layout and nothing restacks', () => {
+  const plan = planViewStacking({
+    boundsMap: { chatgpt: SHOWN, claude: SHOWN, gemini: HIDDEN },
+    keys: KEYS,
+    keepRendering: [],
+    dashboardOpen: false,
+  });
+  assert.deepStrictEqual(plan.views, {
+    chatgpt: { visible: true, load: true },
+    claude: { visible: true, load: true },
+    gemini: { visible: false, load: false },
+    grok: { visible: false, load: false },
+  });
+  assert.deepStrictEqual(plan.raise, []);
+  assert.strictEqual(plan.stackKey, null);
+});
+
+test('planViewStacking: a hidden relay speaker shows behind the views the user sees', () => {
+  const plan = planViewStacking({
+    boundsMap: { chatgpt: SHOWN, claude: SHOWN, gemini: HIDDEN, grok: HIDDEN },
+    keys: KEYS,
+    keepRendering: ['grok'],
+    dashboardOpen: false,
+  });
+  assert.deepStrictEqual(plan.views.grok, { visible: true, load: true });
+  assert.deepStrictEqual(plan.views.gemini, { visible: false, load: false });
+  assert.deepStrictEqual(plan.raise, ['chatgpt', 'claude']);
+  assert.strictEqual(plan.stackKey, 'grok<chatgpt,claude');
+});
+
+test('planViewStacking: a relay speaker the user already sees needs no restacking', () => {
+  const plan = planViewStacking({
+    boundsMap: { chatgpt: SHOWN, grok: SHOWN },
+    keys: KEYS,
+    keepRendering: ['grok'],
+    dashboardOpen: false,
+  });
+  assert.deepStrictEqual(plan.views.grok, { visible: true, load: true });
+  assert.strictEqual(plan.stackKey, null);
+});
+
+test('planViewStacking: with the dashboard open only the relay speaker keeps rendering', () => {
+  const plan = planViewStacking({
+    boundsMap: { chatgpt: SHOWN, grok: SHOWN },
+    keys: KEYS,
+    keepRendering: ['grok'],
+    dashboardOpen: true,
+  });
+  assert.deepStrictEqual(plan.views.chatgpt, { visible: false, load: false });
+  assert.deepStrictEqual(plan.views.grok, { visible: true, load: true });
+  assert.deepStrictEqual(plan.raise, []);
+  assert.strictEqual(plan.stackKey, 'grok<<dashboard');
+});
+
+test('planViewStacking: stackKey is stable across resizes and changes with the shown views', () => {
+  const args = { keys: KEYS, keepRendering: ['gemini'], dashboardOpen: false };
+  const a = planViewStacking({ ...args, boundsMap: { chatgpt: SHOWN, gemini: HIDDEN } });
+  const b = planViewStacking({ ...args, boundsMap: { chatgpt: SHOWN, gemini: HIDDEN } });
+  const c = planViewStacking({
+    ...args,
+    boundsMap: { chatgpt: SHOWN, claude: SHOWN, gemini: HIDDEN },
+  });
+  assert.strictEqual(a.stackKey, b.stackKey);
+  assert.notStrictEqual(a.stackKey, c.stackKey);
+});
+
+test('planViewStacking: a speaker with no layout bounds stays hidden', () => {
+  const plan = planViewStacking({
+    boundsMap: { chatgpt: SHOWN },
+    keys: KEYS,
+    keepRendering: ['grok'],
+    dashboardOpen: false,
+  });
+  assert.deepStrictEqual(plan.views.grok, { visible: false, load: false });
+  assert.strictEqual(plan.stackKey, null);
+});
+
+test('planViewStacking: a relay speaker and a bot target both keep rendering behind', () => {
+  const plan = planViewStacking({
+    boundsMap: { chatgpt: SHOWN, claude: HIDDEN, gemini: HIDDEN, grok: HIDDEN },
+    keys: KEYS,
+    keepRendering: ['grok', 'gemini'],
+    dashboardOpen: false,
+  });
+  assert.deepStrictEqual(plan.views.gemini, { visible: true, load: true });
+  assert.deepStrictEqual(plan.views.grok, { visible: true, load: true });
+  assert.deepStrictEqual(plan.views.claude, { visible: false, load: false });
+  assert.deepStrictEqual(plan.raise, ['chatgpt']);
+  assert.strictEqual(plan.stackKey, 'gemini,grok<chatgpt');
 });
