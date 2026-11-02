@@ -18,6 +18,7 @@ async function runRelay(replies, options = {}, startOptions = {}) {
   const events = [];
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 2,
     maxWaitMs: 200,
     silentWaitMs: 20,
@@ -59,6 +60,7 @@ test('a thinking pause longer than a few polls does not end the turn', async () 
   let polls = 0;
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 2,
     maxWaitMs: 500,
     stuckStreamingMs: 400,
@@ -115,6 +117,7 @@ test('an injector failure skips the turn at once instead of waiting for a reply'
   const events = [];
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 2,
     maxWaitMs: 60000,
     silentWaitMs: 60000,
@@ -198,6 +201,7 @@ test('a reply cut off by the time limit is handed on marked as incomplete', asyn
 test('task runs keep waiting through silence: silentWaitMs is for relays only', async () => {
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 2,
     maxWaitMs: 60,
     silentWaitMs: 5,
@@ -217,6 +221,7 @@ test('the old reply is not taken as the answer while the new one has not started
   let polls = 0;
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 2,
     maxWaitMs: 1000,
     stuckStreamingMs: 10,
@@ -233,6 +238,7 @@ test('a time-out never hands on the old reply as a partial answer', async () => 
   const oldReply = '上一輪的舊回覆'.repeat(10);
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 2,
     maxWaitMs: 30,
     extractResponse: async () => ({ ok: true, text: oldReply }),
@@ -297,6 +303,7 @@ test('a page that says it is working is never settled as stuck', async () => {
   let polls = 0;
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 2,
     maxWaitMs: 1000,
     stuckStreamingMs: 10,

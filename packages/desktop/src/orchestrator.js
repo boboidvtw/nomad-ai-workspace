@@ -29,8 +29,9 @@ const INCOMPLETE_REPLY_NOTE = '[注意：這份回覆等待逾時，內容可能
  * more replies than before, the last of which is not the one marked before the send, do: the
  * old text can come back after a blink of the page (an empty read, a stop button that flickers)
  * when the platform dropped the prompt, and older replies can load in above it. A page holding
- * fewer replies than before reloaded under us; it waits, so the worst case is a visible timeout,
- * never an old reply passed on as new. Without a comparable count, activity or other text does.
+ * fewer replies than before, or counted by another selector, changed under us; it waits, so the
+ * worst case is a visible timeout, never an old reply passed on as new. A snapshot without a
+ * count (no reply on the page yet) falls back to text: any activity or other text moves past it.
  * @param {ReplySnapshot} previous
  * @param {{ ok?: boolean, count?: number, countOf?: string, isBaseline?: boolean } | undefined} res
  * @param {string} pageText
@@ -39,8 +40,10 @@ const INCOMPLETE_REPLY_NOTE = '[注意：這份回覆等待逾時，內容可能
  */
 function movedPastPrevious(previous, res, pageText, isStreaming) {
   if (previous.count !== null) {
-    if (typeof res?.count !== 'number') return false;
-    if (res.countOf === previous.countOf) return res.count > previous.count && !res.isBaseline;
+    // Another selector than the snapshot's means the page changed under us (the snapshot caught
+    // a page still loading); its count cannot be compared, and its text could be the old reply.
+    if (typeof res?.count !== 'number' || res.countOf !== previous.countOf) return false;
+    return res.count > previous.count && !res.isBaseline;
   }
   return isStreaming || (res?.ok !== false && pageText !== previous.text);
 }
@@ -101,6 +104,8 @@ class MultiAiOrchestrator {
    * @param {number} [options.pageCallTimeoutMs=60000] - Max time for one call into a page, which never returns if the page navigates away mid-script
    * @param {number} [options.composerWaitMs=20000] - How long a just-loaded page may take to mount its input box
    * @param {number} [options.composerRetryMs=1500] - Delay between looks for that input box
+   * @param {number} [options.snapshotSettleMs=1000] - Gap between the pre-send reads that must agree
+   * @param {number} [options.snapshotSettleTries=8] - Most pre-send reads before taking the last one
    * @param {(platform: string) => Promise<{ blocked: boolean, reason?: string }>} [options.checkBlocked] - Task runs only: stops waiting when the page needs a human
    * @param {(platform: string | null) => void} [options.onSpeakerChange] - The platform taking its turn, or null when the relay ends
    * @param {Function} [options.onStep] - (event) => void
@@ -119,6 +124,8 @@ class MultiAiOrchestrator {
     this.pageCallTimeoutMs = options.pageCallTimeoutMs ?? 60000;
     this.composerWaitMs = options.composerWaitMs ?? 20000;
     this.composerRetryMs = options.composerRetryMs ?? 1500;
+    this.snapshotSettleMs = options.snapshotSettleMs ?? 1000;
+    this.snapshotSettleTries = options.snapshotSettleTries ?? 8;
     this.checkBlocked = options.checkBlocked || null;
     this.onSpeakerChange = options.onSpeakerChange || (() => {});
     this.onStep = options.onStep || (() => {});
@@ -487,12 +494,33 @@ class MultiAiOrchestrator {
   }
 
   /**
-   * The latest reply and the page's reply count. Taken before a send so the wait that follows
-   * can tell the new reply from the one already there.
+   * The latest reply and the page's reply count, marked on the page. Taken before a send so the
+   * wait that follows can tell the new reply from the one already there. A page that just loaded
+   * can still be rendering its replies (Perplexity draws them oldest first), and a read taken then
+   * is not the last reply, so reads repeat until two in a row agree.
    * @param {string} platform
    * @returns {Promise<ReplySnapshot>}
    */
   async readReplySnapshot(platform) {
+    let snapshot = await this.readMarkedReply(platform);
+    for (let reads = 1; reads < this.snapshotSettleTries; reads++) {
+      await this.sleep(this.snapshotSettleMs);
+      const next = await this.readMarkedReply(platform);
+      const same =
+        next.text === snapshot.text &&
+        next.count === snapshot.count &&
+        next.countOf === snapshot.countOf;
+      snapshot = next;
+      if (same) break;
+    }
+    return snapshot;
+  }
+
+  /**
+   * @param {string} platform
+   * @returns {Promise<ReplySnapshot>}
+   */
+  async readMarkedReply(platform) {
     try {
       const res = await this.withPageTimeout(
         this.extractResponse(platform, { markBaseline: true }),
@@ -556,7 +584,9 @@ class MultiAiOrchestrator {
     let pollCount = 0;
     // Until the page shows activity (streaming, or text other than the pre-send reply), what
     // it holds is the old reply: a send that never happened must not hand that back as new.
-    let sawNewReply = !previousText;
+    // A snapshot with a count saw a reply element even when it had no text yet (a page still
+    // loading), so only the count can move past it.
+    let sawNewReply = !previousText && previous.count === null;
 
     if (this.initialWaitMs > 0) {
       await this.sleep(this.initialWaitMs);

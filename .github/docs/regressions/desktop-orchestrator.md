@@ -205,9 +205,11 @@
   matched) and `isBaseline`. The pre-send read marks its reply element
   (`data-nomad-baseline`); a new reply needs a higher count under the same selector and a last
   reply that is not the marked one, because Perplexity renders older answers late and raises
-  the count without a new reply (seen live: 1 → 3). Fewer replies (a reloaded page) keep
-  waiting, so the worst case is a visible timeout. Without a comparable count the text rule
-  still applies.
+  the count without a new reply (seen live: 1 → 3). The snapshot repeats its read until two in
+  a row agree, since a page that just loaded draws its replies oldest first. Fewer replies, or a
+  count through another selector (grok.com caught mid-load matched only an empty `.prose`), keep
+  waiting, so the worst case is a visible timeout. Only a snapshot with no count falls back to
+  the text rule.
 - **Guard:** `packages/desktop/src/__tests__/orchestrator-reply-count.test.js`,
   `packages/desktop/src/__tests__/extractors.test.js`
 
