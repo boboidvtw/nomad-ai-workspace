@@ -110,8 +110,12 @@ describe('background runtime message routing', () => {
       )?.[0] ?? '';
     const uploadBranch =
       source.match(/case 'gv\.sync\.upload': \{[\s\S]*?case 'gv\.sync\.download': \{/)?.[0] ?? '';
+    const imageSource = readFileSync(
+      resolve(process.cwd(), 'src/pages/background/runtimeImageMessages.ts'),
+      'utf8',
+    );
     const imageHandler =
-      source.match(/async function handleRuntimeImageMessage\([\s\S]*?\n\}/)?.[0] ?? '';
+      imageSource.match(/async function handleRuntimeImageMessage\([\s\S]*?\n\}/)?.[0] ?? '';
 
     expect(captureBranch).toContain('chrome.tabs.query({ active: true, windowId })');
     expect(captureBranch).toContain('sender_not_active');
