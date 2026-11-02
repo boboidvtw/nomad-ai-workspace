@@ -31,10 +31,12 @@ app.on('child-process-gone', (_event, details) => {
 mainLog.write('info', [
   `[Nomad Desktop] v${app.getVersion()} starting (packaged=${app.isPackaged})`,
 ]);
-const { calculateLayoutBounds, ALL_PLATFORMS } = require('./src/layout-engine');
+const { calculateLayoutBounds, planViewStacking, ALL_PLATFORMS } = require('./src/layout-engine');
 const { PLATFORM_INJECTORS, toDeliveryResult } = require('./src/injectors');
 const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
+const { createRelayHistory } = require('./src/relay-history');
+const { createRenderHolds } = require('./src/render-holds');
 const { LocalSyncBridge } = require('./src/bridge');
 const { createStudioBots } = require('./src/studio-bots');
 const { windowBackgroundFor, firstPaintQuery } = require('./src/window-theme');
@@ -109,6 +111,10 @@ let sessionManager = null;
 let isDrawerOpen = false;
 /** @type {string | null} */
 let relaySpeaker = null;
+/** @type {string | null} */
+let lastStackKey = null;
+// Bots and webview tasks waiting on a reply keep that platform rendering, like the relay speaker.
+const renderHolds = createRenderHolds(() => updateViewBounds());
 /** @type {WebContentsView | null} */
 let dashboardView = null;
 let isDashboardOpen = false;
@@ -208,33 +214,28 @@ function updateViewBounds() {
     drawerWidth: isDrawerOpen ? DRAWER_WIDTH : 0,
   });
 
-  let behindUserViews = false;
+  const plan = planViewStacking({
+    boundsMap,
+    keys: Object.keys(views),
+    keepRendering: relaySpeaker ? [relaySpeaker, ...renderHolds.list()] : renderHolds.list(),
+    dashboardOpen: isDashboardOpen,
+  });
   for (const [key, item] of Object.entries(views)) {
     const b = boundsMap[key];
-    if (!b) {
-      item.view.setVisible(false);
-      continue;
-    }
-    const visible = b.visible && !isDashboardOpen;
-    if (visible) ensurePlatformLoaded(key);
+    const { visible, load } = plan.views[key];
+    if (load) ensurePlatformLoaded(key);
     // Hidden views are sized too, so a page a bot drives in the background still lays out.
-    item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
-    if (key === relaySpeaker && !visible) {
-      ensurePlatformLoaded(key);
-      item.view.setVisible(true);
-      behindUserViews = true;
-      continue;
-    }
+    if (b) item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
     item.view.setVisible(visible);
   }
 
   // addChildView moves a view to the top, which puts the user's views over the relay speaker.
-  if (behindUserViews) {
-    for (const [key, item] of Object.entries(views)) {
-      if (boundsMap[key]?.visible) mainWindow.contentView.addChildView(item.view);
-    }
+  // Restack only when the stacking changes, so resizing during a relay does not reorder views.
+  if (plan.stackKey && plan.stackKey !== lastStackKey) {
+    for (const key of plan.raise) mainWindow.contentView.addChildView(views[key].view);
     if (dashboardView) mainWindow.contentView.addChildView(dashboardView);
   }
+  lastStackKey = plan.stackKey;
 
   if (dashboardView) {
     dashboardView.setBounds(
@@ -444,6 +445,12 @@ async function createMainWindow() {
   });
 
   // 4. Initialize Multi-AI Orchestrator Engine
+  const relayHistory = createRelayHistory({
+    getSessionManager: () => sessionManager,
+    getOrchestratorHistory: () => orchestrator?.history,
+    rename: (platform, title) =>
+      sessionManager ? sessionManager.applyInPageRenaming(platform, title) : Promise.resolve(),
+  });
   orchestrator = new MultiAiOrchestrator({
     injectPrompt: async (/** @type {string} */ platform, /** @type {string} */ text) => {
       const results = await dispatchPromptToTargets(text, [platform]);
@@ -495,24 +502,7 @@ async function createMainWindow() {
     },
     onStep: async (/** @type {Record<string, any>} */ event) => {
       if (event.type === 'turn-complete' && event.speaker && event.canonicalTitle) {
-        try {
-          await sessionManager?.applyInPageRenaming(event.speaker, event.canonicalTitle);
-        } catch (e) {
-          console.warn(
-            '[Nomad Desktop] Action failed:',
-            e instanceof Error ? e.message : String(e),
-          );
-        }
-        const activeWs = sessionManager?.getActiveWorkspace();
-        if (sessionManager && activeWs) {
-          sessionManager.captureActiveUrls(activeWs.id);
-          sessionManager.addTurn(activeWs.id, {
-            speaker: event.speaker,
-            round: event.round,
-            content: event.content || event.responseSnippet,
-            timestamp: new Date().toISOString(),
-          });
-        }
+        await relayHistory.onTurnComplete(event);
       }
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('nomad:orchestration-step', event);
@@ -520,22 +510,8 @@ async function createMainWindow() {
       bridge?.broadcast('orchestration-step', event);
     },
     onComplete: async (/** @type {Record<string, any>} */ summary) => {
-      const activeWs = sessionManager?.getActiveWorkspace();
-      if (sessionManager && activeWs) {
-        sessionManager.captureActiveUrls(activeWs.id);
-        sessionManager.updateWorkspace(activeWs.id, {
-          completed: true,
-          history:
-            orchestrator && orchestrator.history && orchestrator.history.length > 0
-              ? orchestrator.history
-              : activeWs.history || [],
-        });
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send(
-            'nomad:workspaces-updated',
-            sessionManager.getAllWorkspaces(),
-          );
-        }
+      if (relayHistory.onComplete() && sessionManager && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('nomad:workspaces-updated', sessionManager.getAllWorkspaces());
       }
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('nomad:orchestration-step', { type: 'completed', summary });
@@ -550,10 +526,12 @@ async function createMainWindow() {
     inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
     readReply: (platform) =>
       orchestrator ? orchestrator.readReply(platform) : Promise.resolve(''),
-    awaitSettled: (platform, options) =>
-      orchestrator
-        ? orchestrator.awaitSettled(platform, options)
-        : Promise.resolve({ settled: false, text: '' }),
+    awaitSettled: (platform, options) => {
+      const orch = orchestrator;
+      return orch
+        ? renderHolds.during(platform, () => orch.awaitSettled(platform, options))
+        : Promise.resolve({ settled: false, text: '' });
+    },
     openChat: openPlatformChat,
     currentUrl: async (platform) => views[platform]?.view.webContents.getURL() || null,
     notify: notifyBotBlocked,
