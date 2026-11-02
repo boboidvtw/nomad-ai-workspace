@@ -20,6 +20,7 @@ export type TailRule = {
     id: string;
     type: "tail";
     pattern: string;
+    after?: string;
     reason: string;
 };
 export type BlockedRule = UrlRule | TextRule | SelectorRule | TailRule;
@@ -37,7 +38,8 @@ export type StateSnapshot = {
      */
     selectorHits: string[];
     /**
-     * - end of the page text; collected only for platforms with tail rules
+     * - page text after the last prompt (or the end of the page); collected
+     * only for platforms with tail rules
      */
     tail?: string | undefined;
 };
@@ -59,14 +61,16 @@ export const BLOCKED_MANIFESTS: Readonly<Record<string, BlockedManifest>>;
  * Text rules only look at alert, dialog, banner and status regions, never at message bodies,
  * so an AI reply that merely mentions "rate limit" does not count as blocked. Tail rules are for
  * notices a platform draws inside the conversation instead (Grok's capacity notice): they read
- * only the last few hundred characters of the page, where that notice replaces the reply, and
- * their patterns quote the notice itself rather than words a reply could use.
+ * only what follows the last prompt (`after`), where that notice replaces the reply, so a notice
+ * that a later prompt got past no longer counts. Without `after`, or before any prompt, they read
+ * the last few hundred characters of the page. Their patterns quote the notice itself rather
+ * than words a reply could use.
  */
 /**
  * @typedef {{ id: string, type: 'url', pattern: string, reason: string }} UrlRule
  * @typedef {{ id: string, type: 'text', pattern: string, reason: string }} TextRule
  * @typedef {{ id: string, type: 'selector', selector: string, reason: string }} SelectorRule
- * @typedef {{ id: string, type: 'tail', pattern: string, reason: string }} TailRule
+ * @typedef {{ id: string, type: 'tail', pattern: string, after?: string, reason: string }} TailRule
  * @typedef {UrlRule | TextRule | SelectorRule | TailRule} BlockedRule
  * @typedef {{ rules: BlockedRule[] }} BlockedManifest
  *
@@ -74,7 +78,8 @@ export const BLOCKED_MANIFESTS: Readonly<Record<string, BlockedManifest>>;
  * @property {string} url
  * @property {string[]} notices - text of alert/dialog/banner/status regions
  * @property {string[]} selectorHits - ids of selector rules that matched
- * @property {string} [tail] - end of the page text; collected only for platforms with tail rules
+ * @property {string} [tail] - page text after the last prompt (or the end of the page); collected
+ *   only for platforms with tail rules
  *
  * @typedef {{ blocked: false } | { blocked: true, ruleId: string, reason: string }} BlockedVerdict
  */

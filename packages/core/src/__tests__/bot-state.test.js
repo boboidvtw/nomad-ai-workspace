@@ -74,6 +74,17 @@ describe('Bots - blocked-state manifests', () => {
     assert.strictEqual(res.ruleId, 'high-demand');
   });
 
+  it('flags the second Grok capacity wording, drawn inside a reply row', () => {
+    // Seen on grok.com later on 2026-11-02, after the prompt it refused.
+    const res = detectBlocked('grok', {
+      url: 'https://grok.com/c/abc',
+      notices: [],
+      selectorHits: [],
+      tail: '\n\nGrok\n需求量高\n\n請稍後再試，或升級以取得更高的優先使用權\n\n升級\n\n快速\n上傳文件',
+    });
+    assert.strictEqual(res.ruleId, 'high-demand');
+  });
+
   it('does not flag a capacity notice that a later reply has pushed out of the tail', () => {
     const res = detectBlocked('grok', {
       url: 'https://grok.com/c/abc',
@@ -105,6 +116,33 @@ describe('Bots - blocked-state manifests', () => {
     assert.ok(grok.tail.length < 1000, 'only the end of the page is read');
     assert.strictEqual(detectBlocked('grok', grok).ruleId, 'high-demand');
     assert.strictEqual(claude.tail, undefined);
+  });
+
+  it('reads the tail after the last prompt, so an answered capacity notice does not linger', () => {
+    const { JSDOM } = require('jsdom');
+    const user = (/** @type {string} */ t) => `<div data-testid="user-message">${t}</div>`;
+    const reply = (/** @type {string} */ t) => `<div data-testid="assistant-message">${t}</div>`;
+    const notice =
+      '<div>需求量高</div><div>Grok 目前使用人數較多，請稍後再試，或升級你的方案以獲得優先使用權</div>';
+    const snap = (/** @type {string} */ transcript) => {
+      const dom = new JSDOM(
+        `<!doctype html><body><main>${transcript}</main><form>快速</form></body>`,
+        {
+          url: 'https://grok.com/c/1',
+          runScripts: 'outside-only',
+        },
+      );
+      return JSON.parse(JSON.stringify(dom.window.eval(buildStateSnapshotScript('grok'))));
+    };
+
+    // Seen live: the refused prompt, then a later prompt that Grok answered with a short reply.
+    const answered = snap(
+      `${user('第 2 次')}${notice}${user('請只回覆：COMPOSER-1102')}${reply('COMPOSER-1102')}`,
+    );
+    assert.deepStrictEqual(detectBlocked('grok', answered), { blocked: false });
+
+    const refused = snap(`${user('第 1 次')}${reply('SAME-1102')}${user('第 2 次')}${notice}`);
+    assert.strictEqual(detectBlocked('grok', refused).ruleId, 'high-demand');
   });
 
   it('builds a snapshot script that runs in a page-like context', () => {
