@@ -185,3 +185,12 @@
 - **Guard:** `packages/desktop/src/__tests__/view-stacking.test.js`,
   `npx electron packages/desktop/scripts/measure-relay-stacking.js` (exits 1 when a held view
   sits above a shown one or a resize reorders views)
+
+## Formulas in a reply were read twice and garbled, and broke the next relay turn
+
+- **Trap:** KaTeX draws each formula twice, as MathML for screen readers and as HTML, so
+  `innerText` of a Gemini reply read "𝑅𝑆𝑉=𝐶𝑡−𝐿𝑛…RSV=Hn−Ln…". Perplexity's editor dropped part
+  of those symbols, the 1% length check failed, and the relay turn was lost.
+- **Rule:** Every extractor reads through `readText`, which replaces each formula with its TeX
+  source (`data-math`, else the KaTeX `annotation`) as `$…$` or `$$…$$` on an off-screen copy.
+- **Guard:** `packages/desktop/src/__tests__/extractors.test.js`
