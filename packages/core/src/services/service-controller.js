@@ -58,7 +58,8 @@ class ServiceController {
   async isRunning(service) {
     if (!service.check) return false;
     if (service.check.type === 'port') return this.runner.probePort(service.check.port);
-    return (await this.runner.findPids(service.check.pattern)).length > 0;
+    // The Studio's own card checks the Studio, so this process counts.
+    return (await this.runner.findPids(service.check.pattern, { includeSelf: true })).length > 0;
   }
 
   /** @param {ServiceDefinition} service */

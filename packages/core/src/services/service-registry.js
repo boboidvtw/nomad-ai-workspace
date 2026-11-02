@@ -8,6 +8,9 @@ const path = require('node:path');
 
 const TERMINAL_STOP_HINT = '互動工具沒有背景服務。請在終端機結束；這裡不關閉，以免中斷其他工作階段';
 const HERMES_GATEWAY_WARNING = '啟動後 Hermes 會連上 Telegram 並開始回覆訊息。確定要啟動嗎？';
+// hermes runs its CLI through `python3 -I -c <launcher> gateway run`, so the command line ends
+// with the arguments but no longer holds "hermes gateway run"; older installs still do.
+const HERMES_GATEWAY_PATTERN = '(hermes|hermes_cli\\.main.*) gateway run$';
 const STUDIO_STOP_WARNING = '這會關閉 Nomad AI Studio，Dashboard 也會一起關閉。確定嗎？';
 
 const DOCKER_TIMEOUT_MS = 180000;
@@ -139,11 +142,11 @@ function buildServiceRegistry(home) {
     {
       id: 'hermes-gateway',
       label: 'Hermes Telegram 閘道',
-      check: { type: 'process', pattern: 'hermes gateway run' },
+      check: { type: 'process', pattern: HERMES_GATEWAY_PATTERN },
       timeoutMs: 60000,
       confirmStart: HERMES_GATEWAY_WARNING,
       start: { kind: 'daemon', bin: 'hermes', args: ['gateway', 'run'] },
-      stop: { kind: 'process', pattern: 'hermes gateway run', marker: 'gateway run' },
+      stop: { kind: 'process', pattern: HERMES_GATEWAY_PATTERN, marker: 'gateway run' },
     },
     composeService(
       'maih',

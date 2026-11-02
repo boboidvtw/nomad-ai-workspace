@@ -444,3 +444,55 @@ test('Injectors: Grok never types into the extension prompt manager', async () =
     ['', ''],
   );
 });
+
+test('dispatchUntilComposerReady: retries only the pages whose input box was not there yet', async () => {
+  const { dispatchUntilComposerReady } = require('../injectors.js');
+  /** @type {string[][]} */
+  const calls = [];
+  let grokTries = 0;
+  const dispatch = async (/** @type {string[]} */ targets) => {
+    calls.push(targets);
+    /** @type {Record<string, unknown>} */
+    const out = {};
+    for (const t of targets) {
+      if (t === 'grok' && ++grokTries < 3)
+        out[t] = { ok: false, error: 'Grok input element not found' };
+      else out[t] = { ok: true };
+    }
+    return out;
+  };
+
+  const results = await dispatchUntilComposerReady(dispatch, ['grok', 'gemini'], {
+    waitMs: 10_000,
+    sleep: async () => {},
+  });
+
+  assert.deepStrictEqual(results, { grok: { ok: true }, gemini: { ok: true } });
+  assert.deepStrictEqual(calls, [['grok', 'gemini'], ['grok'], ['grok']]);
+});
+
+test('dispatchUntilComposerReady: gives up after the wait and never retries other failures', async () => {
+  const { dispatchUntilComposerReady } = require('../injectors.js');
+  let clock = 0;
+  let calls = 0;
+  const dispatch = async () => {
+    calls += 1;
+    return {
+      grok: { ok: false, error: 'Grok input element not found' },
+      claude: { ok: false, error: 'Claude did not send the prompt (it is still in the input box)' },
+    };
+  };
+
+  const results = await dispatchUntilComposerReady(dispatch, ['grok', 'claude'], {
+    waitMs: 3000,
+    pollMs: 1000,
+    now: () => clock,
+    sleep: async (/** @type {number} */ ms) => {
+      clock += ms;
+    },
+  });
+
+  assert.strictEqual(calls, 4);
+  assert.match(String(/** @type {any} */ (results.grok).error), /not found/);
+  assert.match(String(/** @type {any} */ (results.claude).error), /did not send/);
+});

@@ -6,8 +6,16 @@ export function createServiceRunner(home?: string): {
     which(bin: string): string | null;
     /** @param {number} port */
     probePort: (port: number) => Promise<boolean>;
-    /** @param {string} pattern */
-    findPids: (pattern: string) => Promise<number[]>;
+    /**
+     * Leaves this process out unless asked, so a stop can never kill the Studio itself. Asking
+     * for it also lifts macOS pgrep's default of leaving out the caller's ancestors (-a), which
+     * is safe only for status checks: an ancestor shell can carry the pattern in its command.
+     * Linux pgrep never leaves them out, and its -a means something else.
+     * @param {string} pattern @param {{ includeSelf?: boolean }} [options]
+     */
+    findPids: (pattern: string, options?: {
+        includeSelf?: boolean;
+    }) => Promise<number[]>;
     /** @param {number} port */
     pidsOnPort: (port: number) => Promise<number[]>;
     /** @param {number} pid */

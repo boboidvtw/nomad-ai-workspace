@@ -154,3 +154,34 @@
   new chat and the task is retried once.
 - **Guard:** `packages/desktop/src/__tests__/injectors.test.js`,
   `packages/desktop/src/__tests__/webview-task-runner.test.js`
+
+## The Studio's own Dashboard card always read "stopped"
+
+- **Trap:** The card checks the Studio with `pgrep -f`, run from inside the Studio. macOS pgrep
+  leaves out the caller's ancestors by default, and `parsePids` also drops `process.pid` so a
+  stop can never kill the Studio. The card showed 未啟動 with the stop button disabled.
+- **Rule:** Status checks call `findPids(pattern, { includeSelf: true })`, which adds `-a` on
+  macOS and keeps the Studio's own pid. Stops keep the default, which leaves the Studio and its
+  ancestor shells out.
+- **Guard:** `packages/core/src/__tests__/service-runner.test.js`
+
+## The Hermes gateway card timed out though the gateway was running
+
+- **Trap:** hermes now runs its CLI as `python3 -I -c <launcher> gateway run`, so the command
+  line no longer holds "hermes gateway run". The card reported 操作逾時 and its stop found
+  nothing to stop.
+- **Rule:** Match both forms, anchored at the end:
+  `(hermes|hermes_cli\.main.*) gateway run$`. pgrep uses POSIX regex, where `.` matches the
+  newlines inside the launcher, so tests match with the `s` flag.
+- **Guard:** `packages/core/src/__tests__/service-controller.test.js`
+
+## A relay speaker could be shown before the user's views were raised over it
+
+- **Trap:** `updateViewBounds` made the held view visible and only then raised the user's
+  views. One main-process task commits as one frame, so this did not flicker, but nothing
+  checked the order, and a split task would show the speaker over the user's views.
+- **Rule:** `applyViewStacking` restacks first, then shows held views. Screen capture needs a
+  macOS permission, so the real child order is checked in Electron.
+- **Guard:** `packages/desktop/src/__tests__/view-stacking.test.js`,
+  `npx electron packages/desktop/scripts/measure-relay-stacking.js` (exits 1 when a held view
+  sits above a shown one or a resize reorders views)

@@ -32,11 +32,16 @@ mainLog.write('info', [
   `[Nomad Desktop] v${app.getVersion()} starting (packaged=${app.isPackaged})`,
 ]);
 const { calculateLayoutBounds, planViewStacking, ALL_PLATFORMS } = require('./src/layout-engine');
-const { PLATFORM_INJECTORS, toDeliveryResult } = require('./src/injectors');
+const {
+  PLATFORM_INJECTORS,
+  dispatchUntilComposerReady,
+  toDeliveryResult,
+} = require('./src/injectors');
 const { PLATFORM_EXTRACTORS } = require('./src/extractors');
 const { MultiAiOrchestrator } = require('./src/orchestrator');
 const { createRelayHistory } = require('./src/relay-history');
 const { createRenderHolds } = require('./src/render-holds');
+const { applyViewStacking } = require('./src/view-stacking');
 const { LocalSyncBridge } = require('./src/bridge');
 const { createStudioBots } = require('./src/studio-bots');
 const { windowBackgroundFor, firstPaintQuery } = require('./src/window-theme');
@@ -220,22 +225,15 @@ function updateViewBounds() {
     keepRendering: relaySpeaker ? [relaySpeaker, ...renderHolds.list()] : renderHolds.list(),
     dashboardOpen: isDashboardOpen,
   });
-  for (const [key, item] of Object.entries(views)) {
-    const b = boundsMap[key];
-    const { visible, load } = plan.views[key];
-    if (load) ensurePlatformLoaded(key);
-    // Hidden views are sized too, so a page a bot drives in the background still lays out.
-    if (b) item.view.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
-    item.view.setVisible(visible);
-  }
-
-  // addChildView moves a view to the top, which puts the user's views over the relay speaker.
-  // Restack only when the stacking changes, so resizing during a relay does not reorder views.
-  if (plan.stackKey && plan.stackKey !== lastStackKey) {
-    for (const key of plan.raise) mainWindow.contentView.addChildView(views[key].view);
-    if (dashboardView) mainWindow.contentView.addChildView(dashboardView);
-  }
-  lastStackKey = plan.stackKey;
+  lastStackKey = applyViewStacking({
+    contentView: mainWindow.contentView,
+    views,
+    boundsMap,
+    plan,
+    dashboardView,
+    lastStackKey,
+    ensureLoaded: ensurePlatformLoaded,
+  });
 
   if (dashboardView) {
     dashboardView.setBounds(
@@ -561,7 +559,10 @@ async function createMainWindow() {
     }),
     runWebviewTask: studioBots.runTask,
     onDispatchPrompt: async ({ prompt, targets }) => {
-      const results = await dispatchPromptToTargets(prompt, targets);
+      const results = await dispatchUntilComposerReady(
+        (pending) => dispatchPromptToTargets(prompt, pending),
+        targets,
+      );
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('nomad:prompt-dispatched', { prompt, targets, results });
       }

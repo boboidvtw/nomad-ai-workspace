@@ -599,7 +599,40 @@ function toDeliveryResult(res) {
   return { ok: true, data: res };
 }
 
+/** @param {unknown} res */
+function isComposerMissing(res) {
+  const r = /** @type {{ ok?: boolean, error?: string } | null} */ (res);
+  return Boolean(r && r.ok === false && /input (element )?not found/i.test(r.error || ''));
+}
+
+/**
+ * Dispatches, then re-sends to the pages that had no input box yet: a page loaded on demand
+ * takes a few seconds to mount its composer. Any other failure is final, since the text may
+ * already be in the box and a second send would type it twice.
+ * @param {(targets: string[]) => Promise<Record<string, unknown>>} dispatch
+ * @param {string[]} targets
+ * @param {{ waitMs?: number, pollMs?: number, now?: () => number, sleep?: (ms: number) => Promise<void> }} [options]
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function dispatchUntilComposerReady(dispatch, targets, options = {}) {
+  const {
+    waitMs = 20_000,
+    pollMs = 1000,
+    now = Date.now,
+    sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  } = options;
+  const deadline = now() + waitMs;
+  let results = await dispatch(targets);
+  for (;;) {
+    const missing = targets.filter((t) => isComposerMissing(results[t]));
+    if (missing.length === 0 || now() >= deadline) return results;
+    await sleep(pollMs);
+    results = { ...results, ...(await dispatch(missing)) };
+  }
+}
+
 module.exports = {
+  dispatchUntilComposerReady,
   toDeliveryResult,
   PLATFORM_INJECTORS,
   formatPromptWithAttachments,
