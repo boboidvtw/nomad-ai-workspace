@@ -376,12 +376,11 @@ curl -s http://127.0.0.1:8555/v1/systemone -H 'content-type: application/json' -
 
 **常見問題**：
 
-| 現象                             | 原因                          | 處理                                                                         |
-| :------------------------------- | :---------------------------- | :--------------------------------------------------------------------------- |
-| 卡片顯示 OFFLINE，`/health` 正常 | Dashboard 來源不在 CORS 名單  | 確認 `laya/serve.py` 的 `allow_origins` 含 `http://127.0.0.1:8765`，重啟服務 |
-| Dashboard 不在 8765              | 8765 被占用時會改用 8766 等埠 | 把實際網址加進 `allow_origins`，重啟服務                                     |
-| `/health` 連不上                 | 服務沒開或啟動失敗            | 執行 `start_service.sh`，再看同目錄的 `laya_serve.log`                       |
-| 選項超過 20 個時準確率下降       | 選項共用固定的 token 額度     | 拆成兩層問題，或改用 Jev                                                     |
+| 現象                             | 原因                        | 處理                                                                                                                       |
+| :------------------------------- | :-------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| 卡片顯示 OFFLINE，`/health` 正常 | Dashboard 不是由 Nomad 開啟 | 從 Studio 或 `http://127.0.0.1:8765/dashboard` 開啟；Dashboard 經由 Nomad 的 `/api/laya/*` 呼叫 Laya，Laya 不需要設定 CORS |
+| `/health` 連不上                 | 服務沒開或啟動失敗          | 執行 `start_service.sh`，再看同目錄的 `laya_serve.log`                                                                     |
+| 選項超過 20 個時準確率下降       | 選項共用固定的 token 額度   | 拆成兩層問題，或改用 Jev                                                                                                   |
 
 **和 TypeSafe Jev 的差別**：Laya 相容 Jev 的 `POST /v1/systemone` 協定，既有 Jev 客戶端改 `baseUrl` 就能用。Laya 是可自架的開源權重，資料不離開本機，沒有 API 費用；Jev 是閉源雲端服務，不必自備算力，選項很多時準確率較高。
 
@@ -403,16 +402,15 @@ curl -s http://127.0.0.1:8555/v1/systemone -H 'content-type: application/json' -
 | Obsidian             | 開啟 App             | 結束 App              |                                      |
 | Nomad AI Studio      | 開啟 App             | 結束 App              | 會連 Dashboard 一起關，所以會詢問    |
 | Claude Code、Codex   | 開新的終端機視窗     | 不提供                | 請在終端機結束，以免中斷其他工作階段 |
-| Nomad 專案協調器     | 無法使用             | 無法使用              | 安裝路徑已不存在                     |
 
-Docker 類服務會先自動開啟 OrbStack。OrbStack 啟動時，其他設定自動重啟的容器（例如 cumora）也會一起起來。關閉服務不會關閉 OrbStack，不用時請自行關閉。
+Docker 類服務會先自動開啟 OrbStack。OrbStack 啟動時，其他設定自動重啟的容器（例如 cumora）也會一起起來。關閉服務不會關閉 OrbStack，不用時請自行關閉。如果 OrbStack 在啟動途中重啟（例如自動更新），會自動再試一次；仍失敗才顯示「請再試一次」。
 
 **安全設計**：
 
 - 按鈕只送服務 ID。指令寫死在 `packages/core/src/services/service-registry.js`，請求內容不會變成指令。
 - API 需要 `~/.nomad/daemon-token`，並檢查 Host 與 Origin。
 - 不經過 shell 執行，也不會加上刪除資料的參數。
-- 關閉前會核對程序指令列，不符就拒絕，不會誤關其他程式。
+- 關閉前會核對程序指令列，不符就拒絕，不會誤關其他程式。程式 10 秒內沒有結束時，會再核對一次指令列，相符才強制結束（SIGKILL）。
 
 **執行紀錄**：`~/.nomad/service-logs/<服務 ID>.log`。按鈕顯示失敗時先看這裡。
 
