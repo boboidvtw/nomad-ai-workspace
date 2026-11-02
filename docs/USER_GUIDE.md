@@ -322,6 +322,69 @@ curl -s -X POST http://127.0.0.1:8765/api/bots/mentions -H "Authorization: Beare
 
 **關閉 Bots**：在 Studio 設定檔（macOS 為 `~/Library/Application Support/Nomad AI Studio/nomad-studio-settings.json`）把 `bots.enabled` 設為 `false` 後重新啟動，即回到 Bots 之前的行為（任務仍會等到 AI 回覆才完成）。
 
+### 7.11 Laya 決策引擎 (Laya Decision Engine)
+
+Laya 把一段文字（State）和你定義的問題（Questions）丟進模型，一次算完就回傳結構化答案，不生成文字。適合分類、分流、判斷要不要做某件事，不適合寫作或聊天。
+
+**專案裡有兩個 Laya，彼此無關**：
+
+|           | Laya 服務（Dashboard 卡片） | 規則版 Laya（`packages/core`） |
+| :-------- | :-------------------------- | :----------------------------- |
+| 原理      | 神經網路模型                | 關鍵字比對 6 組規則            |
+| 需要 8555 | 需要                        | 不需要                         |
+| 問題      | 自訂問題與選項              | 固定 6 種意圖                  |
+| 入口      | Laya 實驗室、⌘K 導流、API   | Studio 的管線測試框            |
+
+以下都是 Laya 服務。
+
+**啟動與停止**（服務不會自動啟動）：
+
+```bash
+~/.gemini/antigravity-ide/scratch/laya/start_service.sh
+```
+
+```bash
+~/.gemini/antigravity-ide/scratch/laya/stop_service.sh
+```
+
+```bash
+curl -s http://127.0.0.1:8555/health
+```
+
+`loaded` 列出三個模型就代表可用。啟動約 10 秒，常駐約 1.4 GB 記憶體，不用時可以停掉。
+
+**在 Dashboard 操作**：
+
+1. 開啟 Dashboard，到 Laya 卡片按「推論實驗室」（頂部的「Laya 實驗室」相同）。
+2. 在「選擇評估範例」挑一題，修改狀態文本。範例決定問題與選項，頁面上不能改。
+3. 按「發送推論請求」。第一次約 2 秒，之後約 15 毫秒。
+4. 讀結果（見下表）。
+
+**用 API 自訂問題**：
+
+```bash
+curl -s http://127.0.0.1:8555/v1/systemone -H 'content-type: application/json' -d '{"state":"用戶的信用卡被盜刷 3,500 元，要求立即停卡。","questions":{"分類":{"type":"choice","instructions":"這是哪一類客訴？","criteria":{"fraud":"盜刷或爭議款項","billing":"帳單查詢"}},"停卡":{"type":"noul","instructions":"是否需要立即停卡？","criteria":{"true":"需要","false":"不需要"}}}}'
+```
+
+| 問題類型 | 用途     | 結果看哪個欄位                                 |
+| :------- | :------- | :--------------------------------------------- |
+| `choice` | 多選一   | `choice` 是答案，`probabilities` 是各選項機率  |
+| `noul`   | 是或否   | `noul`，越接近 1 越偏「是」                    |
+| `score`  | 分級評分 | `score` 是 0 起算的級數，`legend` 對照級數意義 |
+
+`answer_confidence` 是最高選項的機率；要依信心自動執行動作時，先用自己的資料確認門檻。`score` 對選項描述很敏感，描述寫得越具體，結果越穩定。
+
+**常見問題**：
+
+| 現象                             | 原因                          | 處理                                                                         |
+| :------------------------------- | :---------------------------- | :--------------------------------------------------------------------------- |
+| 卡片顯示 OFFLINE，`/health` 正常 | Dashboard 來源不在 CORS 名單  | 確認 `laya/serve.py` 的 `allow_origins` 含 `http://127.0.0.1:8765`，重啟服務 |
+| Dashboard 不在 8765              | 8765 被占用時會改用 8766 等埠 | 把實際網址加進 `allow_origins`，重啟服務                                     |
+| `/health` 連不上                 | 服務沒開或啟動失敗            | 執行 `start_service.sh`，再看同目錄的 `laya_serve.log`                       |
+| 選項超過 20 個時準確率下降       | 選項共用固定的 token 額度     | 拆成兩層問題，或改用 Jev                                                     |
+
+**和 TypeSafe Jev 的差別**：Laya 相容 Jev 的 `POST /v1/systemone` 協定，既有 Jev 客戶端改 `baseUrl` 就能用。Laya 是可自架的開源權重，資料不離開本機，沒有 API 費用；Jev 是閉源雲端服務，不必自備算力，選項很多時準確率較高。
+
 ---
 
 ## 8. 🔄 更新後重新載入方式 (How to Reload)
