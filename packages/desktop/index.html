@@ -1359,6 +1359,35 @@
         color: var(--accent-color);
         font-weight: 600;
       }
+      .evo-demo-banner {
+        flex-shrink: 0;
+        margin: 8px 12px 0;
+        padding: 7px 10px;
+        border-radius: 7px;
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        color: var(--text-strong);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .evo-guide summary {
+        margin-top: 4px;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .evo-guide ol {
+        margin: 4px 0;
+        padding-left: 18px;
+      }
+      .evo-demo-tag {
+        font-size: 9.5px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 4px;
+        background: rgba(245, 158, 11, 0.18);
+        color: var(--tint-amber-400);
+        white-space: nowrap;
+      }
       .evo-status-badge {
         font-size: 9px;
         font-weight: 700;
@@ -3138,6 +3167,7 @@
           </div>
           <select
             id="evo-project-select"
+            title="範例：只切換下方標籤，不會變更工作目錄"
             onchange="handleEvoProjectSwitch(this.value)"
             style="
               width: 100%;
@@ -3171,7 +3201,7 @@
           >
             <div style="display: flex; justify-content: space-between; font-weight: 700">
               <span style="color: var(--tint-emerald-400)">🌿 影子沙盒 Worktree</span>
-              <span style="font-size: 10px; color: var(--text-muted)">隔離保護中</span>
+              <span class="evo-demo-tag">範例</span>
             </div>
             <code id="evo-worktree-label" style="font-size: 10.5px; color: var(--text-strong)"
               >shadow/evo-ide-workbench</code
@@ -3179,13 +3209,13 @@
           </div>
 
           <div class="evo-section-label" style="margin-top: 4px">
-            <span>🗂️ 變更檔案與三庫映射</span>
+            <span>🗂️ 變更檔案與三庫映射 <span class="evo-demo-tag">範例</span></span>
             <span id="evo-tree-count">7 項</span>
           </div>
           <div id="evo-file-tree" style="display: flex; flex-direction: column; gap: 3px"></div>
 
           <div class="evo-section-label" style="margin-top: auto">
-            <span>⚡ Headroom & 基因預算</span>
+            <span>⚡ Headroom & 基因預算 <span class="evo-demo-tag">範例</span></span>
             <span id="evo-budget-pct" style="color: var(--accent-color)">50.1%</span>
           </div>
           <div
@@ -3276,11 +3306,29 @@
                   border: 1px solid rgba(167, 139, 250, 0.45);
                   color: var(--tint-violet-300);
                 "
-                title="模擬 Agent 執行失敗後重試成功，觸發 Trajectory Reflector 自動提煉新基因"
+                title="隨機產生一條範例基因並寫入 experience-db。範例內容請勿批准"
               >
-                🧪 模擬「犯錯 ➔ 修正」提煉新基因
+                🧪 模擬「犯錯 ➔ 修正」提煉新基因（範例）
               </button>
             </div>
+          </div>
+
+          <div class="evo-demo-banner" id="evo-demo-banner">
+            ⚠️ <b>範例畫面</b>：中間的回覆是固定文案，不會呼叫 AI；右側 Diff 不會改任何檔案。
+            只有「進化 HUD」的批准、回滾與寫入三庫會真的改寫 Claude / Gemini 規則檔。
+            <details class="evo-guide" id="evo-guide">
+              <summary>📖 操作說明</summary>
+              <ol>
+                <li>在下方輸入框打一句規則，要含「不要、改用、禁止、應該、記住、規則」等字。</li>
+                <li>出現紫色膠囊後，按「審查三庫編譯預覽」，確認要寫入的文字。</li>
+                <li>按「批准固化並同步至三庫」，規則就會寫入 Claude 與 Gemini 規則檔。</li>
+                <li>想撤掉時，到進化 HUD 的啟用中基因按「一鍵回滾」。</li>
+              </ol>
+              <div>
+                批准的是全域規則，之後每個 Claude Code session 都會載入，請確認整句能長期套用。
+              </div>
+              <div>想問 AI 問題時，請切回單欄或多欄版面再送出。</div>
+            </details>
           </div>
 
           <div class="evo-chat-stream" id="evo-chat-stream">
@@ -3317,7 +3365,7 @@
           <!-- RIGHT SUB-PANEL 1: SURGICAL DIFF REVIEWER -->
           <div class="evo-right-panel" id="evo-panel-diff">
             <div class="evo-section-label">
-              <span>🔪 外科手術補丁佇列 (Shadow Worktree Diffs)</span>
+              <span>🔪 外科手術補丁佇列 <span class="evo-demo-tag">範例</span></span>
               <span style="color: var(--accent-color)">surgical-code-editor</span>
             </div>
             <div
@@ -3378,7 +3426,7 @@
           <!-- RIGHT SUB-PANEL 3: SHADOW SANDBOX TEST GATE -->
           <div class="evo-right-panel" id="evo-panel-gate" style="display: none">
             <div style="display: flex; justify-content: space-between; align-items: center">
-              <div class="evo-section-label">🧪 影子沙盒自動化測試與預算門禁</div>
+              <div class="evo-section-label">🧪 回歸測試（不驗證基因內容）</div>
               <button
                 class="btn-ws-op"
                 onclick="handleRunEvoSandboxTests()"
@@ -3610,6 +3658,14 @@
           if (isEvolver) {
             loadEvolverWorkbench();
           }
+        }
+        const promptInput = document.getElementById('prompt-input');
+        if (promptInput) {
+          promptInput.dataset.defaultPlaceholder ??= promptInput.placeholder;
+          promptInput.placeholder =
+            state.layout === 'evolver'
+              ? 'IDE 頁面不會送到 AI：含「不要、改用、規則」等字會產生候選基因，其餘回固定文案'
+              : promptInput.dataset.defaultPlaceholder;
         }
       }
 
@@ -5574,6 +5630,7 @@
             evoState.chatMessages.push({
               id: 'msg-' + Date.now(),
               role: 'agent',
+              real: true,
               cot: `Auto-Guarded 審批通過：\n1. 已寫入 ~/.gemini/memory/experience-db/genes/evolver/${geneId}.yaml + .json\n2. 已編譯至 ~/.claude/rules/common/evolver-genes.md 與 ~/.claude/hooks/evolver-guard-rules.json\n3. 已注入 ~/.gemini/memory/coding/dynamic_rules.md (共寫入 ${writtenCount} 個實體檔案)`,
               tools: [
                 {
@@ -5598,6 +5655,7 @@
             evoState.chatMessages.push({
               id: 'msg-rev-' + Date.now(),
               role: 'agent',
+              real: true,
               cot: `1-Click Rollback 觸發：已將 ${geneId} 狀態標記為 REVERTED，並從 ~/.claude/rules/common/evolver-genes.md 與 ~/.gemini/memory/coding/dynamic_rules.md 移除 (${writtenCount} 個檔案已同步更新)`,
               tools: [{ label: `⏪ 已回滾基因: ${geneId}`, tab: 'hud' }],
               text: `⏪ 已完成 **\`${geneId}\`** 一鍵回滾！該基因已從 Claude 與 Gemini 的活躍規則與 PreToolUse Hook 中移除。`,
@@ -5651,7 +5709,7 @@
               cot: `1. [Trajectory Reflector] 偵測到 status=ERROR -> status=DONE 對比軌跡 (${sample.triggerSymptom})\n2. [Shadow Sandbox Verifier] 自動執行 74 項回歸測試 100% 通過，Token 淨增量 +${g.verification.tokenDelta} tokens (低於 120 上限)\n3. [Auto-Guarded Gate] 已生成三庫編譯補丁，等待人類一鍵確認`,
               tools: [
                 { label: `🧬 新基因草案: ${g.geneId}`, tab: 'hud' },
-                { label: `🧪 沙盒門禁: PASS (+${g.verification.tokenDelta} tokens)`, tab: 'gate' },
+                { label: `🧪 未實測 (+${g.verification.tokenDelta} tokens)`, tab: 'gate' },
               ],
               text: `從剛剛的「失敗 ➔ 修正」軌跡中，我自動提煉出 1 條新的跨平台 Harness 基因：**\`${g.geneId}\`（${g.title}）**。已通過影子沙盒驗證，請點擊下方進化膠囊審批！`,
               capsuleGeneId: g.geneId,
@@ -5816,7 +5874,7 @@
                         🧬 偵測到可進化經驗 (${linkedGene.geneId})
                       </span>
                       <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: var(--tint-emerald-400); font-weight: 700;">
-                        ${linkedGene.status === 'ACTIVE' ? '✅ 已固化生效' : `🧪 沙盒 100% 通過 (+${linkedGene.verification?.tokenDelta || 32} tokens)`}
+                        ${linkedGene.status === 'ACTIVE' ? '✅ 已固化生效' : `🧪 未實測 (+${linkedGene.verification?.tokenDelta || 32} tokens)`}
                       </span>
                     </div>
                     <div style="font-size: 11px; color: var(--text-soft);">
@@ -5850,7 +5908,7 @@
                 <div class="evo-msg-card">
                   <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-size: 11px; font-weight: 700; color: var(--tint-emerald-400);">🤖 NOMAD EVOLVER AGENT</span>
-                    <span style="font-size: 10px; color: var(--text-dim);">Worktree: ${escapeHtml(wb.worktreeBranch)}</span>
+                    ${m.real ? '' : '<span class="evo-demo-tag">範例回覆</span>'}
                   </div>
                   ${
                     m.cot
@@ -5953,18 +6011,20 @@
                 onclick="handleResolveEvoPatch('${activePatch.patchId}', 'MERGE')"
                 style="flex: 1; padding: 7px; font-weight: 700; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: var(--tint-emerald-400);"
               >
-                ✅ 批准合併至主幹 (Merge Worktree)
+                ✅ 標記已合併（範例，不改檔案）
               </button>
               <button
                 class="btn-ws-op"
                 onclick="handleResolveEvoPatch('${activePatch.patchId}', 'REJECT')"
                 style="padding: 7px 12px; font-weight: 600; color: var(--tint-red-400);"
               >
-                ❌ 退回重修
+                ❌ 標記退回（範例）
               </button>
             </div>`
                 : `<div id="evo-patch-resolved" style="padding: 7px; text-align: center; font-weight: 700; color: var(--text-soft);">${
-                    activePatch.status === 'MERGED' ? '✅ 已合併' : '❌ 已退回'
+                    activePatch.status === 'MERGED'
+                      ? '✅ 已標記合併（範例）'
+                      : '❌ 已標記退回（範例）'
                   }</div>`
             }
           `;
@@ -5987,7 +6047,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                       <span style="font-size: 11.5px; font-weight: 700; color: var(--tint-violet-300);">🧬 ${escapeHtml(g.geneId)}</span>
                       <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.18); color: var(--tint-emerald-400); font-weight: 700;">
-                        沙盒 ${g.verification?.regressionPassed || 74}/${g.verification?.regressionTotal || 74} PASS · +${g.verification?.tokenDelta || 32} tok
+                        未實測 · +${g.verification?.tokenDelta || 32} tok
                       </span>
                     </div>
                     <div style="font-size: 11.5px; font-weight: 600; color: var(--text-strong);">${escapeHtml(g.title)}</div>
@@ -6022,7 +6082,7 @@
                   <span style="font-size: 11px; font-weight: 700; color: var(--accent-color);">${escapeHtml(g.geneId)}</span>
                   <div style="display: flex; gap: 6px; align-items: center;">
                     <span style="font-size: 9.5px; padding: 1px 6px; border-radius: 4px; background: rgba(var(--fg-rgb), 0.07); color: var(--text-soft);">
-                      命中 ${g.telemetry?.hitCount || 0} 次 · 攔截 ${g.telemetry?.savedErrors || 0} 錯
+                      範例計數：命中 ${g.telemetry?.hitCount || 0} 次 · 攔截 ${g.telemetry?.savedErrors || 0} 錯
                     </span>
                     <span style="font-size: 9.5px; color: ${g.telemetry?.distilledToWeights ? 'var(--tint-violet-300)' : 'var(--tint-emerald-400)'};">
                       ${g.telemetry?.distilledToWeights ? '🌙 已微調內化' : '☀️ 動態規則'}
@@ -6032,7 +6092,7 @@
                 <div style="font-size: 11px; font-weight: 600; color: var(--text-strong);">${escapeHtml(g.title)}</div>
                 <div style="font-size: 10.5px; color: var(--text-muted);">${escapeHtml(g.ruleDirective)}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
-                  <code style="font-size: 9.5px; color: var(--text-dim);">Hook: ${escapeHtml(g.hookGuard?.targetTool || 'run_command')}</code>
+                  <code style="font-size: 9.5px; color: var(--text-dim);">Hook: ${escapeHtml(g.hookGuard?.targetTool || 'run_command')}（未接線）</code>
                   <button
                     class="btn-ws-op"
                     onclick="handleRevertEvoGene('${g.geneId}')"
