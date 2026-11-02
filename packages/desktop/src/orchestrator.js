@@ -1,4 +1,5 @@
 const { createSemanticTitle } = require('./session-manager');
+const { isConversationUrl } = require('@nomad/core');
 /**
  * Nomad AI Studio - Multi-AI Orchestrator Engine
  * Autonomous dialogue, task handoff, and debate coordination across AI engines.
@@ -94,7 +95,7 @@ class MultiAiOrchestrator {
   /**
    * @param {Object} [options]
    * @param {Function} [options.injectPrompt] - async (platform, text) => { ok: boolean }
-   * @param {Function} [options.extractResponse] - async (platform, { markBaseline }?) => { ok: boolean, text: string, count?: number, countOf?: string, isBaseline?: boolean }
+   * @param {Function} [options.extractResponse] - async (platform, { markBaseline }?) => { ok: boolean, text: string, count?: number, countOf?: string, isBaseline?: boolean, url?: string }
    * @param {Function} [options.checkStreaming] - async (platform) => { ok: boolean, isStreaming: boolean }
    * @param {number} [options.initialWaitMs=2000] - Initial delay before polling
    * @param {number} [options.pollIntervalMs=800] - Polling interval
@@ -497,28 +498,30 @@ class MultiAiOrchestrator {
    * The latest reply and the page's reply count, marked on the page. Taken before a send so the
    * wait that follows can tell the new reply from the one already there. A page that just loaded
    * can still be rendering its replies (Perplexity draws them oldest first), and a read taken then
-   * is not the last reply, so reads repeat until two in a row agree.
+   * is not the last reply, so reads repeat until two in a row agree. A conversation page showing
+   * no reply at all has not drawn its replies yet (chatgpt.com after a reload), and an empty
+   * snapshot would let the old reply through as new, so reads go on until one appears.
    * @param {string} platform
    * @returns {Promise<ReplySnapshot>}
    */
   async readReplySnapshot(platform) {
-    let snapshot = await this.readMarkedReply(platform);
+    let { snapshot } = await this.readMarkedReply(platform);
     for (let reads = 1; reads < this.snapshotSettleTries; reads++) {
       await this.sleep(this.snapshotSettleMs);
       const next = await this.readMarkedReply(platform);
       const same =
-        next.text === snapshot.text &&
-        next.count === snapshot.count &&
-        next.countOf === snapshot.countOf;
-      snapshot = next;
-      if (same) break;
+        next.snapshot.text === snapshot.text &&
+        next.snapshot.count === snapshot.count &&
+        next.snapshot.countOf === snapshot.countOf;
+      snapshot = next.snapshot;
+      if (same && !next.loading) break;
     }
     return snapshot;
   }
 
   /**
    * @param {string} platform
-   * @returns {Promise<ReplySnapshot>}
+   * @returns {Promise<{ snapshot: ReplySnapshot, loading: boolean }>}
    */
   async readMarkedReply(platform) {
     try {
@@ -527,12 +530,15 @@ class MultiAiOrchestrator {
       );
       const counted = typeof res?.count === 'number';
       return {
-        text: (res?.text || '').trim(),
-        count: counted ? res.count : null,
-        countOf: counted ? res.countOf || null : null,
+        snapshot: {
+          text: (res?.text || '').trim(),
+          count: counted ? res.count : null,
+          countOf: counted ? res.countOf || null : null,
+        },
+        loading: !counted && isConversationUrl(platform, res?.url),
       };
     } catch {
-      return { text: '', count: null, countOf: null };
+      return { snapshot: { text: '', count: null, countOf: null }, loading: false };
     }
   }
 

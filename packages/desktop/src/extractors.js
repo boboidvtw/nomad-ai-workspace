@@ -81,7 +81,7 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
             break;
           }
         }
-        if (!target) return { ok: false, error: "No Claude assistant response found" };
+        if (!target) return { ok: false, error: "No Claude assistant response found", url: location.href };
         // While Claude thinks the row holds only the thinking summary and its timer, no reply yet.
         const isThinking = target.closest('[data-is-streaming="true"]') && !target.querySelector('.standard-markdown') && !target.matches('.standard-markdown');
         if (isThinking) return { ok: true, text: "", length: 0, count, countOf, isBaseline: isBaseline(target) };
@@ -148,7 +148,7 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
             break;
           }
         }
-        if (!target) return { ok: false, error: "No ChatGPT assistant response found" };
+        if (!target) return { ok: false, error: "No ChatGPT assistant response found", url: location.href };
         const text = readText(target);
         return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
       } catch (err) {
@@ -201,7 +201,7 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
             break;
           }
         }
-        if (!target) return { ok: false, error: "No Gemini model response found" };
+        if (!target) return { ok: false, error: "No Gemini model response found", url: location.href };
         const text = readText(target);
         return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
       } catch (err) {
@@ -241,11 +241,14 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
           '.prose',
           'div.response-content'
         ];
+        // The composer is a tiptap editor whose box and placeholder also carry "prose"; nothing
+        // inside a form or an editor is a reply.
+        const isChrome = (el) => Boolean(el.closest('form, [contenteditable="true"]'));
         let target = null;
         let count = 0;
         let countOf = null;
         for (const sel of selectors) {
-          const els = document.querySelectorAll(sel);
+          const els = [...document.querySelectorAll(sel)].filter((el) => !isChrome(el));
           if (els.length > 0) {
             target = els[els.length - 1];
             count = els.length;
@@ -254,14 +257,14 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
           }
         }
         if (!target) {
-          const bubbles = document.querySelectorAll('div[class*="bubble"], div[role="listitem"]');
+          const bubbles = [...document.querySelectorAll('div[class*="bubble"], div[role="listitem"]')].filter((el) => !isChrome(el));
           if (bubbles.length > 0) {
             target = bubbles[bubbles.length - 1];
             count = bubbles.length;
             countOf = 'bubble';
           }
         }
-        if (!target) return { ok: false, error: "No Grok response found" };
+        if (!target) return { ok: false, error: "No Grok response found", url: location.href };
         const text = readText(target);
         return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
       } catch (err) {
@@ -294,7 +297,7 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
 ${READ_TEXT_SOURCE}${baselineSource(options)}
         const replies = document.querySelectorAll('[data-testid="markdown-reply"]');
         const target = replies[replies.length - 1];
-        if (!target) return { ok: false, error: "No Copilot response found" };
+        if (!target) return { ok: false, error: "No Copilot response found", url: location.href };
         const text = readText(target).replace(/[\\u200b-\\u200d\\ufeff]/g, "").trim();
         return { ok: true, text, length: text.length, count: replies.length, countOf: 'markdown-reply', isBaseline: isBaseline(target) };
       } catch (err) {
@@ -338,7 +341,7 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
             break;
           }
         }
-        if (!target) return { ok: false, error: "No Perplexity response found" };
+        if (!target) return { ok: false, error: "No Perplexity response found", url: location.href };
         // Sources render as inline chips ("databricks +1"); read a copy without them.
         const text = readText(target, (copy) => {
           copy.querySelectorAll('[data-pplx-citation], .citation').forEach((el) => el.remove());

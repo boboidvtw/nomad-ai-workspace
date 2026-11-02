@@ -209,7 +209,8 @@
   a row agree, since a page that just loaded draws its replies oldest first. Fewer replies, or a
   count through another selector (grok.com caught mid-load matched only an empty `.prose`), keep
   waiting, so the worst case is a visible timeout. Only a snapshot with no count falls back to
-  the text rule.
+  the text rule, and a conversation URL showing no reply yet (chatgpt.com right after a reload)
+  is read again until a reply appears, since an empty snapshot would let the old reply through.
 - **Guard:** `packages/desktop/src/__tests__/orchestrator-reply-count.test.js`,
   `packages/desktop/src/__tests__/extractors.test.js`
 
@@ -218,9 +219,11 @@
 - **Trap:** Grok draws 需求量高 / 目前使用人數較多 inside the conversation where the reply would
   be, not in an alert or dialog, so the blocked check never saw it and a task waited out its
   full timeout.
-- **Rule:** `tail` rules match the last 600 characters of the page, collected only for
-  platforms that have one. Their patterns quote the notice itself; add the English wording only
-  once it has been seen, since a guess could match a reply.
+- **Rule:** `tail` rules match the page text after the last prompt (`after`, Grok's
+  `[data-testid="user-message"]`), read with `innerText` so script data never matches, or the
+  last 600 characters without one. A notice that a later prompt got past stops counting (seen
+  live: an answered retry still read as blocked when the tail was the page end). Patterns quote
+  the two zh-TW wordings seen; add the English one only once it has been seen.
 - **Guard:** `packages/core/src/__tests__/bot-state.test.js`
 
 ## A bot's freshly opened chat failed when its input box mounted late
@@ -231,3 +234,11 @@
   and retries only a missing input box. A bound conversation with no input box at all is
   rebound to a new chat after that wait.
 - **Guard:** `packages/desktop/src/__tests__/webview-task-runner.test.js`
+
+## Grok's composer was read as a reply on a page with none
+
+- **Trap:** grok.com's composer is a tiptap editor; it and its placeholder overlay both carry the
+  class `prose`, a fallback reply selector, so an empty chat read "輸入 @ 以搜尋您的應用程式" as
+  the latest reply.
+- **Rule:** The Grok extractor skips anything inside a `form` or an editor.
+- **Guard:** `packages/desktop/src/__tests__/extractors.test.js`

@@ -182,3 +182,43 @@ test('readReplySnapshot reports no count when the extractor gives none or fails'
     countOf: null,
   });
 });
+
+test('readReplySnapshot keeps reading a conversation page that has not drawn its replies yet', async () => {
+  // Seen on chatgpt.com: right after a reload a conversation shows no reply for a few seconds.
+  const conversation = 'https://chatgpt.com/c/abc';
+  const reads = [
+    { ok: false, url: conversation },
+    { ok: false, url: conversation },
+    { ok: false, url: conversation },
+    { ok: true, text: 'Old answer', count: 2, countOf: 'reply', url: conversation },
+    { ok: true, text: 'Old answer', count: 2, countOf: 'reply', url: conversation },
+  ];
+  const orch = new MultiAiOrchestrator({
+    snapshotSettleMs: 0,
+    extractResponse: async () => reads.shift() || reads.at(-1),
+  });
+
+  assert.deepStrictEqual(await orch.readReplySnapshot('chatgpt'), {
+    text: 'Old answer',
+    count: 2,
+    countOf: 'reply',
+  });
+});
+
+test('readReplySnapshot takes an empty new-chat page after two reads', async () => {
+  let reads = 0;
+  const orch = new MultiAiOrchestrator({
+    snapshotSettleMs: 0,
+    extractResponse: async () => {
+      reads++;
+      return { ok: false, url: 'https://chatgpt.com/' };
+    },
+  });
+
+  assert.deepStrictEqual(await orch.readReplySnapshot('chatgpt'), {
+    text: '',
+    count: null,
+    countOf: null,
+  });
+  assert.strictEqual(reads, 2);
+});

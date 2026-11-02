@@ -280,3 +280,34 @@ test('Extractors: the reply marked before a send stays recognised when older one
   assert.strictEqual(answered.count, 3);
   assert.strictEqual(answered.isBaseline, false);
 });
+
+test('Extractors: a page with no reply still reports its URL', () => {
+  const { JSDOM } = require('jsdom');
+  for (const platform of ['claude', 'chatgpt', 'gemini', 'grok', 'copilot', 'perplexity']) {
+    const dom = new JSDOM('<!doctype html><body></body>', {
+      url: 'https://example.com/c/1',
+      runScripts: 'outside-only',
+    });
+    const res = dom.window.eval(PLATFORM_EXTRACTORS[platform].getLatestResponse());
+    assert.strictEqual(res.ok, false, platform);
+    assert.strictEqual(res.url, 'https://example.com/c/1', platform);
+  }
+});
+
+test('Extractors: Grok does not read its composer or its placeholder as a reply', () => {
+  const { JSDOM } = require('jsdom');
+  // grok.com's composer: a tiptap editor and a placeholder overlay, both with class "prose".
+  const composer =
+    '<form><div class="tiptap ProseMirror prose" contenteditable="true"><p></p></div>' +
+    '<div class="absolute pointer-events-none prose">輸入 @ 以搜尋您的應用程式</div></form>';
+  const read = (/** @type {string} */ body) =>
+    new JSDOM(`<!doctype html><body>${body}</body>`, { runScripts: 'outside-only' }).window.eval(
+      PLATFORM_EXTRACTORS.grok.getLatestResponse(),
+    );
+
+  assert.strictEqual(read(composer).ok, false);
+
+  const withReply = read(`<div class="prose">GROK-1</div>${composer}`);
+  assert.strictEqual(withReply.text, 'GROK-1');
+  assert.strictEqual(withReply.count, 1);
+});
