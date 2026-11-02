@@ -5,20 +5,25 @@
  * made in Node by detectBlocked(), so rules stay testable without a browser.
  *
  * Text rules only look at alert, dialog, banner and status regions, never at message bodies,
- * so an AI reply that merely mentions "rate limit" does not count as blocked.
+ * so an AI reply that merely mentions "rate limit" does not count as blocked. Tail rules are for
+ * notices a platform draws inside the conversation instead (Grok's capacity notice): they read
+ * only the last few hundred characters of the page, where that notice replaces the reply, and
+ * their patterns quote the notice itself rather than words a reply could use.
  */
 
 /**
  * @typedef {{ id: string, type: 'url', pattern: string, reason: string }} UrlRule
  * @typedef {{ id: string, type: 'text', pattern: string, reason: string }} TextRule
  * @typedef {{ id: string, type: 'selector', selector: string, reason: string }} SelectorRule
- * @typedef {UrlRule | TextRule | SelectorRule} BlockedRule
+ * @typedef {{ id: string, type: 'tail', pattern: string, reason: string }} TailRule
+ * @typedef {UrlRule | TextRule | SelectorRule | TailRule} BlockedRule
  * @typedef {{ rules: BlockedRule[] }} BlockedManifest
  *
  * @typedef {Object} StateSnapshot
  * @property {string} url
  * @property {string[]} notices - text of alert/dialog/banner/status regions
  * @property {string[]} selectorHits - ids of selector rules that matched
+ * @property {string} [tail] - end of the page text; collected only for platforms with tail rules
  *
  * @typedef {{ blocked: false } | { blocked: true, ruleId: string, reason: string }} BlockedVerdict
  */
@@ -28,6 +33,8 @@ const NOTICE_SELECTOR =
   '[role="alert"], [role="alertdialog"], [role="dialog"], [role="status"], [role="banner"]';
 const MAX_NOTICE_LENGTH = 500;
 const MAX_NOTICES = 20;
+/** The notice, the composer's chrome after it, and some slack. */
+const TAIL_LENGTH = 600;
 
 /** @type {Readonly<Record<string, BlockedManifest>>} */
 const BLOCKED_MANIFESTS = Object.freeze({
@@ -111,6 +118,14 @@ const BLOCKED_MANIFESTS = Object.freeze({
         pattern: 'rate limit|limit reached|too many requests',
         reason: 'Grok is rate limiting requests',
       },
+      {
+        // Seen in zh-TW: 需求量高 / Grok 目前使用人數較多，請稍後再試… / 升級至 Super. Add the
+        // English notice once its exact wording is seen; a guess could match a reply.
+        id: 'high-demand',
+        type: 'tail',
+        pattern: '需求量高[\\s\\S]{0,40}目前使用人數較多|使用人數較多，請稍後再試',
+        reason: 'Grok is at capacity; try again later',
+      },
     ],
   },
 });
@@ -130,7 +145,9 @@ function detectBlocked(platform, snapshot) {
         ? new RegExp(rule.pattern, 'i').test(snapshot.url || '')
         : rule.type === 'text'
           ? new RegExp(rule.pattern, 'i').test(notices)
-          : (snapshot.selectorHits || []).includes(rule.id);
+          : rule.type === 'tail'
+            ? new RegExp(rule.pattern, 'i').test(snapshot.tail || '')
+            : (snapshot.selectorHits || []).includes(rule.id);
     if (hit) return { blocked: true, ruleId: rule.id, reason: rule.reason };
   }
   return { blocked: false };
@@ -143,7 +160,9 @@ function detectBlocked(platform, snapshot) {
  * @returns {string}
  */
 function buildStateSnapshotScript(platform) {
-  const selectorRules = (BLOCKED_MANIFESTS[platform]?.rules || [])
+  const rules = BLOCKED_MANIFESTS[platform]?.rules || [];
+  const readsTail = rules.some((rule) => rule.type === 'tail');
+  const selectorRules = rules
     .filter((rule) => rule.type === 'selector')
     .map((rule) => ({ id: rule.id, selector: /** @type {SelectorRule} */ (rule).selector }));
   return `(() => {
@@ -155,7 +174,12 @@ function buildStateSnapshotScript(platform) {
   const selectorHits = selectorRules
     .filter((rule) => { try { return Boolean(document.querySelector(rule.selector)); } catch (e) { return false; } })
     .map((rule) => rule.id);
-  return { url: String(location.href), notices, selectorHits };
+  const snapshot = { url: String(location.href), notices, selectorHits };
+  if (${readsTail}) {
+    const text = String((document.body && document.body.innerText) || '');
+    snapshot.tail = text.slice(-${TAIL_LENGTH});
+  }
+  return snapshot;
 })()`;
 }
 
