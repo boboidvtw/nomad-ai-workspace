@@ -4,9 +4,10 @@ const { MultiAiOrchestrator } = require('../orchestrator.js');
 
 /**
  * Replays one page state per poll, then keeps the last one.
- * @param {Array<{ text: string, count?: number, countOf?: string, streaming?: boolean }>} states
+ * @param {Array<{ text: string, count?: number, countOf?: string, isBaseline?: boolean, streaming?: boolean }>} states
+ * @param {any[]} [extractCalls] - receives the options of each extract call
  */
-function makeOrchestrator(states) {
+function makeOrchestrator(states, extractCalls = []) {
   let i = 0;
   const current = () => states[Math.min(i, states.length - 1)];
   return new MultiAiOrchestrator({
@@ -14,10 +15,13 @@ function makeOrchestrator(states) {
     pollIntervalMs: 2,
     maxWaitMs: 80,
     checkStreaming: async () => ({ ok: true, isStreaming: Boolean(current().streaming) }),
-    extractResponse: async () => {
-      const { text, count, countOf = 'reply' } = current();
+    extractResponse: async (_platform, options) => {
+      extractCalls.push(options);
+      const { text, count, countOf = 'reply', isBaseline = false } = current();
       i++;
-      return count === undefined ? { ok: true, text } : { ok: true, text, count, countOf };
+      return count === undefined
+        ? { ok: true, text }
+        : { ok: true, text, count, countOf, isBaseline };
     },
   });
 }
@@ -81,6 +85,26 @@ test('a page that shows fewer replies than before is not treated as answered', a
 
   assert.strictEqual(res.settled, false);
   assert.strictEqual(res.text, '');
+});
+
+test('older replies loading in above the old one do not count as a new reply', async () => {
+  // Perplexity renders earlier answers late; the reply marked before the send is still last.
+  const orch = makeOrchestrator([{ text: 'Old answer', count: 5, isBaseline: true }]);
+
+  const res = await orch.awaitSettled('perplexity', { previous: OLD });
+
+  assert.strictEqual(res.settled, false);
+  assert.strictEqual(res.text, '');
+});
+
+test('readReplySnapshot asks the extractor to mark the reply it read', async () => {
+  /** @type {any[]} */
+  const calls = [];
+  const orch = makeOrchestrator([{ text: 'hi', count: 1 }], calls);
+
+  await orch.readReplySnapshot('claude');
+
+  assert.deepStrictEqual(calls, [{ markBaseline: true }]);
 });
 
 test('readReplySnapshot returns the text with its reply count', async () => {

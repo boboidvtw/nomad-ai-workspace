@@ -202,9 +202,12 @@
   after the platform dropped the prompt (an empty read, a stop button that flickered) passed
   the old reply on as the new answer.
 - **Rule:** Extractors return `count` and `countOf` (how many replies the counted selector
-  matched). When the pre-send read has a count, only a higher count under the same selector
-  counts as a new reply; fewer replies (a reloaded page) keep waiting, so the worst case is a
-  visible timeout. Without a comparable count the text rule still applies.
+  matched) and `isBaseline`. The pre-send read marks its reply element
+  (`data-nomad-baseline`); a new reply needs a higher count under the same selector and a last
+  reply that is not the marked one, because Perplexity renders older answers late and raises
+  the count without a new reply (seen live: 1 → 3). Fewer replies (a reloaded page) keep
+  waiting, so the worst case is a visible timeout. Without a comparable count the text rule
+  still applies.
 - **Guard:** `packages/desktop/src/__tests__/orchestrator-reply-count.test.js`,
   `packages/desktop/src/__tests__/extractors.test.js`
 

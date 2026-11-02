@@ -26,12 +26,13 @@ const INCOMPLETE_REPLY_NOTE = '[注意：這份回覆等待逾時，內容可能
 
 /**
  * Whether a page read moved past the reply that was there before the send. With a count, only
- * more replies than before do: the old text can come back after a blink of the page (an empty
- * read, a stop button that flickers) when the platform dropped the prompt. A page holding fewer
- * replies than before reloaded under us; it waits, so the worst case is a visible timeout, never
- * an old reply passed on as new. Without a comparable count, any activity or different text does.
+ * more replies than before, the last of which is not the one marked before the send, do: the
+ * old text can come back after a blink of the page (an empty read, a stop button that flickers)
+ * when the platform dropped the prompt, and older replies can load in above it. A page holding
+ * fewer replies than before reloaded under us; it waits, so the worst case is a visible timeout,
+ * never an old reply passed on as new. Without a comparable count, activity or other text does.
  * @param {ReplySnapshot} previous
- * @param {{ ok?: boolean, count?: number, countOf?: string } | undefined} res
+ * @param {{ ok?: boolean, count?: number, countOf?: string, isBaseline?: boolean } | undefined} res
  * @param {string} pageText
  * @param {boolean} isStreaming
  * @returns {boolean}
@@ -39,7 +40,7 @@ const INCOMPLETE_REPLY_NOTE = '[注意：這份回覆等待逾時，內容可能
 function movedPastPrevious(previous, res, pageText, isStreaming) {
   if (previous.count !== null) {
     if (typeof res?.count !== 'number') return false;
-    if (res.countOf === previous.countOf) return res.count > previous.count;
+    if (res.countOf === previous.countOf) return res.count > previous.count && !res.isBaseline;
   }
   return isStreaming || (res?.ok !== false && pageText !== previous.text);
 }
@@ -90,7 +91,7 @@ class MultiAiOrchestrator {
   /**
    * @param {Object} [options]
    * @param {Function} [options.injectPrompt] - async (platform, text) => { ok: boolean }
-   * @param {Function} [options.extractResponse] - async (platform) => { ok: boolean, text: string }
+   * @param {Function} [options.extractResponse] - async (platform, { markBaseline }?) => { ok: boolean, text: string, count?: number, countOf?: string, isBaseline?: boolean }
    * @param {Function} [options.checkStreaming] - async (platform) => { ok: boolean, isStreaming: boolean }
    * @param {number} [options.initialWaitMs=2000] - Initial delay before polling
    * @param {number} [options.pollIntervalMs=800] - Polling interval
@@ -493,7 +494,9 @@ class MultiAiOrchestrator {
    */
   async readReplySnapshot(platform) {
     try {
-      const res = await this.withPageTimeout(this.extractResponse(platform));
+      const res = await this.withPageTimeout(
+        this.extractResponse(platform, { markBaseline: true }),
+      );
       const counted = typeof res?.count === 'number';
       return {
         text: (res?.text || '').trim(),

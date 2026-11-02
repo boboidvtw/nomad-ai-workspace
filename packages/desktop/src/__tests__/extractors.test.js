@@ -41,7 +41,14 @@ test('Extractors: Copilot reads the last reply without zero-width characters', (
   // Copy out of the jsdom realm before comparing.
   assert.deepStrictEqual(
     { ...reply },
-    { ok: true, text: 'CPX-1234', length: 8, count: 2, countOf: 'markdown-reply' },
+    {
+      ok: true,
+      text: 'CPX-1234',
+      length: 8,
+      count: 2,
+      countOf: 'markdown-reply',
+      isBaseline: false,
+    },
   );
   assert.strictEqual(dom.window.eval(PLATFORM_EXTRACTORS.copilot.checkStatus()).isStreaming, true);
 
@@ -249,4 +256,27 @@ test('Extractors: every platform reports how many replies its page holds', () =>
     assert.ok(two.countOf, `${platform} names what it counted`);
     assert.strictEqual(three.countOf, two.countOf, platform);
   }
+});
+
+test('Extractors: the reply marked before a send stays recognised when older ones load in', () => {
+  const { JSDOM } = require('jsdom');
+  const reply = (/** @type {string} */ b) => `<div class="prose">${b}</div>`;
+  const dom = new JSDOM(`<!doctype html><body><main>${reply('old')}</main></body>`, {
+    runScripts: 'outside-only',
+  });
+  const main = /** @type {HTMLElement} */ (dom.window.document.querySelector('main'));
+  const read = (/** @type {{ markBaseline?: boolean }} */ o = {}) =>
+    dom.window.eval(PLATFORM_EXTRACTORS.perplexity.getLatestResponse(o));
+
+  assert.strictEqual(read({ markBaseline: true }).isBaseline, true);
+
+  main.insertAdjacentHTML('afterbegin', reply('older'));
+  const lazyLoaded = read();
+  assert.strictEqual(lazyLoaded.count, 2);
+  assert.strictEqual(lazyLoaded.isBaseline, true);
+
+  main.insertAdjacentHTML('beforeend', reply('old'));
+  const answered = read();
+  assert.strictEqual(answered.count, 3);
+  assert.strictEqual(answered.isBaseline, false);
 });
