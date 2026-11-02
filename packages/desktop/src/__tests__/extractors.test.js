@@ -179,3 +179,39 @@ test('Extractors: Perplexity still reads an answer block that holds no input', (
   const reply = dom.window.eval(PLATFORM_EXTRACTORS.perplexity.getLatestResponse());
   assert.strictEqual(reply.text, 'HOLD-C');
 });
+
+// Live gemini.google.com markup (2026-11-02): a display formula keeps its TeX in data-math, and
+// KaTeX renders it twice (MathML for screen readers, HTML for the eye), so innerText read
+// "𝑅𝑆𝑉=𝐶𝑡−𝐿𝑛…RSV=Hn−Ln…" and Perplexity's editor dropped part of that, failing the relay.
+const GEMINI_MATH =
+  '<div class="markdown markdown-main-panel"><p>計算：</p>' +
+  '<div class="math-block" data-math="RSV = \\frac{C_t - L_n}{H_n - L_n} \\times 100">' +
+  '<span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics>' +
+  '<mrow><mi>R</mi><mo>=</mo></mrow><annotation encoding="application/x-tex">RSV = \\frac{C_t - L_n}{H_n - L_n} \\times 100</annotation>' +
+  '</semantics></math></span><span class="katex-html" aria-hidden="true">RSV=Hn−Ln</span></span></span></div>' +
+  '<p>其中 <span class="math-inline" data-math="C_t"><span class="katex"><span class="katex-mathml">𝐶𝑡</span>' +
+  '<span class="katex-html">Ct</span></span></span> 是收盤價。</p></div>';
+
+test('Extractors: Gemini reads formulas as their TeX source, once', () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(`<!doctype html><body>${GEMINI_MATH}</body>`, {
+    runScripts: 'outside-only',
+  });
+  const reply = dom.window.eval(PLATFORM_EXTRACTORS.gemini.getLatestResponse());
+  assert.ok(reply.text.includes('$$RSV = \\frac{C_t - L_n}{H_n - L_n} \\times 100$$'), reply.text);
+  assert.ok(reply.text.includes('其中 $C_t$ 是收盤價'), reply.text);
+  assert.ok(!reply.text.includes('RSV=Hn'), reply.text);
+  assert.ok(!reply.text.includes('𝐶𝑡'), reply.text);
+});
+
+test('Extractors: ChatGPT reads a KaTeX formula from its TeX annotation', () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(
+    '<!doctype html><body><div class="markdown"><p>面積 <span class="katex"><span class="katex-mathml">' +
+      '<math><semantics><mi>π</mi><annotation encoding="application/x-tex">\\pi r^2</annotation></semantics></math>' +
+      '</span><span class="katex-html" aria-hidden="true">πr2</span></span></p></div></body>',
+    { runScripts: 'outside-only' },
+  );
+  const reply = dom.window.eval(PLATFORM_EXTRACTORS.chatgpt.getLatestResponse());
+  assert.strictEqual(reply.text, '面積 $\\pi r^2$');
+});

@@ -3,11 +3,48 @@
  * Extracts latest AI responses and detects completion status across platforms.
  */
 
+/**
+ * Defines readText(el, prepare?) inside an extractor script. KaTeX draws each formula twice
+ * (MathML for screen readers, HTML for the eye), so innerText read it twice and garbled, and the
+ * next platform's editor could reject that text. Formulas are read as their TeX source instead.
+ * The copy sits off-screen in the page so innerText still sees the layout and keeps line breaks.
+ */
+const READ_TEXT_SOURCE = `
+      const MATH_SELECTOR = '.math-block, .math-inline, .katex-display, .katex';
+      const texOf = (el) => el.getAttribute('data-math') ||
+        (el.querySelector('annotation[encoding="application/x-tex"]') || {}).textContent || '';
+      const readText = (el, prepare) => {
+        if (!prepare && !el.querySelector(MATH_SELECTOR)) return (el.innerText || el.textContent || '').trim();
+        const copy = el.cloneNode(true);
+        if (prepare) prepare(copy);
+        for (const m of [...copy.querySelectorAll(MATH_SELECTOR)]) {
+          const tex = copy.contains(m) ? texOf(m).trim() : '';
+          if (!tex) continue;
+          if (m.matches('.math-block, .katex-display')) {
+            const block = document.createElement('div');
+            block.textContent = '$$' + tex + '$$';
+            m.replaceWith(block);
+          } else {
+            m.replaceWith(document.createTextNode('$' + tex + '$'));
+          }
+        }
+        const host = document.createElement('div');
+        host.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;width:' + (el.clientWidth || 800) + 'px';
+        host.appendChild(copy);
+        document.body.appendChild(host);
+        try {
+          return (copy.innerText || copy.textContent || '').replace(/\\n{3,}/g, '\\n\\n').trim();
+        } finally {
+          host.remove();
+        }
+      };`;
+
 /** @type {Record<string, { getLatestResponse: () => string, checkStatus: () => string }>} Script builders run inside each platform webview */
 const PLATFORM_EXTRACTORS = {
   claude: {
     getLatestResponse: () => `(function() {
       try {
+${READ_TEXT_SOURCE}
         const selectors = [
           '.font-claude-message',
           '[data-testid="assistant-message"]',
@@ -32,7 +69,7 @@ const PLATFORM_EXTRACTORS = {
         const blocks = target.matches('.standard-markdown')
           ? [target]
           : [...target.querySelectorAll('.standard-markdown')];
-        const parts = (blocks.length ? blocks : [target]).map((el) => (el.innerText || el.textContent || "").trim());
+        const parts = (blocks.length ? blocks : [target]).map((el) => readText(el));
         const text = parts.filter(Boolean).join("\\n\\n");
         return { ok: true, text, length: text.length };
       } catch (err) {
@@ -66,6 +103,7 @@ const PLATFORM_EXTRACTORS = {
   chatgpt: {
     getLatestResponse: () => `(function() {
       try {
+${READ_TEXT_SOURCE}
         // Modern ChatGPT selectors (2025/2026): assistant-message, MarkdownRoot, search-unit-key
         const selectors = [
           '[data-markdown-text-style="assistant-message"]',
@@ -87,7 +125,7 @@ const PLATFORM_EXTRACTORS = {
           }
         }
         if (!target) return { ok: false, error: "No ChatGPT assistant response found" };
-        const text = (target.innerText || target.textContent || "").trim();
+        const text = readText(target);
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
@@ -115,6 +153,7 @@ const PLATFORM_EXTRACTORS = {
   gemini: {
     getLatestResponse: () => `(function() {
       try {
+${READ_TEXT_SOURCE}
         const selectors = [
           'div.markdown.markdown-main-panel',
           'message-content',
@@ -135,7 +174,7 @@ const PLATFORM_EXTRACTORS = {
           }
         }
         if (!target) return { ok: false, error: "No Gemini model response found" };
-        const text = (target.innerText || target.textContent || "").trim();
+        const text = readText(target);
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
@@ -164,6 +203,7 @@ const PLATFORM_EXTRACTORS = {
   grok: {
     getLatestResponse: () => `(function() {
       try {
+${READ_TEXT_SOURCE}
         const selectors = [
           // The bubble around it holds the "Grok" header and the run time, not the reply.
           '[data-testid="assistant-message"] .response-content-markdown',
@@ -186,7 +226,7 @@ const PLATFORM_EXTRACTORS = {
           if (bubbles.length > 0) target = bubbles[bubbles.length - 1];
         }
         if (!target) return { ok: false, error: "No Grok response found" };
-        const text = (target.innerText || target.textContent || "").trim();
+        const text = readText(target);
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
@@ -215,10 +255,11 @@ const PLATFORM_EXTRACTORS = {
   copilot: {
     getLatestResponse: () => `(function() {
       try {
+${READ_TEXT_SOURCE}
         const replies = document.querySelectorAll('[data-testid="markdown-reply"]');
         const target = replies[replies.length - 1];
         if (!target) return { ok: false, error: "No Copilot response found" };
-        const text = (target.innerText || target.textContent || "").replace(/[\\u200b-\\u200d\\ufeff]/g, "").trim();
+        const text = readText(target).replace(/[\\u200b-\\u200d\\ufeff]/g, "").trim();
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
@@ -239,6 +280,7 @@ const PLATFORM_EXTRACTORS = {
   perplexity: {
     getLatestResponse: () => `(function() {
       try {
+${READ_TEXT_SOURCE}
         const selectors = [
           '.prose',
           'div[class*="answer"]',
@@ -257,20 +299,10 @@ const PLATFORM_EXTRACTORS = {
           }
         }
         if (!target) return { ok: false, error: "No Perplexity response found" };
-        // Sources render as inline chips ("databricks +1"); read a copy without them. The copy
-        // sits off-screen in the page so innerText still sees the layout and keeps line breaks.
-        const copy = target.cloneNode(true);
-        copy.querySelectorAll('[data-pplx-citation], .citation').forEach((el) => el.remove());
-        const host = document.createElement('div');
-        host.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;width:' + (target.clientWidth || 800) + 'px';
-        host.appendChild(copy);
-        document.body.appendChild(host);
-        let text;
-        try {
-          text = (copy.innerText || copy.textContent || "").replace(/\\n{3,}/g, "\\n\\n").trim();
-        } finally {
-          host.remove();
-        }
+        // Sources render as inline chips ("databricks +1"); read a copy without them.
+        const text = readText(target, (copy) => {
+          copy.querySelectorAll('[data-pplx-citation], .citation').forEach((el) => el.remove());
+        });
         return { ok: true, text, length: text.length };
       } catch (err) {
         return { ok: false, error: err.message };
