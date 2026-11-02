@@ -1,0 +1,398 @@
+<!--
+  Dashboard service controls. Kept in its own file so index.html does not keep growing.
+  Adds start/stop buttons, real status and a how-to to every card. Commands live in the
+  backend registry (@nomad/core services); this file only ever sends a service id.
+-->
+<style>
+  .svc-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-top: 0.85rem;
+  }
+  .svc-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .svc-label {
+    flex: 1 1 8rem;
+    min-width: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .svc-state {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+  .svc-state[data-state='running'] {
+    color: var(--accent);
+  }
+  .svc-state[data-state='failed'] {
+    color: #dc2626;
+  }
+  .svc-btn {
+    padding: 0.32rem 0.7rem;
+    border: 1px solid var(--border-color, rgba(127, 127, 127, 0.3));
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .svc-btn[data-action='start']:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .svc-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .svc-message {
+    flex-basis: 100%;
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+  .svc-guide {
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+  .svc-guide summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .svc-guide ol {
+    margin: 0.35rem 0 0;
+    padding-left: 1.15rem;
+  }
+</style>
+
+<script>
+  (function () {
+    var SERVICE_CARDS = [
+      {
+        card: 'card-laya',
+        services: ['laya'],
+        guide: [
+          '按「啟動」，約 10 秒後狀態變成執行中。',
+          '按「推論實驗室」選範例，按「發送推論請求」。',
+          '自訂問題要用 POST /v1/systemone，範例在使用手冊 7.11。',
+          '常駐約佔 1.4 GB 記憶體，不用時按「關閉」。',
+        ],
+      },
+      {
+        card: 'card-nomad-studio',
+        services: ['nomad-studio'],
+        guide: [
+          '能看到這一頁，通常代表 Studio 已在執行。',
+          '按「召喚工作台」把 Studio 視窗帶到最前面，或按 Cmd+Shift+Space。',
+          '按「關閉」會結束 Studio，Dashboard 也會一起關閉，所以會先詢問。',
+          '其他服務不受影響，會繼續在背景執行。',
+        ],
+      },
+      {
+        card: 'card-lmstudio',
+        services: ['lmstudio'],
+        guide: [
+          '按「啟動」開啟本機 API（1234 埠）。App 開著不等於 API 開著。',
+          '在 LM Studio App 載入模型，或在終端機執行 lms load。沒載入模型無法推論。',
+          '在「快捷管線」用「列出模型清單」確認。',
+          '按「關閉」只停 API，App 與已下載的模型都不受影響。',
+        ],
+      },
+      {
+        card: 'card-comfyui',
+        services: ['comfyui'],
+        guide: [
+          '按「啟動」，約 1 分鐘內就緒。',
+          '狀態變成執行中後，開啟 http://127.0.0.1:8188 。',
+          '模型放在 ~/Developer/ComfyUI/models，放好後在介面重新整理。',
+          '生圖很吃記憶體，不用時按「關閉」。',
+        ],
+      },
+      {
+        card: 'card-hermes',
+        services: ['hermes-web', 'hermes-gateway'],
+        guide: [
+          'Hermes Web 是管理介面（9119 埠），只在本機使用。第一次啟動要建置，可能需要幾分鐘。',
+          'Telegram 閘道會連上 Telegram 並開始回覆訊息，所以啟動前會先詢問。',
+          '只想對話時，不必啟動這兩項，在終端機執行 hermes 即可。',
+          '紀錄在 ~/.hermes/logs/agent.log。',
+        ],
+      },
+      {
+        card: 'card-maih',
+        services: ['maih'],
+        guide: [
+          '按「啟動」會自動開 OrbStack，再建置並啟動全部容器。第一次需要幾分鐘。',
+          '網頁在 http://127.0.0.1:3000 ，API 在 http://127.0.0.1:8000/health/live 。',
+          '按「關閉」會停止並移除容器，資料保留在 Docker volume。',
+        ],
+      },
+      {
+        card: 'card-cli',
+        services: ['claude-cli', 'codex-cli'],
+        guide: [
+          '按「開啟」會開一個新的終端機視窗並啟動該工具。',
+          '要在特定專案使用時，改在該專案資料夾的終端機執行 claude 或 codex。',
+          '離開時在終端機輸入 /exit。這裡不提供關閉，以免中斷其他工作階段。',
+        ],
+      },
+      {
+        card: 'card-postgres',
+        services: ['postgres'],
+        guide: [
+          '按「啟動」會自動開 OrbStack，再啟動資料庫。',
+          '連線 127.0.0.1:5432，帳密在 ~/docker-services/postgres/.env。',
+          '本機沒有 psql，請用「快捷管線」裡的「進入 psql 終端」。',
+          '按「關閉」時 Adminer 也會一起停止。資料保留在 data 資料夾。',
+        ],
+      },
+      {
+        card: 'card-redis',
+        services: ['redis'],
+        guide: [
+          '按「啟動」會自動開 OrbStack，再啟動 Redis。',
+          '連線 127.0.0.1:6379，密碼在 ~/docker-services/redis/.env。',
+          '本機沒有 redis-cli，請用「快捷管線」的指令，它會從 .env 帶入密碼。',
+          '按「關閉」不會刪除資料，資料保留在 data 資料夾。',
+        ],
+      },
+      {
+        card: 'card-adminer',
+        services: ['adminer'],
+        guide: [
+          '按「啟動」會連同 PostgreSQL 一起啟動。',
+          '開啟 http://127.0.0.1:8080 ，伺服器填 postgres。',
+          '帳密在 ~/docker-services/postgres/.env。',
+          '按「關閉」只停 Adminer，PostgreSQL 繼續執行。',
+        ],
+      },
+      {
+        card: 'card-obsidian',
+        services: ['obsidian'],
+        guide: [
+          '按「啟動」開啟 Obsidian。',
+          '要直接開知識庫時，按卡片上的開啟連結。',
+          '按「關閉」會結束 App。筆記會自動存檔。',
+        ],
+      },
+      {
+        card: 'card-nomad-cli',
+        services: ['nomad-cli'],
+        guide: [
+          '這張卡片目前無法使用：協調器的安裝路徑已不存在。',
+          '要恢復時，把 Antigravity-Stack 放回 ~/程式倉庫，並建立 orchestration/.venv。',
+          '恢復後按「開啟」會在終端機執行 nomad-cli status。',
+        ],
+      },
+    ];
+
+    var STATE_LABELS = {
+      running: '執行中',
+      stopped: '未啟動',
+      starting: '啟動中…',
+      stopping: '關閉中…',
+      failed: '失敗',
+      ready: '可開啟',
+      unavailable: '無法使用',
+    };
+    var BADGE_TEXT = { running: 'ONLINE', starting: 'STARTING', stopping: 'STOPPING' };
+    var POLL_MS = 2000;
+    var state = { byId: {}, connected: false, timer: null };
+
+    function controlsFor(card) {
+      return document.querySelector('[data-svc-card="' + card + '"]');
+    }
+
+    function buildRow(id) {
+      var row = document.createElement('div');
+      row.className = 'svc-row';
+      row.dataset.service = id;
+      [
+        ['svc-label', id],
+        ['svc-state', ''],
+      ].forEach(function (item) {
+        var span = document.createElement('span');
+        span.className = item[0];
+        span.textContent = item[1];
+        row.appendChild(span);
+      });
+      ['start', 'stop'].forEach(function (action) {
+        var button = document.createElement('button');
+        button.className = 'svc-btn';
+        button.type = 'button';
+        button.dataset.action = action;
+        button.textContent = action === 'start' ? '▶ 啟動' : '■ 關閉';
+        button.disabled = true;
+        button.addEventListener('click', function () {
+          runAction(id, action);
+        });
+        row.appendChild(button);
+      });
+      var message = document.createElement('div');
+      message.className = 'svc-message';
+      message.hidden = true;
+      row.appendChild(message);
+      return row;
+    }
+
+    function buildGuide(steps) {
+      var details = document.createElement('details');
+      details.className = 'svc-guide';
+      var summary = document.createElement('summary');
+      summary.textContent = '📖 操作說明';
+      var list = document.createElement('ol');
+      steps.forEach(function (step) {
+        var item = document.createElement('li');
+        item.textContent = step;
+        list.appendChild(item);
+      });
+      details.appendChild(summary);
+      details.appendChild(list);
+      return details;
+    }
+
+    function mountPanels() {
+      SERVICE_CARDS.forEach(function (entry) {
+        var card = document.getElementById(entry.card);
+        var actions = card && card.querySelector('.card-actions');
+        if (!actions || controlsFor(entry.card)) return;
+        var panel = document.createElement('div');
+        panel.className = 'svc-panel';
+        panel.dataset.svcCard = entry.card;
+        entry.services.forEach(function (id) {
+          panel.appendChild(buildRow(id));
+        });
+        panel.appendChild(buildGuide(entry.guide));
+        actions.parentNode.insertBefore(panel, actions);
+      });
+    }
+
+    function paintRow(row, service) {
+      var stateEl = row.querySelector('.svc-state');
+      var message = row.querySelector('.svc-message');
+      var start = row.querySelector('[data-action="start"]');
+      var stop = row.querySelector('[data-action="stop"]');
+      row.querySelector('.svc-label').textContent = service.label;
+      stateEl.textContent = STATE_LABELS[service.state] || service.state;
+      stateEl.dataset.state = service.state;
+      start.disabled = !service.canStart;
+      stop.disabled = !service.canStop;
+      start.textContent = service.state === 'ready' ? '▶ 開啟' : '▶ 啟動';
+      message.textContent = service.message || '';
+      message.hidden = !service.message;
+    }
+
+    function paintBadge(entry) {
+      var card = document.getElementById(entry.card);
+      var badge = card && card.querySelector('.card-top .status-badge');
+      var label = badge && badge.querySelector('span:last-child');
+      var services = entry.services.map(function (id) {
+        return state.byId[id];
+      });
+      if (!label || services.indexOf(undefined) !== -1) return;
+      var first = services.find(function (s) {
+        return s.state === 'running' || s.state === 'starting' || s.state === 'stopping';
+      });
+      var current = first || services[0];
+      if (current.state === 'ready') {
+        badge.className = 'status-badge static';
+        label.textContent = 'CLI';
+      } else if (current.state === 'unavailable') {
+        badge.className = 'status-badge offline';
+        label.textContent = '未安裝';
+      } else {
+        badge.className = 'status-badge ' + (first ? 'online' : 'offline');
+        var keepLatency = current.state === 'running' && /\d\s*ms/.test(label.textContent);
+        if (!keepLatency) label.textContent = BADGE_TEXT[current.state] || 'OFFLINE';
+      }
+    }
+
+    function paintSummary() {
+      var all = Object.values(state.byId).filter(function (s) {
+        return s.state !== 'ready' && s.state !== 'unavailable';
+      });
+      var online = all.filter(function (s) {
+        return s.state === 'running';
+      });
+      var count = document.getElementById('hud-online-count');
+      var total = document.getElementById('hud-total-count');
+      if (count) count.textContent = online.length;
+      if (total) total.textContent = all.length;
+      var hud = document.getElementById('hud-laya-latency');
+      if (hud && state.byId.laya && state.byId.laya.state === 'running') {
+        if (hud.textContent === 'OFFLINE') hud.textContent = 'ONLINE';
+      }
+    }
+
+    function showDisconnected() {
+      document.querySelectorAll('.svc-state').forEach(function (el) {
+        el.textContent = '請從 Nomad AI Studio 開啟';
+      });
+    }
+
+    function schedulePoll() {
+      clearTimeout(state.timer);
+      var busy = Object.values(state.byId).some(function (s) {
+        return s.state === 'starting' || s.state === 'stopping';
+      });
+      if (busy) state.timer = setTimeout(refreshServiceCards, POLL_MS);
+    }
+
+    /** @returns {Promise<boolean>} true when real status was painted */
+    async function refreshServiceCards() {
+      try {
+        var res = await fetch((await getApiBase()) + '/api/services', { cache: 'no-store' });
+        var json = await res.json();
+        if (!res.ok || !json.success) throw new Error('status unavailable');
+        state.byId = {};
+        json.data.services.forEach(function (service) {
+          state.byId[service.id] = service;
+          var row = document.querySelector('.svc-row[data-service="' + service.id + '"]');
+          if (row) paintRow(row, service);
+        });
+        SERVICE_CARDS.forEach(paintBadge);
+        paintSummary();
+        state.connected = true;
+        schedulePoll();
+        return true;
+      } catch {
+        state.connected = false;
+        showDisconnected();
+        return false;
+      }
+    }
+
+    async function runAction(id, action) {
+      var service = state.byId[id] || {};
+      var warning = action === 'start' ? service.confirmStart : service.confirmStop;
+      if (warning && !window.confirm(warning)) return;
+      try {
+        var res = await fetch(
+          (await getApiBase()) + '/api/services/' + encodeURIComponent(id) + '/' + action,
+          { method: 'POST' },
+        );
+        var json = await res.json();
+        if (!json.success && typeof showToast === 'function') showToast(json.message);
+      } catch {
+        if (typeof showToast === 'function') showToast('無法連線到 Nomad AI Studio');
+      }
+      await refreshServiceCards();
+    }
+
+    window.refreshServiceCards = refreshServiceCards;
+    window.addEventListener('DOMContentLoaded', function () {
+      mountPanels();
+      refreshServiceCards();
+    });
+  })();
+</script>

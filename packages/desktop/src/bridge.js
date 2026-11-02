@@ -12,6 +12,8 @@ const {
   err,
   ErrorCodes,
   PipelineManager,
+  ServiceController,
+  handleServiceRequest,
   getSyncStatus,
   exportToDrive,
   importFromDrive,
@@ -87,6 +89,7 @@ class LocalSyncBridge {
     this.sseClients = new Set();
     this.heartbeatTimer = null;
     this.daemonPort = options.daemonPort || 8765;
+    this.serviceController = options.serviceController || new ServiceController();
     this.pipelineManager = new PipelineManager({
       headroomEnabled: true,
       layaEnabled: true,
@@ -417,6 +420,10 @@ class LocalSyncBridge {
         );
         return;
       }
+
+      // 0.0 Dashboard service start/stop
+      const serviceRes = await handleServiceRequest(this.serviceController, req.method, pathname);
+      if (serviceRes) return this.sendJson(res, serviceRes.status, serviceRes.body);
 
       // 0.1 Microservice health probe
       if (pathname === '/api/probe' && req.method === 'GET') {

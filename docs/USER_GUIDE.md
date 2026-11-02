@@ -385,6 +385,47 @@ curl -s http://127.0.0.1:8555/v1/systemone -H 'content-type: application/json' -
 
 **和 TypeSafe Jev 的差別**：Laya 相容 Jev 的 `POST /v1/systemone` 協定，既有 Jev 客戶端改 `baseUrl` 就能用。Laya 是可自架的開源權重，資料不離開本機，沒有 API 費用；Jev 是閉源雲端服務，不必自備算力，選項很多時準確率較高。
 
+### 7.12 Dashboard 一鍵啟動與關閉 (Service Controls)
+
+每張卡片都有「▶ 啟動」「■ 關閉」按鈕和「📖 操作說明」。狀態由本機程式實際檢查，按下後會顯示「啟動中…」，完成後變成「執行中」或失敗原因。
+
+| 卡片                 | 啟動                 | 關閉                  | 備註                                 |
+| :------------------- | :------------------- | :-------------------- | :----------------------------------- |
+| Laya                 | 啟動 8555 服務       | 停止服務              |                                      |
+| LM Studio            | 開啟 1234 本機 API   | 只停 API              | 模型要另外載入                       |
+| ComfyUI              | 啟動 8188            | 停止該程序            |                                      |
+| Hermes Web           | 啟動 9119 管理介面   | 停止                  | 第一次要建置                         |
+| Hermes Telegram 閘道 | 連上 Telegram        | 中斷連線              | 會開始回覆訊息，所以啟動前會詢問     |
+| MAIH                 | 建置並啟動全部容器   | `docker compose down` | 第一次需要幾分鐘，資料保留在 volume  |
+| PostgreSQL           | 啟動資料庫           | `docker compose down` | 關閉時 Adminer 一起停，資料保留      |
+| Redis                | 啟動 Redis           | `docker compose down` | 資料保留                             |
+| Adminer              | 連同 PostgreSQL 啟動 | 只停 Adminer          |                                      |
+| Obsidian             | 開啟 App             | 結束 App              |                                      |
+| Nomad AI Studio      | 開啟 App             | 結束 App              | 會連 Dashboard 一起關，所以會詢問    |
+| Claude Code、Codex   | 開新的終端機視窗     | 不提供                | 請在終端機結束，以免中斷其他工作階段 |
+| Nomad 專案協調器     | 無法使用             | 無法使用              | 安裝路徑已不存在                     |
+
+Docker 類服務會先自動開啟 OrbStack。OrbStack 啟動時，其他設定自動重啟的容器（例如 cumora）也會一起起來。關閉服務不會關閉 OrbStack，不用時請自行關閉。
+
+**安全設計**：
+
+- 按鈕只送服務 ID。指令寫死在 `packages/core/src/services/service-registry.js`，請求內容不會變成指令。
+- API 需要 `~/.nomad/daemon-token`，並檢查 Host 與 Origin。
+- 不經過 shell 執行，也不會加上刪除資料的參數。
+- 關閉前會核對程序指令列，不符就拒絕，不會誤關其他程式。
+
+**執行紀錄**：`~/.nomad/service-logs/<服務 ID>.log`。按鈕顯示失敗時先看這裡。
+
+**API**（Token 位於 `~/.nomad/daemon-token`）：
+
+```bash
+curl -s -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/services
+```
+
+```bash
+curl -s -X POST -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/services/comfyui/start
+```
+
 ---
 
 ## 8. 🔄 更新後重新載入方式 (How to Reload)

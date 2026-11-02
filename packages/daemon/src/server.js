@@ -11,6 +11,8 @@ const {
   DEFAULT_DAEMON_PORT,
   DEFAULT_DAEMON_HOST,
   PipelineManager,
+  ServiceController,
+  handleServiceRequest,
   getSyncStatus,
   exportToDrive,
   importFromDrive,
@@ -89,6 +91,7 @@ class NomadDaemonServer {
     this.sseClients = new Set();
     /** @type {StudioRegistration | null} */
     this.activeStudio = null;
+    this.serviceController = options.serviceController || new ServiceController();
     this.pipelineManager = new PipelineManager({
       headroomEnabled: true,
       layaEnabled: true,
@@ -778,6 +781,10 @@ class NomadDaemonServer {
           }),
         );
       }
+
+      // 4.9 Dashboard service start/stop
+      const serviceRes = await handleServiceRequest(this.serviceController, req.method, pathname);
+      if (serviceRes) return this.sendJson(res, serviceRes.status, serviceRes.body);
 
       // 5. Microservices Probe API
       if (pathname === '/api/probe' && req.method === 'GET') {
