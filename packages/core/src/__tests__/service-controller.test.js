@@ -385,3 +385,21 @@ test('registry: stops that would end other work are not offered', () => {
   assert.ok(byId['nomad-studio'].confirmStop);
   assert.ok(byId['hermes-gateway'].confirmStart);
 });
+
+test('registry: the Hermes gateway is found however hermes launches it', () => {
+  const hermes = buildServiceRegistry('/home/u').find((s) => s.id === 'hermes-gateway');
+  // pgrep matches with POSIX regular expressions, where `.` also matches a newline: dotAll.
+  const check = new RegExp(/** @type {any} */ (hermes).check.pattern, 's');
+  const stop = /** @type {any} */ (hermes).stop;
+  // hermes 2026-11 runs its CLI through `python3 -I -c <launcher>` (seen live), so the command
+  // line no longer holds "hermes gateway run".
+  const launcher =
+    '/Users/u/.hermes/tools/python-3.14.9/bin/python3 -I -c import os, re, sys\n' +
+    'from hermes_cli.main import main\nsys.exit(main())\n gateway run';
+  for (const cmd of [launcher, '/usr/local/bin/python3 /Users/u/.local/bin/hermes gateway run']) {
+    assert.match(cmd, check);
+    assert.match(cmd, new RegExp(stop.pattern, 's'));
+    assert.ok(cmd.includes(stop.marker));
+  }
+  assert.doesNotMatch('zsh -c "hermes gateway run; tail -f log"', check);
+});

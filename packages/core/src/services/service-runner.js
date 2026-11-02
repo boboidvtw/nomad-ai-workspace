@@ -56,12 +56,12 @@ function createServiceRunner(home = os.homedir()) {
     });
   }
 
-  /** @param {string} output @returns {number[]} */
-  function parsePids(output) {
+  /** @param {string} output @param {boolean} [includeSelf] @returns {number[]} */
+  function parsePids(output, includeSelf = false) {
     return output
       .split('\n')
       .map((line) => Number.parseInt(line, 10))
-      .filter((pid) => pid > 0 && pid !== process.pid);
+      .filter((pid) => pid > 0 && (includeSelf || pid !== process.pid));
   }
 
   return {
@@ -79,8 +79,18 @@ function createServiceRunner(home = os.homedir()) {
     /** @param {number} port */
     probePort: async (port) => (await probePort('127.0.0.1', port, PROBE_TIMEOUT_MS)).online,
 
-    /** @param {string} pattern */
-    findPids: async (pattern) => parsePids(await lookup('/usr/bin/pgrep', ['-f', pattern])),
+    /**
+     * Leaves this process out unless asked, so a stop can never kill the Studio itself. Asking
+     * for it also lifts macOS pgrep's default of leaving out the caller's ancestors (-a), which
+     * is safe only for status checks: an ancestor shell can carry the pattern in its command.
+     * Linux pgrep never leaves them out, and its -a means something else.
+     * @param {string} pattern @param {{ includeSelf?: boolean }} [options]
+     */
+    findPids: async (pattern, options = {}) => {
+      const withAncestors = options.includeSelf && process.platform === 'darwin';
+      const args = withAncestors ? ['-a', '-f', pattern] : ['-f', pattern];
+      return parsePids(await lookup('/usr/bin/pgrep', args), options.includeSelf);
+    },
 
     /** @param {number} port */
     pidsOnPort: async (port) =>

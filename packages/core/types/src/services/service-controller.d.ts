@@ -17,7 +17,9 @@ export class ServiceController {
             pathExists: (target: string) => boolean;
             which(bin: string): string | null;
             probePort: (port: number) => Promise<boolean>;
-            findPids: (pattern: string) => Promise<number[]>;
+            findPids: (pattern: string, options?: {
+                includeSelf?: boolean;
+            }) => Promise<number[]>;
             pidsOnPort: (port: number) => Promise<number[]>;
             commandLine: (pid: number) => Promise<string>;
             kill(pid: number, signal: NodeJS.Signals): void;
@@ -42,7 +44,9 @@ export class ServiceController {
         pathExists: (target: string) => boolean;
         which(bin: string): string | null;
         probePort: (port: number) => Promise<boolean>;
-        findPids: (pattern: string) => Promise<number[]>;
+        findPids: (pattern: string, options?: {
+            includeSelf?: boolean;
+        }) => Promise<number[]>;
         pidsOnPort: (port: number) => Promise<number[]>;
         commandLine: (pid: number) => Promise<string>;
         kill(pid: number, signal: NodeJS.Signals): void;
