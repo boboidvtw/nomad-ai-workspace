@@ -12,8 +12,8 @@ export function createServiceRunner(home?: string): {
     pidsOnPort: (port: number) => Promise<number[]>;
     /** @param {number} pid */
     commandLine: (pid: number) => Promise<string>;
-    /** @param {number} pid @param {NodeJS.Signals} signal */
-    kill: (pid: number, signal: NodeJS.Signals) => true;
+    /** A process that already exited counts as killed. @param {number} pid @param {NodeJS.Signals} signal */
+    kill(pid: number, signal: NodeJS.Signals): void;
     /** @param {string} name */
     logHint: (name: string) => string;
     /** Terminal.app opens `.command` files without an automation permission prompt.

@@ -89,8 +89,14 @@ function createServiceRunner(home = os.homedir()) {
     /** @param {number} pid */
     commandLine: (pid) => lookup('/bin/ps', ['-o', 'command=', '-p', String(pid)]),
 
-    /** @param {number} pid @param {NodeJS.Signals} signal */
-    kill: (pid, signal) => process.kill(pid, signal),
+    /** A process that already exited counts as killed. @param {number} pid @param {NodeJS.Signals} signal */
+    kill(pid, signal) {
+      try {
+        process.kill(pid, signal);
+      } catch (error) {
+        if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ESRCH') throw error;
+      }
+    },
 
     /** @param {string} name */
     logHint: (name) => `~/.nomad/service-logs/${name}.log`,

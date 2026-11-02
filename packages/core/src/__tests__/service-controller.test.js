@@ -254,6 +254,78 @@ test('stop: refuses to kill an unrelated program on the same port', async () => 
   assert.ok(state.message.includes('不是'));
 });
 
+test('stop: a process that ignores SIGTERM is killed after its marker is checked again', async () => {
+  const runner = createRunner({
+    pidsOnPort: async () => (runner.ports.has(9002) ? [111] : []),
+    commandLine: async () => '/venv/bin/python main.py --port 9002',
+    kill: (pid, signal) => {
+      runner.calls.push(['kill', pid, signal]);
+      if (signal === 'SIGKILL') runner.ports.delete(9002);
+    },
+  });
+  runner.ports.add(9002);
+  const ctl = createController([PROCESS_SERVICE], runner);
+  await ctl.stop('beta');
+  await ctl.whenIdle('beta');
+  assert.deepStrictEqual(runner.calls, [
+    ['kill', 111, 'SIGTERM'],
+    ['kill', 111, 'SIGKILL'],
+  ]);
+  assert.strictEqual((await ctl.list()).data.services[0].state, 'stopped');
+});
+
+test('stop: no SIGKILL when the port now belongs to another program', async () => {
+  let checks = 0;
+  const runner = createRunner({
+    pidsOnPort: async () => [111],
+    commandLine: async () => (checks++ === 0 ? 'python main.py' : '/usr/bin/other-server'),
+  });
+  runner.ports.add(9002);
+  const ctl = createController([PROCESS_SERVICE], runner);
+  await ctl.stop('beta');
+  await ctl.whenIdle('beta');
+  assert.deepStrictEqual(runner.calls, [['kill', 111, 'SIGTERM']]);
+  assert.strictEqual((await ctl.list()).data.services[0].state, 'failed');
+});
+
+test('start: a docker start that fails once is retried after the engine is up again', async () => {
+  let attempts = 0;
+  const runner = createRunner({
+    exec: async (bin, args) => {
+      runner.calls.push([bin, args]);
+      if (!bin.endsWith('alpha-start')) return { code: 0 };
+      attempts += 1;
+      if (attempts === 1) return { code: 1 };
+      runner.ports.add(9001);
+      return { code: 0 };
+    },
+  });
+  const ctl = createController([DOCKER_SERVICE], runner);
+  await ctl.start('gamma');
+  await ctl.whenIdle('gamma');
+  assert.deepStrictEqual(
+    runner.calls.map((call) => call[0]),
+    ['/bin/orb', '/bin/alpha-start', '/bin/orb', '/bin/alpha-start'],
+  );
+  assert.strictEqual((await ctl.list()).data.services[0].state, 'running');
+});
+
+test('start: a docker start that fails twice reports failed with a retry hint', async () => {
+  const runner = createRunner({
+    exec: async (bin, args) => {
+      runner.calls.push([bin, args]);
+      return { code: bin.endsWith('alpha-start') ? 1 : 0 };
+    },
+  });
+  const ctl = createController([DOCKER_SERVICE], runner);
+  await ctl.start('gamma');
+  await ctl.whenIdle('gamma');
+  const state = (await ctl.list()).data.services[0];
+  assert.strictEqual(state.state, 'failed');
+  assert.ok(state.message.includes('再試'));
+  assert.strictEqual(runner.calls.filter((call) => call[0].endsWith('alpha-start')).length, 2);
+});
+
 test('stop: already stopped does nothing', async () => {
   const runner = createRunner();
   const ctl = createController([PORT_SERVICE], runner);
