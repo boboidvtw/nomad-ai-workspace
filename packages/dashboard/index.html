@@ -3214,102 +3214,6 @@
             </div>
           </div>
         </div>
-
-        <!-- CARD 11: NOMAD CLI & STACK (TOOLS) -->
-        <div class="card" data-category="tools" id="card-nomad-cli">
-          <div>
-            <div class="card-top">
-              <div class="card-title-group">
-                <span class="card-icon">🧭</span>
-                <div>
-                  <h2>Nomad 專案協調器</h2>
-                  <div class="card-subtitle">Nomad CLI & Antigravity Stack Orchestrator</div>
-                </div>
-              </div>
-              <div class="status-badge static">
-                <span>Stack Ready</span>
-              </div>
-            </div>
-
-            <div class="card-tags" style="margin-top: 0.75rem">
-              <span class="tag primary">nomad-cli</span>
-              <span class="tag cyan">15+ Projects</span>
-              <span class="tag accent">Auto-Healing</span>
-            </div>
-
-            <div class="card-desc" style="margin-top: 0.75rem">
-              本機統籌所有微服務、專案狀態檢查、服務起停與日誌串流之統一命令列協調層。
-            </div>
-          </div>
-
-          <div>
-            <div class="card-meta">
-              <div class="meta-row">
-                <span class="meta-label">協調器腳本</span>
-                <span class="meta-val">~/.gemini/scripts/nomad-cli</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">核心狀態指令</span>
-                <span class="meta-val">nomad-cli status</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">儀表板服務</span>
-                <span class="meta-val">http://127.0.0.1:8556</span>
-              </div>
-            </div>
-
-            <div class="card-pipelines-drawer" id="drawer-card-nomad-cli">
-              <div class="pipeline-row">
-                <div class="pipeline-info">
-                  <span class="pipeline-name">🧭 檢查所有專案狀態</span>
-                  <span class="pipeline-cmd">~/.gemini/scripts/nomad-cli status</span>
-                </div>
-                <button class="btn-copy" onclick="copyText('~/.gemini/scripts/nomad-cli status')">
-                  📋 複製
-                </button>
-              </div>
-              <div class="pipeline-row">
-                <div class="pipeline-info">
-                  <span class="pipeline-name">🩺 詳細健康檢查</span>
-                  <span class="pipeline-cmd"
-                    >~/.gemini/scripts/nomad-cli health-check --verbose</span
-                  >
-                </div>
-                <button
-                  class="btn-copy"
-                  onclick="copyText('~/.gemini/scripts/nomad-cli health-check --verbose')"
-                >
-                  📋 複製
-                </button>
-              </div>
-              <div class="pipeline-row">
-                <div class="pipeline-info">
-                  <span class="pipeline-name">🔄 重啟 Nomad Dashboard 服務</span>
-                  <span class="pipeline-cmd"
-                    >pkill -f "http.server 8556" ; python3 -m http.server 8556 --bind 127.0.0.1
-                    --directory ~/Developer/nomad-dashboard &</span
-                  >
-                </div>
-                <button
-                  class="btn-copy"
-                  data-cmd='pkill -f "http.server 8556" ; python3 -m http.server 8556 --bind 127.0.0.1 --directory "$HOME/Developer/nomad-dashboard" &amp;'
-                  onclick="copyText(this.dataset.cmd)"
-                >
-                  📋 複製
-                </button>
-              </div>
-            </div>
-
-            <div class="card-actions">
-              <button class="btn-pipeline-toggle" onclick="toggleCardPipelines('card-nomad-cli')">
-                ⚙️ 快捷管線
-              </button>
-              <button class="btn-copy" onclick="copyText('~/.gemini/scripts/nomad-cli status')">
-                💻 複製 nomad-cli
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- ========================================================
@@ -3461,13 +3365,6 @@
                 onclick="copyText('python3 ~/.gemini/scripts/pulse_check.py')"
               >
                 📋 脈衝自檢
-              </button>
-            </div>
-
-            <div class="ops-cmd-block">
-              <span class="ops-cmd-text">~/.gemini/scripts/nomad-cli status</span>
-              <button class="btn-copy" onclick="copyText('~/.gemini/scripts/nomad-cli status')">
-                📋 專案狀態
               </button>
             </div>
           </div>
@@ -3830,15 +3727,6 @@
           actionUrl: 'obsidian://open?vault=obsidian-llm-knowledge-base',
           tags: ['Obsidian', 'Knowledge Graph', 'KI', 'Vault'],
         },
-        {
-          type: 'service',
-          id: 'card-nomad-cli',
-          title: '🧭 Nomad 專案協調器',
-          desc: '統籌所有微服務、專案狀態檢查與起停之統一命令列協調層。',
-          category: 'tools',
-          actionUrl: '#card-nomad-cli',
-          tags: ['nomad-cli', 'Status', 'Stack', 'Orchestrator'],
-        },
         // 快捷維運管線條目 (CLI Pipelines)
         {
           type: 'pipeline',
@@ -3874,13 +3762,6 @@
           cmd: 'python3 ~/.gemini/scripts/pulse_check.py',
           desc: '執行全域微服務自動修復與狀態掃描',
           tags: ['pulse', 'health', 'check', 'monitor'],
-        },
-        {
-          type: 'pipeline',
-          title: '🧭 Nomad 專案群狀態檢視 (nomad-cli)',
-          cmd: '~/.gemini/scripts/nomad-cli status',
-          desc: '查詢 15 個本機專案與服務執行狀態',
-          tags: ['nomad', 'cli', 'status', 'projects'],
         },
         {
           type: 'pipeline',
@@ -4218,7 +4099,7 @@
 
         const t0 = performance.now();
         try {
-          const resp = await fetch('http://127.0.0.1:8555/v1/systemone', {
+          const resp = await fetch((await getApiBase()) + '/api/laya/systemone', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -4369,11 +4250,11 @@
         btn.disabled = true;
         btn.innerText = '⏳ 推論計算中...';
         resBox.style.display = 'block';
-        resBox.innerText = '正在向 http://127.0.0.1:8555/v1/systemone 發送請求...';
+        resBox.innerText = '正在經由 Nomad 向 Laya（127.0.0.1:8555/v1/systemone）發送請求...';
 
         const t0 = performance.now();
         try {
-          const resp = await fetch('http://127.0.0.1:8555/v1/systemone', {
+          const resp = await fetch((await getApiBase()) + '/api/laya/systemone', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -4424,7 +4305,9 @@
         // 1. Laya 専用檢查
         try {
           const t0 = performance.now();
-          const resp = await fetch('http://127.0.0.1:8555/health', { cache: 'no-store' });
+          const resp = await fetch((await getApiBase()) + '/api/laya/health', {
+            cache: 'no-store',
+          });
           if (resp.ok) {
             const data = await resp.json();
             const latency = Math.round(performance.now() - t0);

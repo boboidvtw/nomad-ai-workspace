@@ -9,7 +9,6 @@ const path = require('node:path');
 const TERMINAL_STOP_HINT = '互動工具沒有背景服務。請在終端機結束；這裡不關閉，以免中斷其他工作階段';
 const HERMES_GATEWAY_WARNING = '啟動後 Hermes 會連上 Telegram 並開始回覆訊息。確定要啟動嗎？';
 const STUDIO_STOP_WARNING = '這會關閉 Nomad AI Studio，Dashboard 也會一起關閉。確定嗎？';
-const ORCHESTRATOR_MISSING = '協調器已不在 ~/程式倉庫/Antigravity-Stack，無法啟動';
 
 const DOCKER_TIMEOUT_MS = 180000;
 const BUILD_TIMEOUT_MS = 900000;
@@ -92,7 +91,6 @@ function buildServiceRegistry(home) {
   const postgres = path.join(home, 'docker-services/postgres');
   const redis = path.join(home, 'docker-services/redis');
   const maih = path.join(home, 'Developer/maih');
-  const orchestrator = path.join(home, '程式倉庫/Antigravity-Stack/orchestration');
 
   return [
     {
@@ -189,14 +187,6 @@ function buildServiceRegistry(home) {
       start: { kind: 'terminal', command: 'codex' },
       stop: null,
       noStopReason: TERMINAL_STOP_HINT,
-    },
-    {
-      id: 'nomad-cli',
-      label: 'Nomad 協調器',
-      requires: { paths: [orchestrator], reason: ORCHESTRATOR_MISSING },
-      start: { kind: 'terminal', command: path.join(home, '.gemini/scripts/nomad-cli status') },
-      stop: null,
-      noStopReason: '協調器是單次指令，沒有背景服務',
     },
   ];
 }
