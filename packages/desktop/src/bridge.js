@@ -14,6 +14,7 @@ const {
   PipelineManager,
   ServiceController,
   handleServiceRequest,
+  handleLayaRequest,
   getSyncStatus,
   exportToDrive,
   importFromDrive,
@@ -425,6 +426,12 @@ class LocalSyncBridge {
       // 0.0 Dashboard service start/stop
       const serviceRes = await handleServiceRequest(this.serviceController, req.method, pathname);
       if (serviceRes) return this.sendJson(res, serviceRes.status, serviceRes.body);
+      const layaRes = await handleLayaRequest({
+        method: req.method,
+        pathname,
+        readBody: () => this.readJsonBody(req),
+      });
+      if (layaRes) return this.sendJson(res, layaRes.status, layaRes.body);
 
       // 0.1 Microservice health probe
       if (pathname === '/api/probe' && req.method === 'GET') {

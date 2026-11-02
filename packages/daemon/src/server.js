@@ -13,6 +13,7 @@ const {
   PipelineManager,
   ServiceController,
   handleServiceRequest,
+  handleLayaRequest,
   getSyncStatus,
   exportToDrive,
   importFromDrive,
@@ -786,6 +787,12 @@ class NomadDaemonServer {
       // 4.9 Dashboard service start/stop
       const serviceRes = await handleServiceRequest(this.serviceController, req.method, pathname);
       if (serviceRes) return this.sendJson(res, serviceRes.status, serviceRes.body);
+      const layaRes = await handleLayaRequest({
+        method: req.method,
+        pathname,
+        readBody: () => this.readJsonBody(req),
+      });
+      if (layaRes) return this.sendJson(res, layaRes.status, layaRes.body);
 
       // 5. Microservices Probe API
       if (pathname === '/api/probe' && req.method === 'GET') {
