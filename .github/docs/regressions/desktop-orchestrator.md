@@ -99,3 +99,58 @@
 - **Guard:** `packages/desktop/src/__tests__/top-bar-labels.test.js` (structure),
   `npx electron packages/desktop/scripts/measure-top-bar.js` (real layout, 960-2400px,
   exits 1 on overflow or wrap)
+
+## The last relay turn was saved twice in the workspace
+
+- **Trap:** The orchestrator does not await `onStep`, and the `turn-complete` handler awaited
+  the in-page rename before `addTurn`. The last turn has no turn delay, so `onComplete`
+  replaced the history with the orchestrator's record while the rename was still running,
+  and the late `addTurn` appended the last reply a second time.
+- **Rule:** Record the turn before awaiting anything in a step handler, and keep `turns` equal
+  to the history length whenever the history is replaced.
+- **Guard:** `packages/desktop/src/__tests__/relay-history.test.js`
+
+## Injectors appended to text a failed send left behind, and took an old stop button as a send
+
+- **Trap:** The contenteditable injectors collapsed the selection to the end of the editor
+  before `insertText`, so text left by a failed send was sent along with the new prompt
+  (Gemini received the prompt twice). The send check also counted any stop button as a send,
+  so typing into a page still answering the previous prompt reported `ok` with nothing sent.
+- **Rule:** Select the whole editor before typing, and only count a stop button that appeared
+  after the click. jsdom has no `execCommand`; tests emulate `insertText` over the selection
+  so a caret-only script fails them.
+- **Guard:** `packages/desktop/src/__tests__/injectors.test.js`
+
+## A Gemini view that was never shown finished replies without drawing them
+
+- **Trap:** A view lazy-loaded while hidden gets no animation frames. Gemini completed the
+  reply (stop button gone) but the reply body stayed empty until the view was shown, so bot
+  and task runs timed out with `gemini did not finish replying`. The relay was safe only
+  because its speaker is kept visible behind the user's views.
+- **Rule:** Every wait on a platform's reply holds that platform rendering (`render-holds.js`,
+  wrapped around `awaitSettled` in `main.js`); `planViewStacking` keeps held views visible
+  behind the user's views and restacks only when the stacking changes.
+- **Guard:** `packages/desktop/src/__tests__/render-holds.test.js`,
+  `packages/desktop/src/__tests__/layout-engine.test.js`
+
+## Perplexity task output was the follow-up box's Pro upsell
+
+- **Trap:** Before the answer's `.prose` rendered, the extractor fell back to
+  `div[class*="answer"]`, which on perplexity.ai is the follow-up composer with a Pro upsell,
+  and `div.break-words`, which holds the user's own question and suggested follow-ups. A
+  task stored "Pro 已啟用進階搜尋的免費預覽" as the reply.
+- **Rule:** A candidate block that contains an input is page chrome, never a reply; and
+  `div.break-words` is not a reply selector.
+- **Guard:** `packages/desktop/src/__tests__/extractors.test.js`
+
+## A Grok bot bound to a conversation it cannot open typed into the extension
+
+- **Trap:** Grok keeps the URL of a conversation the account cannot see ("你需要存取權限"), so
+  the bot's open looked fine. That page has no composer, and the injector fell back to the
+  Voyager prompt manager's textarea or Grok's hidden autosize copy, then reported "still in
+  the input box" on every run.
+- **Rule:** The Grok injector skips `gv-*` and `aria-hidden` inputs and reports
+  `input element not found`; a bot whose bound conversation has no input box is rebound to a
+  new chat and the task is retried once.
+- **Guard:** `packages/desktop/src/__tests__/injectors.test.js`,
+  `packages/desktop/src/__tests__/webview-task-runner.test.js`
