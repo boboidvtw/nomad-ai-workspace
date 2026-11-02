@@ -46,6 +46,18 @@ const DEFAULT_MAX_BLOCKED_MS = 15 * 60 * 1000;
  */
 
 /**
+ * True when a run failed because the page had no input box to type into.
+ * @param {import('@nomad/core').UnitResult<unknown>} res
+ */
+function isMissingComposer(res) {
+  return (
+    !res.success &&
+    res.errorCode === ErrorCodes.BOT_INJECT_FAILED_006 &&
+    /input (element )?not found/i.test(res.message || '')
+  );
+}
+
+/**
  * @param {WebviewTaskRunnerDeps} deps
  */
 function createWebviewTaskRunner(deps) {
@@ -199,8 +211,8 @@ function createWebviewTaskRunner(deps) {
       roster.setBotState(bot.id, BOT_STATE.UNKNOWN);
       return chat;
     }
-    const text = chat.data.freshChat && bot.persona ? `${bot.persona}\n\n---\n\n${prompt}` : prompt;
-    const res = await injectAndWait(platform, text, {
+    /** @type {WaitHooks} */
+    const hooks = {
       onBlocked: (reason) => {
         roster.setBotState(bot.id, BOT_STATE.BLOCKED);
         roster.appendTimeline(bot.id, { type: 'state', summary: `Blocked: ${reason}` });
@@ -209,9 +221,35 @@ function createWebviewTaskRunner(deps) {
       onUnblocked: () => {
         roster.setBotState(bot.id, BOT_STATE.WORKING);
       },
-    });
+    };
+    const withPersona = (/** @type {boolean} */ fresh) =>
+      fresh && bot.persona ? `${bot.persona}\n\n---\n\n${prompt}` : prompt;
+    let freshChat = chat.data.freshChat;
+    let res = await injectAndWait(platform, withPersona(freshChat), hooks);
 
-    if (chat.data.freshChat) {
+    // A conversation the account can no longer see can keep its URL (Grok does), so the open
+    // looked fine; a page with no input box is that case, and a new chat is the way out.
+    if (!freshChat && isMissingComposer(res)) {
+      roster.bindCanonicalChat(bot.id, { platform, url: null });
+      roster.appendTimeline(bot.id, {
+        type: 'chat-rebound',
+        summary: `Conversation ${bot.canonicalChat?.url} has no input box; starting a new one`,
+      });
+      const opened = await /** @type {NonNullable<WebviewTaskRunnerDeps['openChat']>} */ (
+        deps.openChat
+      )(platform, null);
+      if (!opened.ok) {
+        roster.setBotState(bot.id, BOT_STATE.UNKNOWN);
+        return err(
+          ErrorCodes.BOT_INJECT_FAILED_006,
+          `Could not open a new ${platform} chat: ${opened.error || 'unknown error'}`,
+        );
+      }
+      freshChat = true;
+      res = await injectAndWait(platform, withPersona(true), hooks);
+    }
+
+    if (freshChat) {
       const landed =
         await /** @type {NonNullable<WebviewTaskRunnerDeps['currentUrl']>} */ (deps.currentUrl)(
           platform,

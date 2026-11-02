@@ -152,3 +152,30 @@ test('Extractors: Perplexity drops inline citation chips from the reply', () => 
   assert.strictEqual(reply.length, reply.text.length);
   assert.strictEqual(dom.window.document.body.innerHTML, before, 'page DOM is left untouched');
 });
+
+test('Extractors: Perplexity does not read the follow-up composer as a reply', () => {
+  const { JSDOM } = require('jsdom');
+  // Live perplexity.ai (2026-11-02): before the answer's .prose renders, the only
+  // div[class*="answer"] is the follow-up box with its Pro upsell and input, and
+  // div.break-words holds the user's own question and the suggested follow-ups.
+  const dom = new JSDOM(
+    '<!doctype html><body>' +
+      '<div class="break-words">請只回覆：HOLD-C</div><div class="break-words">結束對話</div>' +
+      '<div class="answer-composer"><div>Pro 已啟用進階搜尋的免費預覽。</div>' +
+      '<div id="ask-input" contenteditable="true"></div></div></body>',
+    { runScripts: 'outside-only' },
+  );
+  const reply = dom.window.eval(PLATFORM_EXTRACTORS.perplexity.getLatestResponse());
+  assert.strictEqual(reply.ok, false);
+});
+
+test('Extractors: Perplexity still reads an answer block that holds no input', () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(
+    '<!doctype html><body><div class="answer-text">HOLD-C</div>' +
+      '<div class="answer-composer"><div id="ask-input" contenteditable="true"></div></div></body>',
+    { runScripts: 'outside-only' },
+  );
+  const reply = dom.window.eval(PLATFORM_EXTRACTORS.perplexity.getLatestResponse());
+  assert.strictEqual(reply.text, 'HOLD-C');
+});
