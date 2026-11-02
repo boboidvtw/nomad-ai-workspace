@@ -20,7 +20,7 @@ export class ServiceController {
             findPids: (pattern: string) => Promise<number[]>;
             pidsOnPort: (port: number) => Promise<number[]>;
             commandLine: (pid: number) => Promise<string>;
-            kill: (pid: number, signal: NodeJS.Signals) => true;
+            kill(pid: number, signal: NodeJS.Signals): void;
             logHint: (name: string) => string;
             writeLauncher(name: string, command: string | undefined): string;
             exec(bin: string, args: string[] | undefined, { cwd, timeoutMs, logName }: {
@@ -45,7 +45,7 @@ export class ServiceController {
         findPids: (pattern: string) => Promise<number[]>;
         pidsOnPort: (port: number) => Promise<number[]>;
         commandLine: (pid: number) => Promise<string>;
-        kill: (pid: number, signal: NodeJS.Signals) => true;
+        kill(pid: number, signal: NodeJS.Signals): void;
         logHint: (name: string) => string;
         writeLauncher(name: string, command: string | undefined): string;
         exec(bin: string, args: string[] | undefined, { cwd, timeoutMs, logName }: {
@@ -140,9 +140,19 @@ export class ServiceController {
     /** @param {ServiceDefinition} service */
     runStart(service: ServiceDefinition): Promise<void>;
     /** @param {ServiceDefinition} service */
+    startDockerEngine(service: ServiceDefinition): Promise<void>;
+    /** OrbStack can restart its VM mid-build (updates do this); `compose up` is safe to repeat.
+     * @param {ServiceDefinition} service */
+    runDockerStart(service: ServiceDefinition): Promise<void>;
+    /** @param {ServiceDefinition} service */
     runStop(service: ServiceDefinition): Promise<void>;
-    /** Only signals processes whose command line carries the service's marker. @param {ServiceDefinition} service */
+    /** @param {ServiceDefinition} service @returns {Promise<number[]>} */
+    ownedPids(service: ServiceDefinition): Promise<number[]>;
+    /** Only signals processes whose command line carries the service's marker, checked again
+     * before escalating to SIGKILL. @param {ServiceDefinition} service */
     killVerified(service: ServiceDefinition): Promise<void>;
+    /** @param {ServiceDefinition} service @param {boolean} wanted @param {number} deadline */
+    reaches(service: ServiceDefinition, wanted: boolean, deadline: number): Promise<boolean>;
     /** @param {ServiceDefinition} service @param {boolean} wanted */
     waitFor(service: ServiceDefinition, wanted: boolean): Promise<void>;
 }

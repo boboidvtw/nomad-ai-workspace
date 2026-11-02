@@ -14,6 +14,8 @@ const DEFAULT_TIMEOUT_MS = 30000;
 const EXEC_GRACE_MS = 30000;
 const DEFAULT_POLL_MS = 500;
 const DOCKER_ENGINE_TIMEOUT_MS = 60000;
+const TERM_GRACE_MS = 10000;
+const DOCKER_RETRY_HINT = '，Docker 引擎可能中途重啟過，請再試一次';
 const OPEN_BIN = '/usr/bin/open';
 
 /**
@@ -173,12 +175,8 @@ class ServiceController {
       return;
     }
     if (service.needsDocker) {
-      await this.runExec(
-        { ...service, timeoutMs: DOCKER_ENGINE_TIMEOUT_MS },
-        { kind: 'exec', bin: 'orb', args: ['start'] },
-      );
-    }
-    if (start.kind === 'daemon') {
+      await this.runDockerStart(service);
+    } else if (start.kind === 'daemon') {
       this.runner.spawnDetached(this.resolveBin(start.bin), start.args, {
         cwd: start.cwd,
         logName: service.id,
@@ -190,14 +188,36 @@ class ServiceController {
   }
 
   /** @param {ServiceDefinition} service */
+  async startDockerEngine(service) {
+    await this.runExec(
+      { ...service, timeoutMs: DOCKER_ENGINE_TIMEOUT_MS },
+      { kind: 'exec', bin: 'orb', args: ['start'] },
+    );
+  }
+
+  /** OrbStack can restart its VM mid-build (updates do this); `compose up` is safe to repeat.
+   * @param {ServiceDefinition} service */
+  async runDockerStart(service) {
+    await this.startDockerEngine(service);
+    try {
+      await this.runExec(service, service.start);
+    } catch {
+      await this.startDockerEngine(service);
+      await this.runExec(service, service.start).catch((/** @type {Error} */ error) => {
+        throw new Error(error.message + DOCKER_RETRY_HINT);
+      });
+    }
+  }
+
+  /** @param {ServiceDefinition} service */
   async runStop(service) {
     if (service.stop?.kind === 'process') await this.killVerified(service);
     else if (service.stop) await this.runExec(service, service.stop);
     await this.waitFor(service, false);
   }
 
-  /** Only signals processes whose command line carries the service's marker. @param {ServiceDefinition} service */
-  async killVerified(service) {
+  /** @param {ServiceDefinition} service @returns {Promise<number[]>} */
+  async ownedPids(service) {
     const { port, pattern, marker } = service.stop || {};
     const pids = port
       ? await this.runner.pidsOnPort(port)
@@ -206,19 +226,35 @@ class ServiceController {
     for (const pid of pids) {
       if ((await this.runner.commandLine(pid)).includes(marker || '\0')) owned.push(pid);
     }
+    return owned;
+  }
+
+  /** Only signals processes whose command line carries the service's marker, checked again
+   * before escalating to SIGKILL. @param {ServiceDefinition} service */
+  async killVerified(service) {
+    const owned = await this.ownedPids(service);
     if (owned.length === 0) throw new Error(`使用中的程式不是 ${service.label}，未關閉`);
     owned.forEach((pid) => this.runner.kill(pid, 'SIGTERM'));
+    const graceMs = Math.min(TERM_GRACE_MS, (service.timeoutMs || DEFAULT_TIMEOUT_MS) / 2);
+    if (await this.reaches(service, false, Date.now() + graceMs)) return;
+    const survivors = (await this.ownedPids(service)).filter((pid) => owned.includes(pid));
+    survivors.forEach((pid) => this.runner.kill(pid, 'SIGKILL'));
+  }
+
+  /** @param {ServiceDefinition} service @param {boolean} wanted @param {number} deadline */
+  async reaches(service, wanted, deadline) {
+    for (;;) {
+      if ((await this.isRunning(service)) === wanted) return true;
+      if (Date.now() >= deadline) return false;
+      await new Promise((resolve) => setTimeout(resolve, this.pollMs));
+    }
   }
 
   /** @param {ServiceDefinition} service @param {boolean} wanted */
   async waitFor(service, wanted) {
     const deadline = Date.now() + (service.timeoutMs || DEFAULT_TIMEOUT_MS);
-    for (;;) {
-      if ((await this.isRunning(service)) === wanted) return;
-      if (Date.now() >= deadline) {
-        throw new Error(`操作逾時，請看 ${this.runner.logHint(service.id)}`);
-      }
-      await new Promise((resolve) => setTimeout(resolve, this.pollMs));
+    if (!(await this.reaches(service, wanted, deadline))) {
+      throw new Error(`操作逾時，請看 ${this.runner.logHint(service.id)}`);
     }
   }
 }

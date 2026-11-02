@@ -33,12 +33,12 @@ function fakeServices() {
       confirmStart: '確定嗎？',
     },
     {
-      id: 'nomad-cli',
-      label: 'Nomad 協調器',
+      id: 'comfyui',
+      label: 'ComfyUI',
       state: 'unavailable',
       canStart: false,
       canStop: false,
-      message: '協調器已不在',
+      message: '找不到 venv',
     },
   ];
 }
@@ -79,7 +79,7 @@ test.afterEach(() => {
 test('Service panel: every card has a how-to and at least one control', async () => {
   const { document } = await loadDashboard();
   const cards = [...document.querySelectorAll('.card[id^="card-"]')];
-  assert.strictEqual(cards.length, 12);
+  assert.strictEqual(cards.length, 11);
   for (const card of cards) {
     assert.ok(card.querySelector('.svc-row'), `${card.id} has controls`);
     const guide = card.querySelector('details.svc-guide');
@@ -113,11 +113,11 @@ test('Service panel: buttons send only the id, and follow the reported state', a
 
 test('Service panel: an unavailable service shows why and cannot be pressed', async () => {
   const { document } = await loadDashboard();
-  const row = document.querySelector('.svc-row[data-service="nomad-cli"]');
+  const row = document.querySelector('.svc-row[data-service="comfyui"]');
   assert.strictEqual(row.querySelector('[data-action="start"]').disabled, true);
-  assert.strictEqual(row.querySelector('.svc-message').textContent, '協調器已不在');
-  const badge = document.querySelector('#card-nomad-cli .status-badge');
-  assert.ok(!badge.textContent.includes('Stack Ready'));
+  assert.strictEqual(row.querySelector('.svc-message').textContent, '找不到 venv');
+  const badge = document.querySelector('#card-comfyui .card-top .status-badge');
+  assert.ok(badge.textContent.includes('未安裝'));
 });
 
 test('Service panel: declining the warning sends nothing', async () => {
@@ -202,4 +202,26 @@ test('Bridge: service routes need the token and refuse other sites', async () =>
   } finally {
     await bridge.stop();
   }
+});
+
+test('Bridge: the Laya route needs the token and refuses other sites', async () => {
+  const bridge = new LocalSyncBridge({ port: 19898, host: '127.0.0.1', authToken: TOKEN });
+  await bridge.start();
+  const url = 'http://127.0.0.1:19898/api/laya/systemone';
+  try {
+    assert.strictEqual((await fetch(url, { method: 'POST', body: '{}' })).status, 401);
+    const crossSite = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + TOKEN, Origin: 'https://evil.example' },
+      body: '{}',
+    });
+    assert.strictEqual(crossSite.status, 403);
+  } finally {
+    await bridge.stop();
+  }
+});
+
+test('Dashboard: Laya is called through Nomad, not directly from the page', () => {
+  assert.ok(!INDEX.includes("fetch('http://127.0.0.1:8555"));
+  assert.strictEqual(INDEX.split("+ '/api/laya/systemone'").length - 1, 2);
 });

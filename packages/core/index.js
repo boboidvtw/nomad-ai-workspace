@@ -79,6 +79,7 @@ const { LocalModelClient } = require('./src/client/local-model-client');
 const { probePort, probeAllServices } = require('./src/probe/prober');
 const { ServiceController } = require('./src/services/service-controller');
 const { handleServiceRequest } = require('./src/services/service-routes');
+const { handleLayaRequest } = require('./src/services/laya-proxy');
 const { buildServiceRegistry } = require('./src/services/service-registry');
 
 // Local gateway auth (Daemon & Bridge)
@@ -305,6 +306,7 @@ module.exports = {
   probeAllServices,
   ServiceController,
   handleServiceRequest,
+  handleLayaRequest,
   buildServiceRegistry,
   // Local gateway auth
   resolveAuthToken,

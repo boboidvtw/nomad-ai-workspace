@@ -12,6 +12,12 @@
 
 ### 🔧 修正 (Fixed)
 
+- **Dashboard 服務控制收尾**：
+  - 關閉時忽略 SIGTERM 的程式，10 秒後再核對一次指令列，相符才 SIGKILL；連接埠已換成別的程式時不會強制結束。
+  - Docker 類服務啟動失敗時（例如 OrbStack 自動更新途中重啟 VM），重新開啟引擎後自動再試一次。
+  - Laya 改經由 Nomad 的 `/api/laya/systemone`、`/api/laya/health` 呼叫，不再需要在 Laya 的 `serve.py` 加 CORS，更新 Laya 也不會失效。
+  - 移除「Nomad 專案協調器」卡片與相關指令：協調器程式已不在本機，也沒有遠端 repo。
+
 - **Dashboard 狀態改為實測**：狀態列原本固定多算 4 個服務，部分卡片顯示寫死的文字（例如協調器已不存在卻顯示 Stack Ready）。現在都由本機實際檢查。
 - **修正卡片上失效的指令**：ComfyUI、Hermes、PostgreSQL、Redis 的指令指向不存在的環境、路徑或未安裝的工具；移除已不存在的 Telegram 審批橋接。
 
