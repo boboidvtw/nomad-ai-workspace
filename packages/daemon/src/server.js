@@ -11,6 +11,8 @@ const {
   DEFAULT_DAEMON_PORT,
   DEFAULT_DAEMON_HOST,
   PipelineManager,
+  ServiceController,
+  handleServiceRequest,
   getSyncStatus,
   exportToDrive,
   importFromDrive,
@@ -60,6 +62,7 @@ class NomadDaemonServer {
    * @param {number} [options.port] - Defaults to $NOMAD_PORT or 8765
    * @param {string} [options.host] - Defaults to $NOMAD_HOST or 127.0.0.1
    * @param {string} [options.authToken] - Shared gateway token (defaults to ~/.nomad/daemon-token)
+   * @param {import('@nomad/core').ServiceController} [options.serviceController] - Dashboard service control (tests inject a fake)
    * @param {() => any} [options.getStatus] - Studio status fallback when no Studio is registered
    * @param {Function} [options.onDispatchPrompt]
    * @param {Function} [options.onSetLayout]
@@ -89,6 +92,7 @@ class NomadDaemonServer {
     this.sseClients = new Set();
     /** @type {StudioRegistration | null} */
     this.activeStudio = null;
+    this.serviceController = options.serviceController || new ServiceController();
     this.pipelineManager = new PipelineManager({
       headroomEnabled: true,
       layaEnabled: true,
@@ -778,6 +782,10 @@ class NomadDaemonServer {
           }),
         );
       }
+
+      // 4.9 Dashboard service start/stop
+      const serviceRes = await handleServiceRequest(this.serviceController, req.method, pathname);
+      if (serviceRes) return this.sendJson(res, serviceRes.status, serviceRes.body);
 
       // 5. Microservices Probe API
       if (pathname === '/api/probe' && req.method === 'GET') {

@@ -15,7 +15,8 @@
     "index.js",
     "theme.js",
     "index.html",
-    "bots-panel.html"
+    "bots-panel.html",
+    "service-panel.html"
   ],
   "dependencies": {
     "@nomad/core": "*"

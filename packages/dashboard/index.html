@@ -2574,12 +2574,9 @@
               <div class="pipeline-row">
                 <div class="pipeline-info">
                   <span class="pipeline-name">🎨 本地啟動 ComfyUI</span>
-                  <span class="pipeline-cmd">cd ~/Developer/ComfyUI && python3 main.py</span>
+                  <span class="pipeline-cmd">~/Developer/ComfyUI/start_comfyui.sh</span>
                 </div>
-                <button
-                  class="btn-copy"
-                  onclick="copyText('cd ~/Developer/ComfyUI && python3 main.py')"
-                >
+                <button class="btn-copy" onclick="copyText('~/Developer/ComfyUI/start_comfyui.sh')">
                   📋 複製
                 </button>
               </div>
@@ -2662,24 +2659,19 @@
               </div>
               <div class="pipeline-row">
                 <div class="pipeline-info">
-                  <span class="pipeline-name">🔄 重啟 Gateway 守護進程</span>
-                  <span class="pipeline-cmd"
-                    >launchctl kickstart -k gui/$(id -u)/ai.hermes.gateway</span
-                  >
+                  <span class="pipeline-name">📡 查看閘道狀態</span>
+                  <span class="pipeline-cmd">hermes gateway status</span>
                 </div>
-                <button
-                  class="btn-copy"
-                  onclick="copyText('launchctl kickstart -k gui/$(id -u)/ai.hermes.gateway')"
-                >
+                <button class="btn-copy" onclick="copyText('hermes gateway status')">
                   📋 複製
                 </button>
               </div>
               <div class="pipeline-row">
                 <div class="pipeline-info">
                   <span class="pipeline-name">📜 實時監看日誌</span>
-                  <span class="pipeline-cmd">tail -f ~/.hermes/agent.log</span>
+                  <span class="pipeline-cmd">tail -f ~/.hermes/logs/agent.log</span>
                 </div>
-                <button class="btn-copy" onclick="copyText('tail -f ~/.hermes/agent.log')">
+                <button class="btn-copy" onclick="copyText('tail -f ~/.hermes/logs/agent.log')">
                   📋 複製
                 </button>
               </div>
@@ -2815,10 +2807,6 @@
                 <span class="meta-val">~/.local/bin/claude, ~/.local/bin/codex</span>
               </div>
               <div class="meta-row">
-                <span class="meta-label">Telegram 橋接</span>
-                <span class="meta-val">com.antigravity.telegram_bridge</span>
-              </div>
-              <div class="meta-row">
                 <span class="meta-label">終端機</span>
                 <span class="meta-val">Tabby.app (zh-TW 原生分頁)</span>
               </div>
@@ -2838,22 +2826,6 @@
                   <span class="pipeline-cmd">codex</span>
                 </div>
                 <button class="btn-copy" onclick="copyText('codex')">📋 複製</button>
-              </div>
-              <div class="pipeline-row">
-                <div class="pipeline-info">
-                  <span class="pipeline-name">🔄 重啟 Telegram 審批橋接</span>
-                  <span class="pipeline-cmd"
-                    >launchctl kickstart -k gui/$(id -u)/com.antigravity.telegram_bridge</span
-                  >
-                </div>
-                <button
-                  class="btn-copy"
-                  onclick="
-                    copyText('launchctl kickstart -k gui/$(id -u)/com.antigravity.telegram_bridge')
-                  "
-                >
-                  📋 複製
-                </button>
               </div>
             </div>
 
@@ -2961,11 +2933,13 @@
               <div class="pipeline-row">
                 <div class="pipeline-info">
                   <span class="pipeline-name">🐘 進入 psql 終端</span>
-                  <span class="pipeline-cmd">psql -h 127.0.0.1 -U postgres -d app_db</span>
+                  <span class="pipeline-cmd"
+                    >docker exec -it postgres-server psql -U postgres -d app_db</span
+                  >
                 </div>
                 <button
                   class="btn-copy"
-                  onclick="copyText('psql -h 127.0.0.1 -U postgres -d app_db')"
+                  onclick="copyText('docker exec -it postgres-server psql -U postgres -d app_db')"
                 >
                   📋 複製
                 </button>
@@ -2984,7 +2958,7 @@
               </button>
               <button
                 class="btn-copy"
-                onclick="copyText('psql -h 127.0.0.1 -U postgres -d app_db')"
+                onclick="copyText('docker exec -it postgres-server psql -U postgres -d app_db')"
               >
                 📋 複製 psql
               </button>
@@ -3031,7 +3005,10 @@
               </div>
               <div class="meta-row">
                 <span class="meta-label">管理指令</span>
-                <span class="meta-val">redis-cli -h 127.0.0.1</span>
+                <span class="meta-val"
+                  >cd ~/docker-services/redis && source .env && docker exec -it -e
+                  REDISCLI_AUTH=$REDIS_PASSWORD redis-server redis-cli</span
+                >
               </div>
             </div>
 
@@ -3039,18 +3016,38 @@
               <div class="pipeline-row">
                 <div class="pipeline-info">
                   <span class="pipeline-name">⚡ 進入 redis-cli</span>
-                  <span class="pipeline-cmd">redis-cli -h 127.0.0.1</span>
+                  <span class="pipeline-cmd"
+                    >cd ~/docker-services/redis && source .env && docker exec -it -e
+                    REDISCLI_AUTH=$REDIS_PASSWORD redis-server redis-cli</span
+                  >
                 </div>
-                <button class="btn-copy" onclick="copyText('redis-cli -h 127.0.0.1')">
+                <button
+                  class="btn-copy"
+                  onclick="
+                    copyText(
+                      'cd ~/docker-services/redis && source .env && docker exec -it -e REDISCLI_AUTH=$REDIS_PASSWORD redis-server redis-cli',
+                    )
+                  "
+                >
                   📋 複製
                 </button>
               </div>
               <div class="pipeline-row">
                 <div class="pipeline-info">
                   <span class="pipeline-name">👀 實時監看 Redis 請求 (Monitor)</span>
-                  <span class="pipeline-cmd">redis-cli -h 127.0.0.1 monitor</span>
+                  <span class="pipeline-cmd"
+                    >cd ~/docker-services/redis && source .env && docker exec -it -e
+                    REDISCLI_AUTH=$REDIS_PASSWORD redis-server redis-cli monitor</span
+                  >
                 </div>
-                <button class="btn-copy" onclick="copyText('redis-cli -h 127.0.0.1 monitor')">
+                <button
+                  class="btn-copy"
+                  onclick="
+                    copyText(
+                      'cd ~/docker-services/redis && source .env && docker exec -it -e REDISCLI_AUTH=$REDIS_PASSWORD redis-server redis-cli monitor',
+                    )
+                  "
+                >
                   📋 複製
                 </button>
               </div>
@@ -3060,7 +3057,14 @@
               <button class="btn-pipeline-toggle" onclick="toggleCardPipelines('card-redis')">
                 ⚙️ 快捷管線
               </button>
-              <button class="btn-copy" onclick="copyText('redis-cli -h 127.0.0.1')">
+              <button
+                class="btn-copy"
+                onclick="
+                  copyText(
+                    'cd ~/docker-services/redis && source .env && docker exec -it -e REDISCLI_AUTH=$REDIS_PASSWORD redis-server redis-cli',
+                  )
+                "
+              >
                 📋 複製 redis-cli
               </button>
               <button class="btn-copy" onclick="copyText('redis://127.0.0.1:6379/0')">
@@ -3378,10 +3382,12 @@
             </div>
 
             <div class="ops-cmd-block">
-              <span class="ops-cmd-text">psql -h 127.0.0.1 -U postgres -d app_db</span>
+              <span class="ops-cmd-text"
+                >docker exec -it postgres-server psql -U postgres -d app_db</span
+              >
               <button
                 class="btn-copy"
-                onclick="copyText('psql -h 127.0.0.1 -U postgres -d app_db')"
+                onclick="copyText('docker exec -it postgres-server psql -U postgres -d app_db')"
               >
                 📋 進入 psql
               </button>
@@ -3477,14 +3483,9 @@
             </div>
 
             <div class="ops-cmd-block">
-              <span class="ops-cmd-text"
-                >launchctl kickstart -k gui/$(id -u)/ai.hermes.gateway</span
-              >
-              <button
-                class="btn-copy"
-                onclick="copyText('launchctl kickstart -k gui/$(id -u)/ai.hermes.gateway')"
-              >
-                📋 重啟 Gateway
+              <span class="ops-cmd-text">hermes gateway status</span>
+              <button class="btn-copy" onclick="copyText('hermes gateway status')">
+                📋 閘道狀態
               </button>
             </div>
 
@@ -3856,7 +3857,7 @@
         {
           type: 'pipeline',
           title: '🐘 進入 psql 互動式終端',
-          cmd: 'psql -h 127.0.0.1 -U postgres -d app_db',
+          cmd: 'docker exec -it postgres-server psql -U postgres -d app_db',
           desc: '本機直接透過 psql 連線 postgres-server',
           tags: ['psql', 'sql', 'postgres', 'cli'],
         },
@@ -3884,9 +3885,9 @@
         {
           type: 'pipeline',
           title: '🔄 重啟 Hermes Gateway 守護進程',
-          cmd: 'launchctl kickstart -k gui/$(id -u)/ai.hermes.gateway',
-          desc: '透過 launchctl 重啟 Hermes 背景通訊網關',
-          tags: ['hermes', 'gateway', 'launchctl', 'restart'],
+          cmd: 'hermes gateway status',
+          desc: '查看 Hermes Telegram 閘道狀態',
+          tags: ['hermes', 'gateway', 'status'],
         },
         {
           type: 'pipeline',
@@ -4443,6 +4444,9 @@
           document.getElementById('hud-laya-latency').innerText = 'OFFLINE';
         }
 
+        // Real status comes from the backend; the probes below are for pages opened without it.
+        if (await window.refreshServiceCards()) return;
+
         // Nomad AI Studio (Local Sync Bridge)
         const studio = await checkServiceProbe({ probeUrl: 'http://127.0.0.1:8765/api/status' });
         const bStudio = document.getElementById('badge-nomad-studio');
@@ -4494,9 +4498,6 @@
           bAdminer.className = 'status-badge offline';
           document.getElementById('adminer-status-text').innerText = 'OFFLINE';
         }
-
-        // 本機靜態在線 (Nomad Dashboard, Obsidian, Hermes CLI, Nomad CLI 等)
-        currentOnline += 4;
 
         onlineCount = currentOnline;
         const totalServices = 11;
@@ -5432,5 +5433,6 @@
       openHashCategory();
       window.addEventListener('hashchange', openHashCategory);
     </script>
+    <!-- @nomad:service-panel -->
   </body>
 </html>

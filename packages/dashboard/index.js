@@ -11,16 +11,29 @@ const { dashboardThemeTokens, themeDashboardHtml } = require('./theme');
 const DASHBOARD_HTML_PATH = path.join(__dirname, 'index.html');
 const BOTS_PANEL_PATH = path.join(__dirname, 'bots-panel.html');
 const BOTS_PANEL_MARKER = '<!-- @nomad:bots-panel -->';
+const SERVICE_PANEL_PATH = path.join(__dirname, 'service-panel.html');
+const SERVICE_PANEL_MARKER = '<!-- @nomad:service-panel -->';
 
 /**
- * Inlines the Bots panel (kept in its own file so index.html does not keep growing).
+ * @param {string} html
+ * @param {string} marker
+ * @param {string} filePath
+ * @returns {string}
+ */
+function inlinePanel(html, marker, filePath) {
+  if (!html.includes(marker) || !fs.existsSync(filePath)) return html;
+  const panel = fs.readFileSync(filePath, 'utf-8');
+  return html.replace(marker, () => panel);
+}
+
+/**
+ * Inlines the panels kept in their own files so index.html does not keep growing.
  * @param {string} html
  * @returns {string}
  */
 function composeDashboard(html) {
-  if (!html.includes(BOTS_PANEL_MARKER) || !fs.existsSync(BOTS_PANEL_PATH)) return html;
-  const panel = fs.readFileSync(BOTS_PANEL_PATH, 'utf-8');
-  return html.replace(BOTS_PANEL_MARKER, () => panel);
+  const withBots = inlinePanel(html, BOTS_PANEL_MARKER, BOTS_PANEL_PATH);
+  return inlinePanel(withBots, SERVICE_PANEL_MARKER, SERVICE_PANEL_PATH);
 }
 
 /**

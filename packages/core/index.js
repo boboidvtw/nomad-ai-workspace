@@ -77,6 +77,9 @@ const { LocalModelClient } = require('./src/client/local-model-client');
 
 // Microservice health probe (Daemon & Bridge)
 const { probePort, probeAllServices } = require('./src/probe/prober');
+const { ServiceController } = require('./src/services/service-controller');
+const { handleServiceRequest } = require('./src/services/service-routes');
+const { buildServiceRegistry } = require('./src/services/service-registry');
 
 // Local gateway auth (Daemon & Bridge)
 const {
@@ -300,6 +303,9 @@ module.exports = {
   // Microservice health probe
   probePort,
   probeAllServices,
+  ServiceController,
+  handleServiceRequest,
+  buildServiceRegistry,
   // Local gateway auth
   resolveAuthToken,
   getTokenFilePath,

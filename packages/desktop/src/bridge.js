@@ -12,6 +12,8 @@ const {
   err,
   ErrorCodes,
   PipelineManager,
+  ServiceController,
+  handleServiceRequest,
   getSyncStatus,
   exportToDrive,
   importFromDrive,
@@ -54,6 +56,7 @@ class LocalSyncBridge {
    * @param {Function} [options.onToggleWindow] - Callback for window summon/hide
    * @param {import('./orchestrator').MultiAiOrchestrator | null} [options.orchestrator]
    * @param {string} [options.authToken] - Shared gateway token (defaults to ~/.nomad/daemon-token)
+   * @param {import('@nomad/core').ServiceController} [options.serviceController] - Dashboard service control (tests inject a fake)
    * @param {Function} [options.onInspectPlatform] - Debug hook: inspect a platform webview
    * @param {Function} [options.onEvalScript] - Debug hook: run a script in a platform webview
    * @param {boolean} [options.debugEndpoints=false] - Serve /api/debug/* (they run scripts inside logged-in AI sessions); 404 otherwise
@@ -87,6 +90,7 @@ class LocalSyncBridge {
     this.sseClients = new Set();
     this.heartbeatTimer = null;
     this.daemonPort = options.daemonPort || 8765;
+    this.serviceController = options.serviceController || new ServiceController();
     this.pipelineManager = new PipelineManager({
       headroomEnabled: true,
       layaEnabled: true,
@@ -417,6 +421,10 @@ class LocalSyncBridge {
         );
         return;
       }
+
+      // 0.0 Dashboard service start/stop
+      const serviceRes = await handleServiceRequest(this.serviceController, req.method, pathname);
+      if (serviceRes) return this.sendJson(res, serviceRes.status, serviceRes.body);
 
       // 0.1 Microservice health probe
       if (pathname === '/api/probe' && req.method === 'GET') {
