@@ -244,11 +244,13 @@ const PLATFORM_EXTRACTORS = {
           'div[class*="answer"]',
           'div[dir="auto"].text-textOff',
           '.markdown',
-          'div.break-words'
         ];
+        // The follow-up box also matches the fallbacks (its class holds "answer"); a block with
+        // an input in it is page chrome, never a reply.
+        const isChrome = (el) => Boolean(el.querySelector('[contenteditable="true"], textarea'));
         let target = null;
         for (const sel of selectors) {
-          const els = document.querySelectorAll(sel);
+          const els = [...document.querySelectorAll(sel)].filter((el) => !isChrome(el));
           if (els.length > 0) {
             target = els[els.length - 1];
             break;

@@ -101,7 +101,9 @@ const SEND_CONFIRM_SOURCE = `
         const leftover = () => String(input.value ?? input.innerText ?? input.textContent ?? '').trim();
         const isStreaming = () => Boolean(document.querySelector(
           'button[aria-label*="停止"], button[aria-label*="Stop"], button[data-testid="stop-button"]'));
-        const wasSent = () => leftover().length === 0 || isStreaming();
+        // A stop button that was already there belongs to the previous reply, not to this send.
+        const busyBefore = isStreaming();
+        const wasSent = () => leftover().length === 0 || (!busyBefore && isStreaming());
         await waitFor(() => isEnabled(findSend()), 1500);
         const btn = findSend();
         if (isEnabled(btn)) {
@@ -143,8 +145,8 @@ const RAW_PLATFORM_INJECTORS = {
       input.focus();
       const sel = window.getSelection();
       const range = document.createRange();
+      // Select everything, so the prompt replaces text a failed send left in the box.
       range.selectNodeContents(input);
-      range.collapse(false);
       if (sel) { sel.removeAllRanges(); sel.addRange(range); }
       let ok = false;
       try { ok = document.execCommand('insertText', false, text); } catch(e) {}
@@ -186,8 +188,8 @@ ${SEND_CONFIRM_SOURCE}
 
       const sel = window.getSelection();
       const range = document.createRange();
+      // Select everything, so the prompt replaces text a failed send left in the box.
       range.selectNodeContents(input);
-      range.collapse(false);
       if (sel) { sel.removeAllRanges(); sel.addRange(range); }
       let ok = false;
       try { ok = document.execCommand('insertText', false, text); } catch(e) {}
@@ -257,13 +259,11 @@ ${SEND_CONFIRM_SOURCE}
       input.click();
       input.classList.remove('ql-blank');
       
-      // 2. Clear placeholder content and prepare selection inside <p>
-      const targetNode = input.querySelector('p') || input;
+      // 2. Select everything, so the prompt replaces text a failed send left in the box
       const sel = window.getSelection();
       if (sel) {
         const range = document.createRange();
-        range.selectNodeContents(targetNode);
-        range.collapse(false);
+        range.selectNodeContents(input);
         sel.removeAllRanges();
         sel.addRange(range);
       }
@@ -299,8 +299,11 @@ ${SEND_CONFIRM_SOURCE}
                              document.querySelector('button[aria-label*="Send"]') ||
                              document.querySelector('button.send-button');
       const isEnabled = (btn) => Boolean(btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true');
+      const isStreaming = () => Boolean(document.querySelector('button[aria-label*="停止"], button[aria-label*="Stop"]'));
+      // A stop button that was already there belongs to the previous reply, not to this send.
+      const busyBefore = isStreaming();
       const wasSent = () => (input.innerText || input.textContent || '').trim().length === 0 ||
-        Boolean(document.querySelector('button[aria-label*="停止"], button[aria-label*="Stop"]'));
+        (!busyBefore && isStreaming());
       const waitFor = async (check, timeoutMs) => {
         const deadline = Date.now() + timeoutMs;
         for (;;) {
@@ -351,12 +354,21 @@ ${SEND_CONFIRM_SOURCE}
         '[data-testid*="input"]'
       ];
       
+      // Text typed into the Voyager extension's inputs (gv-*) or into the hidden copy Grok's
+      // autosizing textarea measures with never reaches Grok.
+      const isForeignInput = (el) => {
+        if (el.getAttribute('aria-hidden') === 'true') return true;
+        for (; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+          if ([...el.classList].some((c) => c.startsWith('gv-'))) return true;
+        }
+        return false;
+      };
       let input = null;
       const visibleMatches = [];
       for (const sel of inputCandidates) {
         const els = document.querySelectorAll(sel);
         for (const el of els) {
-          if (el instanceof HTMLElement) {
+          if (el instanceof HTMLElement && !isForeignInput(el)) {
             const rect = el.getBoundingClientRect();
             if (rect.width > 60 && rect.height > 20) {
               visibleMatches.push({ el, area: rect.width * rect.height });
@@ -369,7 +381,7 @@ ${SEND_CONFIRM_SOURCE}
         visibleMatches.sort((a, b) => b.area - a.area);
         input = visibleMatches[0].el;
       } else {
-        input = document.querySelector('textarea, [contenteditable="true"]');
+        input = [...document.querySelectorAll('textarea, [contenteditable="true"]')].find((el) => !isForeignInput(el)) || null;
       }
       
       if (!input) {
@@ -404,7 +416,6 @@ ${SEND_CONFIRM_SOURCE}
         if (sel) {
           const range = document.createRange();
           range.selectNodeContents(input);
-          range.collapse(false);
           sel.removeAllRanges();
           sel.addRange(range);
         }
@@ -461,7 +472,8 @@ ${SEND_CONFIRM_SOURCE}
       const questionCount = () => document.querySelectorAll('[data-testid="chatQuestion"]').length;
       const before = questionCount();
       const isStreaming = () => Boolean(document.querySelector('button[aria-label*="停止"], button[aria-label*="Stop"]'));
-      const wasSent = () => questionCount() > before || isStreaming();
+      const busyBefore = isStreaming();
+      const wasSent = () => questionCount() > before || (!busyBefore && isStreaming());
       const waitFor = async (check, timeoutMs) => {
         const deadline = Date.now() + timeoutMs;
         for (;;) {

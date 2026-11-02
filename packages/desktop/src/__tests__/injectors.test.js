@@ -333,3 +333,114 @@ test('Injectors: Perplexity refuses to send when the editor did not take the pro
   assert.match(result.error, /did not take the prompt/);
   assert.deepStrictEqual(sent, []);
 });
+
+/**
+ * jsdom has no execCommand; this one types over the current selection the way Chrome does, so
+ * a script that only moves the caret to the end of old text sends the old text too.
+ * @param {import('jsdom').JSDOM} dom
+ */
+function emulateInsertText(dom) {
+  const doc = dom.window.document;
+  doc.execCommand = (/** @type {string} */ cmd, _ui, /** @type {string} */ value) => {
+    const sel = dom.window.getSelection();
+    if (cmd !== 'insertText' || !sel || sel.rangeCount === 0) return false;
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(doc.createTextNode(value));
+    return true;
+  };
+}
+
+const LEFTOVER_PAGES = {
+  claude: {
+    html: '<div class="ProseMirror" contenteditable="true"><p>old text</p></div><button aria-label="傳送訊息">↑</button>',
+    input: '.ProseMirror',
+  },
+  chatgpt: {
+    html: '<div id="prompt-textarea" contenteditable="true"><p>old text</p></div><button data-testid="send-button" aria-label="傳送提示">↑</button>',
+    input: '#prompt-textarea',
+  },
+  gemini: {
+    html: '<rich-textarea><div class="ql-editor" contenteditable="true"><p>old text</p></div></rich-textarea><button aria-label="傳送訊息">↑</button>',
+    input: '.ql-editor',
+  },
+};
+
+for (const platform of /** @type {(keyof typeof LEFTOVER_PAGES)[]} */ (
+  Object.keys(LEFTOVER_PAGES)
+)) {
+  test(`Injectors: ${platform} replaces text a failed send left in the input box`, async () => {
+    const { JSDOM } = require('jsdom');
+    const page = LEFTOVER_PAGES[platform];
+    const dom = new JSDOM(`<!doctype html><body>${page.html}</body>`, {
+      runScripts: 'outside-only',
+    });
+    emulateInsertText(dom);
+    const doc = dom.window.document;
+    const input = /** @type {HTMLElement} */ (doc.querySelector(page.input));
+    input.getBoundingClientRect = () => /** @type {DOMRect} */ ({ width: 400, height: 40 });
+    /** @type {string[]} */
+    const sent = [];
+    doc.querySelector('button')?.addEventListener('click', () => {
+      sent.push(String(input.textContent));
+      input.innerHTML = '<p></p>';
+    });
+
+    const result = await dom.window.eval(PLATFORM_INJECTORS[platform]('hello'));
+    assert.strictEqual(result.ok, true);
+    assert.deepStrictEqual(sent, ['hello']);
+  });
+}
+
+/** A page still answering the last prompt: the send button has become a stop button. */
+const BUSY_PAGES = {
+  chatgpt: {
+    html: '<div id="prompt-textarea" contenteditable="true"><p></p></div><button data-testid="stop-button" aria-label="停止串流">■</button>',
+    input: '#prompt-textarea',
+  },
+  gemini: {
+    html: '<rich-textarea><div class="ql-editor" contenteditable="true"><p></p></div></rich-textarea><button aria-label="停止回覆">■</button>',
+    input: '.ql-editor',
+  },
+};
+
+for (const platform of /** @type {(keyof typeof BUSY_PAGES)[]} */ (Object.keys(BUSY_PAGES))) {
+  test(`Injectors: ${platform} does not count a reply already streaming as a send`, async () => {
+    const { JSDOM } = require('jsdom');
+    const page = BUSY_PAGES[platform];
+    const dom = new JSDOM(`<!doctype html><body>${page.html}</body>`, {
+      runScripts: 'outside-only',
+    });
+    const input = /** @type {HTMLElement} */ (dom.window.document.querySelector(page.input));
+    input.getBoundingClientRect = () => /** @type {DOMRect} */ ({ width: 400, height: 40 });
+
+    const result = await dom.window.eval(PLATFORM_INJECTORS[platform]('hello'));
+    assert.strictEqual(result.ok, false);
+    assert.match(result.error, /did not send the prompt/);
+  });
+}
+
+test('Injectors: Grok never types into the extension prompt manager', async () => {
+  const { JSDOM } = require('jsdom');
+  // A conversation the account cannot open has no composer; only the Voyager prompt manager's
+  // own textarea and a hidden measuring textarea are left on the page.
+  const dom = new JSDOM(
+    '<!doctype html><body class="gv-grok-page"><div class="gv-pm"><form>' +
+      '<textarea class="gv-pm-input-text" placeholder="Prompt 文字"></textarea>' +
+      '<button type="submit">儲存</button></form></div>' +
+      // react-textarea-autosize's measuring copy, which Grok leaves on every page.
+      '<textarea tabindex="-1" aria-hidden="true" style="visibility: hidden"></textarea></body>',
+    { runScripts: 'outside-only' },
+  );
+  const areas = [...dom.window.document.querySelectorAll('textarea')];
+  areas[0].getBoundingClientRect = () => /** @type {DOMRect} */ ({ width: 700, height: 80 });
+  areas[1].getBoundingClientRect = () => /** @type {DOMRect} */ ({ width: 726, height: 14 });
+
+  const result = await dom.window.eval(PLATFORM_INJECTORS.grok('hello'));
+  assert.strictEqual(result.ok, false);
+  assert.match(result.error, /input element not found/);
+  assert.deepStrictEqual(
+    areas.map((a) => a.value),
+    ['', ''],
+  );
+});
