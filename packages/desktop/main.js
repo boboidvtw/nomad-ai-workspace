@@ -523,7 +523,9 @@ async function createMainWindow() {
     enabled: store.get('bots')?.enabled !== false,
     inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
     readReply: (platform) =>
-      orchestrator ? orchestrator.readReply(platform) : Promise.resolve(''),
+      orchestrator
+        ? orchestrator.readReplySnapshot(platform)
+        : Promise.resolve({ text: '', count: null, countOf: null }),
     awaitSettled: (platform, options) => {
       const orch = orchestrator;
       return orch

@@ -194,3 +194,35 @@
 - **Rule:** Every extractor reads through `readText`, which replaces each formula with its TeX
   source (`data-math`, else the KaTeX `annotation`) as `$…$` or `$$…$$` on an off-screen copy.
 - **Guard:** `packages/desktop/src/__tests__/extractors.test.js`
+
+## A dropped prompt could be answered with the reply that was already there
+
+- **Trap:** The wait accepted text identical to the pre-send reply once it saw streaming or a
+  different read, so a new reply that repeats the old one is not lost. A page that blinked
+  after the platform dropped the prompt (an empty read, a stop button that flickered) passed
+  the old reply on as the new answer.
+- **Rule:** Extractors return `count` and `countOf` (how many replies the counted selector
+  matched). When the pre-send read has a count, only a higher count under the same selector
+  counts as a new reply; fewer replies (a reloaded page) keep waiting, so the worst case is a
+  visible timeout. Without a comparable count the text rule still applies.
+- **Guard:** `packages/desktop/src/__tests__/orchestrator-reply-count.test.js`,
+  `packages/desktop/src/__tests__/extractors.test.js`
+
+## Grok's capacity notice read as "no reply" instead of blocked
+
+- **Trap:** Grok draws 需求量高 / 目前使用人數較多 inside the conversation where the reply would
+  be, not in an alert or dialog, so the blocked check never saw it and a task waited out its
+  full timeout.
+- **Rule:** `tail` rules match the last 600 characters of the page, collected only for
+  platforms that have one. Their patterns quote the notice itself; add the English wording only
+  once it has been seen, since a guess could match a reply.
+- **Guard:** `packages/core/src/__tests__/bot-state.test.js`
+
+## A bot's freshly opened chat failed when its input box mounted late
+
+- **Trap:** `/api/prompt` and the relay waited for a late composer, but bot and task runs sent
+  once right after `openChat`, so a cold page failed with "input element not found".
+- **Rule:** `webview-task-runner` sends through `dispatchUntilComposerReady` (20 s by default)
+  and retries only a missing input box. A bound conversation with no input box at all is
+  rebound to a new chat after that wait.
+- **Guard:** `packages/desktop/src/__tests__/webview-task-runner.test.js`

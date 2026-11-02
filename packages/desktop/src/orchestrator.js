@@ -19,6 +19,32 @@ const { createSemanticTitle } = require('./session-manager');
 const INCOMPLETE_REPLY_NOTE = '[注意：這份回覆等待逾時，內容可能不完整]';
 
 /**
+ * The latest reply on a page and how many replies the page holds. `count` and `countOf` (the
+ * selector that was counted) are null when the extractor could not count, so text alone decides.
+ * @typedef {{ text: string, count: number | null, countOf: string | null }} ReplySnapshot
+ */
+
+/**
+ * Whether a page read moved past the reply that was there before the send. With a count, only
+ * more replies than before do: the old text can come back after a blink of the page (an empty
+ * read, a stop button that flickers) when the platform dropped the prompt. A page holding fewer
+ * replies than before reloaded under us; it waits, so the worst case is a visible timeout, never
+ * an old reply passed on as new. Without a comparable count, any activity or different text does.
+ * @param {ReplySnapshot} previous
+ * @param {{ ok?: boolean, count?: number, countOf?: string } | undefined} res
+ * @param {string} pageText
+ * @param {boolean} isStreaming
+ * @returns {boolean}
+ */
+function movedPastPrevious(previous, res, pageText, isStreaming) {
+  if (previous.count !== null) {
+    if (typeof res?.count !== 'number') return false;
+    if (res.countOf === previous.countOf) return res.count > previous.count;
+  }
+  return isStreaming || (res?.ok !== false && pageText !== previous.text);
+}
+
+/**
  * What every speaker needs before the previous reply: without the user's question, a later
  * speaker sees only an answer to something it was never asked.
  * @param {string | null | undefined} title
@@ -307,7 +333,7 @@ class MultiAiOrchestrator {
         this.onSpeakerChange(speaker);
 
         // 1. Inject prompt to current speaker, remembering the reply already on the page
-        const previousText = await this.readReply(speaker);
+        const previous = await this.readReplySnapshot(speaker);
         const delivery = await this.deliverPrompt(speaker, currentInput);
 
         // 2. Wait for speaker response to generate and settle
@@ -317,7 +343,7 @@ class MultiAiOrchestrator {
           reply = await this.pollUntilSettled(speaker, {
             maxWaitMs: this.maxWaitMs,
             pollIntervalMs: this.pollIntervalMs,
-            previousText,
+            previous,
             honorRelayControls: true,
           });
         }
@@ -451,17 +477,31 @@ class MultiAiOrchestrator {
   }
 
   /**
-   * The latest reply on the platform's page, or '' when it cannot be read. Taken before a send
-   * so the wait that follows can tell the new reply from the one already there.
+   * The latest reply on the platform's page, or '' when it cannot be read.
    * @param {string} platform
    * @returns {Promise<string>}
    */
   async readReply(platform) {
+    return (await this.readReplySnapshot(platform)).text;
+  }
+
+  /**
+   * The latest reply and the page's reply count. Taken before a send so the wait that follows
+   * can tell the new reply from the one already there.
+   * @param {string} platform
+   * @returns {Promise<ReplySnapshot>}
+   */
+  async readReplySnapshot(platform) {
     try {
       const res = await this.withPageTimeout(this.extractResponse(platform));
-      return (res?.text || '').trim();
+      const counted = typeof res?.count === 'number';
+      return {
+        text: (res?.text || '').trim(),
+        count: counted ? res.count : null,
+        countOf: counted ? res.countOf || null : null,
+      };
     } catch {
-      return '';
+      return { text: '', count: null, countOf: null };
     }
   }
 
@@ -469,28 +509,39 @@ class MultiAiOrchestrator {
    * Waits for one platform's reply outside of a relay run (used by task runners).
    * Unlike a relay turn it ignores relay pause/stop state and the silent-page limit.
    * @param {string} platform
-   * @param {{ maxWaitMs?: number, pollIntervalMs?: number, previousText?: string }} [options]
-   *   previousText: the reply read before the send (see readReply); it is not taken as the answer.
+   * @param {{ maxWaitMs?: number, pollIntervalMs?: number, previous?: ReplySnapshot, previousText?: string }} [options]
+   *   previous: the page read before the send (see readReplySnapshot); its reply is not taken as
+   *   the answer. previousText is the same without a count.
    * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>}
    */
   awaitSettled(platform, options = {}) {
     return this.pollUntilSettled(platform, {
       maxWaitMs: options.maxWaitMs ?? this.maxWaitMs,
       pollIntervalMs: options.pollIntervalMs ?? this.pollIntervalMs,
-      previousText: options.previousText || '',
+      previous: options.previous || {
+        text: options.previousText || '',
+        count: null,
+        countOf: null,
+      },
       honorRelayControls: false,
     });
   }
 
   /**
    * @param {string} platform
-   * @param {{ maxWaitMs: number, pollIntervalMs: number, previousText?: string, honorRelayControls: boolean }} options
+   * @param {{ maxWaitMs: number, pollIntervalMs: number, previous?: ReplySnapshot, honorRelayControls: boolean }} options
    * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>}
    */
   async pollUntilSettled(
     platform,
-    { maxWaitMs, pollIntervalMs, previousText = '', honorRelayControls },
+    {
+      maxWaitMs,
+      pollIntervalMs,
+      previous = { text: '', count: null, countOf: null },
+      honorRelayControls,
+    },
   ) {
+    const previousText = previous.text;
     const checkBlocked = honorRelayControls ? null : this.checkBlocked;
     const isAborted = () => honorRelayControls && this.isAborted;
     const isPaused = () => honorRelayControls && this.isPaused;
@@ -530,8 +581,8 @@ class MultiAiOrchestrator {
         const isStreaming = statusRes?.isStreaming ?? false;
         const pageText = (responseRes?.text || '').trim();
         pollCount++;
-        if (!sawNewReply && (isStreaming || pageText !== previousText)) {
-          sawNewReply = true;
+        if (!sawNewReply) {
+          sawNewReply = movedPastPrevious(previous, responseRes, pageText, isStreaming);
         }
         const text = sawNewReply ? pageText : '';
 

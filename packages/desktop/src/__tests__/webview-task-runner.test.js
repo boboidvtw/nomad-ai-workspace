@@ -108,6 +108,8 @@ function botHarness(opts = {}) {
       return { ok: true };
     },
     currentUrl: async () => (urls.length > 1 ? urls.shift() : urls[0]) || null,
+    // These tests start where the wait for a late input box has already given up.
+    composerWaitMs: 0,
   });
   const bot = () => roster.getAgent('agent-claude').data;
   const run = (prompt = 'Do it') =>
@@ -315,7 +317,7 @@ test('reads the reply on the page before the send and hands it to the wait', asy
   const runner = createWebviewTaskRunner({
     readReply: async () => {
       order.push('read');
-      return 'last answer';
+      return { text: 'last answer', count: 2, countOf: 'reply' };
     },
     inject: async (platform) => {
       order.push('inject');
@@ -331,5 +333,60 @@ test('reads the reply on the page before the send and hands it to the wait', asy
 
   assert.strictEqual(res.data.text, 'new answer');
   assert.deepStrictEqual(order, ['read', 'inject']);
-  assert.deepStrictEqual(waits, [{ previousText: 'last answer' }]);
+  assert.deepStrictEqual(waits, [
+    { previous: { text: 'last answer', count: 2, countOf: 'reply' } },
+  ]);
+});
+
+// --- Cold pages: wait for the input box ---------------------------------------
+
+/** @param {Array<{ ok: boolean, error?: string }>} results */
+function coldHarness(results) {
+  let clock = 0;
+  /** @type {string[]} */
+  const injected = [];
+  const runner = createWebviewTaskRunner({
+    inject: async (platform, text) => {
+      injected.push(text);
+      return { [platform]: results.shift() || { ok: true } };
+    },
+    awaitSettled: settled,
+    composerWaitMs: 5000,
+    composerRetryMs: 1000,
+    now: () => clock,
+    sleep: async (ms) => {
+      clock += ms;
+    },
+  });
+  return { runner, injected, elapsed: () => clock };
+}
+
+test('a page that has not mounted its input box yet is sent to again once it has', async () => {
+  const missing = { ok: false, error: 'Grok input element not found' };
+  const h = coldHarness([missing, missing]);
+
+  const res = await h.runner.run('grok', 'hi');
+
+  assert.strictEqual(res.success, true);
+  assert.deepStrictEqual(h.injected, ['hi', 'hi', 'hi']);
+});
+
+test('the wait for an input box gives up after composerWaitMs', async () => {
+  const missing = { ok: false, error: 'Grok input element not found' };
+  const h = coldHarness(Array.from({ length: 20 }, () => ({ ...missing })));
+
+  const res = await h.runner.run('grok', 'hi');
+
+  assert.strictEqual(res.success, false);
+  assert.match(res.message, /input element not found/);
+  assert.strictEqual(h.elapsed(), 5000);
+});
+
+test('other send failures are not retried, since the text may already be in the box', async () => {
+  const h = coldHarness([{ ok: false, error: 'Claude did not send the prompt' }]);
+
+  const res = await h.runner.run('claude', 'hi');
+
+  assert.strictEqual(res.success, false);
+  assert.deepStrictEqual(h.injected, ['hi']);
 });

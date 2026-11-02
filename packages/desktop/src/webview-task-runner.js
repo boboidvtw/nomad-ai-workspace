@@ -18,17 +18,22 @@ const {
   isConversationUrl,
   isSameConversation,
 } = require('@nomad/core');
+const { dispatchUntilComposerReady } = require('./injectors');
 
 const DEFAULT_BLOCKED_POLL_MS = 5000;
 const DEFAULT_MAX_BLOCKED_MS = 15 * 60 * 1000;
+const DEFAULT_COMPOSER_WAIT_MS = 20_000;
+const DEFAULT_COMPOSER_RETRY_MS = 1500;
 
 /**
+ * @typedef {import('./orchestrator').ReplySnapshot} ReplySnapshot
+ *
  * @typedef {Object} WebviewTaskRunnerDeps
  * @property {(platform: string, text: string) => Promise<Record<string, any>>} inject
  *   Same shape as main.js dispatchPromptToTargets: `{ [platform]: { ok, error? } }`.
- * @property {(platform: string, options: { previousText: string }) => Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>} awaitSettled
- *   `previousText` is the reply read before the send; the wait must not return it as the answer.
- * @property {(platform: string) => Promise<string>} [readReply] - the latest reply on the page
+ * @property {(platform: string, options: { previous: ReplySnapshot }) => Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>} awaitSettled
+ *   `previous` is the page read before the send; the wait must not return its reply as the answer.
+ * @property {(platform: string) => Promise<ReplySnapshot>} [readReply] - the latest reply on the page and the page's reply count
  * @property {import('@nomad/core').BotRoster} [roster]
  * @property {(platform: string, url: string | null) => Promise<{ ok: boolean, error?: string }>} [openChat]
  *   Loads `url`, or a new conversation when null, and resolves once the page is ready.
@@ -36,6 +41,8 @@ const DEFAULT_MAX_BLOCKED_MS = 15 * 60 * 1000;
  * @property {(notice: BlockedNotice) => void} [notify] - called once when a run becomes blocked
  * @property {number} [blockedPollMs=5000] - how often to re-check a blocked page
  * @property {number} [maxBlockedMs=900000] - give up after the page stays blocked this long
+ * @property {number} [composerWaitMs=20000] - how long a page just opened may take to mount its input box
+ * @property {number} [composerRetryMs=1500] - delay between sends while that input box is missing
  * @property {(ms: number) => Promise<void>} [sleep]
  * @property {() => number} [now]
  *
@@ -68,6 +75,12 @@ function createWebviewTaskRunner(deps) {
   const maxBlockedMs = deps.maxBlockedMs ?? DEFAULT_MAX_BLOCKED_MS;
   const sleep = deps.sleep || ((/** @type {number} */ ms) => new Promise((r) => setTimeout(r, ms)));
   const now = deps.now || Date.now;
+  const composerWait = {
+    waitMs: deps.composerWaitMs ?? DEFAULT_COMPOSER_WAIT_MS,
+    pollMs: deps.composerRetryMs ?? DEFAULT_COMPOSER_RETRY_MS,
+    now,
+    sleep,
+  };
 
   /**
    * Chains work per platform: one webview can only hold one conversation turn at a time.
@@ -90,14 +103,14 @@ function createWebviewTaskRunner(deps) {
    * Waits for the reply. A blocked page (usage limit, signed out) does not fail the run:
    * the user is told once and the wait continues until the page recovers or the budget ends.
    * @param {string} platform
-   * @param {string} previousText
+   * @param {ReplySnapshot} previous
    * @param {WaitHooks} hooks
    */
-  async function waitForReply(platform, previousText, hooks) {
+  async function waitForReply(platform, previous, hooks) {
     /** @type {number | null} */
     let blockedSince = null;
     for (;;) {
-      const reply = await deps.awaitSettled(platform, { previousText });
+      const reply = await deps.awaitSettled(platform, { previous });
       if (!reply.blocked && blockedSince !== null) {
         blockedSince = null;
         hooks.onUnblocked?.();
@@ -129,17 +142,26 @@ function createWebviewTaskRunner(deps) {
    * @param {WaitHooks} [hooks]
    */
   async function injectAndWait(platform, prompt, hooks = {}) {
-    const previousText = deps.readReply ? await deps.readReply(platform) : '';
+    const previous = deps.readReply
+      ? await deps.readReply(platform)
+      : { text: '', count: null, countOf: null };
     let injected;
     try {
-      injected = await deps.inject(platform, prompt);
+      // A chat opened for a bot has only just started loading, so its input box can be late.
+      injected = await dispatchUntilComposerReady(
+        () => deps.inject(platform, prompt),
+        [platform],
+        composerWait,
+      );
     } catch (e) {
       return err(
         ErrorCodes.BOT_INJECT_FAILED_006,
         `Injecting into ${platform} failed: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
-    const delivery = injected?.[platform];
+    const delivery = /** @type {{ ok?: boolean, error?: string } | undefined} */ (
+      injected?.[platform]
+    );
     if (!delivery?.ok) {
       return err(
         ErrorCodes.BOT_INJECT_FAILED_006,
@@ -147,7 +169,7 @@ function createWebviewTaskRunner(deps) {
       );
     }
 
-    return waitForReply(platform, previousText, {
+    return waitForReply(platform, previous, {
       onBlocked: (reason) => {
         deps.notify?.({ botId: null, botName: null, platform, reason });
       },

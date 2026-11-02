@@ -54,24 +54,28 @@ ${READ_TEXT_SOURCE}
           'div[class*="font-claude"]'
         ];
         let target = null;
+        let count = 0;
+        let countOf = null;
         for (const sel of selectors) {
           const els = document.querySelectorAll(sel);
           if (els.length > 0) {
             target = els[els.length - 1];
+            count = els.length;
+            countOf = sel;
             break;
           }
         }
         if (!target) return { ok: false, error: "No Claude assistant response found" };
         // While Claude thinks the row holds only the thinking summary and its timer, no reply yet.
         const isThinking = target.closest('[data-is-streaming="true"]') && !target.querySelector('.standard-markdown') && !target.matches('.standard-markdown');
-        if (isThinking) return { ok: true, text: "", length: 0 };
+        if (isThinking) return { ok: true, text: "", length: 0, count, countOf };
         // A message row also holds a screen-reader label and the action bar; read its markdown.
         const blocks = target.matches('.standard-markdown')
           ? [target]
           : [...target.querySelectorAll('.standard-markdown')];
         const parts = (blocks.length ? blocks : [target]).map((el) => readText(el));
         const text = parts.filter(Boolean).join("\\n\\n");
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count, countOf };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -115,18 +119,22 @@ ${READ_TEXT_SOURCE}
           'article[data-testid*="conversation-turn"]'
         ];
         let target = null;
+        let count = 0;
+        let countOf = null;
         for (const sel of selectors) {
           const els = [...document.querySelectorAll(sel)];
           if (els.length > 0) {
             // The page also holds hidden copies of other replies, sometimes after the real one.
             const shown = els.filter((el) => el.getBoundingClientRect().height > 0);
             target = shown[shown.length - 1] || els[els.length - 1];
+            count = els.length;
+            countOf = sel;
             break;
           }
         }
         if (!target) return { ok: false, error: "No ChatGPT assistant response found" };
         const text = readText(target);
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count, countOf };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -166,16 +174,20 @@ ${READ_TEXT_SOURCE}
           '.model-response'
         ];
         let target = null;
+        let count = 0;
+        let countOf = null;
         for (const sel of selectors) {
           const els = document.querySelectorAll(sel);
           if (els.length > 0) {
             target = els[els.length - 1];
+            count = els.length;
+            countOf = sel;
             break;
           }
         }
         if (!target) return { ok: false, error: "No Gemini model response found" };
         const text = readText(target);
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count, countOf };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -214,20 +226,28 @@ ${READ_TEXT_SOURCE}
           'div.response-content'
         ];
         let target = null;
+        let count = 0;
+        let countOf = null;
         for (const sel of selectors) {
           const els = document.querySelectorAll(sel);
           if (els.length > 0) {
             target = els[els.length - 1];
+            count = els.length;
+            countOf = sel;
             break;
           }
         }
         if (!target) {
           const bubbles = document.querySelectorAll('div[class*="bubble"], div[role="listitem"]');
-          if (bubbles.length > 0) target = bubbles[bubbles.length - 1];
+          if (bubbles.length > 0) {
+            target = bubbles[bubbles.length - 1];
+            count = bubbles.length;
+            countOf = 'bubble';
+          }
         }
         if (!target) return { ok: false, error: "No Grok response found" };
         const text = readText(target);
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count, countOf };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -260,7 +280,7 @@ ${READ_TEXT_SOURCE}
         const target = replies[replies.length - 1];
         if (!target) return { ok: false, error: "No Copilot response found" };
         const text = readText(target).replace(/[\\u200b-\\u200d\\ufeff]/g, "").trim();
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count: replies.length, countOf: 'markdown-reply' };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -291,10 +311,14 @@ ${READ_TEXT_SOURCE}
         // an input in it is page chrome, never a reply.
         const isChrome = (el) => Boolean(el.querySelector('[contenteditable="true"], textarea'));
         let target = null;
+        let count = 0;
+        let countOf = null;
         for (const sel of selectors) {
           const els = [...document.querySelectorAll(sel)].filter((el) => !isChrome(el));
           if (els.length > 0) {
             target = els[els.length - 1];
+            count = els.length;
+            countOf = sel;
             break;
           }
         }
@@ -303,7 +327,7 @@ ${READ_TEXT_SOURCE}
         const text = readText(target, (copy) => {
           copy.querySelectorAll('[data-pplx-citation], .citation').forEach((el) => el.remove());
         });
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count, countOf };
       } catch (err) {
         return { ok: false, error: err.message };
       }

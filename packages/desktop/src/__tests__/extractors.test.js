@@ -39,7 +39,10 @@ test('Extractors: Copilot reads the last reply without zero-width characters', (
 
   const reply = dom.window.eval(PLATFORM_EXTRACTORS.copilot.getLatestResponse());
   // Copy out of the jsdom realm before comparing.
-  assert.deepStrictEqual({ ...reply }, { ok: true, text: 'CPX-1234', length: 8 });
+  assert.deepStrictEqual(
+    { ...reply },
+    { ok: true, text: 'CPX-1234', length: 8, count: 2, countOf: 'markdown-reply' },
+  );
   assert.strictEqual(dom.window.eval(PLATFORM_EXTRACTORS.copilot.checkStatus()).isStreaming, true);
 
   stop.remove();
@@ -214,4 +217,36 @@ test('Extractors: ChatGPT reads a KaTeX formula from its TeX annotation', () => 
   );
   const reply = dom.window.eval(PLATFORM_EXTRACTORS.chatgpt.getLatestResponse());
   assert.strictEqual(reply.text, '面積 $\\pi r^2$');
+});
+
+test('Extractors: every platform reports how many replies its page holds', () => {
+  const { JSDOM } = require('jsdom');
+  /** @type {Record<string, (body: string) => string>} */
+  const replyHtml = {
+    claude: (b) =>
+      `<div class="font-claude-message"><div class="standard-markdown">${b}</div></div>`,
+    chatgpt: (b) => `<div data-markdown-text-style="assistant-message">${b}</div>`,
+    gemini: (b) => `<div class="markdown markdown-main-panel">${b}</div>`,
+    grok: (b) =>
+      `<div data-testid="assistant-message"><div class="response-content-markdown">${b}</div></div>`,
+    copilot: (b) => `<div data-testid="markdown-reply">${b}</div>`,
+    perplexity: (b) => `<div class="prose">${b}</div>`,
+  };
+
+  for (const [platform, html] of Object.entries(replyHtml)) {
+    const script = PLATFORM_EXTRACTORS[platform].getLatestResponse();
+    const read = (/** @type {string[]} */ bodies) =>
+      new JSDOM(`<!doctype html><body>${bodies.map(html).join('')}</body>`, {
+        runScripts: 'outside-only',
+      }).window.eval(script);
+
+    const two = read(['same', 'same']);
+    const three = read(['same', 'same', 'same']);
+
+    assert.strictEqual(two.text, 'same', platform);
+    assert.strictEqual(two.count, 2, platform);
+    assert.strictEqual(three.count, 3, platform);
+    assert.ok(two.countOf, `${platform} names what it counted`);
+    assert.strictEqual(three.countOf, two.countOf, platform);
+  }
 });
