@@ -27,6 +27,7 @@ test('Orchestrator: Executes full round-robin relay sequence with state events',
 
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 5,
     injectPrompt: async (platform, text) => {
       promptsInjected.push({ platform, text });
@@ -83,6 +84,7 @@ test('Orchestrator: Executes full round-robin relay sequence with state events',
 test('Orchestrator: Pause, resume and stop controls', async () => {
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 10,
     injectPrompt: async () => ({ ok: true }),
     extractResponse: async () => ({ ok: true, text: 'Sample output' }),
@@ -121,6 +123,7 @@ test('Orchestrator: Settles via adaptive inactivity even if isStreaming remains 
     'This is a detailed mock AI response containing more than forty characters for testing adaptive settlement.';
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 5,
     maxWaitMs: 1000,
     stuckStreamingMs: 20,
@@ -142,6 +145,7 @@ test('Orchestrator: Retains monotonic baseline text if subsequent extract poll g
   const goodText = 'Valid captured text before temporary glitch occurred.';
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 5,
     maxWaitMs: 50,
     extractResponse: async () => {
@@ -159,6 +163,7 @@ test('Orchestrator: Retains monotonic baseline text if subsequent extract poll g
 test('Orchestrator: Falls back to the default turn delay for non-numeric input', async () => {
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     injectPrompt: async () => ({ ok: true }),
     extractResponse: async () => ({ ok: true, text: 'x' }),
     checkStreaming: async () => ({ ok: true, isStreaming: false }),
@@ -171,6 +176,7 @@ test('Orchestrator: Falls back to the default turn delay for non-numeric input',
 
   const orch2 = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     injectPrompt: async () => ({ ok: true }),
   });
   await orch2.start({ prompt: 'Goal', sequence: ['claude', 'chatgpt'], turnDelayMs: -10 });
@@ -185,6 +191,7 @@ test('Orchestrator: A relay turn skips the reply that was on the page before the
   const pollsSinceSend = {};
   const orch = new MultiAiOrchestrator({
     initialWaitMs: 0,
+    snapshotSettleMs: 0,
     pollIntervalMs: 2,
     maxWaitMs: 500,
     injectPrompt: async (/** @type {string} */ platform) => {

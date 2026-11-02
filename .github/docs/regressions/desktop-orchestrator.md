@@ -194,3 +194,51 @@
 - **Rule:** Every extractor reads through `readText`, which replaces each formula with its TeX
   source (`data-math`, else the KaTeX `annotation`) as `$…$` or `$$…$$` on an off-screen copy.
 - **Guard:** `packages/desktop/src/__tests__/extractors.test.js`
+
+## A dropped prompt could be answered with the reply that was already there
+
+- **Trap:** The wait accepted text identical to the pre-send reply once it saw streaming or a
+  different read, so a new reply that repeats the old one is not lost. A page that blinked
+  after the platform dropped the prompt (an empty read, a stop button that flickered) passed
+  the old reply on as the new answer.
+- **Rule:** Extractors return `count` and `countOf` (how many replies the counted selector
+  matched) and `isBaseline`. The pre-send read marks its reply element
+  (`data-nomad-baseline`); a new reply needs a higher count under the same selector and a last
+  reply that is not the marked one, because Perplexity renders older answers late and raises
+  the count without a new reply (seen live: 1 → 3). The snapshot repeats its read until two in
+  a row agree, since a page that just loaded draws its replies oldest first. Fewer replies, or a
+  count through another selector (grok.com caught mid-load matched only an empty `.prose`), keep
+  waiting, so the worst case is a visible timeout. Only a snapshot with no count falls back to
+  the text rule, and a conversation URL showing no reply yet (chatgpt.com right after a reload)
+  is read again until a reply appears, since an empty snapshot would let the old reply through.
+- **Guard:** `packages/desktop/src/__tests__/orchestrator-reply-count.test.js`,
+  `packages/desktop/src/__tests__/extractors.test.js`
+
+## Grok's capacity notice read as "no reply" instead of blocked
+
+- **Trap:** Grok draws 需求量高 / 目前使用人數較多 inside the conversation where the reply would
+  be, not in an alert or dialog, so the blocked check never saw it and a task waited out its
+  full timeout.
+- **Rule:** `tail` rules match the page text after the last prompt (`after`, Grok's
+  `[data-testid="user-message"]`), read with `innerText` so script data never matches, or the
+  last 600 characters without one. A notice that a later prompt got past stops counting (seen
+  live: an answered retry still read as blocked when the tail was the page end). Patterns quote
+  the two zh-TW wordings seen; add the English one only once it has been seen.
+- **Guard:** `packages/core/src/__tests__/bot-state.test.js`
+
+## A bot's freshly opened chat failed when its input box mounted late
+
+- **Trap:** `/api/prompt` and the relay waited for a late composer, but bot and task runs sent
+  once right after `openChat`, so a cold page failed with "input element not found".
+- **Rule:** `webview-task-runner` sends through `dispatchUntilComposerReady` (20 s by default)
+  and retries only a missing input box. A bound conversation with no input box at all is
+  rebound to a new chat after that wait.
+- **Guard:** `packages/desktop/src/__tests__/webview-task-runner.test.js`
+
+## Grok's composer was read as a reply on a page with none
+
+- **Trap:** grok.com's composer is a tiptap editor; it and its placeholder overlay both carry the
+  class `prose`, a fallback reply selector, so an empty chat read "輸入 @ 以搜尋您的應用程式" as
+  the latest reply.
+- **Rule:** The Grok extractor skips anything inside a `form` or an editor.
+- **Guard:** `packages/desktop/src/__tests__/extractors.test.js`

@@ -456,11 +456,14 @@ async function createMainWindow() {
     },
     // Scripts run against a page that was never loaded wait forever, so a read loads it first.
     onSpeakerChange: setRelaySpeaker,
-    extractResponse: async (/** @type {string} */ platform) => {
+    extractResponse: async (
+      /** @type {string} */ platform,
+      /** @type {{ markBaseline?: boolean } | undefined} */ options,
+    ) => {
       ensurePlatformLoaded(platform);
       const item = views[platform];
       if (!item) return { ok: false, error: 'Platform view not found' };
-      const extractorScript = PLATFORM_EXTRACTORS[platform]?.getLatestResponse();
+      const extractorScript = PLATFORM_EXTRACTORS[platform]?.getLatestResponse(options);
       if (!extractorScript) return { ok: false, error: 'Extractor script not found' };
       try {
         const res = await item.view.webContents.executeJavaScript(extractorScript);
@@ -523,7 +526,9 @@ async function createMainWindow() {
     enabled: store.get('bots')?.enabled !== false,
     inject: (platform, text) => dispatchPromptToTargets(text, [platform]),
     readReply: (platform) =>
-      orchestrator ? orchestrator.readReply(platform) : Promise.resolve(''),
+      orchestrator
+        ? orchestrator.readReplySnapshot(platform)
+        : Promise.resolve({ text: '', count: null, countOf: null }),
     awaitSettled: (platform, options) => {
       const orch = orchestrator;
       return orch

@@ -121,7 +121,7 @@ test('passes the pre-send reply through to awaitSettled', async () => {
   const bots = createStudioBots({
     enabled: false,
     inject: async (platform) => ({ [platform]: { ok: true } }),
-    readReply: async () => 'old reply',
+    readReply: async () => ({ text: 'old reply', count: 4, countOf: 'reply' }),
     awaitSettled: async (_platform, options) => {
       waits.push(options);
       return { settled: true, text: 'fresh reply' };
@@ -134,5 +134,7 @@ test('passes the pre-send reply through to awaitSettled', async () => {
   const res = await bots.runWebviewTask('claude', 'hi');
 
   assert.strictEqual(res.data.text, 'fresh reply');
-  assert.deepStrictEqual(waits, [{ maxWaitMs: 180000, previousText: 'old reply' }]);
+  assert.deepStrictEqual(waits, [
+    { maxWaitMs: 180000, previous: { text: 'old reply', count: 4, countOf: 'reply' } },
+  ]);
 });

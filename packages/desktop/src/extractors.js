@@ -39,12 +39,28 @@ const READ_TEXT_SOURCE = `
         }
       };`;
 
-/** @type {Record<string, { getLatestResponse: () => string, checkStatus: () => string }>} Script builders run inside each platform webview */
+/**
+ * Defines isBaseline(target) inside an extractor script. The read taken before a send marks the
+ * reply it found; later reads say whether the last reply is still that element. Platforms that
+ * render older replies late (Perplexity) raise the reply count without a new reply, and only the
+ * mark tells those apart.
+ * @param {{ markBaseline?: boolean }} [options]
+ */
+const baselineSource = (options = {}) => `
+      const isBaseline = (el) => {
+        if (${Boolean(options.markBaseline)}) {
+          document.querySelectorAll('[data-nomad-baseline]').forEach((m) => m.removeAttribute('data-nomad-baseline'));
+          el.setAttribute('data-nomad-baseline', '');
+        }
+        return el.hasAttribute('data-nomad-baseline');
+      };`;
+
+/** @type {Record<string, { getLatestResponse: (options?: { markBaseline?: boolean }) => string, checkStatus: () => string }>} Script builders run inside each platform webview */
 const PLATFORM_EXTRACTORS = {
   claude: {
-    getLatestResponse: () => `(function() {
+    getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}
+${READ_TEXT_SOURCE}${baselineSource(options)}
         const selectors = [
           '.font-claude-message',
           '[data-testid="assistant-message"]',
@@ -54,24 +70,28 @@ ${READ_TEXT_SOURCE}
           'div[class*="font-claude"]'
         ];
         let target = null;
+        let count = 0;
+        let countOf = null;
         for (const sel of selectors) {
           const els = document.querySelectorAll(sel);
           if (els.length > 0) {
             target = els[els.length - 1];
+            count = els.length;
+            countOf = sel;
             break;
           }
         }
-        if (!target) return { ok: false, error: "No Claude assistant response found" };
+        if (!target) return { ok: false, error: "No Claude assistant response found", url: location.href };
         // While Claude thinks the row holds only the thinking summary and its timer, no reply yet.
         const isThinking = target.closest('[data-is-streaming="true"]') && !target.querySelector('.standard-markdown') && !target.matches('.standard-markdown');
-        if (isThinking) return { ok: true, text: "", length: 0 };
+        if (isThinking) return { ok: true, text: "", length: 0, count, countOf, isBaseline: isBaseline(target) };
         // A message row also holds a screen-reader label and the action bar; read its markdown.
         const blocks = target.matches('.standard-markdown')
           ? [target]
           : [...target.querySelectorAll('.standard-markdown')];
         const parts = (blocks.length ? blocks : [target]).map((el) => readText(el));
         const text = parts.filter(Boolean).join("\\n\\n");
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -101,9 +121,9 @@ ${READ_TEXT_SOURCE}
   },
 
   chatgpt: {
-    getLatestResponse: () => `(function() {
+    getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}
+${READ_TEXT_SOURCE}${baselineSource(options)}
         // Modern ChatGPT selectors (2025/2026): assistant-message, MarkdownRoot, search-unit-key
         const selectors = [
           '[data-markdown-text-style="assistant-message"]',
@@ -115,18 +135,22 @@ ${READ_TEXT_SOURCE}
           'article[data-testid*="conversation-turn"]'
         ];
         let target = null;
+        let count = 0;
+        let countOf = null;
         for (const sel of selectors) {
           const els = [...document.querySelectorAll(sel)];
           if (els.length > 0) {
             // The page also holds hidden copies of other replies, sometimes after the real one.
             const shown = els.filter((el) => el.getBoundingClientRect().height > 0);
             target = shown[shown.length - 1] || els[els.length - 1];
+            count = els.length;
+            countOf = sel;
             break;
           }
         }
-        if (!target) return { ok: false, error: "No ChatGPT assistant response found" };
+        if (!target) return { ok: false, error: "No ChatGPT assistant response found", url: location.href };
         const text = readText(target);
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -151,9 +175,9 @@ ${READ_TEXT_SOURCE}
   },
 
   gemini: {
-    getLatestResponse: () => `(function() {
+    getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}
+${READ_TEXT_SOURCE}${baselineSource(options)}
         const selectors = [
           'div.markdown.markdown-main-panel',
           'message-content',
@@ -166,16 +190,20 @@ ${READ_TEXT_SOURCE}
           '.model-response'
         ];
         let target = null;
+        let count = 0;
+        let countOf = null;
         for (const sel of selectors) {
           const els = document.querySelectorAll(sel);
           if (els.length > 0) {
             target = els[els.length - 1];
+            count = els.length;
+            countOf = sel;
             break;
           }
         }
-        if (!target) return { ok: false, error: "No Gemini model response found" };
+        if (!target) return { ok: false, error: "No Gemini model response found", url: location.href };
         const text = readText(target);
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -201,9 +229,9 @@ ${READ_TEXT_SOURCE}
   },
 
   grok: {
-    getLatestResponse: () => `(function() {
+    getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}
+${READ_TEXT_SOURCE}${baselineSource(options)}
         const selectors = [
           // The bubble around it holds the "Grok" header and the run time, not the reply.
           '[data-testid="assistant-message"] .response-content-markdown',
@@ -213,21 +241,32 @@ ${READ_TEXT_SOURCE}
           '.prose',
           'div.response-content'
         ];
+        // The composer is a tiptap editor whose box and placeholder also carry "prose"; nothing
+        // inside a form or an editor is a reply.
+        const isChrome = (el) => Boolean(el.closest('form, [contenteditable="true"]'));
         let target = null;
+        let count = 0;
+        let countOf = null;
         for (const sel of selectors) {
-          const els = document.querySelectorAll(sel);
+          const els = [...document.querySelectorAll(sel)].filter((el) => !isChrome(el));
           if (els.length > 0) {
             target = els[els.length - 1];
+            count = els.length;
+            countOf = sel;
             break;
           }
         }
         if (!target) {
-          const bubbles = document.querySelectorAll('div[class*="bubble"], div[role="listitem"]');
-          if (bubbles.length > 0) target = bubbles[bubbles.length - 1];
+          const bubbles = [...document.querySelectorAll('div[class*="bubble"], div[role="listitem"]')].filter((el) => !isChrome(el));
+          if (bubbles.length > 0) {
+            target = bubbles[bubbles.length - 1];
+            count = bubbles.length;
+            countOf = 'bubble';
+          }
         }
-        if (!target) return { ok: false, error: "No Grok response found" };
+        if (!target) return { ok: false, error: "No Grok response found", url: location.href };
         const text = readText(target);
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -253,14 +292,14 @@ ${READ_TEXT_SOURCE}
   },
 
   copilot: {
-    getLatestResponse: () => `(function() {
+    getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}
+${READ_TEXT_SOURCE}${baselineSource(options)}
         const replies = document.querySelectorAll('[data-testid="markdown-reply"]');
         const target = replies[replies.length - 1];
-        if (!target) return { ok: false, error: "No Copilot response found" };
+        if (!target) return { ok: false, error: "No Copilot response found", url: location.href };
         const text = readText(target).replace(/[\\u200b-\\u200d\\ufeff]/g, "").trim();
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count: replies.length, countOf: 'markdown-reply', isBaseline: isBaseline(target) };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -278,9 +317,9 @@ ${READ_TEXT_SOURCE}
   },
 
   perplexity: {
-    getLatestResponse: () => `(function() {
+    getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}
+${READ_TEXT_SOURCE}${baselineSource(options)}
         const selectors = [
           '.prose',
           'div[class*="answer"]',
@@ -291,19 +330,23 @@ ${READ_TEXT_SOURCE}
         // an input in it is page chrome, never a reply.
         const isChrome = (el) => Boolean(el.querySelector('[contenteditable="true"], textarea'));
         let target = null;
+        let count = 0;
+        let countOf = null;
         for (const sel of selectors) {
           const els = [...document.querySelectorAll(sel)].filter((el) => !isChrome(el));
           if (els.length > 0) {
             target = els[els.length - 1];
+            count = els.length;
+            countOf = sel;
             break;
           }
         }
-        if (!target) return { ok: false, error: "No Perplexity response found" };
+        if (!target) return { ok: false, error: "No Perplexity response found", url: location.href };
         // Sources render as inline chips ("databricks +1"); read a copy without them.
         const text = readText(target, (copy) => {
           copy.querySelectorAll('[data-pplx-citation], .citation').forEach((el) => el.remove());
         });
-        return { ok: true, text, length: text.length };
+        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
       } catch (err) {
         return { ok: false, error: err.message };
       }
