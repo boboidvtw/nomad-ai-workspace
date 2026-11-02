@@ -316,6 +316,69 @@ curl -s -X POST http://127.0.0.1:8765/api/bots/mentions -H "Authorization: Beare
 
 **Turning Bots off**: set `bots.enabled` to `false` in the Studio settings file (`~/Library/Application Support/Nomad AI Studio/nomad-studio-settings.json` on macOS) and restart to get the pre-bots behaviour back (tasks still wait for the AI reply).
 
+### 7.11 Laya Decision Engine
+
+Laya takes a piece of text (the state) and the questions you define, and returns structured answers from one forward pass. It generates no text. Use it for classification, routing and yes/no decisions, not for writing or chat.
+
+**The project has two unrelated things named Laya**:
+
+|             | Laya service (Dashboard card) | Rule-based Laya (`packages/core`) |
+| :---------- | :---------------------------- | :-------------------------------- |
+| How         | Neural model                  | Keyword match over 6 rule sets    |
+| Needs 8555  | Yes                           | No                                |
+| Questions   | You define them               | 6 fixed intents                   |
+| Entry point | Laya Lab, ⌘K routing, API     | Studio's pipeline test box        |
+
+The rest of this section covers the Laya service.
+
+**Start and stop** (the service does not start on its own):
+
+```bash
+~/.gemini/antigravity-ide/scratch/laya/start_service.sh
+```
+
+```bash
+~/.gemini/antigravity-ide/scratch/laya/stop_service.sh
+```
+
+```bash
+curl -s http://127.0.0.1:8555/health
+```
+
+It is ready when `loaded` lists three models. Startup takes about 10 seconds and the service holds about 1.4 GB of memory, so stop it when idle.
+
+**From the Dashboard**:
+
+1. Open the Dashboard and press 推論實驗室 on the Laya card (Laya 實驗室 in the header does the same).
+2. Pick a preset and edit the state text. The preset sets the questions and options; the page cannot change them.
+3. Press 發送推論請求. The first call takes about 2 seconds, later calls about 15 ms.
+4. Read the result using the table below.
+
+**Custom questions through the API**:
+
+```bash
+curl -s http://127.0.0.1:8555/v1/systemone -H 'content-type: application/json' -d '{"state":"My card was charged 3,500 without my approval. Please block it now.","questions":{"category":{"type":"choice","instructions":"Which kind of complaint is this?","criteria":{"fraud":"Fraud or a disputed charge","billing":"Billing question"}},"block":{"type":"noul","instructions":"Should the card be blocked now?","criteria":{"true":"Yes","false":"No"}}}}'
+```
+
+| Type     | Use          | Read this field                                         |
+| :------- | :----------- | :------------------------------------------------------ |
+| `choice` | Pick one     | `choice` is the answer; `probabilities` per option      |
+| `noul`   | Yes or no    | `noul`; closer to 1 means yes                           |
+| `score`  | Rate a level | `score` counts from 0; `legend` maps levels to meanings |
+
+`answer_confidence` is the probability of the top option. Before acting automatically on it, check the threshold against your own data. `score` is sensitive to option wording, so specific descriptions give steadier results.
+
+**Troubleshooting**:
+
+| Symptom                             | Cause                                        | Fix                                                                                    |
+| :---------------------------------- | :------------------------------------------- | :------------------------------------------------------------------------------------- |
+| Card shows OFFLINE, `/health` works | Dashboard origin is not in the CORS list     | Make sure `allow_origins` in `laya/serve.py` has `http://127.0.0.1:8765`, then restart |
+| Dashboard is not on 8765            | It moves to 8766 or later when 8765 is taken | Add that origin to `allow_origins`, then restart                                       |
+| `/health` does not answer           | Service is down or failed to start           | Run `start_service.sh`, then read `laya_serve.log` next to it                          |
+| Accuracy drops past 20 options      | Options share a fixed token budget           | Split into two questions, or use Jev                                                   |
+
+**Compared with TypeSafe Jev**: Laya speaks Jev's `POST /v1/systemone` protocol, so an existing Jev client only needs a new `baseUrl`. Laya is self-hosted with open weights, keeps data on your machine and has no API fee. Jev is a closed cloud service that needs no local compute and scores higher with many options.
+
 ---
 
 ## 8. 🔄 How to Reload After Updates

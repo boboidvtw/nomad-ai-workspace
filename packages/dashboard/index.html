@@ -1300,6 +1300,22 @@
         flex: 1;
       }
 
+      .laya-guide {
+        font-size: 0.8rem;
+        line-height: 1.6;
+        color: var(--text-muted);
+      }
+
+      .laya-guide summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .laya-guide ol {
+        margin: 0.4rem 0 0;
+        padding-left: 1.2rem;
+      }
+
       .form-group {
         display: flex;
         flex-direction: column;
@@ -2228,33 +2244,43 @@
                 <div class="pipeline-info">
                   <span class="pipeline-name">🚀 啟動 Laya 服務</span>
                   <span class="pipeline-cmd"
-                    >cd ~/.gemini/antigravity-ide/scratch/laya && uvicorn app.main:app --port
-                    8555</span
+                    >~/.gemini/antigravity-ide/scratch/laya/start_service.sh</span
                   >
                 </div>
                 <button
                   class="btn-copy"
-                  onclick="
-                    copyText(
-                      'cd ~/.gemini/antigravity-ide/scratch/laya && python3 -m uvicorn app.main:app --port 8555',
-                    )
-                  "
+                  onclick="copyText('~/.gemini/antigravity-ide/scratch/laya/start_service.sh')"
                 >
                   📋 複製
                 </button>
               </div>
               <div class="pipeline-row">
                 <div class="pipeline-info">
-                  <span class="pipeline-name">🧪 執行基準測試</span>
+                  <span class="pipeline-name">🛑 停止 Laya 服務</span>
                   <span class="pipeline-cmd"
-                    >cd ~/.gemini/antigravity-ide/scratch/laya && pytest tests/</span
+                    >~/.gemini/antigravity-ide/scratch/laya/stop_service.sh</span
+                  >
+                </div>
+                <button
+                  class="btn-copy"
+                  onclick="copyText('~/.gemini/antigravity-ide/scratch/laya/stop_service.sh')"
+                >
+                  📋 複製
+                </button>
+              </div>
+              <div class="pipeline-row">
+                <div class="pipeline-info">
+                  <span class="pipeline-name">🧪 執行驗證腳本</span>
+                  <span class="pipeline-cmd"
+                    >cd ~/.gemini/antigravity-ide/scratch/laya && .venv/bin/python3
+                    test_decision.py</span
                   >
                 </div>
                 <button
                   class="btn-copy"
                   onclick="
                     copyText(
-                      'cd ~/.gemini/antigravity-ide/scratch/laya && python3 -m pytest tests/',
+                      'cd ~/.gemini/antigravity-ide/scratch/laya && .venv/bin/python3 test_decision.py',
                     )
                   "
                 >
@@ -3381,16 +3407,11 @@
 
             <div class="ops-cmd-block">
               <span class="ops-cmd-text"
-                >cd ~/.gemini/antigravity-ide/scratch/laya && python3 -m uvicorn app.main:app --port
-                8555</span
+                >~/.gemini/antigravity-ide/scratch/laya/start_service.sh</span
               >
               <button
                 class="btn-copy"
-                onclick="
-                  copyText(
-                    'cd ~/.gemini/antigravity-ide/scratch/laya && python3 -m uvicorn app.main:app --port 8555',
-                  )
-                "
+                onclick="copyText('~/.gemini/antigravity-ide/scratch/laya/start_service.sh')"
               >
                 📋 啟動 Laya
               </button>
@@ -3492,6 +3513,26 @@
         </div>
 
         <div class="drawer-body">
+          <details class="laya-guide" id="laya-guide">
+            <summary>📖 操作說明</summary>
+            <ol>
+              <li>
+                看卡片右上角。顯示 OFFLINE 時，按「快捷管線」複製「啟動 Laya
+                服務」，貼到終端機執行，約 10 秒後按「刷新探測」。
+              </li>
+              <li>在「選擇評估範例」挑一題。範例決定問題與選項，這裡只能改下方文字。</li>
+              <li>修改狀態文本，按「發送推論請求」。第一次約 2 秒，之後約 15 毫秒。</li>
+              <li>
+                讀結果：choice 看 <code>choice</code> 與各選項機率；noul 看
+                <code>noul</code>，越接近 1 越偏「是」；score 看 <code>score</code> 與
+                <code>legend</code> 對照。
+              </li>
+              <li>
+                不用開這頁也能用：⌘K 導流、<code>POST /v1/systemone</code>，詳見使用手冊 7.11。
+              </li>
+            </ol>
+          </details>
+
           <div class="form-group">
             <label class="form-label">
               <span>選擇評估範例 (Presets)</span>
@@ -3850,9 +3891,9 @@
         {
           type: 'pipeline',
           title: '⚡ Laya System 1 背景啟動',
-          cmd: 'cd ~/.gemini/antigravity-ide/scratch/laya && python3 -m uvicorn app.main:app --port 8555',
+          cmd: '~/.gemini/antigravity-ide/scratch/laya/start_service.sh',
           desc: '在 8555 連接埠啟動 Laya 決策引擎伺服器',
-          tags: ['laya', 'start', 'uvicorn', '8555', 'systemone'],
+          tags: ['laya', 'start', 'start_service', '8555', 'systemone'],
         },
       ];
 
