@@ -408,6 +408,8 @@ describe('Live Artifact previews', () => {
 
         expect(initialize).toHaveBeenCalledWith(
             expect.objectContaining({
+                look: 'classic',
+                layout: 'dagre',
                 flowchart: expect.objectContaining({ htmlLabels: false, useMaxWidth: true }),
             })
         );
