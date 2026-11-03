@@ -61,6 +61,7 @@ type ManagerInternals = {
   observeLibraryTable: () => void;
   observeBodyPromptPopovers: () => void;
   injectLibraryDropZone: () => void;
+  bindDraggablesInLibraryTable: () => void;
   watchContainerMount: () => void;
   destroy: () => void;
   applyFolderEnabledSetting: () => void;
@@ -426,6 +427,31 @@ describe('L12 — floating drop zone heartbeat and archived-row set', () => {
     // ...but a silent gap (source row torn out, no dragend/drop) hides it.
     await vi.advanceTimersByTimeAsync(400);
     expect(zone.style.opacity).toBe('0');
+  });
+
+  it('shows the floating drop zone for a drag that starts inside a bound library row', async () => {
+    vi.useFakeTimers();
+    const { internals } = createManager();
+    internals.data = {
+      folders: [
+        { id: 'f1', name: 'Folder', parentId: null, isExpanded: true, createdAt: 1, updatedAt: 1 },
+      ],
+      folderContents: { f1: [] },
+    };
+    internals.save = vi.fn().mockResolvedValue(true);
+
+    const row = createLibraryRow('bound1');
+    internals.bindDraggablesInLibraryTable();
+    internals.injectLibraryDropZone();
+    const zone = document.querySelector('.gv-library-drop-zone') as HTMLElement;
+
+    // A real drag starts on a cell, and the row's own dragstart handler stops propagation.
+    row
+      .querySelector('td')!
+      .dispatchEvent(new Event('dragstart', { bubbles: true, cancelable: true }) as DragEvent);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(zone.style.opacity).toBe('1');
+    expect(zone.querySelector('[data-folder-id="f1"]')).not.toBeNull();
   });
 
   it('hides the floating drop zone on a document-level drop', async () => {

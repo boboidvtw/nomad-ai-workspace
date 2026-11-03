@@ -76,6 +76,33 @@ describe('mountLibraryDropZone', () => {
     ]);
   });
 
+  it('shows even when the row stops dragstart from bubbling', async () => {
+    vi.useFakeTimers();
+    mount(folderData());
+    const row = document.createElement('tr');
+    row.className = 'mat-mdc-row';
+    const cell = document.createElement('td');
+    const a = document.createElement('a');
+    a.setAttribute('href', '/prompts/p1');
+    cell.appendChild(a);
+    row.appendChild(cell);
+    document.body.appendChild(row);
+    row.addEventListener('dragstart', (e) => e.stopPropagation(), true);
+
+    cell.dispatchEvent(new Event('dragstart', { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(zone()?.style.opacity).toBe('1');
+  });
+
+  it('cleanup also removes the capture-phase dragstart listener', async () => {
+    vi.useFakeTimers();
+    const { cleanup } = mount(folderData());
+    const remove = vi.spyOn(document, 'removeEventListener');
+    cleanup();
+    expect(remove).toHaveBeenCalledWith('dragstart', expect.any(Function), true);
+  });
+
   it('stays hidden while the folder data cannot be edited', async () => {
     vi.useFakeTimers();
     mount(folderData(), false);

@@ -1493,6 +1493,18 @@
     "message": "未分类",
     "description": "根目录下未分类对话的标签"
   },
+  "folder_default_name": {
+    "message": "我的文件夹",
+    "description": "Name of the folder created when AI Studio has none yet"
+  },
+  "conversation_added_to_folder": {
+    "message": "已添加到",
+    "description": "Notification prefix after dropping a prompt onto a folder; the folder name follows in quotes"
+  },
+  "conversation_saved_to_root": {
+    "message": "已保存到未分类",
+    "description": "Notification after dropping a prompt onto the Uncategorized item"
+  },
   "timelineLevelTitle": {
     "message": "节点层级",
     "description": "时间线节点层级右键菜单标题"

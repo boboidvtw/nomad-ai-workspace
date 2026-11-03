@@ -1493,6 +1493,18 @@
     "message": "غير مصنف",
     "description": "Label for root-level conversations not in any folder"
   },
+  "folder_default_name": {
+    "message": "مجلدي",
+    "description": "Name of the folder created when AI Studio has none yet"
+  },
+  "conversation_added_to_folder": {
+    "message": "تمت الإضافة إلى",
+    "description": "Notification prefix after dropping a prompt onto a folder; the folder name follows in quotes"
+  },
+  "conversation_saved_to_root": {
+    "message": "تم الحفظ في غير مصنف",
+    "description": "Notification after dropping a prompt onto the Uncategorized item"
+  },
   "timelineLevelTitle": {
     "message": "مستوى العقدة",
     "description": "Title for timeline node level context menu"
