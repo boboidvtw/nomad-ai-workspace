@@ -48,6 +48,8 @@ test('Extractors: Copilot reads the last reply without zero-width characters', (
       count: 2,
       countOf: 'markdown-reply',
       isBaseline: false,
+      promptCount: 0,
+      promptIsBaseline: false,
     },
   );
   assert.strictEqual(dom.window.eval(PLATFORM_EXTRACTORS.copilot.checkStatus()).isStreaming, true);
@@ -366,6 +368,11 @@ const PROMPT_PAGES = {
     reply: (a) =>
       `<div data-testid="assistant-message"><div class="response-content-markdown">${a}</div></div>`,
   },
+  copilot: {
+    prompt: (q) =>
+      `<div data-testid="chatQuestion"><div role="article" class="fai-UserMessage"><div class="fai-UserMessage__message">${q}</div></div></div>`,
+    reply: (a) => `<div data-testid="markdown-reply"><p>${a}</p></div>`,
+  },
   perplexity: {
     prompt: (q) =>
       `<div class="group/user-bubble"><div data-message-bubble="right">${q}</div></div>`,
@@ -410,15 +417,3 @@ for (const [platform, page] of Object.entries(PROMPT_PAGES)) {
     assert.strictEqual(res.promptIsBaseline, false);
   });
 }
-
-test('Extractors: Copilot does not count prompts until its prompt element is checked live', () => {
-  const { JSDOM } = require('jsdom');
-  const dom = new JSDOM(
-    '<!doctype html><body><div data-testid="markdown-reply"><p>ok</p></div></body>',
-    { runScripts: 'outside-only' },
-  );
-  const res = dom.window.eval(
-    PLATFORM_EXTRACTORS.copilot.getLatestResponse({ markBaseline: true }),
-  );
-  assert.strictEqual(res.promptCount, undefined);
-});
