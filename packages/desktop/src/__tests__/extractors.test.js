@@ -346,3 +346,79 @@ test('Extractors: a new Gemini chat reports no prompts yet, even with no reply o
   assert.strictEqual(res.promptCount, 0);
   assert.strictEqual(res.promptIsBaseline, false);
 });
+
+// Prompt elements as found on each live page (2026-11-03); the reply markup is what the
+// platform's extractor already reads.
+const PROMPT_PAGES = {
+  claude: {
+    prompt: (q) => `<div data-testid="user-message"><p>${q}</p></div>`,
+    reply: (a) =>
+      `<div class="font-claude-message"><div class="standard-markdown">${a}</div></div>`,
+  },
+  chatgpt: {
+    prompt: (q) =>
+      `<div data-content-search-unit-key="turn:0:user"><div data-user-message-bubble="true">${q}</div></div>`,
+    reply: (a) =>
+      `<div data-message-author-role="assistant"><div class="markdown">${a}</div></div>`,
+  },
+  grok: {
+    prompt: (q) => `<div data-testid="user-message"><div class="message-bubble">${q}</div></div>`,
+    reply: (a) =>
+      `<div data-testid="assistant-message"><div class="response-content-markdown">${a}</div></div>`,
+  },
+  perplexity: {
+    prompt: (q) =>
+      `<div class="group/user-bubble"><div data-message-bubble="right">${q}</div></div>`,
+    reply: (a) => `<div class="prose">${a}</div>`,
+  },
+};
+
+for (const [platform, page] of Object.entries(PROMPT_PAGES)) {
+  test(`Extractors: ${platform} counts the prompts on its page and marks the last one before a send`, () => {
+    const { JSDOM } = require('jsdom');
+    const dom = new JSDOM(
+      `<!doctype html><body><main>${page.prompt('2+3?')}${page.reply('5')}</main></body>`,
+      { runScripts: 'outside-only' },
+    );
+    const main = /** @type {HTMLElement} */ (dom.window.document.querySelector('main'));
+    const read = (/** @type {{ markBaseline?: boolean }} */ o = {}) =>
+      dom.window.eval(PLATFORM_EXTRACTORS[platform].getLatestResponse(o));
+
+    const before = read({ markBaseline: true });
+    assert.strictEqual(before.text, '5');
+    assert.strictEqual(before.promptCount, 1);
+    assert.strictEqual(before.promptIsBaseline, true);
+
+    // Dropped: the input box emptied, but no prompt bubble came.
+    assert.strictEqual(read().promptIsBaseline, true);
+
+    main.insertAdjacentHTML('beforeend', page.prompt('4+5?'));
+    const sent = read();
+    assert.strictEqual(sent.promptCount, 2);
+    assert.strictEqual(sent.promptIsBaseline, false);
+    assert.strictEqual(sent.isBaseline, true);
+  });
+
+  test(`Extractors: a new ${platform} chat reports no prompts yet, even with no reply on the page`, () => {
+    const { JSDOM } = require('jsdom');
+    const dom = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' });
+    const res = dom.window.eval(
+      PLATFORM_EXTRACTORS[platform].getLatestResponse({ markBaseline: true }),
+    );
+    assert.strictEqual(res.ok, false);
+    assert.strictEqual(res.promptCount, 0);
+    assert.strictEqual(res.promptIsBaseline, false);
+  });
+}
+
+test('Extractors: Copilot does not count prompts until its prompt element is checked live', () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(
+    '<!doctype html><body><div data-testid="markdown-reply"><p>ok</p></div></body>',
+    { runScripts: 'outside-only' },
+  );
+  const res = dom.window.eval(
+    PLATFORM_EXTRACTORS.copilot.getLatestResponse({ markBaseline: true }),
+  );
+  assert.strictEqual(res.promptCount, undefined);
+});
