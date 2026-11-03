@@ -27,6 +27,9 @@ const TYPE_KEYWORDS = [
   { type: '設計', keywords: ['設計', '架構', '選型', '規範', '拓撲', 'blueprint'] },
 ];
 
+const QUESTION_PATTERN =
+  /[?？]$|是多少|多少|什麼|甚麼|為什麼|如何|怎麼|哪|嗎$|^(what|why|how|who|when|where|which|is|are|can|does|do)\b/;
+
 const PLACEHOLDER_WORKSPACE_TITLES = ['新協作對話', '協作會話', '未命名工作區'];
 
 /**
@@ -64,6 +67,8 @@ function inferType(promptText) {
       return item.type;
     }
   }
+  // A plain question ("6 加 2 是多少？") asks for an answer, not a design.
+  if (QUESTION_PATTERN.test(lower.trim())) return '研究';
   return '設計';
 }
 
@@ -86,15 +91,18 @@ function extractTopic(promptText) {
     .trim();
 
   const words = cleaned.split(/\s+/).filter(Boolean);
-  let topic = words[0] || '協作任務';
-  if (topic.length < 4 && words[1]) {
-    topic = topic + words[1];
+  if (words.length === 0) return '協作任務';
+  // Short words ("6 加 2 是多少") join up until the topic says something.
+  let topic = words[0];
+  for (const word of words.slice(1)) {
+    if (topic.length >= 4) break;
+    topic += word;
   }
   if (topic.length > 15) {
     topic = topic.slice(0, 15);
   }
   if (topic.length < 4) {
-    topic = topic + '架構設計';
+    topic = topic + '協作任務';
   }
   return topic;
 }
