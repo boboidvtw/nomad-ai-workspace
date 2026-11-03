@@ -358,7 +358,9 @@ export function mountLibraryDropZone(options: LibraryDropZoneOptions): () => voi
     setTimeout(hideZone, 100);
   };
 
-  document.addEventListener('dragstart', onDragStart);
+  // Capture phase: library rows stop their own dragstart from propagating (to keep
+  // Angular Material out of it), so a bubbling listener here would never hear it.
+  document.addEventListener('dragstart', onDragStart, true);
   document.addEventListener('dragover', onDragOver);
   document.addEventListener('dragend', onDragEnd);
   document.addEventListener('drop', onDrop);
@@ -366,7 +368,7 @@ export function mountLibraryDropZone(options: LibraryDropZoneOptions): () => voi
   return () => {
     clearDragHeartbeat();
     try {
-      document.removeEventListener('dragstart', onDragStart);
+      document.removeEventListener('dragstart', onDragStart, true);
     } catch {}
     try {
       document.removeEventListener('dragover', onDragOver);

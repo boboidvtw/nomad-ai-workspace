@@ -1493,6 +1493,18 @@
     "message": "未分類",
     "description": "Label for root-level conversations not in any folder"
   },
+  "folder_default_name": {
+    "message": "マイフォルダ",
+    "description": "Name of the folder created when AI Studio has none yet"
+  },
+  "conversation_added_to_folder": {
+    "message": "追加しました:",
+    "description": "Notification prefix after dropping a prompt onto a folder; the folder name follows in quotes"
+  },
+  "conversation_saved_to_root": {
+    "message": "未分類に保存しました",
+    "description": "Notification after dropping a prompt onto the Uncategorized item"
+  },
   "timelineLevelTitle": {
     "message": "ノード階層",
     "description": "Title for timeline node level context menu"

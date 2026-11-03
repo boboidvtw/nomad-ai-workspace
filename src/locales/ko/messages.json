@@ -1493,6 +1493,18 @@
     "message": "미분류",
     "description": "Label for root-level conversations not in any folder"
   },
+  "folder_default_name": {
+    "message": "내 폴더",
+    "description": "Name of the folder created when AI Studio has none yet"
+  },
+  "conversation_added_to_folder": {
+    "message": "추가됨:",
+    "description": "Notification prefix after dropping a prompt onto a folder; the folder name follows in quotes"
+  },
+  "conversation_saved_to_root": {
+    "message": "미분류에 저장됨",
+    "description": "Notification after dropping a prompt onto the Uncategorized item"
+  },
   "timelineLevelTitle": {
     "message": "노드 레벨",
     "description": "Title for timeline node level context menu"

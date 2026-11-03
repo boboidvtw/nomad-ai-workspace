@@ -1453,6 +1453,18 @@
     "message": "未分類",
     "description": "根目錄下未分類對話的標籤"
   },
+  "folder_default_name": {
+    "message": "我的資料夾",
+    "description": "Name of the folder created when AI Studio has none yet"
+  },
+  "conversation_added_to_folder": {
+    "message": "已加入",
+    "description": "Notification prefix after dropping a prompt onto a folder; the folder name follows in quotes"
+  },
+  "conversation_saved_to_root": {
+    "message": "已存到未分類",
+    "description": "Notification after dropping a prompt onto the Uncategorized item"
+  },
   "timelineLevelTitle": {
     "message": "節點層級",
     "description": "時間軸節點層級右鍵選單標題"

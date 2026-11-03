@@ -1493,6 +1493,18 @@
     "message": "Без категории",
     "description": "Label for root-level conversations not in any folder"
   },
+  "folder_default_name": {
+    "message": "Моя папка",
+    "description": "Name of the folder created when AI Studio has none yet"
+  },
+  "conversation_added_to_folder": {
+    "message": "Добавлено в",
+    "description": "Notification prefix after dropping a prompt onto a folder; the folder name follows in quotes"
+  },
+  "conversation_saved_to_root": {
+    "message": "Сохранено в «Без категории»",
+    "description": "Notification after dropping a prompt onto the Uncategorized item"
+  },
   "timelineLevelTitle": {
     "message": "Уровень узла",
     "description": "Title for timeline node level context menu"

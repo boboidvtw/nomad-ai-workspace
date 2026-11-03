@@ -1493,6 +1493,18 @@
     "message": "Sin categorizar",
     "description": "Label for root-level conversations not in any folder"
   },
+  "folder_default_name": {
+    "message": "Mi carpeta",
+    "description": "Name of the folder created when AI Studio has none yet"
+  },
+  "conversation_added_to_folder": {
+    "message": "Añadido a",
+    "description": "Notification prefix after dropping a prompt onto a folder; the folder name follows in quotes"
+  },
+  "conversation_saved_to_root": {
+    "message": "Guardado en Sin categoría",
+    "description": "Notification after dropping a prompt onto the Uncategorized item"
+  },
   "timelineLevelTitle": {
     "message": "Nivel de Nodo",
     "description": "Title for timeline node level context menu"
