@@ -48,6 +48,9 @@ async function renderMermaidToSvg(code) {
         securityLevel: 'strict',
         theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
         fontFamily: 'inherit',
+        // Mermaid 12 defaults to the 'neo' look and ELK layout; keep the classic appearance.
+        look: 'classic',
+        layout: 'dagre',
         flowchart: {
             htmlLabels: false,
             useMaxWidth: true,

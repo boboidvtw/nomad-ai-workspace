@@ -17,7 +17,10 @@
   - 根目錄的 `npm run desktop`、`desktop:dev` 改呼叫桌面套件自己的指令。
 - **mermaid 11.12.2 升到 12.2.0、DOMPurify 升到 3.4.17**：移除 Chrome、Edge、Safari 擴充套件與 Studio 裡 critical 等級的 DOMPurify XSS 漏洞，以及 mermaid 的 CSS 注入、prototype pollution 與 DoS 漏洞。
   - 明確設定 `look: 'classic'`、`layout: 'dagre'`，圖表外觀與排版和升級前相同（mermaid 12 預設改為 `neo` 與 ELK）。
-  - Firefox 版仍用 `mermaid-legacy`（9.2.2），gemini-nexus 仍用 10.9.8，兩者的漏洞另外處理。
+- **Firefox 版與 gemini-nexus 也改用 mermaid 12.2.0**：移除 `mermaid-legacy`（9.2.2）與 gemini-nexus 的 10.9.8，正式相依的 audit 從 6 項降到 2 項（剩 katex 的 low 等級）。
+  - Firefox 先前不能升級的原因：mermaid 內含的 lodash 用 `Function("return this")()` 找全域物件，在 Firefox content script 會被 CSP 擋下，flowchart、class、state、mindmap、pie 因此全部畫不出來。Firefox 建置現在把它換成 `globalThis`（`scripts/firefox-global-this.ts`），實機 Firefox 159 八種圖表全數正常，AMO lint 的 `DANGEROUS_EVAL` 警告也一併消失。
+  - Firefox 從此支援 mindmap、xychart 等 9.2.2 沒有的圖表類型。
+  - gemini-nexus 同樣設定 `look: 'classic'`、`layout: 'dagre'`，外觀不變。
 
 ### 🔧 修正 (Fixed)
 

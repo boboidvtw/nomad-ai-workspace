@@ -370,9 +370,11 @@ B --> C`;
   });
 
   describe('Firefox Mermaid compatibility', () => {
-    it('parses representative model output with Mermaid 9.2.2 in strict mode', async () => {
-      const mermaidLegacy = (await import('mermaid-legacy')).default;
-      mermaidLegacy.initialize({ startOnLoad: false, securityLevel: 'strict' });
+    // Firefox now ships the same Mermaid as Chrome/Safari; its build only swaps lodash's
+    // Function() global lookup for globalThis (scripts/firefox-global-this.ts).
+    it('parses representative model output with the shared Mermaid in strict mode', async () => {
+      const { default: mermaid } = await vi.importActual<typeof import('mermaid')>('mermaid');
+      mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' });
 
       const source = normalizeMermaidCode(`sequenceDiagram
         participant 用户
@@ -380,7 +382,7 @@ B --> C`;
         用户->>系统: SSH 登录并检查日志
         系统-->>用户: 服务恢复正常`);
 
-      expect(mermaidLegacy.parse(source)).toBe(true);
+      await expect(mermaid.parse(source)).resolves.toMatchObject({ diagramType: 'sequence' });
     });
   });
 
