@@ -55,6 +55,25 @@ const baselineSource = (options = {}) => `
         return el.hasAttribute('data-nomad-baseline');
       };`;
 
+/**
+ * Defines `prompts` inside an extractor script: how many prompts the user sent on the page and
+ * whether the last one is the one marked before a send. The orchestrator uses it to tell a prompt
+ * the platform dropped (input box emptied, no prompt bubble) from one it is slow to answer.
+ * Only platforms whose prompt element has been checked on the live page use it.
+ * @param {string} selector - the element holding one user prompt
+ * @param {{ markBaseline?: boolean }} [options]
+ */
+const promptsSource = (selector, options = {}) => `
+      const prompts = (() => {
+        const all = document.querySelectorAll(${JSON.stringify(selector)});
+        const last = all[all.length - 1];
+        if (${Boolean(options.markBaseline)}) {
+          document.querySelectorAll('[data-nomad-prompt-baseline]').forEach((m) => m.removeAttribute('data-nomad-prompt-baseline'));
+          if (last) last.setAttribute('data-nomad-prompt-baseline', '');
+        }
+        return { promptCount: all.length, promptIsBaseline: Boolean(last && last.hasAttribute('data-nomad-prompt-baseline')) };
+      })();`;
+
 /** @type {Record<string, { getLatestResponse: (options?: { markBaseline?: boolean }) => string, checkStatus: () => string }>} Script builders run inside each platform webview */
 const PLATFORM_EXTRACTORS = {
   claude: {
@@ -177,7 +196,7 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
   gemini: {
     getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}${baselineSource(options)}
+${READ_TEXT_SOURCE}${baselineSource(options)}${promptsSource('user-query', options)}
         const selectors = [
           'div.markdown.markdown-main-panel',
           'message-content',
@@ -201,9 +220,9 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
             break;
           }
         }
-        if (!target) return { ok: false, error: "No Gemini model response found", url: location.href };
+        if (!target) return { ok: false, error: "No Gemini model response found", url: location.href, ...prompts };
         const text = readText(target);
-        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
+        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target), ...prompts };
       } catch (err) {
         return { ok: false, error: err.message };
       }

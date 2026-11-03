@@ -23,8 +23,8 @@ import {
 } from '@/core/icons/promptManagerIcons';
 import { logger } from '@/core/services/LoggerService';
 import { promptStorageService } from '@/core/services/StorageService';
-import { type StorageKey, StorageKeys } from '@/core/types/common';
-import { type HighlightRecordV1, getHighlightColorHex } from '@/core/types/highlight';
+import { StorageKeys } from '@/core/types/common';
+import type { HighlightRecordV1 } from '@/core/types/highlight';
 import type { PromptItem } from '@/core/types/sync';
 import { isSafari, shouldShowSafariUpdateReminder } from '@/core/utils/browser';
 import { isExtensionContextInvalidatedError } from '@/core/utils/extensionContext';
@@ -35,14 +35,14 @@ import { renderPromptHtmlAsText } from '@/features/prompt/model/promptMarkdown';
 import { convertLegacyBraces, isPromptTemplate } from '@/features/prompt/model/promptTemplate';
 import {
   type SavedLibraryFilter,
+  type SavedLibraryItem,
   filterSavedLibraryItems,
   toSavedLibraryItems,
 } from '@/features/savedLibrary/model';
-import { getCurrentLanguage, getTranslationSync, initI18n, setCachedLanguage } from '@/utils/i18n';
+import { initI18n } from '@/utils/i18n';
 import {
   APP_LANGUAGES,
   APP_LANGUAGE_LABELS,
-  type AppLanguage,
   isAppLanguage,
   normalizeLanguage,
 } from '@/utils/language';
@@ -62,6 +62,29 @@ import { extractPlainTitle } from './compactTitle';
 import { createEventActionButton } from './eventActionButton';
 import { getLatestVersionCached, normalizeVersionString } from './latestVersion';
 import { activatePromptText } from './promptClickAction';
+import {
+  type PMPanelView,
+  type PMTheme,
+  type PMViewMode,
+  type PanelPosition,
+  STORAGE_KEYS,
+  type TriggerPosition,
+  collectAllTags,
+  computeAnchoredPosition,
+  copyText,
+  createEl,
+  createI18n,
+  dedupeTags,
+  detectPageTheme,
+  elFromHTML,
+  escapeHtml,
+  getRuntimeUrl,
+  isPMPanelView,
+  pmLogger,
+  readStorage,
+  uid,
+  writeStorage,
+} from './promptManagerHelpers';
 import { getPromptNameConflictIds, isPromptNameTaken, normalizePromptName } from './promptName';
 import { isPinned, pinGroupOf, sortPinnedFirst, togglePin } from './promptPinning';
 import { createPromptReorder } from './promptReorder';
@@ -73,32 +96,14 @@ import {
   removeStoredHighlight,
   resolveCurrentHighlightScope,
 } from './savedLibraryActions';
+import { buildSavedLibraryRows, getSavedLibraryEmptyText } from './savedLibraryRows';
 import { getScrollHintState } from './scrollHint';
-import { formatStarredMessageTime } from './starredLibrary';
 import { sanitizeSelectedTags } from './tagFilterState';
 import {
   applyTriggerLogoFromStorageChange,
   createTriggerLogoImage,
   mascotLogoFromRecord,
 } from './triggerLogo';
-
-type PanelPosition = { top: number; left: number };
-type TriggerPosition = { bottom: number; right: number };
-type PMPanelView = 'prompts' | 'starred';
-
-function isPMPanelView(value: unknown): value is PMPanelView {
-  return value === 'prompts' || value === 'starred';
-}
-
-const STORAGE_KEYS = {
-  items: StorageKeys.PROMPT_ITEMS,
-  locked: StorageKeys.PROMPT_PANEL_LOCKED,
-  position: StorageKeys.PROMPT_PANEL_POSITION,
-  triggerPos: StorageKeys.PROMPT_TRIGGER_POSITION,
-  selectedTags: StorageKeys.PROMPT_SELECTED_TAGS,
-  language: StorageKeys.LANGUAGE, // reuse global language key
-  theme: StorageKeys.PROMPT_THEME,
-} as const;
 
 const ID = {
   trigger: 'gv-pm-trigger',
@@ -110,133 +115,6 @@ export const PROMPT_TRIGGER_ID = ID.trigger;
 
 const SPONSOR_HEART_PATH_16 =
   'M7.655 14.916h-.002l-.006-.003l-.018-.01a22 22 0 0 1-3.744-2.584C2.045 10.731 0 8.35 0 5.5C0 2.836 2.086 1 4.25 1C5.797 1 7.153 1.802 8 3.02C8.847 1.802 10.203 1 11.75 1C13.914 1 16 2.836 16 5.5c0 2.85-2.044 5.231-3.886 6.818a22 22 0 0 1-3.433 2.414a7 7 0 0 1-.31.17l-.018.01l-.008.004a.75.75 0 0 1-.69 0';
-
-type PMTheme = 'light' | 'dark';
-type PMViewMode = 'compact' | 'comfortable';
-
-function detectPageTheme(): PMTheme {
-  if (
-    document.querySelector('.theme-host.dark-theme') ||
-    document.body.classList.contains('dark-theme') ||
-    document.documentElement.classList.contains('dark') ||
-    document.body.getAttribute('data-theme') === 'dark'
-  ) {
-    return 'dark';
-  }
-  if (
-    document.querySelector('.theme-host.light-theme') ||
-    document.body.classList.contains('light-theme') ||
-    document.documentElement.classList.contains('light') ||
-    document.body.getAttribute('data-theme') === 'light'
-  ) {
-    return 'light';
-  }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-function getRuntimeUrl(path: string): string {
-  // Try the standard Web Extensions API first (mainly for Firefox)
-  try {
-    return browser.runtime.getURL(path);
-  } catch {
-    const win = window as Window & { chrome?: { runtime?: { getURL?: (path: string) => string } } };
-    return win.chrome?.runtime?.getURL?.(path) || path;
-  }
-}
-
-// Use centralized i18n system
-function createI18n() {
-  return {
-    t: (key: TranslationKey): string => getTranslationSync(key),
-    set: async (lang: AppLanguage) => {
-      try {
-        // Check if extension context is still valid
-        if (!browser.runtime?.id) {
-          // Extension context invalidated, skip
-          return;
-        }
-        setCachedLanguage(lang);
-        await browser.storage.sync.set({ language: lang });
-        return;
-      } catch (e) {
-        try {
-          await browser.storage.local.set({ language: lang });
-          return;
-        } catch (localError) {
-          // Silently ignore extension context errors
-          if (
-            isExtensionContextInvalidatedError(e) ||
-            isExtensionContextInvalidatedError(localError)
-          ) {
-            return;
-          }
-          console.warn('[PromptManager] Failed to set language:', e, localError);
-        }
-      }
-    },
-    get: async (): Promise<AppLanguage> => await getCurrentLanguage(),
-  };
-}
-
-function uid(): string {
-  // FNV-1a-ish hash over timestamp + rand
-  const seed = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  let h = 2166136261 >>> 0;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0).toString(36);
-}
-
-/**
- * Storage adapter - uses chrome.storage.local for cross-domain data sharing
- * Falls back to localStorage if chrome.storage is unavailable
- */
-const pmLogger = logger.createChild('PromptManager');
-
-async function readStorage<T>(key: StorageKey, fallback: T): Promise<T> {
-  const result = await promptStorageService.get<T>(key);
-  if (result.success) {
-    return result.data;
-  }
-  pmLogger.debug(`Key not found: ${key}, using fallback`);
-  return fallback;
-}
-
-async function writeStorage<T>(key: StorageKey, value: T): Promise<void> {
-  const result = await promptStorageService.set(key, value);
-  if (!result.success) {
-    pmLogger.error(`Failed to write key: ${key}`, {
-      error: result.error?.message || 'Unknown error',
-      errorDetails: result.error,
-    });
-  }
-}
-
-function createEl<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  className?: string,
-): HTMLElementTagNameMap[K] {
-  const el = document.createElement(tag);
-  if (className) el.className = className;
-  return el;
-}
-
-function elFromHTML(html: string): HTMLElement {
-  const tpl = document.createElement('template');
-  tpl.innerHTML = html.trim();
-  return tpl.content.firstElementChild as HTMLElement;
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 function createSponsorHeartIcon(size = 14): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -258,59 +136,6 @@ function renderSupportLinkLabel(link: HTMLAnchorElement, label: string): void {
   const labelEl = createEl('span', 'gv-pm-support-label');
   labelEl.textContent = label;
   link.replaceChildren(createSponsorHeartIcon(), labelEl);
-}
-
-function dedupeTags(tags: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of tags) {
-    const t = raw.trim().toLowerCase();
-    if (!t) continue;
-    if (!seen.has(t)) {
-      seen.add(t);
-      out.push(t);
-    }
-  }
-  return out;
-}
-
-function collectAllTags(items: PromptItem[]): string[] {
-  const set = new Set<string>();
-  for (const it of items) for (const t of it.tags || []) set.add(String(t).toLowerCase());
-  return Array.from(set).sort();
-}
-
-function copyText(text: string): Promise<void> {
-  try {
-    return navigator.clipboard.writeText(text);
-  } catch {
-    return new Promise<void>((resolve) => {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.left = '-9999px';
-      document.body.appendChild(ta);
-      ta.select();
-      try {
-        document.execCommand('copy');
-      } catch {}
-      ta.remove();
-      resolve();
-    });
-  }
-}
-
-function computeAnchoredPosition(
-  trigger: HTMLElement,
-  panel: HTMLElement,
-): { top: number; left: number } {
-  const rect = trigger.getBoundingClientRect();
-  const vw = window.innerWidth;
-  const pad = 8;
-  const panelW = Math.min(380, Math.max(300, panel.getBoundingClientRect().width || 320));
-  const tentativeLeft = Math.min(vw - panelW - pad, Math.max(pad, rect.left + rect.width - panelW));
-  const top = Math.max(pad, rect.top - (panel.getBoundingClientRect().height || 360) - 10);
-  return { top, left: Math.round(tentativeLeft) };
 }
 
 export async function startPromptManager(): Promise<{ destroy: () => void }> {
@@ -1224,12 +1049,28 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       }
     }
 
-    function getStarredEmptyText(query: string): string {
-      if (starredLoadError) return i18n.t('pm_starred_load_error');
-      if (query) return i18n.t('pm_starred_no_results');
-      if (savedFilter === 'highlights') return i18n.t('savedLibraryNoHighlights');
-      if (savedFilter === 'starred') return i18n.t('noStarredMessages');
-      return i18n.t('savedLibraryEmpty');
+    async function removeSavedLibraryItem(item: SavedLibraryItem): Promise<void> {
+      const removed =
+        item.kind === 'starred'
+          ? await StarredMessagesService.removeStarredMessage(
+              item.conversationId,
+              item.turnId,
+            ).then(() => true)
+          : await removeStoredHighlight(item);
+      if (!removed) {
+        setNotice(i18n.t('highlightDeleteFailed'), 'err');
+        return;
+      }
+      if (item.kind === 'starred') {
+        starredMessages = starredMessages.filter(
+          (message) =>
+            message.conversationId !== item.conversationId || message.turnId !== item.turnId,
+        );
+      } else {
+        highlightRecords = highlightRecords.filter((record) => record.id !== item.id);
+      }
+      renderStarredList();
+      setNotice(i18n.t('pm_deleted') || 'Deleted', 'ok');
     }
 
     function renderStarredList(): void {
@@ -1252,93 +1093,26 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
 
       if (starredLoadError || filtered.length === 0) {
         const empty = createEl('div', 'gv-pm-empty gv-pm-starred-empty');
-        empty.textContent = getStarredEmptyText(query);
+        empty.textContent = getSavedLibraryEmptyText(
+          { loadError: starredLoadError, query, filter: savedFilter },
+          (key) => i18n.t(key),
+        );
         list.appendChild(empty);
         return;
       }
 
-      const frag = document.createDocumentFragment();
-      for (const item of filtered) {
-        const row = createEl('button', 'gv-pm-starred-item');
-        row.setAttribute('type', 'button');
-        row.setAttribute('dir', 'auto');
-        row.title = i18n.t('pm_starred_open');
-        row.addEventListener('click', (event) => {
-          event.preventDefault();
-          void (async () => {
-            await persistPanelView('starred');
-            if (navigateToSavedLibraryItem(item)) closePanel();
-          })();
-        });
-
-        const icon = createEl('span', 'gv-pm-starred-icon');
-        if (item.kind === 'starred') icon.appendChild(createStarIcon(16, true));
-        icon.classList.toggle('gv-pm-highlight-icon', item.kind === 'highlight');
-        if (item.kind === 'highlight') {
-          icon.setAttribute('data-highlight-color', item.color || 'yellow');
-          icon.style.backgroundColor = getHighlightColorHex(item.color || 'yellow');
-        }
-        icon.setAttribute('aria-hidden', 'true');
-
-        const body = createEl('span', 'gv-pm-starred-body');
-        const title = createEl('span', 'gv-pm-starred-title');
-        title.textContent =
-          (item.conversationTitle && item.conversationTitle.trim()) ||
-          i18n.t('pm_starred_untitled');
-        const content = createEl('span', 'gv-pm-starred-content');
-        content.textContent = item.content || '';
-        let note: HTMLSpanElement | null = null;
-        if (item.note) {
-          note = createEl('span', 'gv-pm-highlight-note');
-          note.textContent = item.note;
-        }
-        const meta = createEl('span', 'gv-pm-starred-meta');
-        meta.textContent = `${
-          item.kind === 'starred' ? i18n.t('savedLibraryStars') : i18n.t('savedLibraryHighlights')
-        } · ${formatStarredMessageTime(item.savedAt)}`;
-        body.appendChild(title);
-        body.appendChild(content);
-        if (note) body.appendChild(note);
-        body.appendChild(meta);
-
-        const removeBtn = createEl('button', 'gv-pm-starred-remove');
-        removeBtn.setAttribute('type', 'button');
-        const removeLabel =
-          item.kind === 'starred' ? i18n.t('removeFromStarred') : i18n.t('pm_delete');
-        removeBtn.title = removeLabel;
-        removeBtn.setAttribute('aria-label', removeLabel);
-        removeBtn.addEventListener('click', async (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const removed =
-            item.kind === 'starred'
-              ? await StarredMessagesService.removeStarredMessage(
-                  item.conversationId,
-                  item.turnId,
-                ).then(() => true)
-              : await removeStoredHighlight(item);
-          if (!removed) {
-            setNotice(i18n.t('highlightDeleteFailed'), 'err');
-            return;
-          }
-          if (item.kind === 'starred') {
-            starredMessages = starredMessages.filter(
-              (message) =>
-                message.conversationId !== item.conversationId || message.turnId !== item.turnId,
-            );
-          } else {
-            highlightRecords = highlightRecords.filter((record) => record.id !== item.id);
-          }
-          renderStarredList();
-          setNotice(i18n.t('pm_deleted') || 'Deleted', 'ok');
-        });
-
-        row.appendChild(icon);
-        row.appendChild(body);
-        row.appendChild(removeBtn);
-        frag.appendChild(row);
-      }
-      list.appendChild(frag);
+      list.appendChild(
+        buildSavedLibraryRows(filtered, {
+          t: (key) => i18n.t(key),
+          onOpen: (item) => {
+            void (async () => {
+              await persistPanelView('starred');
+              if (navigateToSavedLibraryItem(item)) closePanel();
+            })();
+          },
+          onRemove: (item) => void removeSavedLibraryItem(item),
+        }),
+      );
       const maxScroll = Math.max(0, list.scrollHeight - list.clientHeight);
       list.scrollTop = Math.min(savedScrollTop, maxScroll);
     }

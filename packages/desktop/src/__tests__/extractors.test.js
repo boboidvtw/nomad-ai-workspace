@@ -311,3 +311,38 @@ test('Extractors: Grok does not read its composer or its placeholder as a reply'
   assert.strictEqual(withReply.text, 'GROK-1');
   assert.strictEqual(withReply.count, 1);
 });
+
+test('Extractors: Gemini counts the prompts on its page and marks the last one before a send', () => {
+  const { JSDOM } = require('jsdom');
+  const turn = (/** @type {string} */ q, /** @type {string} */ a) =>
+    `<user-query>${q}</user-query><div class="markdown markdown-main-panel">${a}</div>`;
+  const dom = new JSDOM(`<!doctype html><body><main>${turn('2+3?', '5')}</main></body>`, {
+    runScripts: 'outside-only',
+  });
+  const main = /** @type {HTMLElement} */ (dom.window.document.querySelector('main'));
+  const read = (/** @type {{ markBaseline?: boolean }} */ o = {}) =>
+    dom.window.eval(PLATFORM_EXTRACTORS.gemini.getLatestResponse(o));
+
+  const before = read({ markBaseline: true });
+  assert.strictEqual(before.promptCount, 1);
+  assert.strictEqual(before.promptIsBaseline, true);
+
+  // Dropped: the input box emptied, but no prompt bubble came.
+  assert.strictEqual(read().promptIsBaseline, true);
+
+  main.insertAdjacentHTML('beforeend', '<user-query>4+5?</user-query>');
+  const sent = read();
+  assert.strictEqual(sent.promptCount, 2);
+  assert.strictEqual(sent.promptIsBaseline, false);
+  // The reply mark is separate: the last reply is still the one from before the send.
+  assert.strictEqual(sent.isBaseline, true);
+});
+
+test('Extractors: a new Gemini chat reports no prompts yet, even with no reply on the page', () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only' });
+  const res = dom.window.eval(PLATFORM_EXTRACTORS.gemini.getLatestResponse({ markBaseline: true }));
+  assert.strictEqual(res.ok, false);
+  assert.strictEqual(res.promptCount, 0);
+  assert.strictEqual(res.promptIsBaseline, false);
+});

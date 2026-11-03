@@ -31,8 +31,9 @@ const DEFAULT_COMPOSER_RETRY_MS = 1500;
  * @typedef {Object} WebviewTaskRunnerDeps
  * @property {(platform: string, text: string) => Promise<Record<string, any>>} inject
  *   Same shape as main.js dispatchPromptToTargets: `{ [platform]: { ok, error? } }`.
- * @property {(platform: string, options: { previous: ReplySnapshot }) => Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>} awaitSettled
+ * @property {(platform: string, options: { previous: ReplySnapshot }) => Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string, dropped?: boolean }>} awaitSettled
  *   `previous` is the page read before the send; the wait must not return its reply as the answer.
+ *   `dropped` means the page never showed the prompt, so it can be sent again.
  * @property {(platform: string) => Promise<ReplySnapshot>} [readReply] - the latest reply on the page and the page's reply count
  * @property {import('@nomad/core').BotRoster} [roster]
  * @property {(platform: string, url: string | null) => Promise<{ ok: boolean, error?: string }>} [openChat]
@@ -116,6 +117,11 @@ function createWebviewTaskRunner(deps) {
         hooks.onUnblocked?.();
       }
       if (reply.settled) return ok({ text: reply.text });
+      if (reply.dropped) {
+        return err(ErrorCodes.BOT_INJECT_FAILED_006, `${platform} dropped the prompt`, {
+          dropped: true,
+        });
+      }
       if (!reply.blocked) {
         return err(ErrorCodes.BOT_RESPONSE_TIMEOUT_005, `${platform} did not finish replying`, {
           partialText: reply.text,
@@ -142,6 +148,18 @@ function createWebviewTaskRunner(deps) {
    * @param {WaitHooks} [hooks]
    */
   async function injectAndWait(platform, prompt, hooks = {}) {
+    const first = await sendAndWait(platform, prompt, hooks);
+    // A prompt the page dropped never reached the platform, so sending it again cannot repeat it.
+    const dropped = !first.success && /** @type {any} */ (first.details)?.dropped;
+    return dropped ? sendAndWait(platform, prompt, hooks) : first;
+  }
+
+  /**
+   * @param {string} platform
+   * @param {string} prompt
+   * @param {WaitHooks} hooks
+   */
+  async function sendAndWait(platform, prompt, hooks) {
     const previous = deps.readReply
       ? await deps.readReply(platform)
       : { text: '', count: null, countOf: null };

@@ -390,3 +390,52 @@ test('other send failures are not retried, since the text may already be in the 
   assert.strictEqual(res.success, false);
   assert.deepStrictEqual(h.injected, ['hi']);
 });
+
+// --- Dropped prompts: one resend, then a quick failure -------------------------
+
+/**
+ * @param {Array<{ settled: boolean, text: string, dropped?: boolean }>} waits - one per send
+ */
+function droppingHarness(waits) {
+  /** @type {string[]} */
+  const order = [];
+  const runner = createWebviewTaskRunner({
+    readReply: async () => {
+      order.push('read');
+      return { text: 'old', count: 1, countOf: 'reply', promptCount: 1 };
+    },
+    inject: async (platform) => {
+      order.push('inject');
+      return { [platform]: { ok: true } };
+    },
+    awaitSettled: async () => waits.shift() || { settled: false, text: '' },
+  });
+  return { runner, order };
+}
+
+test('a prompt the page dropped is sent once more, after a fresh read of the page', async () => {
+  const h = droppingHarness([
+    { settled: false, text: '', dropped: true },
+    { settled: true, text: 'answer' },
+  ]);
+
+  const res = await h.runner.run('gemini', 'hi');
+
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.data.text, 'answer');
+  assert.deepStrictEqual(h.order, ['read', 'inject', 'read', 'inject']);
+});
+
+test('a prompt dropped twice fails as not delivered instead of timing out', async () => {
+  const h = droppingHarness([
+    { settled: false, text: '', dropped: true },
+    { settled: false, text: '', dropped: true },
+  ]);
+
+  const res = await h.runner.run('gemini', 'hi');
+
+  assert.strictEqual(res.success, false);
+  assert.strictEqual(res.errorCode, 'BOT_INJECT_FAILED_006');
+  assert.match(res.message, /dropped the prompt/);
+  assert.deepStrictEqual(h.order, ['read', 'inject', 'read', 'inject']);
+});

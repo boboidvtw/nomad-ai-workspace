@@ -3,8 +3,11 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 describe('prompt manager footer actions', () => {
+  // The panel's own rows live next to its entry point.
   const readPromptManagerCode = () =>
-    readFileSync(resolve(process.cwd(), 'src/pages/content/prompt/index.ts'), 'utf8');
+    ['index.ts', 'savedLibraryRows.ts']
+      .map((file) => readFileSync(resolve(process.cwd(), 'src/pages/content/prompt', file), 'utf8'))
+      .join('\n');
 
   it('keeps the secondary footer row to settings and support', () => {
     const code = readPromptManagerCode();
