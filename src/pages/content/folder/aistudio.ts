@@ -17,6 +17,37 @@ import {
 
 import { watchRouteChanges } from '../utils/routeWatcher';
 import { FolderDataSession } from './FolderDataSession';
+import { mountLibraryDropZone } from './aistudioLibraryDropZone';
+import { AIStudioLibraryMultiSelect } from './aistudioLibraryMultiSelect';
+import {
+  BODY_PROMPT_POPOVER_SELECTOR,
+  buildLibraryPromptData,
+  extractPromptId,
+  extractPromptIdFromHref,
+  extractPromptTitle,
+  getLibraryPromptAnchor,
+  getLibraryPromptRows,
+  type LibraryPromptData,
+  mutationAddsPromptLinks,
+  mutationMayAffectPromptTitles,
+  nodeContainsPromptLink,
+  parseDragDataFromEvent,
+  PROMPT_DRAG_HOST_SELECTORS,
+  PROMPT_LINK_SELECTOR,
+  setPromptDragData,
+  UNBOUND_PROMPT_LINK_SELECTOR,
+} from './aistudioPromptLinks';
+import { AIStudioSidebarWidth, SIDEBAR_WIDTH_KEY } from './aistudioSidebarWidth';
+import { AISTUDIO_FOLDER_STYLE_ID, injectAIStudioFolderStyles } from './aistudioStyles';
+import { exportTimestamp, getCloudTooltip, mergeImportedFolderData } from './aistudioTransfer';
+import {
+  downloadJSON,
+  normalizeText,
+  now,
+  uid,
+  validateFolderData,
+  waitForElement,
+} from './aistudioUtils';
 import {
   mountHideArchivedNudge,
   shouldShowHideArchivedNudge,
@@ -24,106 +55,9 @@ import {
 } from './hideArchivedNudge';
 import type { ConversationReference, DragData, Folder, FolderData } from './types';
 
-function waitForElement<T extends Element = Element>(
-  selector: string,
-  timeoutMs = 10000,
-): Promise<T | null> {
-  return new Promise((resolve) => {
-    const found = document.querySelector(selector) as T | null;
-    if (found) return resolve(found);
-    const obs = new MutationObserver(() => {
-      const el = document.querySelector(selector) as T | null;
-      if (el) {
-        try {
-          obs.disconnect();
-        } catch {}
-        resolve(el);
-      }
-    });
-    try {
-      obs.observe(document.body, { childList: true, subtree: true });
-    } catch {}
-    if (timeoutMs > 0) {
-      setTimeout(() => {
-        try {
-          obs.disconnect();
-        } catch {}
-        resolve(null);
-      }, timeoutMs);
-    }
-  });
-}
-
-function normalizeText(text: string | null | undefined): string {
-  try {
-    return String(text || '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  } catch {
-    return '';
-  }
-}
-
-function downloadJSON(data: unknown, filename: string): void {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: 'application/json;charset=utf-8',
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    try {
-      document.body.removeChild(a);
-    } catch {}
-    URL.revokeObjectURL(url);
-  }, 0);
-}
-
-function now(): number {
-  return Date.now();
-}
-
-function uid(): string {
-  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-}
-
 const NOTIFICATION_TIMEOUT_MS = 5000;
-const PROMPT_LINK_SELECTORS = [
-  'a[href^="/prompts/"]',
-  'a[href^="/u/"][href*="/prompts/"]',
-  'a[href*="://aistudio.google.com/prompts/"]',
-  'a[href*="://aistudio.google.com/u/"][href*="/prompts/"]',
-  'a[href*="://aistudio.google.cn/prompts/"]',
-  'a[href*="://aistudio.google.cn/u/"][href*="/prompts/"]',
-];
-const PROMPT_LINK_SELECTOR = PROMPT_LINK_SELECTORS.join(', ');
-const UNBOUND_PROMPT_LINK_SELECTOR = PROMPT_LINK_SELECTORS.map(
-  (selector) => `${selector}:not([data-gv-drag-bound])`,
-).join(', ');
-const BODY_PROMPT_POPOVER_SELECTOR = [
-  '.cdk-overlay-container',
-  '.cdk-overlay-pane',
-  '[role="menu"]',
-  '[role="listbox"]',
-  '[role="dialog"]',
-].join(', ');
 const PROMPT_LIST_BIND_DEBOUNCE_MS = 120;
 const PROMPT_TITLE_SYNC_DEBOUNCE_MS = 280;
-// If no dragover arrives for this long while the floating library drop zone is
-// visible, treat the drag as over (e.g. the source row was torn out of the DOM by an
-// Angular refresh, so dragend never fires) and hide the zone.
-const LIBRARY_DRAG_HEARTBEAT_MS = 800;
-const PROMPT_DRAG_HOST_SELECTORS = [
-  '[data-test-id^="history-item"]',
-  '[role="listitem"]',
-  '.mat-mdc-list-item',
-  'li',
-];
-
-type LibraryPromptData = DragData & { conversationId: string };
 
 type InlineFolderEditor = {
   wrapper: HTMLElement;
@@ -132,117 +66,7 @@ type InlineFolderEditor = {
   cancelBtn: HTMLButtonElement;
 };
 
-function nodeContainsPromptLink(node: Node): boolean {
-  if (!(node instanceof Element)) return false;
-  if (node.matches(PROMPT_LINK_SELECTOR)) return true;
-  return !!node.querySelector(PROMPT_LINK_SELECTOR);
-}
-
-export function mutationAddsPromptLinks(mutations: MutationRecord[]): boolean {
-  for (const mutation of mutations) {
-    for (const node of Array.from(mutation.addedNodes)) {
-      if (nodeContainsPromptLink(node)) return true;
-    }
-  }
-  return false;
-}
-
-function mutationMayAffectPromptTitles(mutations: MutationRecord[]): boolean {
-  for (const mutation of mutations) {
-    if (mutation.type === 'characterData') {
-      if (mutation.target.parentElement?.closest(PROMPT_LINK_SELECTOR)) return true;
-      continue;
-    }
-
-    if (mutation.type === 'attributes') {
-      if (mutation.target instanceof Element && mutation.target.closest(PROMPT_LINK_SELECTOR))
-        return true;
-      continue;
-    }
-
-    if (mutation.type === 'childList') {
-      if (mutation.target instanceof Element && mutation.target.closest(PROMPT_LINK_SELECTOR)) {
-        return true;
-      }
-
-      for (const node of Array.from(mutation.addedNodes)) {
-        if (nodeContainsPromptLink(node)) return true;
-      }
-      for (const node of Array.from(mutation.removedNodes)) {
-        if (nodeContainsPromptLink(node)) return true;
-      }
-    }
-  }
-  return false;
-}
-
-function extractPromptIdFromHref(rawHref: string): string | null {
-  const href = String(rawHref || '').trim();
-  if (!href) return null;
-  const match = href.match(/\/prompts\/([^/?#]+)/);
-  if (match && match[1]) return match[1];
-  try {
-    const url = new URL(href, location.origin);
-    const pathMatch = url.pathname.match(/\/prompts\/([^/?#]+)/);
-    return pathMatch?.[1] || null;
-  } catch {
-    return null;
-  }
-}
-
-function normalizeDroppedUrl(raw: string): string | null {
-  const firstLine = String(raw || '')
-    .split(/\r?\n/, 1)[0]
-    ?.trim();
-  if (!firstLine) return null;
-  if (/^https?:\/\//i.test(firstLine)) return firstLine;
-  if (firstLine.startsWith('/')) return `${location.origin}${firstLine}`;
-  return null;
-}
-
-export function parseDragDataPayload(raw: string): DragData | null {
-  const trimmed = String(raw || '').trim();
-  if (!trimmed) return null;
-
-  try {
-    const parsed = JSON.parse(trimmed) as unknown;
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      (parsed as { type?: unknown }).type === 'conversation' &&
-      typeof (parsed as { conversationId?: unknown }).conversationId === 'string'
-    ) {
-      const data = parsed as DragData;
-      return {
-        type: 'conversation',
-        conversationId: data.conversationId,
-        title: typeof data.title === 'string' ? data.title : '',
-        url: typeof data.url === 'string' ? data.url : '',
-      };
-    }
-  } catch {}
-
-  const normalizedUrl = normalizeDroppedUrl(trimmed);
-  if (!normalizedUrl) return null;
-  const conversationId = extractPromptIdFromHref(normalizedUrl);
-  if (!conversationId) return null;
-
-  return {
-    type: 'conversation',
-    conversationId,
-    title: '',
-    url: normalizedUrl,
-  };
-}
-
-/**
- * Validate folder data structure
- */
-function validateFolderData(data: unknown): boolean {
-  if (typeof data !== 'object' || data === null) return false;
-  const d = data as Record<string, unknown>;
-  return Array.isArray(d.folders) && typeof d.folderContents === 'object';
-}
+export { mutationAddsPromptLinks, parseDragDataPayload } from './aistudioPromptLinks';
 
 export class AIStudioFolderManager {
   /**
@@ -277,12 +101,11 @@ export class AIStudioFolderManager {
   private promptListBindTimer: number | null = null;
   private promptTitleSyncTimer: number | null = null;
   private promptTitleSyncInProgress: boolean = false;
-  private selectedLibraryPrompts: Set<string> = new Set();
-  private isLibraryMultiSelectMode: boolean = false;
-  private libraryOutsideClickHandler: ((e: MouseEvent) => void) | null = null;
-  private libraryMultiSelectHostElement: HTMLElement | null = null;
-  private libraryBatchDeleteInProgress: boolean = false;
-  private libraryBatchDeleteProgressElement: HTMLElement | null = null;
+  private readonly libraryMultiSelect = new AIStudioLibraryMultiSelect({
+    t: (key) => this.t(key),
+    showNotification: (message, level) => this.showNotification(message, level),
+    createIcon: (name) => this.createIcon(name),
+  });
   private readonly STORAGE_KEY = StorageKeys.FOLDER_DATA_AISTUDIO;
   private folderEnabled: boolean = true; // Whether folder feature is enabled
   private hideArchivedEnabled: boolean = false; // AI Studio-scoped — hide filed convs in /library table
@@ -294,22 +117,10 @@ export class AIStudioFolderManager {
   private lastAccountContextFingerprint: string | null = null; // Debounce account scope refresh
   private resolvingAccountContextFingerprint: string | null = null;
   private stopRouteWatcher: (() => void) | null = null;
-  private sidebarWidth: number = 360; // Default sidebar width (increased to reduce text truncation)
-  private readonly SIDEBAR_WIDTH_KEY = 'gvAIStudioSidebarWidth';
-  private readonly MIN_SIDEBAR_WIDTH = 240;
-  private readonly MAX_SIDEBAR_WIDTH = 600;
+  private readonly sidebarWidth = new AIStudioSidebarWidth({
+    isExtensionContextValid: () => this.isExtensionContextValid(),
+  });
   private readonly UNCATEGORIZED_KEY = '__uncategorized__'; // Special key for root-level conversations
-  private readonly LIBRARY_LONG_PRESS_MS = 500;
-  private readonly MAX_LIBRARY_BATCH_DELETE_COUNT = 50;
-  private readonly LIBRARY_BATCH_DELETE_CONFIG = {
-    DELAY_BETWEEN_DELETIONS: 500,
-    MENU_APPEAR_DELAY: 300,
-    DIALOG_APPEAR_DELAY: 300,
-    DELETION_COMPLETE_DELAY: 500,
-    MAX_BUTTON_WAIT_TIME: 3000,
-    BUTTON_CHECK_INTERVAL: 100,
-    PAGE_REFRESH_DELAY: 1500,
-  } as const;
 
   // Helper to create a ligature icon span with a data-icon attribute
   private createIcon(name: string): HTMLSpanElement {
@@ -471,7 +282,7 @@ export class AIStudioFolderManager {
     await this.refreshAccountScope(true);
 
     // Load sidebar width setting
-    await this.loadSidebarWidth();
+    await this.sidebarWidth.load();
 
     // Set up storage change listener (always needed to respond to setting changes)
     this.setupStorageListener();
@@ -662,7 +473,7 @@ export class AIStudioFolderManager {
     this.unresolvedData = { folders: [], folderContents: {} };
     this.accountScope = null;
     this.activeStorageKey = '';
-    if (this.isLibraryMultiSelectMode) this.exitLibraryMultiSelectMode();
+    if (this.libraryMultiSelect.active) this.libraryMultiSelect.exit();
     document.querySelector('.gv-folder-confirm-dialog.gv-aistudio-confirm')?.remove();
     document.querySelector('.gv-folder-menu.gv-aistudio-folder-menu')?.remove();
     document.querySelector('.gv-library-folder-list')?.replaceChildren();
@@ -844,10 +655,11 @@ export class AIStudioFolderManager {
     this.installRouteChangeListener();
 
     // Apply initial sidebar width (force on first load)
-    this.applySidebarWidth(true);
+    this.sidebarWidth.apply(true);
 
     // Add resize handle for sidebar width adjustment
-    this.addResizeHandle();
+    const removeResizeHandle = this.sidebarWidth.attachResizeHandle();
+    if (removeResizeHandle) this.cleanupFns.push(removeResizeHandle);
 
     // On library page, also bind the table rows as drag sources and surface the floating
     // drop zone (belt-and-suspenders alongside the sidebar panel).
@@ -1089,7 +901,7 @@ export class AIStudioFolderManager {
       cloudUploadButton.addEventListener('click', () => this.handleCloudUpload());
       // Add dynamic tooltip on mouseenter
       cloudUploadButton.addEventListener('mouseenter', async () => {
-        const tooltip = await this.getCloudUploadTooltip();
+        const tooltip = await getCloudTooltip('upload', this.t);
         cloudUploadButton.title = tooltip;
       });
       actions.appendChild(cloudUploadButton);
@@ -1102,7 +914,7 @@ export class AIStudioFolderManager {
       cloudSyncButton.addEventListener('click', () => this.handleCloudSync());
       // Add dynamic tooltip on mouseenter
       cloudSyncButton.addEventListener('mouseenter', async () => {
-        const tooltip = await this.getCloudSyncTooltip();
+        const tooltip = await getCloudTooltip('sync', this.t);
         cloudSyncButton.title = tooltip;
       });
       actions.appendChild(cloudSyncButton);
@@ -1168,103 +980,11 @@ export class AIStudioFolderManager {
     }
 
     this.container = container;
-    this.injectStyles();
+    injectAIStudioFolderStyles();
     this.render();
 
     // Apply initial folder enabled setting
     this.applyFolderEnabledSetting();
-  }
-
-  private injectStyles(): void {
-    const styleId = 'gv-aistudio-folder-styles';
-    if (document.getElementById(styleId)) return;
-
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = `
-      /* AI Studio is a predominantly dark surface; tuned for low contrast so the
-         confirm dialog reads as a subtle elevated card, not a bright pop-out. */
-      .gv-folder-confirm-dialog.gv-aistudio-confirm {
-        background: var(--mat-sys-surface-container-high, #2d2e30);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-        padding: 16px;
-        min-width: 280px;
-        font-family: 'Google Sans', 'Segoe UI', sans-serif;
-        animation: gv-fade-in 0.2s ease-out;
-        color: var(--mat-sys-on-surface, #e3e3e3);
-      }
-
-      .gv-folder-confirm-dialog.gv-aistudio-confirm .gv-confirm-message {
-        margin-bottom: 16px;
-        color: var(--mat-sys-on-surface, #e3e3e3);
-        font-size: 14px;
-        line-height: 1.5;
-        font-weight: 400;
-        opacity: 0.92;
-      }
-
-      .gv-folder-confirm-dialog.gv-aistudio-confirm .gv-confirm-actions {
-        display: flex;
-        gap: 4px;
-        justify-content: flex-end;
-      }
-
-      .gv-folder-confirm-dialog.gv-aistudio-confirm .gv-confirm-btn {
-        padding: 6px 14px;
-        border-radius: 999px;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.15s ease;
-        border: none;
-        outline: none;
-        background: transparent;
-      }
-
-      /* Destructive action: filled but muted — use the token-scaled error tone when
-         available, otherwise a desaturated red that sits quietly on dark surfaces. */
-      .gv-folder-confirm-dialog.gv-aistudio-confirm .gv-confirm-delete {
-        background-color: var(--mat-sys-error-container, rgba(220, 90, 90, 0.22));
-        color: var(--mat-sys-on-error-container, #f5b8b3);
-        box-shadow: none;
-      }
-
-      .gv-folder-confirm-dialog.gv-aistudio-confirm .gv-confirm-delete:hover {
-        background-color: rgba(220, 90, 90, 0.32);
-        color: #ffd3cf;
-        box-shadow: none;
-      }
-
-      /* Cancel is a borderless text button — removes the framing that fought the Delete fill. */
-      .gv-folder-confirm-dialog.gv-aistudio-confirm .gv-confirm-cancel {
-        background-color: transparent;
-        color: var(--mat-sys-on-surface-variant, #c4c7c5);
-        border: none;
-      }
-
-      .gv-folder-confirm-dialog.gv-aistudio-confirm .gv-confirm-cancel:hover {
-        background-color: rgba(255, 255, 255, 0.06);
-        color: var(--mat-sys-on-surface, #e3e3e3);
-      }
-
-      /* Hover effect for remove button in list */
-      .gv-aistudio .gv-conversation-remove-btn:hover {
-        background-color: rgba(220, 90, 90, 0.14) !important;
-        color: #e69892 !important;
-      }
-
-      .gv-aistudio .gv-conversation-remove-btn:hover span {
-        font-variation-settings: 'FILL' 1, 'wght' 600 !important;
-      }
-
-      @keyframes gv-fade-in {
-        from { opacity: 0; transform: translateY(4px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-    `;
-    document.head.appendChild(style);
   }
 
   private render(): void {
@@ -1400,8 +1120,8 @@ export class AIStudioFolderManager {
         this.ensureContainerMounted();
         this.updateLibraryShortcutVisibility();
         if (!/\/library(\/|$)/.test(location.pathname)) {
-          if (this.isLibraryMultiSelectMode) {
-            this.exitLibraryMultiSelectMode();
+          if (this.libraryMultiSelect.active) {
+            this.libraryMultiSelect.exit();
           }
           // The /library table observer watches document.body; keep it disconnected
           // while away from /library so unrelated SPA mutations stay cheap. It is
@@ -1864,7 +1584,7 @@ export class AIStudioFolderManager {
       dragEnterCounter = 0; // Reset counter on drop
       el.classList.remove('gv-folder-dragover');
       if (!this.canEdit) return;
-      const data = this.parseDragDataFromEvent(e);
+      const data = parseDragDataFromEvent(e);
       if (!data || data.type !== 'conversation' || !data.conversationId) return;
       const conv: ConversationReference = {
         conversationId: data.conversationId,
@@ -2033,21 +1753,6 @@ export class AIStudioFolderManager {
     );
   }
 
-  private extractPromptTitle(anchor: HTMLAnchorElement | null): string | null {
-    if (!anchor) return null;
-
-    const aria = normalizeText(anchor.getAttribute('aria-label'));
-    if (aria) return aria;
-
-    const title = normalizeText(anchor.getAttribute('title'));
-    if (title) return title;
-
-    const text = normalizeText(anchor.textContent);
-    if (text) return text;
-
-    return null;
-  }
-
   /**
    * Collect every native prompt-link title in a single document scan and return a
    * promptId -> title map. Anchors carrying the `prompt-link` class win over generic
@@ -2061,7 +1766,7 @@ export class AIStudioFolderManager {
     anchors.forEach((anchor) => {
       const promptId = extractPromptIdFromHref(anchor.getAttribute('href') || anchor.href || '');
       if (!promptId) return;
-      const title = this.extractPromptTitle(anchor);
+      const title = extractPromptTitle(anchor);
       if (!title) return;
       if (anchor.classList.contains('prompt-link')) {
         if (!preferred.has(promptId)) preferred.set(promptId, title);
@@ -2127,45 +1832,6 @@ export class AIStudioFolderManager {
     return anchor.parentElement || anchor;
   }
 
-  private setPromptDragData(e: DragEvent, data: DragData, dragImageEl: HTMLElement): void {
-    try {
-      const transfer = e.dataTransfer;
-      if (!transfer) return;
-      const json = JSON.stringify(data);
-      transfer.effectAllowed = 'move';
-      transfer.setData('application/json', json);
-      transfer.setData('text/plain', json);
-      if (data.url) {
-        transfer.setData('text/uri-list', data.url);
-        transfer.setData('text/x-moz-url', `${data.url}\n${data.title || ''}`);
-      }
-    } catch {}
-    try {
-      e.dataTransfer?.setDragImage(dragImageEl, 10, 10);
-    } catch {}
-  }
-
-  private parseDragDataFromEvent(event: DragEvent): DragData | null {
-    const transfer = event.dataTransfer;
-    if (!transfer) return null;
-
-    const candidates = [
-      transfer.getData('application/json'),
-      transfer.getData('text/plain'),
-      transfer.getData('text/uri-list'),
-      transfer.getData('text/x-moz-url'),
-      transfer.getData('URL'),
-    ];
-
-    for (const candidate of candidates) {
-      if (!candidate) continue;
-      const parsed = parseDragDataPayload(candidate);
-      if (parsed) return parsed;
-    }
-
-    return null;
-  }
-
   private bindDraggablesInPromptList(scope: ParentNode | null = this.historyRoot): void {
     const root = scope ?? this.historyRoot;
     if (!root) return;
@@ -2189,14 +1855,14 @@ export class AIStudioFolderManager {
           const promptAnchor = this.resolvePromptAnchorFromDragEvent(e, hostEl);
           if (!promptAnchor) return;
 
-          const id = this.extractPromptId(promptAnchor);
-          const title = this.extractPromptTitle(promptAnchor) || '';
+          const id = extractPromptId(promptAnchor);
+          const title = extractPromptTitle(promptAnchor) || '';
           const rawHref = promptAnchor.getAttribute('href') || promptAnchor.href || '';
           const url = rawHref.startsWith('http')
             ? rawHref
             : `${location.origin}${rawHref.startsWith('/') ? '' : '/'}${rawHref}`;
           const data: DragData = { type: 'conversation', conversationId: id, title, url };
-          this.setPromptDragData(e, data, hostEl);
+          setPromptDragData(e, data, hostEl);
         });
       }
     });
@@ -2266,10 +1932,10 @@ export class AIStudioFolderManager {
   private bindDraggablesInLibraryTable(): void {
     // Find all table rows that contain chat prompt links
     // The structure from user's example: <tr> > <td> > <a href="/prompts/..."> title </a>
-    const rows = this.getLibraryPromptRows();
+    const rows = getLibraryPromptRows();
     rows.forEach((row) => {
       const tr = row;
-      const anchor = this.getLibraryPromptAnchor(tr);
+      const anchor = getLibraryPromptAnchor(tr);
       if (!anchor) return;
 
       // Skip if already bound
@@ -2286,18 +1952,18 @@ export class AIStudioFolderManager {
         (anchor.style as CSSStyleDeclaration & { webkitUserDrag?: string }).webkitUserDrag = 'none';
       } catch {}
 
-      const buildDragData = (): LibraryPromptData | null => this.buildLibraryPromptData(tr);
+      const buildDragData = (): LibraryPromptData | null => buildLibraryPromptData(tr);
 
       const onDragStart = (e: DragEvent) => {
         // Prevent interference from Angular Material's own drag handling if any
         e.stopPropagation();
         const data = buildDragData();
         if (!data) return;
-        this.setPromptDragData(e, data, tr);
+        setPromptDragData(e, data, tr);
         tr.style.opacity = '0.5';
       };
 
-      this.bindLibraryMultiSelectRow(tr);
+      this.libraryMultiSelect.bindRow(tr);
 
       // Primary: row-level drag covers every cell (icon, title, description, type, timestamp, overflow).
       tr.addEventListener('dragstart', onDragStart, true);
@@ -2314,492 +1980,7 @@ export class AIStudioFolderManager {
     // Rows are bound opportunistically as the table updates; re-sync the hide-archived
     // state each pass so newly added rows pick up the current setting.
     this.applyHideArchivedToLibraryTable();
-    this.updateLibrarySelectionUI();
-  }
-
-  private getLibraryPromptRows(): HTMLElement[] {
-    return Array.from(
-      document.querySelectorAll<HTMLElement>('tr.mat-mdc-row, tr[mat-row], tr[role="row"]'),
-    ).filter((row) => !!this.getLibraryPromptAnchor(row));
-  }
-
-  private getLibraryPromptAnchor(row: HTMLElement): HTMLAnchorElement | null {
-    return row.querySelector(PROMPT_LINK_SELECTOR) as HTMLAnchorElement | null;
-  }
-
-  private buildLibraryPromptData(row: HTMLElement): LibraryPromptData | null {
-    const anchor = this.getLibraryPromptAnchor(row);
-    if (!anchor) return null;
-    const conversationId = this.extractPromptId(anchor);
-    if (!conversationId) return null;
-    const title = this.extractPromptTitle(anchor) || '';
-    const rawHref = anchor.getAttribute('href') || anchor.href || '';
-    const url = rawHref.startsWith('http')
-      ? rawHref
-      : `${location.origin}${rawHref.startsWith('/') ? '' : '/'}${rawHref}`;
-    return { type: 'conversation', conversationId, title, url };
-  }
-
-  private bindLibraryMultiSelectRow(row: HTMLElement): void {
-    if ((row as Element & { _gvLibraryMultiSelectBound?: boolean })._gvLibraryMultiSelectBound)
-      return;
-    (row as Element & { _gvLibraryMultiSelectBound?: boolean })._gvLibraryMultiSelectBound = true;
-
-    let longPressTriggered = false;
-    let longPressTimeoutId: number | null = null;
-
-    const clearLongPress = () => {
-      if (longPressTimeoutId === null) return;
-      clearTimeout(longPressTimeoutId);
-      longPressTimeoutId = null;
-    };
-
-    row.addEventListener('mousedown', (event) => {
-      if (event.button !== 0) return;
-      if (event.target instanceof Element && event.target.closest('button, [role="button"]')) {
-        return;
-      }
-      const data = this.buildLibraryPromptData(row);
-      if (!data) return;
-      longPressTriggered = false;
-      clearLongPress();
-      longPressTimeoutId = window.setTimeout(() => {
-        longPressTriggered = true;
-        this.enterLibraryMultiSelectMode(data.conversationId);
-      }, this.LIBRARY_LONG_PRESS_MS);
-    });
-
-    row.addEventListener('mouseup', clearLongPress);
-    row.addEventListener('mouseleave', clearLongPress);
-
-    row.addEventListener(
-      'click',
-      (event) => {
-        if (event.target instanceof Element && event.target.closest('button, [role="button"]')) {
-          return;
-        }
-        if (this.libraryBatchDeleteInProgress) return;
-
-        if (longPressTriggered) {
-          event.preventDefault();
-          event.stopPropagation();
-          longPressTriggered = false;
-          return;
-        }
-
-        if (!this.isLibraryMultiSelectMode) return;
-
-        const data = this.buildLibraryPromptData(row);
-        if (!data) return;
-        event.preventDefault();
-        event.stopPropagation();
-        this.toggleLibraryPromptSelection(data.conversationId);
-      },
-      true,
-    );
-  }
-
-  private enterLibraryMultiSelectMode(initialConversationId: string): void {
-    this.isLibraryMultiSelectMode = true;
-    this.selectedLibraryPrompts.add(initialConversationId);
-    this.updateLibrarySelectionUI();
-    this.setupLibraryOutsideClickHandler();
-  }
-
-  private exitLibraryMultiSelectMode(): void {
-    this.isLibraryMultiSelectMode = false;
-    this.removeLibraryOutsideClickHandler();
-    this.selectedLibraryPrompts.clear();
-    this.updateLibrarySelectionUI();
-  }
-
-  private toggleLibraryPromptSelection(conversationId: string): void {
-    if (this.selectedLibraryPrompts.has(conversationId)) {
-      this.selectedLibraryPrompts.delete(conversationId);
-      if (this.selectedLibraryPrompts.size === 0) {
-        this.exitLibraryMultiSelectMode();
-        return;
-      }
-    } else {
-      if (this.selectedLibraryPrompts.size >= this.MAX_LIBRARY_BATCH_DELETE_COUNT) {
-        this.showNotification(
-          this.t('batch_delete_limit_reached').replace(
-            '{max}',
-            String(this.MAX_LIBRARY_BATCH_DELETE_COUNT),
-          ),
-          'info',
-        );
-        return;
-      }
-      this.selectedLibraryPrompts.add(conversationId);
-    }
-    this.updateLibrarySelectionUI();
-  }
-
-  private updateLibrarySelectionUI(): void {
-    this.getLibraryPromptRows().forEach((row) => {
-      const data = this.buildLibraryPromptData(row);
-      row.classList.toggle(
-        'gv-library-row-selected',
-        !!data && this.selectedLibraryPrompts.has(data.conversationId),
-      );
-    });
-
-    const host = this.isLibraryMultiSelectMode
-      ? this.getLibraryMultiSelectHost()
-      : this.getExistingLibraryMultiSelectHost();
-    if (!host) return;
-
-    host.classList.toggle('gv-multi-select-mode', this.isLibraryMultiSelectMode);
-
-    const count = host.querySelector('[data-selection-count="true"]');
-    if (count) {
-      count.textContent = this.t('folder_multi_select_count').replace(
-        '{count}',
-        String(this.selectedLibraryPrompts.size),
-      );
-    }
-
-    const actions = host.querySelector('[data-multi-select-actions="true"]');
-    if (!actions) return;
-    if (!this.isLibraryMultiSelectMode) {
-      if (actions.childElementCount > 0) actions.innerHTML = '';
-      return;
-    }
-    if (actions.childElementCount > 0) return;
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'gv-multi-select-action-btn gv-multi-select-delete-btn';
-    deleteBtn.title = this.t('batch_delete_button');
-    deleteBtn.appendChild(this.createIcon('delete'));
-    deleteBtn.addEventListener('click', () => void this.batchDeleteLibraryPrompts());
-    actions.appendChild(deleteBtn);
-
-    const exitBtn = document.createElement('button');
-    exitBtn.className = 'gv-multi-select-action-btn gv-multi-select-exit-btn';
-    exitBtn.title = this.t('folder_multi_select_exit');
-    exitBtn.appendChild(this.createIcon('close'));
-    exitBtn.addEventListener('click', () => this.exitLibraryMultiSelectMode());
-    actions.appendChild(exitBtn);
-  }
-
-  private createLibraryMultiSelectIndicator(): HTMLElement {
-    const indicator = document.createElement('div');
-    indicator.className = 'gv-multi-select-indicator';
-
-    const content = document.createElement('div');
-    content.className = 'gv-multi-select-indicator-content';
-    content.appendChild(this.createIcon('check_circle'));
-
-    const text = document.createElement('span');
-    text.className = 'gv-multi-select-indicator-text';
-    text.dataset.selectionCount = 'true';
-    text.textContent = this.t('folder_multi_select_count').replace('{count}', '0');
-    content.appendChild(text);
-    indicator.appendChild(content);
-
-    const actions = document.createElement('div');
-    actions.className = 'gv-multi-select-actions';
-    actions.dataset.multiSelectActions = 'true';
-    indicator.appendChild(actions);
-
-    return indicator;
-  }
-
-  private getLibraryMultiSelectHost(): HTMLElement {
-    if (!this.libraryMultiSelectHostElement?.isConnected) {
-      const host = document.createElement('div');
-      host.className =
-        'gv-folder-container gv-multi-select-floating-host gv-aistudio-library-select';
-      host.dataset.multiSelectFloatingHost = 'true';
-      host.style.position = 'fixed';
-      host.style.top = '72px';
-      host.style.right = '24px';
-      host.style.width = 'min(360px, calc(100vw - 48px))';
-      host.style.zIndex = String(2147483647);
-      host.appendChild(this.createLibraryMultiSelectIndicator());
-      document.body.appendChild(host);
-      this.libraryMultiSelectHostElement = host;
-    }
-    return this.libraryMultiSelectHostElement;
-  }
-
-  private getExistingLibraryMultiSelectHost(): HTMLElement | null {
-    return this.libraryMultiSelectHostElement?.isConnected
-      ? this.libraryMultiSelectHostElement
-      : null;
-  }
-
-  private setupLibraryOutsideClickHandler(): void {
-    this.removeLibraryOutsideClickHandler();
-    this.libraryOutsideClickHandler = (event) => {
-      const target = event.target;
-      if (!(target instanceof Node)) return;
-      if (this.libraryMultiSelectHostElement?.contains(target)) return;
-      if ((target as Element).closest?.('.cdk-overlay-container, .mat-mdc-dialog-container'))
-        return;
-      if (this.getLibraryPromptRows().some((row) => row.contains(target))) return;
-      this.exitLibraryMultiSelectMode();
-    };
-    setTimeout(() => {
-      document.addEventListener('click', this.libraryOutsideClickHandler!, true);
-    }, 0);
-  }
-
-  private removeLibraryOutsideClickHandler(): void {
-    if (!this.libraryOutsideClickHandler) return;
-    document.removeEventListener('click', this.libraryOutsideClickHandler, true);
-    this.libraryOutsideClickHandler = null;
-  }
-
-  private async batchDeleteLibraryPrompts(): Promise<void> {
-    if (this.libraryBatchDeleteInProgress) return;
-    const conversationIds = Array.from(this.selectedLibraryPrompts);
-    if (conversationIds.length === 0) return;
-
-    const confirmed = confirm(
-      this.t('batch_delete_confirm').replace('{count}', String(conversationIds.length)),
-    );
-    if (!confirmed) return;
-
-    this.libraryBatchDeleteInProgress = true;
-    let successCount = 0;
-    let failedCount = 0;
-
-    try {
-      this.showLibraryBatchDeleteProgress(0, conversationIds.length);
-      for (let i = 0; i < conversationIds.length; i++) {
-        this.updateLibraryBatchDeleteProgress(i + 1, conversationIds.length);
-        const success = await this.triggerLibraryDeleteForPrompt(conversationIds[i]);
-        if (success) successCount++;
-        else failedCount++;
-        if (i < conversationIds.length - 1) {
-          await this.delay(this.LIBRARY_BATCH_DELETE_CONFIG.DELAY_BETWEEN_DELETIONS);
-        }
-      }
-    } finally {
-      this.libraryBatchDeleteInProgress = false;
-      this.hideLibraryBatchDeleteProgress();
-    }
-
-    if (failedCount === 0) {
-      this.showNotification(
-        this.t('batch_delete_success').replace('{count}', String(successCount)),
-        'info',
-      );
-    } else {
-      this.showNotification(
-        this.t('batch_delete_partial')
-          .replace('{success}', String(successCount))
-          .replace('{failed}', String(failedCount)),
-        'warning',
-      );
-    }
-
-    this.exitLibraryMultiSelectMode();
-    if (successCount > 0) {
-      setTimeout(() => location.reload(), this.LIBRARY_BATCH_DELETE_CONFIG.PAGE_REFRESH_DELAY);
-    }
-  }
-
-  private async triggerLibraryDeleteForPrompt(conversationId: string): Promise<boolean> {
-    const row = this.findLibraryPromptRow(conversationId);
-    if (!row) return false;
-    const moreButton = row.querySelector<HTMLElement>(
-      'button[aria-label="More options"], button[aria-label*="More"], button.ms-button-icon',
-    );
-    if (!moreButton) return false;
-
-    moreButton.click();
-    await this.delay(this.LIBRARY_BATCH_DELETE_CONFIG.MENU_APPEAR_DELAY);
-    const deleteClicked = await this.waitForDeleteButtonAndClick();
-    if (!deleteClicked) {
-      this.clickBackdropToCloseMenu();
-      return false;
-    }
-
-    await this.delay(this.LIBRARY_BATCH_DELETE_CONFIG.DIALOG_APPEAR_DELAY);
-    await this.confirmDeleteIfNeeded();
-    await this.delay(this.LIBRARY_BATCH_DELETE_CONFIG.DELETION_COMPLETE_DELAY);
-    return true;
-  }
-
-  private findLibraryPromptRow(conversationId: string): HTMLElement | null {
-    for (const row of this.getLibraryPromptRows()) {
-      const data = this.buildLibraryPromptData(row);
-      if (data?.conversationId === conversationId) return row;
-    }
-    return null;
-  }
-
-  private async waitForDeleteButtonAndClick(): Promise<boolean> {
-    const maxWaitTime = this.LIBRARY_BATCH_DELETE_CONFIG.MAX_BUTTON_WAIT_TIME;
-    const checkInterval = this.LIBRARY_BATCH_DELETE_CONFIG.BUTTON_CHECK_INTERVAL;
-    const keywords = this.getDeleteKeywords();
-    let elapsed = 0;
-
-    while (elapsed < maxWaitTime) {
-      const byTestId = Array.from(
-        document.querySelectorAll<HTMLElement>('[data-test-id="delete-button"]'),
-      ).find((el) => this.isVisibleElement(el));
-      if (byTestId) {
-        byTestId.click();
-        return true;
-      }
-
-      const menuItems = Array.from(
-        document.querySelectorAll<HTMLElement>(
-          '.cdk-overlay-container button[role="menuitem"], .cdk-overlay-container [role="menuitem"], .mat-mdc-menu-content button',
-        ),
-      );
-      for (const item of menuItems) {
-        if (!this.isVisibleElement(item)) continue;
-        const text = normalizeText(item.textContent).toLowerCase();
-        if (
-          keywords.some(
-            (keyword) => text === keyword || (text.includes(keyword) && text.length < 20),
-          )
-        ) {
-          item.click();
-          return true;
-        }
-      }
-
-      const deleteIcon = Array.from(
-        document.querySelectorAll<HTMLElement>(
-          '.cdk-overlay-container mat-icon, .cdk-overlay-container .material-icons, .cdk-overlay-container .google-symbols',
-        ),
-      ).find((icon) => {
-        const text = normalizeText(icon.textContent).toLowerCase();
-        const fontIcon = normalizeText(icon.getAttribute('fonticon')).toLowerCase();
-        return ['delete', 'delete_forever', 'delete_outline'].includes(text || fontIcon);
-      });
-      const iconButton = deleteIcon?.closest('button, [role="menuitem"]') as HTMLElement | null;
-      if (iconButton && this.isVisibleElement(iconButton)) {
-        iconButton.click();
-        return true;
-      }
-
-      await this.delay(checkInterval);
-      elapsed += checkInterval;
-    }
-
-    return false;
-  }
-
-  private async confirmDeleteIfNeeded(): Promise<void> {
-    const maxWaitTime = this.LIBRARY_BATCH_DELETE_CONFIG.MAX_BUTTON_WAIT_TIME;
-    const checkInterval = this.LIBRARY_BATCH_DELETE_CONFIG.BUTTON_CHECK_INTERVAL;
-    const keywords = this.getDeleteKeywords();
-    let elapsed = 0;
-
-    while (elapsed < maxWaitTime) {
-      const confirmByTestId = document.querySelector<HTMLElement>(
-        '[data-test-id*="confirm"], [data-test-id*="delete"]:not([data-test-id="delete-button"])',
-      );
-      if (confirmByTestId && this.isVisibleElement(confirmByTestId)) {
-        confirmByTestId.click();
-        return;
-      }
-
-      const buttons = Array.from(
-        document.querySelectorAll<HTMLElement>(
-          '.cdk-overlay-container button, .mat-mdc-dialog-container button',
-        ),
-      ).filter((button) => this.isVisibleElement(button));
-      for (const button of buttons) {
-        const text = normalizeText(button.textContent).toLowerCase();
-        if (keywords.some((keyword) => text === keyword || text.includes(keyword))) {
-          button.click();
-          return;
-        }
-      }
-
-      const actions = document.querySelector('.mat-mdc-dialog-actions, .mat-dialog-actions');
-      const actionButtons = actions?.querySelectorAll<HTMLElement>('button');
-      if (actionButtons && actionButtons.length >= 2) {
-        const last = actionButtons[actionButtons.length - 1];
-        if (this.isVisibleElement(last)) {
-          last.click();
-          return;
-        }
-      }
-
-      await this.delay(checkInterval);
-      elapsed += checkInterval;
-    }
-  }
-
-  private getDeleteKeywords(): string[] {
-    return (this.t('batch_delete_match_patterns') || '')
-      .split(/[,，、；;]+/)
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  }
-
-  private isVisibleElement(el: HTMLElement): boolean {
-    const style = window.getComputedStyle(el);
-    return (
-      style.display !== 'none' &&
-      style.visibility !== 'hidden' &&
-      style.opacity !== '0' &&
-      el.offsetParent !== null
-    );
-  }
-
-  private clickBackdropToCloseMenu(): void {
-    document.querySelector<HTMLElement>('.cdk-overlay-backdrop')?.click();
-  }
-
-  private showLibraryBatchDeleteProgress(current: number, total: number): void {
-    this.hideLibraryBatchDeleteProgress();
-
-    const progress = document.createElement('div');
-    progress.className = 'gv-batch-delete-progress';
-    progress.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(32, 33, 36, 0.95);
-      color: #e8eaed;
-      padding: 16px 24px;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      z-index: 2147483647;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-family: 'Google Sans', Roboto, Arial, sans-serif;
-      font-size: 14px;
-    `;
-
-    const text = document.createElement('span');
-    text.className = 'gv-batch-delete-progress-text';
-    text.textContent = this.t('batch_delete_in_progress')
-      .replace('{current}', String(current))
-      .replace('{total}', String(total));
-    progress.appendChild(text);
-    document.body.appendChild(progress);
-    this.libraryBatchDeleteProgressElement = progress;
-  }
-
-  private updateLibraryBatchDeleteProgress(current: number, total: number): void {
-    const text = this.libraryBatchDeleteProgressElement?.querySelector(
-      '.gv-batch-delete-progress-text',
-    );
-    if (!text) return;
-    text.textContent = this.t('batch_delete_in_progress')
-      .replace('{current}', String(current))
-      .replace('{total}', String(total));
-  }
-
-  private hideLibraryBatchDeleteProgress(): void {
-    this.libraryBatchDeleteProgressElement?.remove();
-    this.libraryBatchDeleteProgressElement = null;
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    this.libraryMultiSelect.updateUI();
   }
 
   /**
@@ -2808,384 +1989,19 @@ export class AIStudioFolderManager {
    */
   private injectLibraryDropZone(): void {
     if (this.libraryDropZoneInjected) return;
-    if (document.querySelector('.gv-library-drop-zone')) {
-      this.libraryDropZoneInjected = true;
-      return;
-    }
-
-    // Create a floating container that appears during drag
-    const floatingZone = document.createElement('div');
-    floatingZone.className = 'gv-library-drop-zone';
     this.libraryDropZoneInjected = true;
-    floatingZone.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(32, 33, 36, 0.95);
-      border: 2px dashed rgba(138, 180, 248, 0.5);
-      border-radius: 12px;
-      padding: 16px;
-      min-width: 200px;
-      max-width: 300px;
-      max-height: 400px;
-      overflow-y: auto;
-      z-index: 2147483646;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s, transform 0.2s;
-      transform: translateY(10px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      font-family: 'Google Sans', Roboto, Arial, sans-serif;
-    `;
-
-    const title = document.createElement('div');
-    title.style.cssText = `
-      color: #e8eaed;
-      font-size: 14px;
-      font-weight: 500;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    `;
-    title.innerHTML = `<span class="google-symbols" style="font-size: 18px;">folder</span>${this.t('folder_title')}`;
-    floatingZone.appendChild(title);
-
-    const folderList = document.createElement('div');
-    folderList.className = 'gv-library-folder-list';
-    floatingZone.appendChild(folderList);
-
-    document.body.appendChild(floatingZone);
-
-    // Update folder list content
-    const updateFolderList = () => {
-      folderList.innerHTML = '';
-
-      // Add a "Root / Uncategorized" option at the top
-      const rootItem = document.createElement('div');
-      rootItem.className = 'gv-library-folder-item gv-library-root-item';
-      rootItem.style.cssText = `
-        padding: 10px 12px;
-        margin: 4px 0 12px 0;
-        background: rgba(138, 180, 248, 0.1);
-        border-radius: 8px;
-        color: #8ab4f8;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: background 0.15s, border-color 0.15s;
-        border: 2px dashed rgba(138, 180, 248, 0.4);
-      `;
-      rootItem.innerHTML = `<span class="google-symbols" data-icon="inbox">inbox</span>${this.t('folder_uncategorized') || 'Uncategorized'}`;
-
-      const onDropToRoot = async (e: DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!this.canEdit) return;
-        const scopeRequest = this.accountScopeRequest;
-        rootItem.style.background = 'rgba(138, 180, 248, 0.2)';
-        rootItem.style.borderColor = '#8ab4f8';
-
-        const data = this.parseDragDataFromEvent(e);
-        if (!data || data.type !== 'conversation' || !data.conversationId) return;
-
-        const conv: ConversationReference = {
-          conversationId: data.conversationId,
-          title: normalizeText(data.title) || this.t('conversation_untitled'),
-          url: data.url || '',
-          addedAt: now(),
-        };
-
-        // Add to uncategorized section
-        Object.keys(this.data.folderContents).forEach((fid) => {
-          if (fid === this.UNCATEGORIZED_KEY) return;
-          this.data.folderContents[fid] = (this.data.folderContents[fid] || []).filter(
-            (c) => c.conversationId !== conv.conversationId,
-          );
-        });
-
-        const uncatArr = this.data.folderContents[this.UNCATEGORIZED_KEY] || [];
-        const existsInUncat = uncatArr.some((c) => c.conversationId === conv.conversationId);
-        if (!existsInUncat) {
-          uncatArr.push(conv);
-          this.data.folderContents[this.UNCATEGORIZED_KEY] = uncatArr;
-        }
-
-        const saved = await this.save();
-        if (!saved || this.accountScopeRequest !== scopeRequest) return;
-        this.showNotification(
-          this.t('conversation_saved_to_root') || 'Saved to Uncategorized',
-          'info',
-        );
-      };
-
-      rootItem.addEventListener('dragenter', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        rootItem.style.background = 'rgba(138, 180, 248, 0.3)';
-        rootItem.style.borderColor = '#8ab4f8';
-      });
-      rootItem.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-          if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-        } catch {}
-      });
-      rootItem.addEventListener('dragleave', (e) => {
-        e.stopPropagation();
-        rootItem.style.background = 'rgba(138, 180, 248, 0.1)';
-        rootItem.style.borderColor = 'rgba(138, 180, 248, 0.4)';
-      });
-      rootItem.addEventListener('drop', onDropToRoot);
-      folderList.appendChild(rootItem);
-
-      // Ensure at least one folder exists for the dedicated folder list section
-      if (this.data.folders.length === 0) {
-        const defaultFolder: Folder = {
-          id: uid(),
-          name: this.t('folder_default_name') || 'My Folder',
-          parentId: null,
-          isExpanded: true,
-          createdAt: now(),
-          updatedAt: now(),
-        };
-        this.data.folders.push(defaultFolder);
-        this.data.folderContents[defaultFolder.id] = [];
-        this.save();
-      }
-
-      // Render folders with proper hierarchy (root folders + their subfolders)
-      const rootFolders = this.data.folders.filter((f) => !f.parentId);
-      // Sort root folders: pinned first, then by creation time
-      rootFolders.sort((a, b) => {
-        const ap = a.pinned ? 1 : 0;
-        const bp = b.pinned ? 1 : 0;
-        if (ap !== bp) return bp - ap;
-        return a.createdAt - b.createdAt;
-      });
-
-      // Helper function to create a folder drop item
-      const createFolderDropItem = (folder: Folder, isSubfolder: boolean) => {
-        const folderItem = document.createElement('div');
-        folderItem.className = 'gv-library-folder-item';
-        folderItem.dataset.folderId = folder.id;
-        const paddingLeft = isSubfolder ? '28px' : '12px';
-        folderItem.style.cssText = `
-          padding: 10px ${paddingLeft};
-          margin: 4px 0;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 8px;
-          color: #e8eaed;
-          font-size: 13px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          transition: background 0.15s, border-color 0.15s;
-          border: 2px solid transparent;
-        `;
-        const iconName = isSubfolder ? 'subdirectory_arrow_right' : 'folder';
-        const icon = document.createElement('span');
-        icon.className = 'google-symbols';
-        icon.style.cssText = 'font-size: 16px; color: #8ab4f8;';
-        icon.textContent = iconName;
-        folderItem.append(icon, document.createTextNode(folder.name));
-
-        // Bind drop events
-        folderItem.addEventListener('dragenter', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          folderItem.style.background = 'rgba(138, 180, 248, 0.2)';
-          folderItem.style.borderColor = '#8ab4f8';
-        });
-        folderItem.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          try {
-            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-          } catch {}
-        });
-        folderItem.addEventListener('dragleave', (e) => {
-          e.stopPropagation();
-          folderItem.style.background = 'rgba(255, 255, 255, 0.05)';
-          folderItem.style.borderColor = 'transparent';
-        });
-        folderItem.addEventListener('drop', async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!this.canEdit) return;
-          const scopeRequest = this.accountScopeRequest;
-          folderItem.style.background = 'rgba(255, 255, 255, 0.05)';
-          folderItem.style.borderColor = 'transparent';
-
-          const data = this.parseDragDataFromEvent(e);
-          if (!data || data.type !== 'conversation' || !data.conversationId) return;
-
-          const conv: ConversationReference = {
-            conversationId: data.conversationId,
-            title: normalizeText(data.title) || this.t('conversation_untitled'),
-            url: data.url || '',
-            addedAt: now(),
-          };
-
-          // Add to this folder
-          const arr = this.data.folderContents[folder.id] || [];
-          const exists = arr.some((c) => c.conversationId === conv.conversationId);
-          if (!exists) {
-            arr.push(conv);
-            this.data.folderContents[folder.id] = arr;
-          }
-
-          // Remove from other folders
-          Object.keys(this.data.folderContents).forEach((fid) => {
-            if (fid === folder.id) return;
-            this.data.folderContents[fid] = (this.data.folderContents[fid] || []).filter(
-              (c) => c.conversationId !== conv.conversationId,
-            );
-          });
-
-          const saved = await this.save();
-          if (!saved || this.accountScopeRequest !== scopeRequest) return;
-          this.showNotification(
-            `${this.t('conversation_added_to_folder') || 'Added to'} "${folder.name}"`,
-            'info',
-          );
-        });
-
-        return folderItem;
-      };
-
-      // Render root folders and their subfolders
-      rootFolders.forEach((rootFolder) => {
-        folderList.appendChild(createFolderDropItem(rootFolder, false));
-
-        // Render subfolders of this root folder
-        const subfolders = this.data.folders.filter((f) => f.parentId === rootFolder.id);
-        subfolders.sort((a, b) => {
-          const ap = a.pinned ? 1 : 0;
-          const bp = b.pinned ? 1 : 0;
-          if (ap !== bp) return bp - ap;
-          return a.createdAt - b.createdAt;
-        });
-        subfolders.forEach((subfolder) => {
-          folderList.appendChild(createFolderDropItem(subfolder, true));
-        });
-      });
-    };
-
-    // Show/hide the floating zone on drag events
-    let zoneVisible = false;
-    let dragHeartbeatTimer: number | null = null;
-
-    const clearDragHeartbeat = () => {
-      if (dragHeartbeatTimer === null) return;
-      clearTimeout(dragHeartbeatTimer);
-      dragHeartbeatTimer = null;
-    };
-
-    const showZone = () => {
-      if (!this.canEdit) return;
-      zoneVisible = true;
-      updateFolderList();
-      floatingZone.style.opacity = '1';
-      floatingZone.style.pointerEvents = 'auto';
-      floatingZone.style.transform = 'translateY(0)';
-      armDragHeartbeat();
-    };
-
-    const hideZone = () => {
-      zoneVisible = false;
-      clearDragHeartbeat();
-      floatingZone.style.opacity = '0';
-      floatingZone.style.pointerEvents = 'none';
-      floatingZone.style.transform = 'translateY(10px)';
-    };
-
-    // Heartbeat: while the zone is up, every document dragover re-arms this timer. If
-    // the source row is removed mid-drag (Angular table refresh), dragend never fires
-    // and no drop arrives — the silent gap in dragover traffic hides the zone.
-    const armDragHeartbeat = () => {
-      clearDragHeartbeat();
-      dragHeartbeatTimer = window.setTimeout(() => {
-        dragHeartbeatTimer = null;
-        hideZone();
-      }, LIBRARY_DRAG_HEARTBEAT_MS);
-    };
-
-    // Listen for drag events on the document
-    const onDragStart = (e: DragEvent) => {
-      const target = e.target as HTMLElement;
-      // Check if the dragged element is or is within a library table row
-      const isLibraryRow = target.closest?.('tr.mat-mdc-row, tr[mat-row]');
-      if (isLibraryRow) {
-        // Also ensure it's not a row from some other table
-        const hasPromptLink = isLibraryRow.querySelector('a[href*="/prompts/"]');
-        if (hasPromptLink) {
-          setTimeout(showZone, 0);
-        }
-      }
-    };
-
-    const onDragOver = () => {
-      if (!zoneVisible) return;
-      armDragHeartbeat();
-    };
-
-    const onDragEnd = () => {
-      setTimeout(hideZone, 100);
-    };
-
-    // Belt-and-suspenders alongside dragend: a drop anywhere in the document also
-    // dismisses the zone (covers sources whose dragend is swallowed).
-    const onDrop = () => {
-      setTimeout(hideZone, 100);
-    };
-
-    document.addEventListener('dragstart', onDragStart);
-    document.addEventListener('dragover', onDragOver);
-    document.addEventListener('dragend', onDragEnd);
-    document.addEventListener('drop', onDrop);
-
-    this.cleanupFns.push(() => {
-      clearDragHeartbeat();
-      try {
-        document.removeEventListener('dragstart', onDragStart);
-      } catch {}
-      try {
-        document.removeEventListener('dragover', onDragOver);
-      } catch {}
-      try {
-        document.removeEventListener('dragend', onDragEnd);
-      } catch {}
-      try {
-        document.removeEventListener('drop', onDrop);
-      } catch {}
-      try {
-        floatingZone.remove();
-      } catch {}
-    });
-  }
-
-  private extractPromptId(anchor: HTMLAnchorElement): string {
-    const rawHref = anchor.getAttribute('href') || anchor.href || '';
-    const id = extractPromptIdFromHref(rawHref);
-    if (id) return id;
-
-    try {
-      const u = new URL(rawHref, location.origin);
-      const parts = (u.pathname || '').split('/').filter(Boolean);
-      // Expected format: /prompts/{id} -> ['', 'prompts', '{id}']
-      if (parts.length >= 2 && parts[0] === 'prompts') {
-        return parts[1];
-      }
-      return parts[1] || rawHref;
-    } catch {
-      return rawHref;
-    }
+    if (document.querySelector('.gv-library-drop-zone')) return;
+    this.cleanupFns.push(
+      mountLibraryDropZone({
+        t: (key) => this.t(key),
+        canEdit: () => this.canEdit,
+        getData: () => this.data,
+        save: () => this.save(),
+        getScopeRequest: () => this.accountScopeRequest,
+        showNotification: (message, level) => this.showNotification(message, level),
+        uncategorizedKey: this.UNCATEGORIZED_KEY,
+      }),
+    );
   }
 
   private navigateToPrompt(promptId: string, url: string): void {
@@ -3237,23 +2053,7 @@ export class AIStudioFolderManager {
             return;
           }
           // Merge mode by default: simple union without duplicates
-          const draft = this.cloneFolderData(this.data);
-          const existingIds = new Set(draft.folders.map((x) => x.id));
-          for (const f of next.folders) {
-            if (!existingIds.has(f.id)) {
-              draft.folders.push(f);
-              draft.folderContents[f.id] = next.folderContents[f.id] || [];
-            } else {
-              // Merge conversations
-              const base = draft.folderContents[f.id] || [];
-              const add = next.folderContents[f.id] || [];
-              const seen = new Set(base.map((c) => c.conversationId));
-              for (const c of add) {
-                if (!seen.has(c.conversationId)) base.push(c);
-              }
-              draft.folderContents[f.id] = base;
-            }
-          }
+          const draft = mergeImportedFolderData(this.cloneFolderData(this.data), next);
           const saved = await this.replaceData(draft);
           if (this.dataSession !== session || this.accountScopeRequest !== scopeRequest) return;
           if (!saved) return;
@@ -3269,9 +2069,7 @@ export class AIStudioFolderManager {
   }
 
   private timestamp(): string {
-    const d = new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    return exportTimestamp();
   }
 
   private async loadFolderEnabledSetting(): Promise<void> {
@@ -3435,16 +2233,8 @@ export class AIStudioFolderManager {
             await this.handleAccountIsolationToggle(nextEnabled);
           })();
         }
-        if (changes[this.SIDEBAR_WIDTH_KEY]) {
-          const w = changes[this.SIDEBAR_WIDTH_KEY].newValue;
-          if (typeof w === 'number') {
-            const clamped = Math.min(
-              this.MAX_SIDEBAR_WIDTH,
-              Math.max(this.MIN_SIDEBAR_WIDTH, Math.round(w)),
-            );
-            this.sidebarWidth = clamped;
-            this.applySidebarWidth();
-          }
+        if (changes[SIDEBAR_WIDTH_KEY]) {
+          this.sidebarWidth.applyStoredWidth(changes[SIDEBAR_WIDTH_KEY].newValue);
         }
         if (changes[StorageKeys.FOLDER_HIDE_ARCHIVED_CONVERSATIONS_AISTUDIO]) {
           this.hideArchivedEnabled =
@@ -3533,15 +2323,7 @@ export class AIStudioFolderManager {
     this.stopRouteWatcher = null;
 
     // Library multi-select state and any floating UI hosted on document.body.
-    if (this.isLibraryMultiSelectMode) {
-      this.exitLibraryMultiSelectMode();
-    }
-    this.removeLibraryOutsideClickHandler();
-    try {
-      this.libraryMultiSelectHostElement?.remove();
-    } catch {}
-    this.libraryMultiSelectHostElement = null;
-    this.hideLibraryBatchDeleteProgress();
+    this.libraryMultiSelect.destroy();
 
     // Body-appended transient popovers we may have left open.
     try {
@@ -3567,7 +2349,7 @@ export class AIStudioFolderManager {
     this.historyRoot = null;
     this.libraryDropZoneInjected = false;
     try {
-      document.getElementById('gv-aistudio-folder-styles')?.remove();
+      document.getElementById(AISTUDIO_FOLDER_STYLE_ID)?.remove();
     } catch {}
     try {
       document.documentElement.classList.remove('gv-aistudio-root');
@@ -3676,238 +2458,6 @@ export class AIStudioFolderManager {
     } catch {
       return false;
     }
-  }
-
-  /**
-   * Load sidebar width from storage (with localStorage fallback)
-   */
-  private async loadSidebarWidth(): Promise<void> {
-    try {
-      // Try chrome.storage.sync first
-      if (this.isExtensionContextValid()) {
-        const result = await browser.storage.sync.get({ [this.SIDEBAR_WIDTH_KEY]: 280 });
-        const width = result[this.SIDEBAR_WIDTH_KEY];
-        if (
-          typeof width === 'number' &&
-          width >= this.MIN_SIDEBAR_WIDTH &&
-          width <= this.MAX_SIDEBAR_WIDTH
-        ) {
-          this.sidebarWidth = width;
-          return;
-        }
-      }
-    } catch (error) {
-      console.warn(
-        '[AIStudioFolderManager] Failed to load from sync storage, trying localStorage:',
-        error,
-      );
-    }
-
-    // Fallback to localStorage
-    try {
-      const stored = localStorage.getItem(this.SIDEBAR_WIDTH_KEY);
-      if (stored) {
-        const width = parseInt(stored, 10);
-        if (
-          typeof width === 'number' &&
-          width >= this.MIN_SIDEBAR_WIDTH &&
-          width <= this.MAX_SIDEBAR_WIDTH
-        ) {
-          this.sidebarWidth = width;
-        }
-      }
-    } catch (error) {
-      console.error(
-        '[AIStudioFolderManager] Failed to load sidebar width from localStorage:',
-        error,
-      );
-    }
-  }
-
-  /**
-   * Save sidebar width to storage (with localStorage fallback)
-   */
-  private async saveSidebarWidth(): Promise<void> {
-    // Always save to localStorage as immediate backup
-    try {
-      localStorage.setItem(this.SIDEBAR_WIDTH_KEY, String(this.sidebarWidth));
-    } catch (error) {
-      console.error('[AIStudioFolderManager] Failed to save to localStorage:', error);
-    }
-
-    // Try to save to chrome.storage.sync if context is valid
-    if (this.isExtensionContextValid()) {
-      try {
-        await browser.storage.sync.set({ [this.SIDEBAR_WIDTH_KEY]: this.sidebarWidth });
-      } catch (error) {
-        // Silent fail if extension context is invalidated (happens during dev reload)
-        if (error instanceof Error && !error.message.includes('Extension context invalidated')) {
-          console.error('[AIStudioFolderManager] Failed to save sidebar width:', error);
-        }
-      }
-    }
-  }
-
-  /**
-   * Apply sidebar width to the navbar element (only when expanded)
-   */
-  private applySidebarWidth(force: boolean = false): void {
-    // Target the actual nav-content div, not the outer ms-navbar
-    const navContent = document.querySelector('.nav-content.v3-left-nav') as HTMLElement | null;
-    if (!navContent) return;
-
-    // Check if sidebar is expanded by looking at the 'expanded' class
-    const isExpanded = navContent.classList.contains('expanded');
-
-    if (isExpanded || force) {
-      navContent.style.width = `${this.sidebarWidth}px`;
-      navContent.style.minWidth = `${this.sidebarWidth}px`;
-      navContent.style.maxWidth = `${this.sidebarWidth}px`;
-      navContent.style.flex = `0 0 ${this.sidebarWidth}px`;
-    } else {
-      // Remove our width overrides when collapsed to allow native behavior
-      navContent.style.width = '';
-      navContent.style.minWidth = '';
-      navContent.style.maxWidth = '';
-      navContent.style.flex = '';
-    }
-  }
-
-  /**
-   * Add a draggable resize handle to adjust sidebar width
-   */
-  private addResizeHandle(): void {
-    // Target the actual nav-content div
-    const navContent = document.querySelector('.nav-content.v3-left-nav') as HTMLElement | null;
-    if (!navContent) {
-      console.warn('[AIStudioFolderManager] nav-content not found, resize handle not added');
-      return;
-    }
-
-    // Create resize handle
-    const handle = document.createElement('div');
-    handle.className = 'gv-sidebar-resize-handle';
-    handle.title = 'Drag to resize sidebar';
-
-    // Position it at the right edge of the nav-content with inline styles
-    const handleStyle = handle.style;
-    handleStyle.position = 'absolute';
-    handleStyle.top = '0';
-    handleStyle.right = '-4px'; // Position at right edge, overlapping slightly outside
-    handleStyle.width = '8px';
-    handleStyle.height = '100%';
-    handleStyle.cursor = 'ew-resize';
-    handleStyle.zIndex = '10000';
-    handleStyle.backgroundColor = 'transparent';
-    handleStyle.transition = 'background-color 0.2s';
-    handleStyle.pointerEvents = 'auto';
-
-    // Hover effect
-    handle.addEventListener('mouseenter', () => {
-      handleStyle.backgroundColor = 'rgba(66, 133, 244, 0.5)';
-    });
-    handle.addEventListener('mouseleave', () => {
-      handleStyle.backgroundColor = 'transparent';
-    });
-
-    // Dragging logic
-    let isDragging = false;
-    let startX = 0;
-    let startWidth = 0;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      startX = e.clientX;
-      startWidth = this.sidebarWidth;
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Add dragging class for visual feedback
-      document.body.style.cursor = 'ew-resize';
-      document.body.style.userSelect = 'none';
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-
-      const delta = e.clientX - startX;
-      const newWidth = Math.max(
-        this.MIN_SIDEBAR_WIDTH,
-        Math.min(this.MAX_SIDEBAR_WIDTH, startWidth + delta),
-      );
-
-      this.sidebarWidth = newWidth;
-      this.applySidebarWidth(true); // Force apply during drag
-
-      // Handle position is relative, no need to update during drag
-    };
-
-    const handleMouseUp = () => {
-      if (!isDragging) return;
-
-      isDragging = false;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-
-      // Save the new width
-      this.saveSidebarWidth();
-    };
-
-    handle.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    // Ensure nav-content has position relative for absolute handle positioning
-    navContent.style.position = 'relative';
-
-    // Add to nav-content for correct positioning
-    navContent.appendChild(handle);
-
-    // Update handle visibility when sidebar state changes
-    const updateHandleVisibility = () => {
-      const isExpanded = navContent.classList.contains('expanded');
-
-      if (isExpanded) {
-        handleStyle.display = 'block';
-      } else {
-        handleStyle.display = 'none'; // Hide when collapsed
-      }
-    };
-
-    // Monitor sidebar state changes by watching the 'expanded' class
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          updateHandleVisibility();
-          this.applySidebarWidth(); // Reapply width based on current state
-          break;
-        }
-      }
-    });
-
-    try {
-      observer.observe(navContent, {
-        attributes: true,
-        attributeFilter: ['class'],
-      });
-    } catch (error) {
-      console.error('[AIStudioFolderManager] Failed to observe nav-content:', error);
-    }
-
-    // Initial visibility update
-    updateHandleVisibility();
-
-    this.cleanupFns.push(() => {
-      try {
-        observer.disconnect();
-        handle.removeEventListener('mousedown', handleMouseDown);
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        if (handle.parentElement) {
-          handle.parentElement.removeChild(handle);
-        }
-      } catch {}
-    });
   }
 
   /**
@@ -4064,74 +2614,6 @@ export class AIStudioFolderManager {
    */
   private mergePromptsData(local: PromptItem[], cloud: PromptItem[]): PromptItem[] {
     return mergeSyncedPrompts(local, cloud);
-  }
-
-  /**
-   * Get dynamic tooltip for cloud upload button showing last upload time
-   */
-  private async getCloudUploadTooltip(): Promise<string> {
-    try {
-      const response = (await browser.runtime.sendMessage({ type: 'gv.sync.getState' })) as
-        | { ok?: boolean; state?: { lastUploadTime?: number | null } }
-        | undefined;
-      if (response?.ok && response.state) {
-        const lastUploadTime = response.state.lastUploadTime;
-        const timeStr = this.formatRelativeTime(lastUploadTime ?? null);
-        const baseTooltip = this.t('folder_cloud_upload');
-        return lastUploadTime
-          ? `${baseTooltip}\n${this.t('lastUploaded').replace('{time}', timeStr)}`
-          : `${baseTooltip}\n${this.t('neverUploaded')}`;
-      }
-    } catch (e) {
-      console.warn('[AIStudioFolderManager] Failed to get sync state for tooltip:', e);
-    }
-    return this.t('folder_cloud_upload');
-  }
-
-  /**
-   * Get dynamic tooltip for cloud sync button showing last sync time
-   */
-  private async getCloudSyncTooltip(): Promise<string> {
-    try {
-      const response = (await browser.runtime.sendMessage({ type: 'gv.sync.getState' })) as
-        | { ok?: boolean; state?: { lastSyncTime?: number | null } }
-        | undefined;
-      if (response?.ok && response.state) {
-        const lastSyncTime = response.state.lastSyncTime;
-        const timeStr = this.formatRelativeTime(lastSyncTime ?? null);
-        const baseTooltip = this.t('folder_cloud_sync');
-        return lastSyncTime
-          ? `${baseTooltip}\n${this.t('lastSynced').replace('{time}', timeStr)}`
-          : `${baseTooltip}\n${this.t('neverSynced')}`;
-      }
-    } catch (e) {
-      console.warn('[AIStudioFolderManager] Failed to get sync state for tooltip:', e);
-    }
-    return this.t('folder_cloud_sync');
-  }
-
-  /**
-   * Format a timestamp as relative time (e.g. "5 minutes ago")
-   */
-  private formatRelativeTime(timestamp: number | null): string {
-    if (!timestamp) return '';
-    const now = Date.now();
-    const diffMs = now - timestamp;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) {
-      return this.t('justNow');
-    } else if (diffMins < 60) {
-      return `${diffMins} ${this.t('minutesAgo')}`;
-    } else if (diffHours < 24) {
-      return `${diffHours} ${this.t('hoursAgo')}`;
-    } else if (diffDays === 1) {
-      return this.t('yesterday');
-    } else {
-      return new Date(timestamp).toLocaleDateString();
-    }
   }
 }
 

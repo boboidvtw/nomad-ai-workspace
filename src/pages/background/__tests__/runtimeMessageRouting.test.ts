@@ -130,7 +130,7 @@ describe('background runtime message routing', () => {
 
   it('renders AI Studio folder names as text instead of HTML', () => {
     const source = readFileSync(
-      resolve(process.cwd(), 'src/pages/content/folder/aistudio.ts'),
+      resolve(process.cwd(), 'src/pages/content/folder/aistudioLibraryDropZone.ts'),
       'utf8',
     );
     const folderDropItem =
