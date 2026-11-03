@@ -33,6 +33,27 @@ test('SessionManager: extractTopic cleans prefixes and enforces 4-15 character b
   assert.ok(t2.length >= 4 && t2.length <= 15);
 });
 
+test('SessionManager: a plain question is research, not design', () => {
+  assert.strictEqual(inferType('6 加 2 是多少？'), '研究');
+  assert.strictEqual(inferType('3 加 4 是多少'), '研究');
+  assert.strictEqual(inferType('台北今天會下雨嗎'), '研究');
+  assert.strictEqual(inferType('What is the capital of France?'), '研究');
+  // Keywords still win over the question form, and non-questions keep the old default.
+  assert.strictEqual(inferType('如何設計限流架構？'), '設計');
+  assert.strictEqual(inferType('為什麼登入一直失敗？'), '修復');
+  assert.strictEqual(inferType('寫一首詩'), '設計');
+});
+
+test('SessionManager: a short prompt keeps its own words as the topic', () => {
+  assert.strictEqual(extractTopic('6 加 2 是多少？'), '6加2是多少');
+  assert.strictEqual(extractTopic('3 加 4 是多少？'), '3加4是多少');
+  assert.strictEqual(extractTopic('hi'), 'hi協作任務');
+  assert.strictEqual(
+    createSemanticTitle('6 加 2 是多少？').split(' | ').slice(1).join(' | '),
+    '研究 | 6加2是多少',
+  );
+});
+
 test('SessionManager: createSemanticTitle generates MMDD | 類型 | 主題', () => {
   const title = createSemanticTitle('設計百萬級高併發秒殺搶票系統');
   const parts = title.split(' | ');
