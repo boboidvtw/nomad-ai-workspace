@@ -10,6 +10,12 @@
 
 - **Dashboard 一鍵啟動與關閉**：每張卡片都能直接啟動或關閉該項目，並附操作說明。動作由本機白名單執行，按鈕只送服務 ID。
 
+### 🔒 安全性 (Security)
+
+- **桌面版 Electron 40 升到 45.2.1**：40 已不在官方支援範圍（只維護最新 3 個大版本），Chromium 漏洞不再修補。版本改為固定值，因為 electron-builder 找不到被提升到根目錄的 Electron。
+  - macOS 上未簽章的版本從 Electron 42 起發不出系統通知；Bot 需要處理時改為 Dock 圖示跳動，App 內的 HUD 標記不變。
+  - 根目錄的 `npm run desktop`、`desktop:dev` 改呼叫桌面套件自己的指令。
+
 ### 🔧 修正 (Fixed)
 
 - **圓桌、Bot 與任務的實機問題**：

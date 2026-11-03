@@ -197,7 +197,7 @@ Open the Nomad control center via the extension icon in your browser toolbar:
 
 ## 7. 🖥️ Nomad AI Studio Standalone Desktop Workstation
 
-Beyond browser extensions, Nomad AI Workspace offers a native standalone desktop application built on Electron 40 — **Nomad AI Studio**, engineered for professionals requiring high-frequency multi-AI concurrent prompt dispatching and side-by-side comparison.
+Beyond browser extensions, Nomad AI Workspace offers a native standalone desktop application built on Electron 45 — **Nomad AI Studio**, engineered for professionals requiring high-frequency multi-AI concurrent prompt dispatching and side-by-side comparison.
 
 ### 7.1 Dynamic Multi-View Layouts
 

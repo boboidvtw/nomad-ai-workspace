@@ -27,3 +27,10 @@
 3. Add `hardenedRuntime`, entitlements and `notarize` to the electron-builder `mac` config.
    Check the variable names against the installed electron-builder version.
 4. Verify with `spctl -a -vv` and `xcrun stapler validate` on the built `.app`.
+
+## Known cost (2026-11-03)
+
+Since Electron 42, macOS sends notifications through `UNNotification`, which rejects unsigned
+apps (`UNErrorDomain` error 1, checked on Electron 45.2.1). The "bot needs you" notification
+now bounces the Dock icon instead; the HUD badge still shows which bot needs attention. Losing
+system notifications is a reason to reconsider signing if the Dock bounce isn't enough.

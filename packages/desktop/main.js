@@ -158,7 +158,14 @@ function notifyBotBlocked(notice) {
   const who = notice.botName || notice.platform;
   try {
     if (Notification.isSupported()) {
-      new Notification({ title: `${who} needs you`, body: notice.reason }).show();
+      const notification = new Notification({ title: `${who} needs you`, body: notice.reason });
+      // Since Electron 42, macOS rejects notifications from unsigned builds with 'failed',
+      // so bounce the Dock icon instead; the HUD badge below still shows which bot it is.
+      notification.on('failed', (_event, error) => {
+        console.warn('[Nomad Desktop] Notification failed:', error);
+        app.dock?.bounce('informational');
+      });
+      notification.show();
     }
   } catch (e) {
     console.warn('[Nomad Desktop] Notification failed:', e instanceof Error ? e.message : e);
