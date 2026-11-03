@@ -79,7 +79,7 @@ const PLATFORM_EXTRACTORS = {
   claude: {
     getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}${baselineSource(options)}
+${READ_TEXT_SOURCE}${baselineSource(options)}${promptsSource('[data-testid="user-message"]', options)}
         const selectors = [
           '.font-claude-message',
           '[data-testid="assistant-message"]',
@@ -100,17 +100,17 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
             break;
           }
         }
-        if (!target) return { ok: false, error: "No Claude assistant response found", url: location.href };
+        if (!target) return { ok: false, error: "No Claude assistant response found", url: location.href, ...prompts };
         // While Claude thinks the row holds only the thinking summary and its timer, no reply yet.
         const isThinking = target.closest('[data-is-streaming="true"]') && !target.querySelector('.standard-markdown') && !target.matches('.standard-markdown');
-        if (isThinking) return { ok: true, text: "", length: 0, count, countOf, isBaseline: isBaseline(target) };
+        if (isThinking) return { ok: true, text: "", length: 0, count, countOf, isBaseline: isBaseline(target), ...prompts };
         // A message row also holds a screen-reader label and the action bar; read its markdown.
         const blocks = target.matches('.standard-markdown')
           ? [target]
           : [...target.querySelectorAll('.standard-markdown')];
         const parts = (blocks.length ? blocks : [target]).map((el) => readText(el));
         const text = parts.filter(Boolean).join("\\n\\n");
-        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
+        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target), ...prompts };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -142,7 +142,7 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
   chatgpt: {
     getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}${baselineSource(options)}
+${READ_TEXT_SOURCE}${baselineSource(options)}${promptsSource('[data-user-message-bubble]', options)}
         // Modern ChatGPT selectors (2025/2026): assistant-message, MarkdownRoot, search-unit-key
         const selectors = [
           '[data-markdown-text-style="assistant-message"]',
@@ -167,9 +167,9 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
             break;
           }
         }
-        if (!target) return { ok: false, error: "No ChatGPT assistant response found", url: location.href };
+        if (!target) return { ok: false, error: "No ChatGPT assistant response found", url: location.href, ...prompts };
         const text = readText(target);
-        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
+        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target), ...prompts };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -250,7 +250,7 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}${promptsSource('user-query', optio
   grok: {
     getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}${baselineSource(options)}
+${READ_TEXT_SOURCE}${baselineSource(options)}${promptsSource('[data-testid="user-message"]', options)}
         const selectors = [
           // The bubble around it holds the "Grok" header and the run time, not the reply.
           '[data-testid="assistant-message"] .response-content-markdown',
@@ -283,9 +283,9 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
             countOf = 'bubble';
           }
         }
-        if (!target) return { ok: false, error: "No Grok response found", url: location.href };
+        if (!target) return { ok: false, error: "No Grok response found", url: location.href, ...prompts };
         const text = readText(target);
-        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
+        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target), ...prompts };
       } catch (err) {
         return { ok: false, error: err.message };
       }
@@ -338,7 +338,7 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
   perplexity: {
     getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}${baselineSource(options)}
+${READ_TEXT_SOURCE}${baselineSource(options)}${promptsSource('[data-message-bubble="right"]', options)}
         const selectors = [
           '.prose',
           'div[class*="answer"]',
@@ -360,12 +360,12 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}
             break;
           }
         }
-        if (!target) return { ok: false, error: "No Perplexity response found", url: location.href };
+        if (!target) return { ok: false, error: "No Perplexity response found", url: location.href, ...prompts };
         // Sources render as inline chips ("databricks +1"); read a copy without them.
         const text = readText(target, (copy) => {
           copy.querySelectorAll('[data-pplx-citation], .citation').forEach((el) => el.remove());
         });
-        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target) };
+        return { ok: true, text, length: text.length, count, countOf, isBaseline: isBaseline(target), ...prompts };
       } catch (err) {
         return { ok: false, error: err.message };
       }
