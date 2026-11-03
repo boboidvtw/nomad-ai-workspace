@@ -221,6 +221,9 @@ const initMermaid = async (): Promise<boolean> => {
   mermaid.initialize({
     startOnLoad: false,
     theme: theme === 'dark' ? 'dark' : 'default',
+    // Mermaid 12 defaults to the 'neo' look and ELK layout; keep the v11 appearance.
+    look: 'classic',
+    layout: 'dagre',
     htmlLabels: false,
     flowchart: { htmlLabels: false },
     securityLevel: 'strict',

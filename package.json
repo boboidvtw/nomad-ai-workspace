@@ -70,7 +70,7 @@
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "dompurify": "^3",
+    "dompurify": "^3.4.17",
     "echarts": "6.1.0",
     "html-to-image": "^1.11.13",
     "json5": "^2.2.3",
@@ -78,7 +78,7 @@
     "lucide-react": "^0.553.0",
     "marked": "16.4.1",
     "marked-katex-extension": "^4",
-    "mermaid": "11.12.2",
+    "mermaid": "12.2.0",
     "mermaid-legacy": "npm:mermaid@9.2.2",
     "onml": "^2.1.0",
     "react": "^19.1.0",

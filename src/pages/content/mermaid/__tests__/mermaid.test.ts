@@ -72,6 +72,15 @@ describe('Mermaid dynamic loading', () => {
         expect.objectContaining({ htmlLabels: false, flowchart: { htmlLabels: false } }),
       );
     });
+
+    it('keeps the classic look and dagre layout that Mermaid 12 no longer defaults to', async () => {
+      await _initMermaidForTest();
+
+      const mermaid = await loadMermaid();
+      expect(mermaid?.initialize).toHaveBeenCalledWith(
+        expect.objectContaining({ look: 'classic', layout: 'dagre' }),
+      );
+    });
   });
 
   describe('resolveMermaidTheme', () => {
