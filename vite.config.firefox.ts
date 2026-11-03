@@ -3,6 +3,7 @@ import { resolve } from 'path';
 import { defineConfig, loadEnv, mergeConfig } from 'vite';
 
 import pkg from './package.json';
+import { firefoxGlobalThisPlugin } from './scripts/firefox-global-this';
 import baseConfig, { baseBuildOptions, baseManifest } from './vite.config.base';
 
 const outDir = resolve(__dirname, 'dist_firefox');
@@ -114,14 +115,9 @@ export default mergeConfig(
           injectCss: true,
         },
       }),
+      // Firefox shares Mermaid 12 with Chrome/Safari; this keeps its lodash chunks CSP-safe.
+      firefoxGlobalThisPlugin(),
     ],
-    resolve: {
-      alias: {
-        // Firefox uses mermaid v9.2.2 (max compatible version)
-        // Chrome/Safari use mermaid v11.x (latest) by default
-        mermaid: 'mermaid-legacy',
-      },
-    },
     build: {
       ...baseBuildOptions,
       outDir,
