@@ -22,8 +22,12 @@ const INCOMPLETE_REPLY_NOTE = '[注意：這份回覆等待逾時，內容可能
 /**
  * The latest reply on a page and how many replies the page holds. `count` and `countOf` (the
  * selector that was counted) are null when the extractor could not count, so text alone decides.
- * @typedef {{ text: string, count: number | null, countOf: string | null }} ReplySnapshot
+ * `promptCount` is how many prompts the user sent there, or null (absent) when the platform's
+ * prompts cannot be counted, which turns off the dropped-prompt check.
+ * @typedef {{ text: string, count: number | null, countOf: string | null, promptCount?: number | null }} ReplySnapshot
  */
+
+const DROPPED_PROMPT_ERROR = '提問未送達：頁面沒有顯示送出的提問（已重送一次）';
 
 /**
  * Whether a page read moved past the reply that was there before the send. With a count, only
@@ -47,6 +51,19 @@ function movedPastPrevious(previous, res, pageText, isStreaming) {
     return res.count > previous.count && !res.isBaseline;
   }
   return isStreaming || (res?.ok !== false && pageText !== previous.text);
+}
+
+/**
+ * Whether the page shows the prompt just sent: its last prompt is not the one marked before the
+ * send. Gemini at times clears its input box and then never shows the prompt (or shows it and
+ * takes it back), so the injector's ok alone does not mean the platform took the prompt. A read
+ * that cannot count prompts gives no evidence of a drop.
+ * @param {{ promptCount?: number, promptIsBaseline?: boolean } | undefined} res
+ * @returns {boolean}
+ */
+function showsNewPrompt(res) {
+  if (typeof res?.promptCount !== 'number') return true;
+  return res.promptCount > 0 && !res.promptIsBaseline;
 }
 
 /**
@@ -95,7 +112,7 @@ class MultiAiOrchestrator {
   /**
    * @param {Object} [options]
    * @param {Function} [options.injectPrompt] - async (platform, text) => { ok: boolean }
-   * @param {Function} [options.extractResponse] - async (platform, { markBaseline }?) => { ok: boolean, text: string, count?: number, countOf?: string, isBaseline?: boolean, url?: string }
+   * @param {Function} [options.extractResponse] - async (platform, { markBaseline }?) => { ok: boolean, text: string, count?: number, countOf?: string, isBaseline?: boolean, promptCount?: number, promptIsBaseline?: boolean, url?: string }
    * @param {Function} [options.checkStreaming] - async (platform) => { ok: boolean, isStreaming: boolean }
    * @param {number} [options.initialWaitMs=2000] - Initial delay before polling
    * @param {number} [options.pollIntervalMs=800] - Polling interval
@@ -107,6 +124,7 @@ class MultiAiOrchestrator {
    * @param {number} [options.composerRetryMs=1500] - Delay between looks for that input box
    * @param {number} [options.snapshotSettleMs=1000] - Gap between the pre-send reads that must agree
    * @param {number} [options.snapshotSettleTries=8] - Most pre-send reads before taking the last one
+   * @param {number} [options.promptAckMs=20000] - How long a page that counts prompts may take to show the one just sent before it counts as dropped
    * @param {(platform: string) => Promise<{ blocked: boolean, reason?: string }>} [options.checkBlocked] - Task runs only: stops waiting when the page needs a human
    * @param {(platform: string | null) => void} [options.onSpeakerChange] - The platform taking its turn, or null when the relay ends
    * @param {Function} [options.onStep] - (event) => void
@@ -127,6 +145,7 @@ class MultiAiOrchestrator {
     this.composerRetryMs = options.composerRetryMs ?? 1500;
     this.snapshotSettleMs = options.snapshotSettleMs ?? 1000;
     this.snapshotSettleTries = options.snapshotSettleTries ?? 8;
+    this.promptAckMs = options.promptAckMs ?? 20000;
     this.checkBlocked = options.checkBlocked || null;
     this.onSpeakerChange = options.onSpeakerChange || (() => {});
     this.onStep = options.onStep || (() => {});
@@ -341,21 +360,8 @@ class MultiAiOrchestrator {
 
         this.onSpeakerChange(speaker);
 
-        // 1. Inject prompt to current speaker, remembering the reply already on the page
-        const previous = await this.readReplySnapshot(speaker);
-        const delivery = await this.deliverPrompt(speaker, currentInput);
-
-        // 2. Wait for speaker response to generate and settle
-        let reply = { settled: false, text: '' };
-        if (delivery.ok) {
-          this.emitStep('waiting-response', { speaker });
-          reply = await this.pollUntilSettled(speaker, {
-            maxWaitMs: this.maxWaitMs,
-            pollIntervalMs: this.pollIntervalMs,
-            previous,
-            honorRelayControls: true,
-          });
-        }
+        // 1-2. Inject prompt to current speaker and wait for the response to settle
+        const { delivery, reply } = await this.sendAndAwait(speaker, currentInput);
 
         if (this.isAborted) break;
 
@@ -438,6 +444,37 @@ class MultiAiOrchestrator {
   }
 
   /**
+   * One relay turn: reads the page, sends, and waits for the reply. A prompt the page dropped is
+   * sent once more after a fresh read; dropped again, the turn fails at once instead of sitting
+   * out the reply time limit.
+   * @param {string} speaker
+   * @param {string} text
+   * @returns {Promise<{ delivery: { ok: boolean, error?: string }, reply: { settled: boolean, text: string } }>}
+   */
+  async sendAndAwait(speaker, text) {
+    for (let attempt = 1; ; attempt++) {
+      const previous = await this.readReplySnapshot(speaker);
+      const delivery = await this.deliverPrompt(speaker, text);
+      if (!delivery.ok) return { delivery, reply: { settled: false, text: '' } };
+
+      this.emitStep('waiting-response', { speaker });
+      const reply = await this.pollUntilSettled(speaker, {
+        maxWaitMs: this.maxWaitMs,
+        pollIntervalMs: this.pollIntervalMs,
+        previous,
+        honorRelayControls: true,
+      });
+      if (!reply.dropped) return { delivery, reply };
+
+      const retrying = attempt < 2 && !this.isAborted;
+      this.emitStep('prompt-dropped', { speaker, attempt, retrying });
+      if (!retrying) {
+        return { delivery: { ok: false, error: DROPPED_PROMPT_ERROR }, reply };
+      }
+    }
+  }
+
+  /**
    * Sends the prompt and reports whether the page took it, so a failed send is not waited on.
    * @param {string} speaker
    * @param {string} text
@@ -512,7 +549,8 @@ class MultiAiOrchestrator {
       const same =
         next.snapshot.text === snapshot.text &&
         next.snapshot.count === snapshot.count &&
-        next.snapshot.countOf === snapshot.countOf;
+        next.snapshot.countOf === snapshot.countOf &&
+        next.snapshot.promptCount === snapshot.promptCount;
       snapshot = next.snapshot;
       if (same && !next.loading) break;
     }
@@ -534,11 +572,15 @@ class MultiAiOrchestrator {
           text: (res?.text || '').trim(),
           count: counted ? res.count : null,
           countOf: counted ? res.countOf || null : null,
+          ...(typeof res?.promptCount === 'number' ? { promptCount: res.promptCount } : {}),
         },
         loading: !counted && isConversationUrl(platform, res?.url),
       };
     } catch {
-      return { snapshot: { text: '', count: null, countOf: null }, loading: false };
+      return {
+        snapshot: { text: '', count: null, countOf: null },
+        loading: false,
+      };
     }
   }
 
@@ -549,7 +591,7 @@ class MultiAiOrchestrator {
    * @param {{ maxWaitMs?: number, pollIntervalMs?: number, previous?: ReplySnapshot, previousText?: string }} [options]
    *   previous: the page read before the send (see readReplySnapshot); its reply is not taken as
    *   the answer. previousText is the same without a count.
-   * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>}
+   * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string, dropped?: boolean }>}
    */
   awaitSettled(platform, options = {}) {
     return this.pollUntilSettled(platform, {
@@ -567,7 +609,8 @@ class MultiAiOrchestrator {
   /**
    * @param {string} platform
    * @param {{ maxWaitMs: number, pollIntervalMs: number, previous?: ReplySnapshot, honorRelayControls: boolean }} options
-   * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string }>}
+   * @returns {Promise<{ settled: boolean, text: string, blocked?: boolean, reason?: string, dropped?: boolean }>}
+   *   dropped: the page never showed the prompt (see showsNewPrompt) and nothing else happened.
    */
   async pollUntilSettled(
     platform,
@@ -593,6 +636,7 @@ class MultiAiOrchestrator {
     // A snapshot with a count saw a reply element even when it had no text yet (a page still
     // loading), so only the count can move past it.
     let sawNewReply = !previousText && previous.count === null;
+    const countsPrompts = typeof previous.promptCount === 'number';
 
     if (this.initialWaitMs > 0) {
       await this.sleep(this.initialWaitMs);
@@ -624,6 +668,18 @@ class MultiAiOrchestrator {
           sawNewReply = movedPastPrevious(previous, responseRes, pageText, isStreaming);
         }
         const text = sawNewReply ? pageText : '';
+
+        // The page had time to show the prompt, shows no sign of it and is not answering.
+        if (
+          countsPrompts &&
+          !text &&
+          !isStreaming &&
+          Date.now() - startTime >= this.promptAckMs &&
+          !showsNewPrompt(responseRes)
+        ) {
+          console.warn(`[Nomad Orchestrator] [${platform}] The page did not show the prompt`);
+          return { settled: false, text: '', dropped: true };
+        }
 
         // A streaming page can still show the old reply while the new one has not started: that
         // text may only settle once streaming ends, and is never kept as a partial answer.

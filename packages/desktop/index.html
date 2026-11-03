@@ -4406,6 +4406,8 @@
 
           // Add log entry
           addOrchLogCard(event, event.incomplete ? '⚠️ 等待逾時，可能不完整' : '', event.content);
+        } else if (event.type === 'prompt-dropped' && event.retrying) {
+          speakerLabel.textContent = `🔁 ${event.speaker.toUpperCase()} 沒收到提問，重送一次...`;
         } else if (event.type === 'turn-failed') {
           speakerLabel.textContent = `⚠️ ${event.speaker.toUpperCase()} 未回覆，略過這一棒...`;
           addOrchLogCard(event, '⚠️ 已略過', event.error);
