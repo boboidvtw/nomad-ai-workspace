@@ -22,7 +22,6 @@ import {
   accountIsolationService,
   buildScopedStorageKey,
   detectAccountPlatformFromUrl,
-  extractRouteUserIdFromUrl,
 } from '@/core/services/AccountIsolationService';
 import { googleDriveSyncService } from '@/core/services/GoogleDriveSyncService';
 import {
@@ -43,23 +42,15 @@ import type {
   HighlightUpdatePatch,
 } from '@/core/types/highlight';
 import type { PromptItem, SyncAccountScope, SyncMode, SyncProvider } from '@/core/types/sync';
-import {
-  getVoyagerBuildTarget,
-  isFirefox,
-  supportsExtensionNotifications,
-} from '@/core/utils/browser';
+import { getVoyagerBuildTarget, isFirefox } from '@/core/utils/browser';
 import { customWebsiteOriginPatterns } from '@/core/utils/customWebsites';
-import { getNativeOpenConversationUrl } from '@/core/utils/nativeOpenConversation';
-import { hasNotificationsPermission } from '@/core/utils/notificationsPermission';
 import { getPromptNameConflictIds } from '@/core/utils/promptName';
 import {
   SAFARI_CLIPBOARD_IMAGE_COPY_REQUEST,
-  SAFARI_NATIVE_APP_ID,
   copySafariNativeImagePng,
 } from '@/core/utils/safariNativeClipboard';
 import {
   SAFARI_NOTIFICATION_PERMISSION_REQUEST,
-  deliverSafariNativeNotification,
   prepareSafariNativeNotifications,
 } from '@/core/utils/safariNativeNotifications';
 import { isPromptItemArray, parseStoredFolderData } from '@/core/utils/syncDataGuards';
@@ -81,7 +72,6 @@ import {
   startChatGptTemporaryHandoffBackgroundService,
 } from '@/features/plugins/builtin/chatgptTemporaryHandoff/background';
 import { CHATGPT_HANDOFF_GET_TAB_ID_MESSAGE } from '@/features/plugins/builtin/chatgptTemporaryHandoff/storage';
-import { computeNudgeDomains, normalizeIconResourcePath } from '@/features/plugins/promptNudge';
 import {
   HostCatalogRefresher,
   parseHostCatalogRefreshPayload,
@@ -99,15 +89,11 @@ import { listPluginManifests } from '@/features/plugins/sources/defaultSources';
 import { loadPluginState } from '@/features/plugins/storage/pluginState';
 import type { PluginManifest } from '@/features/plugins/types';
 import { startStorageQuotaWarningBackgroundService } from '@/features/storageQuotaWarning/background';
-import type { ForkNode, ForkNodesData } from '@/pages/content/fork/forkTypes';
 import {
   filterTimelineHierarchyByRouteScope,
   getTimelineHierarchyStorageKeysToRead,
   resolveTimelineHierarchyDataForStorageScope,
 } from '@/pages/content/timeline/hierarchyStorage';
-import type { StarredMessagesData } from '@/pages/content/timeline/starredTypes';
-import { getTranslation } from '@/utils/i18n';
-import type { TranslationKey } from '@/utils/translations';
 
 import { unregisterRegisteredContentScripts } from './contentScriptRegistration';
 import { ForkNodesManager } from './forkNodesManager';
@@ -115,6 +101,13 @@ import { handleGitHubSyncMessage } from './githubSyncMessages';
 import { resolveOptionalHighlightSetting } from './highlightOptionalSetting';
 import { handlePlatformFolderSyncMessage, syncAllPlatformFolders } from './multiPlatformFolderSync';
 import { addPermissionChangeListeners } from './permissionEvents';
+import { CUSTOM_WEBSITE_KEY, syncPromptNudgeIcon } from './promptNudgeIcon';
+import {
+  focusOrOpenConversation,
+  showResponseCompleteNotification,
+  startResponseCompleteNotifications,
+} from './responseCompleteNotifications';
+import { filterForkNodesByRouteScope, filterStarredByRouteScope } from './routeScopeFilters';
 import { handleRuntimeImageMessage, isRuntimeImageMessage } from './runtimeImageMessages';
 import {
   isAllowedSyncContentSender,
@@ -127,35 +120,11 @@ const CUSTOM_CONTENT_SCRIPT_ID = 'gv-custom-content-script';
 const PLUGIN_CONTENT_SCRIPT_ID = 'gv-plugin-content-script';
 const PLUGIN_EMBEDDED_CONTENT_SCRIPT_ID = 'gv-plugin-embedded-content-script';
 const CLAUDE_USAGE_MAIN_SCRIPT_ID = 'gv-plugin-claude-usage-main';
-const CUSTOM_WEBSITE_KEY = 'gvPromptCustomWebsites';
 const FETCH_INTERCEPTOR_SCRIPT_ID = 'gv-fetch-interceptor';
 const RESPONSE_COMPLETE_OBSERVER_SCRIPT_ID = 'gv-response-complete-observer';
-const RESPONSE_COMPLETE_NOTIFICATION_DEDUP_MS = 3000;
-const RESPONSE_COMPLETE_NOTIFICATION_MESSAGE_KEY =
-  'responseCompleteNotificationMessage' satisfies TranslationKey;
-const RESPONSE_COMPLETE_NOTIFICATION_MESSAGE_FALLBACK = 'Gemini response complete';
-const RESPONSE_COMPLETE_NOTIFICATION_TITLE = 'Gemini Voyager';
-const RESPONSE_COMPLETE_NOTIFICATION_TITLE_SEPARATOR = ' - ';
-const RESPONSE_COMPLETE_NOTIFICATION_MESSAGE_SEPARATOR = ': ';
-const RESPONSE_COMPLETE_NOTIFICATION_TITLE_MAX_LENGTH = 120;
-const RESPONSE_COMPLETE_NOTIFICATION_MESSAGE_MAX_LENGTH = 220;
-const RESPONSE_COMPLETE_NOTIFICATION_ICON = 'icon-128.png';
-const RESPONSE_COMPLETE_NOTIFICATION_ID_PREFIX = 'gv-response-complete-';
-const RESPONSE_COMPLETE_UNKNOWN_TAB_ID = 'unknown';
 const GENERATED_UI_CAPTURE_PERMISSION_ORIGINS = ['<all_urls>'];
-// Anchored to the start, so it only strips leading invisible characters and can
-// never split an emoji sequence in the label body.
-const RESPONSE_COMPLETE_TURN_LABEL_PREFIXES =
-  // oxlint-disable-next-line no-misleading-character-class
-  /^[\u200B\u200C\u200D\u200E\u200F\uFEFF]*(?:you said|you wrote|user message|your prompt|you asked)[:\s]*/i;
 const RETIRED_TAB_TITLE_UPDATE_SETTING = { [StorageKeys.TAB_TITLE_UPDATE_ENABLED]: false };
 
-const responseCompleteNotificationLastShown = new Map<string, number>();
-const responseCompleteNotificationTargets = new Map<
-  string,
-  { conversationUrl?: string; tabId?: number }
->();
-let nativeOpenConversationPort: ReturnType<typeof browser.runtime.connectNative> | null = null;
 const remoteAnnouncementService = startRemoteAnnouncementBackgroundService();
 registerWelcomePageOnInstall();
 // Remote plugin catalog: the only network writer. Content scripts and the popup
@@ -210,26 +179,6 @@ const GEMINI_RESPONSE_COMPLETE_OBSERVER_MATCHES = [
   'https://business.gemini.google/*',
 ];
 
-interface ResponseCompleteNotificationDetails {
-  conversationUrl?: string;
-  conversationTitle?: string;
-  userPrompt?: string;
-}
-
-async function getInternalI18nMessage(key: TranslationKey, fallback: string): Promise<string> {
-  try {
-    return await getTranslation(key);
-  } catch {
-    // Keep Chrome's extension locale as a last resort if storage-backed i18n fails.
-  }
-
-  try {
-    return chrome.i18n?.getMessage?.(key) || fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 async function openSettingsPageFallback(sourceTabId?: number): Promise<void> {
   if (typeof sourceTabId === 'number') {
     const url = chrome.runtime.getURL(`src/pages/options/index.html?sourceTabId=${sourceTabId}`);
@@ -244,213 +193,7 @@ async function openSettingsPageFallback(sourceTabId?: number): Promise<void> {
   await chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/options/index.html') });
 }
 
-function getTabDedupKey(
-  tabId: number | undefined,
-  tabUrl: string | undefined,
-  conversationUrl?: string,
-): string {
-  return `${tabId ?? RESPONSE_COMPLETE_UNKNOWN_TAB_ID}:${conversationUrl ?? tabUrl ?? ''}`;
-}
-
-function normalizeNotificationText(value: unknown, maxLength: number): string {
-  if (typeof value !== 'string') return '';
-  const normalized = value
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(RESPONSE_COMPLETE_TURN_LABEL_PREFIXES, '');
-  if (!normalized) return '';
-  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 1)}…` : normalized;
-}
-
-async function showResponseCompleteNotification(
-  sender: chrome.runtime.MessageSender,
-  details: ResponseCompleteNotificationDetails,
-): Promise<boolean> {
-  const useSafariNativeNotification = getVoyagerBuildTarget() === 'safari';
-  if (!useSafariNativeNotification && !supportsExtensionNotifications()) return false;
-
-  const setting = await chrome.storage.sync.get({
-    [StorageKeys.RESPONSE_COMPLETE_NOTIFICATION_ENABLED]: false,
-  });
-  if (setting[StorageKeys.RESPONSE_COMPLETE_NOTIFICATION_ENABLED] !== true) return false;
-
-  // "notifications" is an optional permission (granted from the popup toggle);
-  // the namespace check above is not reliable across grant/revoke, so verify
-  // explicitly before attempting to create a notification.
-  if (!useSafariNativeNotification && !(await hasNotificationsPermission())) return false;
-
-  const conversationUrl = details.conversationUrl;
-  const dedupKey = getTabDedupKey(sender.tab?.id, sender.tab?.url, conversationUrl);
-  const now = Date.now();
-  const lastShown = responseCompleteNotificationLastShown.get(dedupKey) ?? 0;
-  if (now - lastShown < RESPONSE_COMPLETE_NOTIFICATION_DEDUP_MS) {
-    return true;
-  }
-
-  responseCompleteNotificationLastShown.set(dedupKey, now);
-  const notificationMessage = await getInternalI18nMessage(
-    RESPONSE_COMPLETE_NOTIFICATION_MESSAGE_KEY,
-    RESPONSE_COMPLETE_NOTIFICATION_MESSAGE_FALLBACK,
-  );
-  const conversationTitle = normalizeNotificationText(
-    details.conversationTitle,
-    RESPONSE_COMPLETE_NOTIFICATION_TITLE_MAX_LENGTH -
-      RESPONSE_COMPLETE_NOTIFICATION_TITLE.length -
-      RESPONSE_COMPLETE_NOTIFICATION_TITLE_SEPARATOR.length,
-  );
-  const userPrompt = normalizeNotificationText(
-    details.userPrompt,
-    RESPONSE_COMPLETE_NOTIFICATION_MESSAGE_MAX_LENGTH -
-      notificationMessage.length -
-      RESPONSE_COMPLETE_NOTIFICATION_MESSAGE_SEPARATOR.length,
-  );
-
-  try {
-    const notificationId = `${RESPONSE_COMPLETE_NOTIFICATION_ID_PREFIX}${sender.tab?.id ?? RESPONSE_COMPLETE_UNKNOWN_TAB_ID}-${now}`;
-    const title = conversationTitle
-      ? `${RESPONSE_COMPLETE_NOTIFICATION_TITLE}${RESPONSE_COMPLETE_NOTIFICATION_TITLE_SEPARATOR}${conversationTitle}`
-      : RESPONSE_COMPLETE_NOTIFICATION_TITLE;
-    const message = userPrompt
-      ? `${notificationMessage}${RESPONSE_COMPLETE_NOTIFICATION_MESSAGE_SEPARATOR}${userPrompt}`
-      : notificationMessage;
-
-    if (useSafariNativeNotification) {
-      return await deliverSafariNativeNotification({
-        id: notificationId,
-        title,
-        body: message,
-        url: conversationUrl,
-      });
-    }
-
-    responseCompleteNotificationTargets.set(notificationId, {
-      conversationUrl,
-      tabId: sender.tab?.id,
-    });
-    await browser.notifications.create(notificationId, {
-      type: 'basic',
-      iconUrl: chrome.runtime.getURL(RESPONSE_COMPLETE_NOTIFICATION_ICON),
-      title,
-      message,
-    });
-    return true;
-  } catch (error) {
-    console.warn('[Background] Failed to show response completion notification:', error);
-    return false;
-  }
-}
-
-async function focusOrOpenConversation(url: URL): Promise<void> {
-  try {
-    const tabs = await browser.tabs.query({});
-    const exactMatch = tabs.find((tab) => {
-      if (typeof tab.url !== 'string' || typeof tab.id !== 'number') return false;
-      try {
-        const tabUrl = new URL(tab.url);
-        return tabUrl.origin === url.origin && tabUrl.pathname === url.pathname;
-      } catch {
-        return false;
-      }
-    });
-
-    if (exactMatch && typeof exactMatch.id === 'number') {
-      const tab = await browser.tabs.update(exactMatch.id, { active: true });
-      if (typeof tab.windowId === 'number') {
-        await browser.windows.update(tab.windowId, { focused: true });
-      }
-      return;
-    }
-
-    const originMatch = tabs.find((tab) => {
-      if (typeof tab.url !== 'string' || typeof tab.id !== 'number') return false;
-      try {
-        const tabUrl = new URL(tab.url);
-        return tabUrl.origin === url.origin;
-      } catch {
-        return false;
-      }
-    });
-
-    if (originMatch && typeof originMatch.id === 'number') {
-      const tab = await browser.tabs.update(originMatch.id, { active: true, url: url.toString() });
-      if (typeof tab.windowId === 'number') {
-        await browser.windows.update(tab.windowId, { focused: true });
-      }
-      return;
-    }
-  } catch {
-    // Fall through to opening a fresh tab.
-  }
-
-  await browser.tabs.create({ url: url.toString() });
-}
-
-// App-dispatched messages (SFSafariApplication.dispatchMessage) are delivered
-// only through a native-messaging port the background opens first — they never
-// arrive via runtime.onMessage. See "Messaging between the app and JavaScript
-// in a Safari web extension" in the Apple docs.
-function connectNativeOpenConversationPort(): void {
-  try {
-    const port = browser.runtime.connectNative(SAFARI_NATIVE_APP_ID);
-    nativeOpenConversationPort = port;
-    port.onMessage.addListener((message: unknown) => {
-      const url = getNativeOpenConversationUrl(message);
-      if (url) void focusOrOpenConversation(url);
-    });
-    port.onDisconnect.addListener(() => {
-      if (nativeOpenConversationPort === port) nativeOpenConversationPort = null;
-      setTimeout(connectNativeOpenConversationPort, 1000);
-    });
-  } catch {
-    // Native host unavailable (extension running without the containing app);
-    // notification clicks fall back to the app's openWindow path.
-    nativeOpenConversationPort = null;
-  }
-}
-
-if (getVoyagerBuildTarget() === 'safari') {
-  connectNativeOpenConversationPort();
-}
-
-function getResponseCompleteNotificationTabId(notificationId: string): number | undefined {
-  const match = new RegExp(`^${RESPONSE_COMPLETE_NOTIFICATION_ID_PREFIX}(\\d+)-`).exec(
-    notificationId,
-  );
-  if (!match) return undefined;
-  const tabId = Number(match[1]);
-  return Number.isFinite(tabId) ? tabId : undefined;
-}
-
-async function openResponseCompleteNotification(notificationId: string): Promise<void> {
-  const target = responseCompleteNotificationTargets.get(notificationId);
-  responseCompleteNotificationTargets.delete(notificationId);
-
-  try {
-    await browser.notifications.clear(notificationId);
-  } catch {}
-
-  const tabId = target?.tabId ?? getResponseCompleteNotificationTabId(notificationId);
-  if (typeof tabId === 'number') {
-    try {
-      const tab = await browser.tabs.update(tabId, { active: true });
-      if (typeof tab.windowId === 'number') {
-        await browser.windows.update(tab.windowId, { focused: true });
-      }
-      return;
-    } catch {
-      // Fall through to opening the saved URL if the tab was closed.
-    }
-  }
-
-  if (target?.conversationUrl) {
-    await browser.tabs.create({ url: target.conversationUrl });
-  }
-}
-
-chrome.notifications?.onClicked?.addListener?.((notificationId) => {
-  if (!notificationId.startsWith(RESPONSE_COMPLETE_NOTIFICATION_ID_PREFIX)) return;
-  void openResponseCompleteNotification(notificationId);
-});
+startResponseCompleteNotifications();
 
 function isSyncAccountScope(value: unknown): value is SyncAccountScope {
   if (typeof value !== 'object' || value === null) return false;
@@ -638,64 +381,6 @@ function isTrustedSyncMessageSender(
     isTrustedExtensionPageSender(sender) ||
     (sender.id === chrome.runtime.id && isAllowedSyncContentSender(sender.tab?.url, platform))
   );
-}
-
-function matchesRouteScope(url: string, routeUserId: string | null): boolean {
-  if (!routeUserId) return true;
-  const routeFromUrl = extractRouteUserIdFromUrl(url);
-  return routeFromUrl === null || routeFromUrl === routeUserId;
-}
-
-function filterStarredByRouteScope(
-  data: StarredMessagesData,
-  routeUserId: string | null,
-): StarredMessagesData {
-  if (!routeUserId) return data;
-
-  const filteredEntries = Object.entries(data.messages).map(([conversationId, messages]) => {
-    const filteredMessages = messages.filter((message) =>
-      matchesRouteScope(message.conversationUrl, routeUserId),
-    );
-    return [conversationId, filteredMessages] as const;
-  });
-
-  const filteredMessages = Object.fromEntries(
-    filteredEntries.filter((entry) => entry[1].length > 0),
-  );
-  return { messages: filteredMessages };
-}
-
-function filterForkNodesByRouteScope(
-  data: ForkNodesData,
-  routeUserId: string | null,
-): ForkNodesData {
-  if (!routeUserId) return data;
-
-  const filteredNodes: Record<string, ForkNode[]> = {};
-  for (const [conversationId, nodes] of Object.entries(data.nodes)) {
-    const filtered = nodes.filter((node) => matchesRouteScope(node.conversationUrl, routeUserId));
-    if (filtered.length > 0) {
-      filteredNodes[conversationId] = filtered;
-    }
-  }
-
-  const filteredGroups: Record<string, string[]> = {};
-  for (const nodes of Object.values(filteredNodes)) {
-    for (const node of nodes) {
-      if (!filteredGroups[node.forkGroupId]) {
-        filteredGroups[node.forkGroupId] = [];
-      }
-      const key = `${node.conversationId}:${node.turnId}`;
-      if (!filteredGroups[node.forkGroupId].includes(key)) {
-        filteredGroups[node.forkGroupId].push(key);
-      }
-    }
-  }
-
-  return {
-    nodes: filteredNodes,
-    groups: filteredGroups,
-  };
 }
 
 /**
@@ -1179,141 +864,6 @@ async function doSyncPluginContentScripts(): Promise<void> {
   }
 }
 
-// --- Prompt Manager discovery nudge (Chrome/Edge only) ----------------------
-// On plugin-capable third-party sites (ChatGPT / Claude) Voyager has no host
-// access until the user turns the Prompt Manager on, so it stays at "No access
-// needed" and cannot run any code on the page. To still hint that Voyager
-// supports the site, paint a small dot on the toolbar icon while the user is on
-// such a site and has not enabled it yet. declarativeContent matches the URL
-// inside Chrome (no host permission, preserves "No access needed") and only
-// exposes SetIcon (no badge action), so the dot is baked into the icon via
-// OffscreenCanvas. chrome.declarativeContent is absent on Firefox/Safari, where
-// this whole feature safely no-ops.
-const NUDGE_ICON_SIZES = [16, 32] as const;
-const NUDGE_DOT_COLOR = '#e5484d';
-let cachedNudgeIcon: { [size: string]: ImageData } | null = null;
-
-function collectBaseIconCandidates(): string[] {
-  const manifest = chrome.runtime.getManifest() as {
-    action?: { default_icon?: string | { [key: string]: string } };
-    icons?: { [key: string]: string };
-  };
-  const candidates = new Set<string>();
-  const actionIcon = manifest.action?.default_icon;
-  if (typeof actionIcon === 'string') {
-    candidates.add(normalizeIconResourcePath(actionIcon));
-  } else if (actionIcon) {
-    for (const value of Object.values(actionIcon)) {
-      candidates.add(normalizeIconResourcePath(value));
-    }
-  }
-  if (manifest.icons) {
-    for (const value of Object.values(manifest.icons)) {
-      candidates.add(normalizeIconResourcePath(value));
-    }
-  }
-  return Array.from(candidates);
-}
-
-async function loadBaseIconBitmap(): Promise<ImageBitmap | null> {
-  for (const candidate of collectBaseIconCandidates()) {
-    try {
-      const response = await fetch(chrome.runtime.getURL(candidate));
-      if (!response.ok) continue;
-      return await createImageBitmap(await response.blob());
-    } catch {
-      // Try the next candidate.
-    }
-  }
-  return null;
-}
-
-async function buildNudgeIcon(): Promise<{ [size: string]: ImageData } | null> {
-  if (cachedNudgeIcon) return cachedNudgeIcon;
-  if (typeof OffscreenCanvas === 'undefined') return null;
-  const bitmap = await loadBaseIconBitmap();
-  if (!bitmap) return null;
-
-  const icon: { [size: string]: ImageData } = {};
-  for (const size of NUDGE_ICON_SIZES) {
-    const canvas = new OffscreenCanvas(size, size);
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      bitmap.close();
-      return null;
-    }
-    ctx.clearRect(0, 0, size, size);
-    ctx.drawImage(bitmap, 0, 0, size, size);
-
-    const radius = size * 0.24;
-    const cx = size - radius - size * 0.04;
-    const cy = radius + size * 0.04;
-    // White ring keeps the dot legible on any icon background.
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius + Math.max(1, size * 0.06), 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.fillStyle = NUDGE_DOT_COLOR;
-    ctx.fill();
-
-    icon[String(size)] = ctx.getImageData(0, 0, size, size);
-  }
-  bitmap.close();
-  cachedNudgeIcon = icon;
-  return icon;
-}
-
-async function getEnabledCustomWebsites(): Promise<Set<string>> {
-  try {
-    const stored = await browser.storage.sync.get({ [CUSTOM_WEBSITE_KEY]: [] });
-    const value = stored[CUSTOM_WEBSITE_KEY];
-    if (!Array.isArray(value)) return new Set();
-    return new Set(value.map((domain) => String(domain).toLowerCase()));
-  } catch {
-    return new Set();
-  }
-}
-
-async function syncPromptNudgeIcon(): Promise<void> {
-  if (!chrome.declarativeContent?.onPageChanged) return;
-
-  const removeAll = () =>
-    new Promise<void>((resolve) => {
-      chrome.declarativeContent.onPageChanged.removeRules(undefined, () => resolve());
-    });
-
-  try {
-    const enabled = await getEnabledCustomWebsites();
-    const nudgeDomains = computeNudgeDomains(pluginSiteDomains, enabled);
-
-    await removeAll();
-    if (nudgeDomains.length === 0) return;
-
-    const icon = await buildNudgeIcon();
-    if (!icon) return;
-
-    const conditions = nudgeDomains.flatMap((domain) => [
-      new chrome.declarativeContent.PageStateMatcher({
-        pageUrl: { hostEquals: domain, schemes: ['https'] },
-      }),
-      new chrome.declarativeContent.PageStateMatcher({
-        pageUrl: { hostSuffix: `.${domain}`, schemes: ['https'] },
-      }),
-    ]);
-
-    chrome.declarativeContent.onPageChanged.addRules([
-      {
-        conditions,
-        actions: [new chrome.declarativeContent.SetIcon({ imageData: icon })],
-      },
-    ]);
-  } catch (error) {
-    console.warn('[Background] Failed to sync Prompt Manager nudge icon:', error);
-  }
-}
-
 // Clear stale persisted content scripts from previous builds then sync fresh
 const clearStaleScripts = async () => {
   if (chrome.scripting?.getRegisteredContentScripts && chrome.scripting?.unregisterContentScripts) {
@@ -1335,7 +885,7 @@ void clearStaleScripts().finally(() => {
   void syncPluginContentScripts();
 });
 void refreshPluginSiteDomains().then(() => {
-  void syncPromptNudgeIcon();
+  void syncPromptNudgeIcon(pluginSiteDomains);
 });
 
 // Initial fetch interceptor registration
@@ -1362,7 +912,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     const domains = Array.isArray(newValue) ? newValue : [];
     void syncCustomContentScripts(domains);
     // Enabling/disabling a site flips whether it should still show the nudge dot.
-    void syncPromptNudgeIcon();
+    void syncPromptNudgeIcon(pluginSiteDomains);
   }
 
   // Re-register fetch interceptor when any watermark-related key changes.
@@ -1421,7 +971,7 @@ addPermissionChangeListeners({
     await syncCustomContentScripts();
     await syncPluginContentScripts();
     // The freshly-granted site is now enabled, so it should no longer be nudged.
-    await syncPromptNudgeIcon();
+    await syncPromptNudgeIcon(pluginSiteDomains);
   },
   onRemoved: () => {
     void syncCustomContentScripts();
@@ -1430,7 +980,7 @@ addPermissionChangeListeners({
     // drop the revoked origin, so the stale plugin registration is removed.
     void syncPluginContentScripts();
     // A revoked plugin site becomes eligible for the nudge dot again.
-    void syncPromptNudgeIcon();
+    void syncPromptNudgeIcon(pluginSiteDomains);
   },
 });
 
