@@ -17,54 +17,18 @@ import {
 
 import { watchRouteChanges } from '../utils/routeWatcher';
 import { FolderDataSession } from './FolderDataSession';
+import { AIStudioFolderTree, createIcon } from './aistudioFolderTree';
+import { AIStudioHideArchived, unhideArchivedRows } from './aistudioHideArchived';
 import { mountLibraryDropZone } from './aistudioLibraryDropZone';
 import { AIStudioLibraryMultiSelect } from './aistudioLibraryMultiSelect';
-import {
-  BODY_PROMPT_POPOVER_SELECTOR,
-  buildLibraryPromptData,
-  extractPromptId,
-  extractPromptIdFromHref,
-  extractPromptTitle,
-  getLibraryPromptAnchor,
-  getLibraryPromptRows,
-  type LibraryPromptData,
-  mutationAddsPromptLinks,
-  mutationMayAffectPromptTitles,
-  nodeContainsPromptLink,
-  parseDragDataFromEvent,
-  PROMPT_DRAG_HOST_SELECTORS,
-  PROMPT_LINK_SELECTOR,
-  setPromptDragData,
-  UNBOUND_PROMPT_LINK_SELECTOR,
-} from './aistudioPromptLinks';
+import { AIStudioPromptListBinding } from './aistudioPromptListBinding';
 import { AIStudioSidebarWidth, SIDEBAR_WIDTH_KEY } from './aistudioSidebarWidth';
 import { AISTUDIO_FOLDER_STYLE_ID, injectAIStudioFolderStyles } from './aistudioStyles';
 import { exportTimestamp, getCloudTooltip, mergeImportedFolderData } from './aistudioTransfer';
-import {
-  downloadJSON,
-  normalizeText,
-  now,
-  uid,
-  validateFolderData,
-  waitForElement,
-} from './aistudioUtils';
-import {
-  mountHideArchivedNudge,
-  shouldShowHideArchivedNudge,
-  unmountHideArchivedNudge,
-} from './hideArchivedNudge';
-import type { ConversationReference, DragData, Folder, FolderData } from './types';
+import { downloadJSON, validateFolderData, waitForElement } from './aistudioUtils';
+import type { FolderData } from './types';
 
 const NOTIFICATION_TIMEOUT_MS = 5000;
-const PROMPT_LIST_BIND_DEBOUNCE_MS = 120;
-const PROMPT_TITLE_SYNC_DEBOUNCE_MS = 280;
-
-type InlineFolderEditor = {
-  wrapper: HTMLElement;
-  input: HTMLInputElement;
-  saveBtn: HTMLButtonElement;
-  cancelBtn: HTMLButtonElement;
-};
 
 export { mutationAddsPromptLinks, parseDragDataPayload } from './aistudioPromptLinks';
 
@@ -98,18 +62,13 @@ export class AIStudioFolderManager {
   private container: HTMLElement | null = null;
   private historyRoot: HTMLElement | null = null;
   private cleanupFns: Array<() => void> = [];
-  private promptListBindTimer: number | null = null;
-  private promptTitleSyncTimer: number | null = null;
-  private promptTitleSyncInProgress: boolean = false;
   private readonly libraryMultiSelect = new AIStudioLibraryMultiSelect({
     t: (key) => this.t(key),
     showNotification: (message, level) => this.showNotification(message, level),
-    createIcon: (name) => this.createIcon(name),
+    createIcon,
   });
   private readonly STORAGE_KEY = StorageKeys.FOLDER_DATA_AISTUDIO;
   private folderEnabled: boolean = true; // Whether folder feature is enabled
-  private hideArchivedEnabled: boolean = false; // AI Studio-scoped — hide filed convs in /library table
-  private hideArchivedNudgeShown: boolean = false; // AI Studio-scoped — nudge dismissed/enabled before
   private accountIsolationEnabled: boolean = false; // Whether hard account isolation is enabled
   private accountScope: AccountScope | null = null; // Resolved account scope for current account
   private activeStorageKey: string = StorageKeys.FOLDER_DATA_AISTUDIO; // Active folder data key
@@ -121,142 +80,30 @@ export class AIStudioFolderManager {
     isExtensionContextValid: () => this.isExtensionContextValid(),
   });
   private readonly UNCATEGORIZED_KEY = '__uncategorized__'; // Special key for root-level conversations
-
-  // Helper to create a ligature icon span with a data-icon attribute
-  private createIcon(name: string): HTMLSpanElement {
-    const span = document.createElement('span');
-    span.className = 'google-symbols';
-    try {
-      span.dataset.icon = name;
-    } catch {}
-    span.textContent = name;
-    return span;
+  private readonly hideArchived = new AIStudioHideArchived({
+    getData: () => this.data,
+    getContainer: () => this.container,
+    uncategorizedKey: this.UNCATEGORIZED_KEY,
+  });
+  private readonly folderTree = new AIStudioFolderTree({
+    t: (key) => this.t(key),
+    getContainer: () => this.container,
+    getData: () => this.data,
+    setData: (data) => {
+      this.data = data;
+    },
+    canEdit: () => this.canEdit,
+    save: () => this.save(),
+    render: () => this.render(),
+    navigateToPrompt: (promptId, url) => this.navigateToPrompt(promptId, url),
+    uncategorizedKey: this.UNCATEGORIZED_KEY,
+  });
+  // Accessors kept for tests that read the old private fields.
+  private get hideArchivedEnabled(): boolean {
+    return this.hideArchived.enabled;
   }
-
-  private createInlineMaterialIcon(name: string): HTMLElement {
-    const icon = document.createElement('mat-icon');
-    icon.setAttribute('role', 'img');
-    icon.setAttribute('aria-hidden', 'true');
-    icon.className = 'mat-icon notranslate google-symbols mat-ligature-font mat-icon-no-color';
-    icon.textContent = name;
-    return icon;
-  }
-
-  private createMenuItem(
-    label: string,
-    iconName: string,
-    action: () => void,
-    options: { danger?: boolean } = {},
-  ): HTMLButtonElement {
-    const item = document.createElement('button');
-    item.type = 'button';
-    item.className = `gv-folder-menu-item${options.danger ? ' gv-folder-menu-item-danger' : ''}`;
-    item.appendChild(this.createInlineMaterialIcon(iconName));
-    item.append(document.createTextNode(label));
-    item.addEventListener('click', action);
-    return item;
-  }
-
-  private createInlineFolderEditor(
-    wrapperTag: 'div' | 'span',
-    wrapperClassName: string,
-    inputClassName: string,
-    inputOptions: { placeholder?: string; value?: string } = {},
-  ): InlineFolderEditor {
-    const wrapper = document.createElement(wrapperTag);
-    wrapper.className = wrapperClassName;
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = inputClassName;
-    input.maxLength = 50;
-    if (inputOptions.placeholder) input.placeholder = inputOptions.placeholder;
-    if (inputOptions.value) input.value = inputOptions.value;
-
-    const saveBtn = document.createElement('button');
-    saveBtn.type = 'button';
-    saveBtn.className = 'gv-folder-inline-btn gv-folder-inline-save';
-    saveBtn.title = this.t('pm_save');
-    saveBtn.appendChild(this.createInlineMaterialIcon('check'));
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.className = 'gv-folder-inline-btn gv-folder-inline-cancel';
-    cancelBtn.title = this.t('pm_cancel');
-    cancelBtn.appendChild(this.createInlineMaterialIcon('close'));
-
-    wrapper.appendChild(input);
-    wrapper.appendChild(saveBtn);
-    wrapper.appendChild(cancelBtn);
-
-    return { wrapper, input, saveBtn, cancelBtn };
-  }
-
-  private showFolderConfirm(
-    anchor: HTMLElement | null | undefined,
-    message: string,
-    actionLabel: string,
-    onConfirm: () => void,
-    alignRight = false,
-  ): void {
-    document.querySelector('.gv-folder-confirm-dialog.gv-aistudio-confirm')?.remove();
-
-    const dialog = document.createElement('div');
-    dialog.className = 'gv-folder-confirm-dialog gv-aistudio-confirm';
-
-    if (anchor) {
-      const rect = anchor.getBoundingClientRect();
-      dialog.style.position = 'fixed';
-      dialog.style.top = `${rect.bottom + 4}px`;
-      dialog.style.left = `${Math.max(10, alignRight ? rect.right - 200 : rect.left + 24)}px`;
-      dialog.style.zIndex = '2147483647';
-    }
-
-    const msg = document.createElement('div');
-    msg.className = 'gv-confirm-message';
-    msg.textContent = message;
-    dialog.appendChild(msg);
-
-    const actions = document.createElement('div');
-    actions.className = 'gv-confirm-actions';
-
-    const confirmBtn = document.createElement('button');
-    confirmBtn.type = 'button';
-    confirmBtn.className = 'gv-confirm-btn gv-confirm-delete';
-    confirmBtn.textContent = actionLabel;
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.className = 'gv-confirm-btn gv-confirm-cancel';
-    cancelBtn.textContent = this.t('pm_cancel');
-
-    let closeOnOutside: ((e: MouseEvent) => void) | null = null;
-    const cleanup = () => {
-      if (closeOnOutside) {
-        document.removeEventListener('click', closeOnOutside);
-        closeOnOutside = null;
-      }
-      dialog.remove();
-    };
-
-    confirmBtn.addEventListener('click', () => {
-      onConfirm();
-      cleanup();
-    });
-    cancelBtn.addEventListener('click', cleanup);
-
-    actions.appendChild(confirmBtn);
-    actions.appendChild(cancelBtn);
-    dialog.appendChild(actions);
-    document.body.appendChild(dialog);
-
-    setTimeout(() => {
-      if (!dialog.isConnected) return;
-      closeOnOutside = (e: MouseEvent) => {
-        if (!dialog.contains(e.target as Node)) cleanup();
-      };
-      document.addEventListener('click', closeOnOutside);
-    }, 0);
+  private set hideArchivedEnabled(enabled: boolean) {
+    this.hideArchived.enabled = enabled;
   }
 
   async init(): Promise<void> {
@@ -673,8 +520,29 @@ export class AIStudioFolderManager {
   private containerMountObserver: MutationObserver | null = null;
   private lastContainerReinjectAt: number = 0;
   private libraryShortcutBtn: HTMLButtonElement | null = null;
-  private libraryTableObserver: MutationObserver | null = null;
-  private bodyPromptPopoverObserver: MutationObserver | null = null;
+  private readonly promptListBinding = new AIStudioPromptListBinding({
+    getHistoryRoot: () => this.historyRoot,
+    getData: () => this.data,
+    setData: (data) => {
+      this.data = data;
+    },
+    canEdit: () => this.canEdit,
+    save: () => this.save(),
+    render: () => this.render(),
+    highlightActiveConversation: () => this.highlightActiveConversation(),
+    bindLibraryRow: (row) => this.libraryMultiSelect.bindRow(row),
+    afterLibraryRowsBound: () => {
+      this.applyHideArchivedToLibraryTable();
+      this.libraryMultiSelect.updateUI();
+    },
+  });
+  // Accessors kept for tests that read the old private fields.
+  private get libraryTableObserver(): MutationObserver | null {
+    return this.promptListBinding.libraryTableObserver;
+  }
+  private get bodyPromptPopoverObserver(): MutationObserver | null {
+    return this.promptListBinding.bodyPromptPopoverObserver;
+  }
   private libraryDropZoneInjected: boolean = false;
 
   /**
@@ -924,8 +792,8 @@ export class AIStudioFolderManager {
     const addBtn = document.createElement('button');
     addBtn.className = 'gv-folder-add-btn';
     addBtn.title = this.t('folder_create');
-    addBtn.appendChild(this.createIcon('add'));
-    addBtn.addEventListener('click', () => this.createFolder());
+    addBtn.appendChild(createIcon('add'));
+    addBtn.addEventListener('click', () => this.folderTree.createFolder());
     actions.appendChild(addBtn);
 
     // On the V2 nav (no inline prompt history), surface a shortcut to /library.
@@ -935,7 +803,7 @@ export class AIStudioFolderManager {
       const libraryBtn = document.createElement('button');
       libraryBtn.className = 'gv-folder-action-btn gv-folder-library-btn';
       libraryBtn.title = this.t('folder_manage_in_library');
-      libraryBtn.appendChild(this.createIcon('library_books'));
+      libraryBtn.appendChild(createIcon('library_books'));
       libraryBtn.addEventListener('click', () => {
         try {
           location.assign('/library');
@@ -998,47 +866,7 @@ export class AIStudioFolderManager {
       });
     const list = this.container.querySelector('.gv-folder-list') as HTMLElement | null;
     if (!list) return;
-    list.innerHTML = '';
-
-    // Render only root-level folders here; children are rendered recursively
-    const folders = this.data.folders.filter((f) => !f.parentId);
-    folders.sort((a, b) => {
-      const ap = a.pinned ? 1 : 0;
-      const bp = b.pinned ? 1 : 0;
-      if (ap !== bp) return bp - ap;
-      return a.createdAt - b.createdAt;
-    });
-
-    for (const f of folders) {
-      list.appendChild(this.renderFolder(f));
-    }
-
-    // Root drop zone
-    const rootDrop = document.createElement('div');
-    rootDrop.className = 'gv-folder-root-drop';
-    rootDrop.textContent = '';
-    this.bindDropZone(rootDrop, null);
-    list.appendChild(rootDrop);
-
-    // Render uncategorized conversations (dropped to root)
-    const uncategorized = this.data.folderContents[this.UNCATEGORIZED_KEY] || [];
-    if (uncategorized.length > 0) {
-      const uncatSection = document.createElement('div');
-      uncatSection.className = 'gv-folder-uncategorized';
-
-      const uncatHeader = document.createElement('div');
-      uncatHeader.className = 'gv-folder-uncategorized-header';
-      uncatHeader.innerHTML = `<span class="google-symbols" data-icon="inbox" style="margin-right: 6px;">inbox</span>${this.t('folder_uncategorized') || 'Uncategorized'}`;
-      uncatSection.appendChild(uncatHeader);
-
-      const uncatContent = document.createElement('div');
-      uncatContent.className = 'gv-folder-uncategorized-content';
-      for (const conv of uncategorized) {
-        uncatContent.appendChild(this.renderConversation(this.UNCATEGORIZED_KEY, conv));
-      }
-      uncatSection.appendChild(uncatContent);
-      list.appendChild(uncatSection);
-    }
+    this.folderTree.renderList(list);
 
     // After rendering, update active highlight
     this.highlightActiveConversation();
@@ -1134,853 +962,33 @@ export class AIStudioFolderManager {
     this.stopRouteWatcher = watchRouteChanges(update);
   }
 
-  private renderFolder(folder: Folder, level: number = 0): HTMLElement {
-    const item = document.createElement('div');
-    item.className = 'gv-folder-item';
-    item.dataset.folderId = folder.id;
-    item.dataset.pinned = folder.pinned ? 'true' : 'false';
-    item.dataset.level = String(level);
-
-    const header = document.createElement('div');
-    header.className = 'gv-folder-item-header';
-    // Add left padding for nested folders
-    header.style.paddingLeft = `${level * 16 + 8}px`;
-    item.appendChild(header);
-    // Allow dropping directly on folder header
-    this.bindDropZone(header, folder.id);
-
-    const expandBtn = document.createElement('button');
-    expandBtn.className = 'gv-folder-expand-btn';
-    expandBtn.appendChild(this.createIcon(folder.isExpanded ? 'expand_more' : 'chevron_right'));
-    expandBtn.addEventListener('click', () => {
-      if (!this.canEdit) return;
-      folder.isExpanded = !folder.isExpanded;
-      this.save().then(() => this.render());
-    });
-    header.appendChild(expandBtn);
-
-    const icon = document.createElement('span');
-    icon.className = 'gv-folder-icon google-symbols';
-    icon.dataset.icon = 'folder';
-    icon.textContent = 'folder';
-    header.appendChild(icon);
-
-    const name = document.createElement('span');
-    name.className = 'gv-folder-name gds-label-l';
-    name.textContent = folder.name;
-    name.addEventListener('dblclick', () => this.renameFolder(folder.id));
-    header.appendChild(name);
-
-    const pinBtn = document.createElement('button');
-    pinBtn.className = 'gv-folder-pin-btn';
-    pinBtn.title = folder.pinned ? this.t('folder_unpin') : this.t('folder_pin');
-    try {
-      pinBtn.dataset.state = folder.pinned ? 'pinned' : 'unpinned';
-    } catch {}
-    pinBtn.appendChild(this.createIcon('push_pin'));
-    pinBtn.addEventListener('click', () => {
-      if (!this.canEdit) return;
-      folder.pinned = !folder.pinned;
-      this.save().then(() => this.render());
-    });
-    header.appendChild(pinBtn);
-
-    const moreBtn = document.createElement('button');
-    moreBtn.className = 'gv-folder-actions-btn';
-    moreBtn.appendChild(this.createIcon('more_vert'));
-    moreBtn.addEventListener('click', (e) => this.openFolderMenu(e, folder.id));
-    header.appendChild(moreBtn);
-
-    // Content (conversations and subfolders)
-    if (folder.isExpanded) {
-      const content = document.createElement('div');
-      content.className = 'gv-folder-content';
-      this.bindDropZone(content, folder.id);
-
-      // Render conversations in this folder
-      const convs = this.data.folderContents[folder.id] || [];
-      for (const conv of convs) {
-        const convEl = this.renderConversation(folder.id, conv);
-        // Add indentation for nested conversations
-        convEl.style.paddingLeft = `${(level + 1) * 16 + 8}px`;
-        content.appendChild(convEl);
-      }
-
-      // Render subfolders (only for root-level folders, creating 2-level hierarchy)
-      if (level === 0) {
-        const subfolders = this.data.folders.filter((f) => f.parentId === folder.id);
-        // Sort subfolders: pinned first, then by creation time
-        subfolders.sort((a, b) => {
-          const ap = a.pinned ? 1 : 0;
-          const bp = b.pinned ? 1 : 0;
-          if (ap !== bp) return bp - ap;
-          return a.createdAt - b.createdAt;
-        });
-        for (const subfolder of subfolders) {
-          content.appendChild(this.renderFolder(subfolder, level + 1));
-        }
-      }
-
-      item.appendChild(content);
-    }
-
-    return item;
-  }
-
-  private renderConversation(folderId: string, conv: ConversationReference): HTMLElement {
-    const row = document.createElement('div');
-    row.className = conv.starred ? 'gv-folder-conversation gv-starred' : 'gv-folder-conversation';
-    row.dataset.folderId = folderId;
-    row.dataset.conversationId = conv.conversationId;
-
-    const icon = document.createElement('span');
-    icon.className = 'gv-conversation-icon google-symbols';
-    icon.dataset.icon = 'chat';
-    icon.textContent = 'chat';
-    row.appendChild(icon);
-
-    const title = document.createElement('span');
-    title.className = 'gv-conversation-title gds-label-l';
-    title.textContent = conv.title || this.t('conversation_untitled');
-    row.appendChild(title);
-
-    const starBtn = document.createElement('button');
-    starBtn.className = conv.starred
-      ? 'gv-conversation-star-btn starred'
-      : 'gv-conversation-star-btn';
-    starBtn.appendChild(this.createIcon(conv.starred ? 'star' : 'star_outline'));
-    starBtn.title = conv.starred ? this.t('conversation_unstar') : this.t('conversation_star');
-    starBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!this.canEdit) return;
-      conv.starred = !conv.starred;
-      this.save().then(() => this.render());
-    });
-    row.appendChild(starBtn);
-
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'gv-conversation-remove-btn';
-    removeBtn.appendChild(this.createIcon('close'));
-    removeBtn.title = this.t('folder_remove_conversation');
-    removeBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.confirmRemoveConversation(folderId, conv.conversationId, conv.title || '', e);
-    });
-    row.appendChild(removeBtn);
-
-    row.addEventListener('click', () => this.navigateToPrompt(conv.conversationId, conv.url));
-
-    row.draggable = true;
-    row.addEventListener('dragstart', (e) => {
-      const data: DragData = {
-        type: 'conversation',
-        conversationId: conv.conversationId,
-        title: conv.title,
-        url: conv.url,
-        sourceFolderId: folderId,
-      };
-      try {
-        if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer?.setData('application/json', JSON.stringify(data));
-      } catch {}
-      try {
-        e.dataTransfer?.setDragImage(row, 10, 10);
-      } catch {}
-    });
-
-    return row;
-  }
-
-  private openFolderMenu(ev: MouseEvent, folderId: string): void {
-    ev.stopPropagation();
-    const folder = this.data.folders.find((f) => f.id === folderId);
-    if (!folder) return;
-
-    const menu = document.createElement('div');
-    menu.className = 'gv-folder-menu gv-aistudio-folder-menu';
-    menu.style.position = 'fixed';
-    menu.style.left = `${ev.clientX}px`;
-    menu.style.top = `${ev.clientY}px`;
-
-    const closeMenu = () => {
-      menu.remove();
-      document.removeEventListener('click', onClickAway);
-    };
-
-    // Only show "Create subfolder" for root-level folders (to maintain 2-level hierarchy)
-    if (!folder.parentId) {
-      menu.appendChild(
-        this.createMenuItem(this.t('folder_create_subfolder'), 'create_new_folder', () => {
-          this.createFolder(folderId);
-          closeMenu();
-        }),
-      );
-    }
-
-    const onClickAway = (e: MouseEvent) => {
-      if (e.target instanceof Node && !menu.contains(e.target)) {
-        closeMenu();
-      }
-    };
-
-    menu.appendChild(
-      this.createMenuItem(this.t('folder_rename'), 'edit', () => {
-        this.renameFolder(folderId);
-        closeMenu();
-      }),
-    );
-    menu.appendChild(
-      this.createMenuItem(
-        this.t('folder_delete'),
-        'delete',
-        () => {
-          this.deleteFolder(folderId);
-          closeMenu();
-        },
-        { danger: true },
-      ),
-    );
-
-    document.body.appendChild(menu);
-    setTimeout(() => document.addEventListener('click', onClickAway), 0);
-  }
-
-  private createFolder(parentId: string | null = null): void {
-    if (!this.canEdit) return;
-    const existingInput = this.container?.querySelector<HTMLInputElement>(
-      '.gv-folder-inline-input input',
-    );
-    if (existingInput) {
-      existingInput.focus();
-      return;
-    }
-
-    const {
-      wrapper: inputContainer,
-      input,
-      saveBtn,
-      cancelBtn,
-    } = this.createInlineFolderEditor('div', 'gv-folder-inline-input', 'gv-folder-name-input', {
-      placeholder: this.t('folder_name_prompt'),
-    });
-
-    const cancel = () => {
-      inputContainer.remove();
-    };
-
-    const save = async () => {
-      if (!this.canEdit) return;
-      const name = input.value.trim();
-      if (!name) {
-        cancel();
-        return;
-      }
-
-      const f: Folder = {
-        id: uid(),
-        name,
-        parentId: parentId || null,
-        isExpanded: true,
-        createdAt: now(),
-        updatedAt: now(),
-      };
-      this.data.folders.push(f);
-      this.data.folderContents[f.id] = [];
-      await this.save();
-      this.render();
-    };
-
-    saveBtn.addEventListener('click', () => {
-      void save();
-    });
-    cancelBtn.addEventListener('click', cancel);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') void save();
-      if (e.key === 'Escape') cancel();
-    });
-
-    const folderList = this.container?.querySelector('.gv-folder-list');
-    if (!folderList) return;
-
-    if (parentId) {
-      const parentFolder = folderList.querySelector(`[data-folder-id="${parentId}"]`);
-      if (parentFolder) {
-        const parentContent = parentFolder.querySelector('.gv-folder-content');
-        if (parentContent) {
-          parentContent.insertBefore(inputContainer, parentContent.firstChild);
-        } else {
-          parentFolder.insertAdjacentElement('afterend', inputContainer);
-        }
-      } else {
-        folderList.appendChild(inputContainer);
-      }
-    } else {
-      folderList.insertBefore(inputContainer, folderList.firstChild);
-    }
-
-    input.focus();
-  }
-
-  private renameFolder(folderId: string): void {
-    if (!this.canEdit) return;
-    const activeRenameInput = this.container?.querySelector<HTMLInputElement>(
-      '.gv-folder-rename-inline input',
-    );
-    if (activeRenameInput) {
-      activeRenameInput.focus();
-      activeRenameInput.select();
-      return;
-    }
-
-    const folder = this.data.folders.find((f) => f.id === folderId);
-    if (!folder) return;
-
-    const folderEl = this.container?.querySelector(`[data-folder-id="${folderId}"]`);
-    if (!folderEl) return;
-
-    const headerEl = folderEl.querySelector<HTMLElement>('.gv-folder-item-header');
-    if (!headerEl) return;
-
-    const folderNameEl = folderEl.querySelector('.gv-folder-name');
-    if (!folderNameEl) return;
-
-    const {
-      wrapper: inputContainer,
-      input,
-      saveBtn,
-      cancelBtn,
-    } = this.createInlineFolderEditor('span', 'gv-folder-rename-inline', 'gv-folder-rename-input', {
-      value: folder.name,
-    });
-
-    const restore = () => {
-      headerEl.classList.remove('gv-folder-editing');
-      folderNameEl.classList.remove('gv-hidden');
-      inputContainer.remove();
-    };
-
-    const save = async () => {
-      if (!this.canEdit) return;
-      const name = input.value.trim();
-      if (!name) {
-        restore();
-        return;
-      }
-
-      folder.name = name;
-      folder.updatedAt = now();
-      await this.save();
-      this.render();
-    };
-
-    saveBtn.addEventListener('click', () => {
-      void save();
-    });
-    cancelBtn.addEventListener('click', restore);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') void save();
-      if (e.key === 'Escape') restore();
-    });
-
-    folderNameEl.classList.add('gv-hidden');
-    headerEl.classList.add('gv-folder-editing');
-    headerEl.insertBefore(inputContainer, folderNameEl.nextSibling);
-    input.focus();
-    input.select();
-  }
-
-  private deleteFolder(folderId: string): void {
-    const folderEl = this.container?.querySelector(`[data-folder-id="${folderId}"]`);
-    const headerEl = folderEl?.querySelector<HTMLElement>('.gv-folder-item-header');
-
-    this.showFolderConfirm(
-      headerEl,
-      this.t('folder_delete_confirm'),
-      this.t('folder_remove_conversation_action'),
-      () => {
-        if (!this.canEdit) return;
-        // Collect all folder IDs to delete (including subfolders)
-        const folderIdsToDelete: string[] = [folderId];
-        const subfolders = this.data.folders.filter((f) => f.parentId === folderId);
-        for (const subfolder of subfolders) {
-          folderIdsToDelete.push(subfolder.id);
-        }
-
-        // Delete all collected folders and their contents
-        this.data.folders = this.data.folders.filter((f) => !folderIdsToDelete.includes(f.id));
-        for (const id of folderIdsToDelete) {
-          delete this.data.folderContents[id];
-        }
-
-        void this.save().then(() => this.render());
-      },
-    );
-  }
-
-  private removeConversationFromFolder(folderId: string, conversationId: string): void {
-    if (!this.canEdit) return;
-    const arr = this.data.folderContents[folderId] || [];
-    this.data.folderContents[folderId] = arr.filter((c) => c.conversationId !== conversationId);
-    this.save().then(() => this.render());
-  }
-
-  private confirmRemoveConversation(
-    folderId: string,
-    conversationId: string,
-    title: string,
-    event: MouseEvent,
-  ): void {
-    const target = event.currentTarget as HTMLElement;
-    this.showFolderConfirm(
-      target,
-      this.t('folder_remove_conversation_confirm').replace(
-        '{title}',
-        title || this.t('conversation_untitled'),
-      ),
-      this.t('folder_remove_conversation_action'),
-      () => this.removeConversationFromFolder(folderId, conversationId),
-      true,
-    );
-  }
-
-  private bindDropZone(el: HTMLElement, targetFolderId: string | null): void {
-    // Use a counter to properly track nested dragenter/dragleave events
-    // This fixes the issue where child elements trigger spurious leave events
-    let dragEnterCounter = 0;
-
-    el.addEventListener('dragenter', (e) => {
-      e.preventDefault();
-      e.stopPropagation(); // Prevent bubbling to parent drop zones
-      dragEnterCounter++;
-      // Only add class on first enter
-      if (dragEnterCounter === 1) {
-        el.classList.add('gv-folder-dragover');
-      }
-    });
-    el.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.stopPropagation(); // Prevent bubbling to parent drop zones
-      try {
-        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-      } catch {}
-    });
-    el.addEventListener('dragleave', (e) => {
-      e.stopPropagation(); // Prevent bubbling to parent drop zones
-      dragEnterCounter--;
-      // Only remove class when truly leaving the container (counter reaches 0)
-      // Also check relatedTarget as a fallback
-      if (dragEnterCounter <= 0) {
-        dragEnterCounter = 0; // Prevent negative values
-        // Double-check: if relatedTarget is still inside, don't remove
-        const related = e.relatedTarget as Node | null;
-        if (!related || !el.contains(related)) {
-          el.classList.remove('gv-folder-dragover');
-        }
-      }
-    });
-    el.addEventListener('drop', (e) => {
-      e.preventDefault();
-      e.stopPropagation(); // Prevent bubbling to parent drop zones
-      dragEnterCounter = 0; // Reset counter on drop
-      el.classList.remove('gv-folder-dragover');
-      if (!this.canEdit) return;
-      const data = parseDragDataFromEvent(e);
-      if (!data || data.type !== 'conversation' || !data.conversationId) return;
-      const conv: ConversationReference = {
-        conversationId: data.conversationId,
-        title: normalizeText(data.title) || this.t('conversation_untitled'),
-        url: data.url || '',
-        addedAt: now(),
-      };
-      const folderId = targetFolderId;
-      if (!folderId || folderId === this.UNCATEGORIZED_KEY) {
-        // Drop to root or uncategorized section: move to uncategorized section
-        // First remove from any existing folder
-        Object.keys(this.data.folderContents).forEach((fid) => {
-          if (fid === this.UNCATEGORIZED_KEY) return; // Don't remove from uncategorized yet
-          this.data.folderContents[fid] = (this.data.folderContents[fid] || []).filter(
-            (c) => c.conversationId !== conv.conversationId,
-          );
-        });
-        // Add to uncategorized if not already there
-        const uncatArr = this.data.folderContents[this.UNCATEGORIZED_KEY] || [];
-        const existsInUncat = uncatArr.some((c) => c.conversationId === conv.conversationId);
-        if (!existsInUncat) {
-          uncatArr.push(conv);
-          this.data.folderContents[this.UNCATEGORIZED_KEY] = uncatArr;
-        }
-      } else {
-        const arr = this.data.folderContents[folderId] || [];
-        const exists = arr.some((c) => c.conversationId === conv.conversationId);
-        if (!exists) {
-          arr.push(conv);
-          this.data.folderContents[folderId] = arr;
-        }
-        // If moving from another folder (including uncategorized), remove there
-        Object.keys(this.data.folderContents).forEach((fid) => {
-          if (fid === folderId) return;
-          this.data.folderContents[fid] = (this.data.folderContents[fid] || []).filter(
-            (c) => c.conversationId !== conv.conversationId,
-          );
-        });
-      }
-      this.save().then(() => this.render());
-    });
-  }
-
   private observePromptList(): void {
-    const root = this.historyRoot;
-    if (!root) return;
-    const observer = new MutationObserver((mutations) => {
-      if (mutationAddsPromptLinks(mutations)) {
-        this.schedulePromptListBinding();
-      }
-      if (mutationMayAffectPromptTitles(mutations)) {
-        this.schedulePromptTitleSync();
-      }
-    });
-    try {
-      observer.observe(root, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-        attributes: true,
-        attributeFilter: ['title', 'aria-label', 'href'],
-      });
-    } catch {}
-    this.cleanupFns.push(() => {
-      try {
-        observer.disconnect();
-      } catch {}
-      if (this.promptListBindTimer !== null) {
-        clearTimeout(this.promptListBindTimer);
-        this.promptListBindTimer = null;
-      }
-      if (this.promptTitleSyncTimer !== null) {
-        clearTimeout(this.promptTitleSyncTimer);
-        this.promptTitleSyncTimer = null;
-      }
-    });
-
-    // Also update on clicks within the prompt list (SPA navigation)
-    const onClick = (e: Event) => {
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-      const a = target.closest('a.prompt-link') as HTMLAnchorElement | null;
-      if (a && /\/prompts\//.test(a.getAttribute('href') || '')) {
-        setTimeout(() => this.highlightActiveConversation(), 0);
-      }
-    };
-    try {
-      root.addEventListener('click', onClick, true);
-    } catch {}
-    this.cleanupFns.push(() => {
-      try {
-        root.removeEventListener('click', onClick, true);
-      } catch {}
-    });
-  }
-
-  private isBodyPromptPopoverElement(element: Element): boolean {
-    return (
-      element.matches(BODY_PROMPT_POPOVER_SELECTOR) ||
-      !!element.closest(BODY_PROMPT_POPOVER_SELECTOR)
-    );
-  }
-
-  private bindDraggablesInBodyPromptPopovers(): void {
-    const popoverRoots = document.querySelectorAll(BODY_PROMPT_POPOVER_SELECTOR);
-    popoverRoots.forEach((root) => this.bindDraggablesInPromptList(root));
+    const cleanup = this.promptListBinding.observePromptList();
+    if (cleanup) this.cleanupFns.push(cleanup);
   }
 
   private observeBodyPromptPopovers(): void {
-    if (this.bodyPromptPopoverObserver) return;
-
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        for (const node of Array.from(mutation.addedNodes)) {
-          if (!(node instanceof Element)) continue;
-          // Cheap overlay-container gate first (class match + ancestor walk) before
-          // the expensive subtree scan for prompt links.
-          if (!this.isBodyPromptPopoverElement(node)) continue;
-          if (!nodeContainsPromptLink(node)) continue;
-          this.bindDraggablesInPromptList(node);
-        }
-      }
-    });
-
-    try {
-      observer.observe(document.body, { childList: true, subtree: true });
-    } catch {}
-    this.bodyPromptPopoverObserver = observer;
-    // destroy() disconnects and nulls this.bodyPromptPopoverObserver directly.
-
-    this.bindDraggablesInBodyPromptPopovers();
-  }
-
-  private schedulePromptListBinding(): void {
-    if (this.promptListBindTimer !== null) return;
-    this.promptListBindTimer = window.setTimeout(() => {
-      this.promptListBindTimer = null;
-      this.bindDraggablesInPromptList();
-    }, PROMPT_LIST_BIND_DEBOUNCE_MS);
-  }
-
-  private schedulePromptTitleSync(): void {
-    if (!this.hasStoredConversations()) return;
-    if (this.promptTitleSyncTimer !== null) return;
-
-    this.promptTitleSyncTimer = window.setTimeout(() => {
-      this.promptTitleSyncTimer = null;
-      void this.runPromptTitleSync();
-    }, PROMPT_TITLE_SYNC_DEBOUNCE_MS);
-  }
-
-  private async runPromptTitleSync(): Promise<void> {
-    if (this.promptTitleSyncInProgress) return;
-
-    this.promptTitleSyncInProgress = true;
-    try {
-      await this.syncConversationTitlesFromPromptList();
-    } finally {
-      this.promptTitleSyncInProgress = false;
-    }
-  }
-
-  private hasStoredConversations(): boolean {
-    return Object.values(this.data.folderContents).some(
-      (conversations) => conversations.length > 0,
-    );
-  }
-
-  /**
-   * Collect every native prompt-link title in a single document scan and return a
-   * promptId -> title map. Anchors carrying the `prompt-link` class win over generic
-   * matches (mirroring the old per-conversation selector priority); within each tier
-   * the first anchor in document order with a usable title wins.
-   */
-  private collectNativePromptTitles(): Map<string, string> {
-    const preferred = new Map<string, string>();
-    const fallback = new Map<string, string>();
-    const anchors = document.querySelectorAll<HTMLAnchorElement>(PROMPT_LINK_SELECTOR);
-    anchors.forEach((anchor) => {
-      const promptId = extractPromptIdFromHref(anchor.getAttribute('href') || anchor.href || '');
-      if (!promptId) return;
-      const title = extractPromptTitle(anchor);
-      if (!title) return;
-      if (anchor.classList.contains('prompt-link')) {
-        if (!preferred.has(promptId)) preferred.set(promptId, title);
-      } else if (!fallback.has(promptId)) {
-        fallback.set(promptId, title);
-      }
-    });
-    const titles = fallback;
-    preferred.forEach((title, promptId) => titles.set(promptId, title));
-    return titles;
+    this.promptListBinding.observeBodyPromptPopovers();
   }
 
   private async syncConversationTitlesFromPromptList(): Promise<void> {
-    if (!this.canEdit || !this.hasStoredConversations()) return;
-
-    // One full-document scan up front; per-conversation lookups are then O(1) instead
-    // of three full-document selector scans for every stored conversation.
-    const nativeTitles = this.collectNativePromptTitles();
-    if (nativeTitles.size === 0) return;
-
-    let hasUpdates = false;
-    for (const conversations of Object.values(this.data.folderContents)) {
-      for (const conversation of conversations) {
-        if (conversation.customTitle) continue;
-        const nativeTitle = nativeTitles.get(conversation.conversationId);
-        if (!nativeTitle || nativeTitle === conversation.title) continue;
-        conversation.title = nativeTitle;
-        conversation.updatedAt = now();
-        hasUpdates = true;
-      }
-    }
-
-    if (!hasUpdates) return;
-
-    await this.save();
-    this.render();
-  }
-
-  private resolvePromptAnchorFromHost(hostEl: HTMLElement): HTMLAnchorElement | null {
-    if (hostEl.matches(PROMPT_LINK_SELECTOR)) {
-      return hostEl as HTMLAnchorElement;
-    }
-    return hostEl.querySelector(PROMPT_LINK_SELECTOR) as HTMLAnchorElement | null;
-  }
-
-  private resolvePromptAnchorFromDragEvent(
-    event: DragEvent,
-    hostEl: HTMLElement,
-  ): HTMLAnchorElement | null {
-    const target = event.target;
-    if (target instanceof Element) {
-      const targetAnchor = target.closest(PROMPT_LINK_SELECTOR) as HTMLAnchorElement | null;
-      if (targetAnchor) return targetAnchor;
-    }
-    return this.resolvePromptAnchorFromHost(hostEl);
-  }
-
-  private resolvePromptDragHost(anchor: HTMLAnchorElement): HTMLElement {
-    for (const selector of PROMPT_DRAG_HOST_SELECTORS) {
-      const match = anchor.closest(selector) as HTMLElement | null;
-      if (match) return match;
-    }
-    return anchor.parentElement || anchor;
+    await this.promptListBinding.syncConversationTitles();
   }
 
   private bindDraggablesInPromptList(scope: ParentNode | null = this.historyRoot): void {
-    const root = scope ?? this.historyRoot;
-    if (!root) return;
-    const anchors: HTMLAnchorElement[] = [];
-    if (root instanceof Element && root.matches(UNBOUND_PROMPT_LINK_SELECTOR)) {
-      anchors.push(root as HTMLAnchorElement);
-    }
-    root.querySelectorAll(UNBOUND_PROMPT_LINK_SELECTOR).forEach((anchor) => {
-      anchors.push(anchor as HTMLAnchorElement);
-    });
-    anchors.forEach((anchor) => {
-      const hostEl = this.resolvePromptDragHost(anchor);
-      anchor.dataset.gvDragBound = '1';
-      if (!(hostEl as Element & { _gvDragBound?: boolean })._gvDragBound) {
-        (hostEl as Element & { _gvDragBound?: boolean })._gvDragBound = true;
-        hostEl.draggable = true;
-        if (!hostEl.style.cursor) {
-          hostEl.style.cursor = 'grab';
-        }
-        hostEl.addEventListener('dragstart', (e) => {
-          const promptAnchor = this.resolvePromptAnchorFromDragEvent(e, hostEl);
-          if (!promptAnchor) return;
-
-          const id = extractPromptId(promptAnchor);
-          const title = extractPromptTitle(promptAnchor) || '';
-          const rawHref = promptAnchor.getAttribute('href') || promptAnchor.href || '';
-          const url = rawHref.startsWith('http')
-            ? rawHref
-            : `${location.origin}${rawHref.startsWith('/') ? '' : '/'}${rawHref}`;
-          const data: DragData = { type: 'conversation', conversationId: id, title, url };
-          setPromptDragData(e, data, hostEl);
-        });
-      }
-    });
+    this.promptListBinding.bindDraggablesInPromptList(scope);
   }
 
-  /**
-   * Observe the library table for dynamic row additions. Idempotent — repeated calls
-   * are no-ops. Watches document.body so SPA navigations that swap the table subtree
-   * don't leave us with a stale observer target.
-   */
   private observeLibraryTable(): void {
-    if (this.libraryTableObserver) return;
-
-    const bodyObserver = new MutationObserver((mutations) => {
-      // Cheap gate: the library table only exists on /library; skip all selector work
-      // elsewhere (the observer is also disconnected on route-away, this is a backstop).
-      if (!/\/library(\/|$)/.test(location.pathname)) return;
-      if (!this.libraryTableMutated(mutations)) return;
-      this.bindDraggablesInLibraryTable();
-    });
-    try {
-      bodyObserver.observe(document.body, { childList: true, subtree: true });
-    } catch {}
-    this.libraryTableObserver = bodyObserver;
-    // Disconnected via disconnectLibraryTableObserver() on route-away and in destroy();
-    // no cleanupFns registration so repeated /library visits cannot grow the list.
+    this.promptListBinding.observeLibraryTable();
   }
 
   private disconnectLibraryTableObserver(): void {
-    if (!this.libraryTableObserver) return;
-    try {
-      this.libraryTableObserver.disconnect();
-    } catch {}
-    this.libraryTableObserver = null;
+    this.promptListBinding.disconnectLibraryTableObserver();
   }
 
-  private libraryTableMutated(mutations: MutationRecord[]): boolean {
-    for (const mutation of mutations) {
-      if (
-        mutation.target instanceof Element &&
-        mutation.target.closest('table.mat-mdc-table, mat-table')
-      ) {
-        return true;
-      }
-
-      for (const node of Array.from(mutation.addedNodes)) {
-        if (!(node instanceof Element)) continue;
-        if (
-          node.matches(
-            'table.mat-mdc-table, mat-table, tr.mat-mdc-row, tr[mat-row], tr[role="row"]',
-          ) ||
-          !!node.querySelector(
-            'table.mat-mdc-table, mat-table, tr.mat-mdc-row, tr[mat-row], tr[role="row"]',
-          )
-        ) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Bind drag handlers to library table rows
-   * Each row contains an anchor with href like /prompts/{id}
-   */
   private bindDraggablesInLibraryTable(): void {
-    // Find all table rows that contain chat prompt links
-    // The structure from user's example: <tr> > <td> > <a href="/prompts/..."> title </a>
-    const rows = getLibraryPromptRows();
-    rows.forEach((row) => {
-      const tr = row;
-      const anchor = getLibraryPromptAnchor(tr);
-      if (!anchor) return;
-
-      // Skip if already bound
-      if ((tr as Element & { _gvLibraryDragBound?: boolean })._gvLibraryDragBound) return;
-      (tr as Element & { _gvLibraryDragBound?: boolean })._gvLibraryDragBound = true;
-
-      tr.draggable = true;
-      tr.style.cursor = 'grab';
-
-      // Disable the anchor's native drag: an <a href> is implicitly draggable as a URL,
-      // which hijacks the drag from the row and produces a payload with no title.
-      anchor.draggable = false;
-      try {
-        (anchor.style as CSSStyleDeclaration & { webkitUserDrag?: string }).webkitUserDrag = 'none';
-      } catch {}
-
-      const buildDragData = (): LibraryPromptData | null => buildLibraryPromptData(tr);
-
-      const onDragStart = (e: DragEvent) => {
-        // Prevent interference from Angular Material's own drag handling if any
-        e.stopPropagation();
-        const data = buildDragData();
-        if (!data) return;
-        setPromptDragData(e, data, tr);
-        tr.style.opacity = '0.5';
-      };
-
-      this.libraryMultiSelect.bindRow(tr);
-
-      // Primary: row-level drag covers every cell (icon, title, description, type, timestamp, overflow).
-      tr.addEventListener('dragstart', onDragStart, true);
-
-      // Fallback: if a browser still honors the anchor's default drag, populate the same JSON payload
-      // so the dropped conversation carries its title instead of degrading to a raw URL.
-      anchor.addEventListener('dragstart', onDragStart, true);
-
-      tr.addEventListener('dragend', () => {
-        tr.style.opacity = '';
-      });
-    });
-
-    // Rows are bound opportunistically as the table updates; re-sync the hide-archived
-    // state each pass so newly added rows pick up the current setting.
-    this.applyHideArchivedToLibraryTable();
-    this.libraryMultiSelect.updateUI();
+    this.promptListBinding.bindDraggablesInLibraryTable();
   }
 
   /**
@@ -2082,136 +1090,16 @@ export class AIStudioFolderManager {
     }
   }
 
-  /**
-   * Load the AI Studio hide-archived settings. Kept fully separate from the Gemini keys
-   * so a user who toggled the feature on Gemini is not surprised when they open AI Studio.
-   */
   private async loadHideArchivedSettings(): Promise<void> {
-    try {
-      const result = await browser.storage.sync.get({
-        [StorageKeys.FOLDER_HIDE_ARCHIVED_CONVERSATIONS_AISTUDIO]: false,
-        [StorageKeys.FOLDER_HIDE_ARCHIVED_NUDGE_SHOWN_AISTUDIO]: false,
-      });
-      this.hideArchivedEnabled =
-        result[StorageKeys.FOLDER_HIDE_ARCHIVED_CONVERSATIONS_AISTUDIO] === true;
-      this.hideArchivedNudgeShown =
-        result[StorageKeys.FOLDER_HIDE_ARCHIVED_NUDGE_SHOWN_AISTUDIO] === true;
-    } catch (error) {
-      console.error('[AIStudioFolderManager] Failed to load hide-archived settings:', error);
-      this.hideArchivedEnabled = false;
-      this.hideArchivedNudgeShown = false;
-    }
+    await this.hideArchived.load();
   }
 
-  private async saveHideArchivedEnabled(next: boolean): Promise<void> {
-    this.hideArchivedEnabled = next;
-    try {
-      await browser.storage.sync.set({
-        [StorageKeys.FOLDER_HIDE_ARCHIVED_CONVERSATIONS_AISTUDIO]: next,
-      });
-    } catch (error) {
-      console.error('[AIStudioFolderManager] Failed to save hide-archived setting:', error);
-    }
-  }
-
-  private async saveHideArchivedNudgeShown(): Promise<void> {
-    this.hideArchivedNudgeShown = true;
-    try {
-      await browser.storage.sync.set({
-        [StorageKeys.FOLDER_HIDE_ARCHIVED_NUDGE_SHOWN_AISTUDIO]: true,
-      });
-    } catch (error) {
-      console.error('[AIStudioFolderManager] Failed to persist nudge-shown flag:', error);
-    }
-  }
-
-  /**
-   * Returns true when the user has at least one conversation filed into a real folder
-   * (uncategorized doesn't count). Used to decide whether to show the onboarding nudge
-   * — showing it with an empty state would be a mystery card.
-   */
-  private hasAnyArchivedConversation(): boolean {
-    for (const [folderId, conversations] of Object.entries(this.data.folderContents)) {
-      if (folderId === this.UNCATEGORIZED_KEY) continue;
-      if (Array.isArray(conversations) && conversations.length > 0) return true;
-    }
-    return false;
-  }
-
-  /**
-   * Decide whether to mount or unmount the AI Studio hide-archived nudge. Safe to call
-   * from any state change path — idempotent and cheap.
-   */
   private updateHideArchivedNudgeVisibility(): void {
-    const container = this.container;
-    if (!container) return;
-
-    const eligible =
-      shouldShowHideArchivedNudge({
-        nudgeShown: this.hideArchivedNudgeShown,
-        hideArchivedAlreadyOn: this.hideArchivedEnabled,
-      }) && this.hasAnyArchivedConversation();
-
-    if (!eligible) {
-      unmountHideArchivedNudge(container);
-      return;
-    }
-
-    mountHideArchivedNudge({
-      container,
-      variantClass: 'gv-hide-archived-nudge--aistudio',
-      i18nKeys: {
-        title: 'aistudio_hide_archived_nudge_title',
-        body: 'aistudio_hide_archived_nudge_body',
-        enable: 'aistudio_hide_archived_nudge_enable',
-        dismiss: 'aistudio_hide_archived_nudge_dismiss',
-        footnote: 'aistudio_hide_archived_nudge_footnote',
-      },
-      onEnable: () => {
-        void this.saveHideArchivedEnabled(true).then(() => this.saveHideArchivedNudgeShown());
-      },
-      onDismiss: () => {
-        void this.saveHideArchivedNudgeShown();
-      },
-    });
+    this.hideArchived.updateNudgeVisibility();
   }
 
-  /**
-   * A conversation is "archived" if any non-uncategorized folder contains it. Build
-   * the id set once per hide-archived pass so the per-row check is O(1) instead of
-   * scanning every folder's contents for every table row.
-   */
-  private collectArchivedConversationIds(): Set<string> {
-    const archived = new Set<string>();
-    for (const [folderId, conversations] of Object.entries(this.data.folderContents)) {
-      if (folderId === this.UNCATEGORIZED_KEY) continue;
-      if (!Array.isArray(conversations)) continue;
-      for (const conversation of conversations) {
-        archived.add(conversation.conversationId);
-      }
-    }
-    return archived;
-  }
-
-  /**
-   * Toggle the hide class on every table row in /library according to the current
-   * setting and folder membership. No-op outside /library.
-   */
   private applyHideArchivedToLibraryTable(): void {
-    if (!/\/library(\/|$)/.test(location.pathname)) return;
-    const rows = document.querySelectorAll<HTMLElement>('tr.mat-mdc-row, tr[mat-row]');
-    if (rows.length === 0) return;
-    const archivedIds = this.collectArchivedConversationIds();
-    rows.forEach((row) => {
-      const anchor = row.querySelector(
-        'a[href^="/prompts/"], a.name-btn[href*="/prompts/"]',
-      ) as HTMLAnchorElement | null;
-      if (!anchor) return;
-      const id = extractPromptIdFromHref(anchor.getAttribute('href') || anchor.href || '');
-      if (!id) return;
-      const shouldHide = this.hideArchivedEnabled && archivedIds.has(id);
-      row.classList.toggle('gv-conversation-archived', shouldHide);
-    });
+    this.hideArchived.applyToLibraryTable();
   }
 
   private setupStorageListener(): void {
@@ -2237,15 +1125,14 @@ export class AIStudioFolderManager {
           this.sidebarWidth.applyStoredWidth(changes[SIDEBAR_WIDTH_KEY].newValue);
         }
         if (changes[StorageKeys.FOLDER_HIDE_ARCHIVED_CONVERSATIONS_AISTUDIO]) {
-          this.hideArchivedEnabled =
-            changes[StorageKeys.FOLDER_HIDE_ARCHIVED_CONVERSATIONS_AISTUDIO].newValue === true;
-          this.applyHideArchivedToLibraryTable();
-          this.updateHideArchivedNudgeVisibility();
+          this.hideArchived.applyStoredEnabled(
+            changes[StorageKeys.FOLDER_HIDE_ARCHIVED_CONVERSATIONS_AISTUDIO].newValue,
+          );
         }
         if (changes[StorageKeys.FOLDER_HIDE_ARCHIVED_NUDGE_SHOWN_AISTUDIO]) {
-          this.hideArchivedNudgeShown =
-            changes[StorageKeys.FOLDER_HIDE_ARCHIVED_NUDGE_SHOWN_AISTUDIO].newValue === true;
-          this.updateHideArchivedNudgeVisibility();
+          this.hideArchived.applyStoredNudgeShown(
+            changes[StorageKeys.FOLDER_HIDE_ARCHIVED_NUDGE_SHOWN_AISTUDIO].newValue,
+          );
         }
       }
     });
@@ -2299,24 +1186,12 @@ export class AIStudioFolderManager {
       this.containerMountObserver?.disconnect();
     } catch {}
     this.containerMountObserver = null;
-    try {
-      this.bodyPromptPopoverObserver?.disconnect();
-    } catch {}
-    this.bodyPromptPopoverObserver = null;
-    this.disconnectLibraryTableObserver();
+    this.promptListBinding.destroy();
 
     // Pollers and debounce timers.
     if (this.accountContextPoller !== null) {
       clearInterval(this.accountContextPoller);
       this.accountContextPoller = null;
-    }
-    if (this.promptListBindTimer !== null) {
-      clearTimeout(this.promptListBindTimer);
-      this.promptListBindTimer = null;
-    }
-    if (this.promptTitleSyncTimer !== null) {
-      clearTimeout(this.promptTitleSyncTimer);
-      this.promptTitleSyncTimer = null;
     }
 
     this.stopRouteWatcher?.();
@@ -2335,9 +1210,7 @@ export class AIStudioFolderManager {
 
     // Un-hide any /library rows we hid; with the feature off nothing would restore them.
     try {
-      document
-        .querySelectorAll('.gv-conversation-archived')
-        .forEach((row) => row.classList.remove('gv-conversation-archived'));
+      unhideArchivedRows();
     } catch {}
 
     // Injected DOM. Resetting container/flags lets initializeFolderUI() re-init cleanly.
