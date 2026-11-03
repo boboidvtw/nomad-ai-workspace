@@ -15,6 +15,9 @@
 - **桌面版 Electron 40 升到 45.2.1**：40 已不在官方支援範圍（只維護最新 3 個大版本），Chromium 漏洞不再修補。版本改為固定值，因為 electron-builder 找不到被提升到根目錄的 Electron。
   - macOS 上未簽章的版本從 Electron 42 起發不出系統通知；Bot 需要處理時改為 Dock 圖示跳動，App 內的 HUD 標記不變。
   - 根目錄的 `npm run desktop`、`desktop:dev` 改呼叫桌面套件自己的指令。
+- **mermaid 11.12.2 升到 12.2.0、DOMPurify 升到 3.4.17**：移除 Chrome、Edge、Safari 擴充套件與 Studio 裡 critical 等級的 DOMPurify XSS 漏洞，以及 mermaid 的 CSS 注入、prototype pollution 與 DoS 漏洞。
+  - 明確設定 `look: 'classic'`、`layout: 'dagre'`，圖表外觀與排版和升級前相同（mermaid 12 預設改為 `neo` 與 ELK）。
+  - Firefox 版仍用 `mermaid-legacy`（9.2.2），gemini-nexus 仍用 10.9.8，兩者的漏洞另外處理。
 
 ### 🔧 修正 (Fixed)
 
