@@ -313,12 +313,12 @@ ${READ_TEXT_SOURCE}${baselineSource(options)}${promptsSource('[data-testid="user
   copilot: {
     getLatestResponse: (options) => `(function() {
       try {
-${READ_TEXT_SOURCE}${baselineSource(options)}
+${READ_TEXT_SOURCE}${baselineSource(options)}${promptsSource('[data-testid="chatQuestion"]', options)}
         const replies = document.querySelectorAll('[data-testid="markdown-reply"]');
         const target = replies[replies.length - 1];
-        if (!target) return { ok: false, error: "No Copilot response found", url: location.href };
+        if (!target) return { ok: false, error: "No Copilot response found", url: location.href, ...prompts };
         const text = readText(target).replace(/[\\u200b-\\u200d\\ufeff]/g, "").trim();
-        return { ok: true, text, length: text.length, count: replies.length, countOf: 'markdown-reply', isBaseline: isBaseline(target) };
+        return { ok: true, text, length: text.length, count: replies.length, countOf: 'markdown-reply', isBaseline: isBaseline(target), ...prompts };
       } catch (err) {
         return { ok: false, error: err.message };
       }
