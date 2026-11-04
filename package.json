@@ -77,7 +77,7 @@
     "katex": "^0.16",
     "lucide-react": "^0.553.0",
     "marked": "16.4.1",
-    "marked-katex-extension": "^4",
+    "marked-katex-extension": "^5.1.13",
     "mermaid": "12.2.0",
     "onml": "^2.1.0",
     "react": "^19.1.0",
