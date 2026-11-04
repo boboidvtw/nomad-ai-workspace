@@ -33,8 +33,6 @@ interface HidableSectionConfig {
   storageKey: StorageKey;
   hideTranslationKey: TranslationKey;
   showTranslationKey: TranslationKey;
-  hideFallback: string;
-  showFallback: string;
   toggleHostSelector?: string;
   /**
    * Where the hide-toggle button gets mounted.
@@ -60,8 +58,6 @@ const SECTION_CONFIGS: readonly HidableSectionConfig[] = [
     storageKey: StorageKeys.GEMS_HIDDEN,
     hideTranslationKey: 'gemsHide',
     showTranslationKey: 'gemsShow',
-    hideFallback: 'Hide Gems',
-    showFallback: 'Show Gems',
   },
   // Notebooks intentionally omitted: the same top-right slot is now used by
   // the folder-anchor swap button (mounted from the folder manager). Keeping
@@ -282,8 +278,7 @@ function injectStyles(): void {
 
 function getSectionText(section: HidableSectionConfig, kind: 'hide' | 'show'): string {
   const translationKey = kind === 'hide' ? section.hideTranslationKey : section.showTranslationKey;
-  const fallback = kind === 'hide' ? section.hideFallback : section.showFallback;
-  return getTranslationSync(translationKey) || fallback;
+  return getTranslationSync(translationKey);
 }
 
 /**

@@ -116,11 +116,7 @@ export class FolderFeedback {
   }
 
   showDataLossNotification(): void {
-    this.showNotificationByLevel(
-      getTranslationSync('folderManager_dataLossWarning') ||
-        'Warning: Failed to load folder data. Please check your browser console for details.',
-      'error',
-    );
+    this.showNotificationByLevel(getTranslationSync('folderManager_dataLossWarning'), 'error');
   }
 
   showNotificationByLevel(message: string, level: 'info' | 'warning' | 'error' = 'error'): void {

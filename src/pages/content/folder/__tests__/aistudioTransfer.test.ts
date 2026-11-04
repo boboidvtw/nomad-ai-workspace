@@ -1,13 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import browser from 'webextension-polyfill';
 
-import {
-  exportTimestamp,
-  formatRelativeTime,
-  getCloudTooltip,
-  mergeImportedFolderData,
-} from '../aistudioTransfer';
-import type { FolderData } from '../types';
+import { formatRelativeTime, getCloudTooltip } from '../aistudioTransfer';
 
 vi.mock('webextension-polyfill', () => ({
   default: { runtime: { sendMessage: vi.fn() } },
@@ -64,56 +58,5 @@ describe('getCloudTooltip', () => {
     await expect(getCloudTooltip('upload', t)).resolves.toBe('Upload');
     sendMessage.mockResolvedValue({ ok: false });
     await expect(getCloudTooltip('sync', t)).resolves.toBe('Sync');
-  });
-});
-
-describe('mergeImportedFolderData', () => {
-  const conv = (id: string) => ({
-    conversationId: id,
-    title: id,
-    url: `/prompts/${id}`,
-    addedAt: 1,
-  });
-  const folder = (id: string) => ({
-    id,
-    name: id,
-    parentId: null,
-    isExpanded: true,
-    createdAt: 1,
-    updatedAt: 1,
-  });
-
-  it('adds new folders and unions the conversations of existing ones', () => {
-    const base: FolderData = { folders: [folder('a')], folderContents: { a: [conv('1')] } };
-    const incoming: FolderData = {
-      folders: [folder('a'), folder('b')],
-      folderContents: { a: [conv('1'), conv('2')], b: [conv('3')] },
-    };
-
-    const merged = mergeImportedFolderData(base, incoming);
-
-    expect(merged.folders.map((f) => f.id)).toEqual(['a', 'b']);
-    expect(merged.folderContents.a.map((c) => c.conversationId)).toEqual(['1', '2']);
-    expect(merged.folderContents.b.map((c) => c.conversationId)).toEqual(['3']);
-  });
-
-  it('does not modify its inputs', () => {
-    const base: FolderData = { folders: [folder('a')], folderContents: { a: [conv('1')] } };
-    const incoming: FolderData = {
-      folders: [folder('a'), folder('b')],
-      folderContents: { a: [conv('2')] },
-    };
-
-    const merged = mergeImportedFolderData(base, incoming);
-
-    expect(base.folders).toHaveLength(1);
-    expect(base.folderContents.a).toHaveLength(1);
-    expect(merged.folderContents.b).toEqual([]);
-  });
-});
-
-describe('exportTimestamp', () => {
-  it('formats a local date as YYYYMMDD-HHMMSS', () => {
-    expect(exportTimestamp(new Date(2026, 0, 2, 3, 4, 5))).toBe('20260102-030405');
   });
 });

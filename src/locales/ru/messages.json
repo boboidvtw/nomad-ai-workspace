@@ -1505,6 +1505,14 @@
     "message": "Сохранено в «Без категории»",
     "description": "Notification after dropping a prompt onto the Uncategorized item"
   },
+  "folder_import_in_progress": {
+    "message": "Импорт уже выполняется",
+    "description": "Notification when an import is started while another import is still running"
+  },
+  "folder_export_in_progress": {
+    "message": "Экспорт уже выполняется",
+    "description": "Notification when an export is started while another export is still running"
+  },
   "timelineLevelTitle": {
     "message": "Уровень узла",
     "description": "Title for timeline node level context menu"

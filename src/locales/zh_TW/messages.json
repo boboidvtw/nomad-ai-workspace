@@ -1465,6 +1465,14 @@
     "message": "已存到未分類",
     "description": "Notification after dropping a prompt onto the Uncategorized item"
   },
+  "folder_import_in_progress": {
+    "message": "匯入正在進行中",
+    "description": "Notification when an import is started while another import is still running"
+  },
+  "folder_export_in_progress": {
+    "message": "匯出正在進行中",
+    "description": "Notification when an export is started while another export is still running"
+  },
   "timelineLevelTitle": {
     "message": "節點層級",
     "description": "時間軸節點層級右鍵選單標題"

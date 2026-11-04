@@ -284,7 +284,7 @@ function ensurePlaceholder(container: HTMLElement) {
   placeholder.className = PLACEHOLDER_CLASS;
 
   // Use i18n for the placeholder text
-  let text = getTranslationSync('inputCollapsePlaceholder') || 'Message Gemini';
+  let text = getTranslationSync('inputCollapsePlaceholder');
 
   placeholder.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor">
@@ -587,7 +587,7 @@ function initInputCollapse(allowCollapseNotEmpty: boolean = false) {
       document.querySelectorAll<HTMLDivElement>(`.${PLACEHOLDER_CLASS}`).forEach((placeholder) => {
         const span = placeholder.querySelector('span');
         if (span) {
-          span.textContent = getTranslationSync('inputCollapsePlaceholder') || 'Message Gemini';
+          span.textContent = getTranslationSync('inputCollapsePlaceholder');
         }
       });
     }

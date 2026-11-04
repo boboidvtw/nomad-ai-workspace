@@ -5,8 +5,6 @@ const NUDGE_CLASS = 'gv-sidebar-collapse-nudge';
 const BASE_NUDGE_CLASS = 'gv-hide-archived-nudge';
 const SHOW_CLASS = `${BASE_NUDGE_CLASS}--show`;
 
-type TranslationKey = Parameters<typeof getTranslationSync>[0];
-
 function getBooleanStorageValue(key: string, fallback: boolean): Promise<boolean> {
   return new Promise((resolve) => {
     try {
@@ -30,10 +28,6 @@ function setBooleanStorageValue(key: string, value: boolean): Promise<void> {
   });
 }
 
-function t(key: TranslationKey, fallback: string): string {
-  return getTranslationSync(key) || fallback;
-}
-
 export function removeSidebarCollapseNudge(): void {
   document.querySelectorAll(`.${NUDGE_CLASS}`).forEach((element) => element.remove());
 }
@@ -49,14 +43,11 @@ function mountSidebarCollapseNudge(anchor: HTMLElement): void {
 
   const title = document.createElement('div');
   title.className = `${BASE_NUDGE_CLASS}__title`;
-  title.textContent = t('sidebarCollapseNudgeTitle', 'Collapsed sections are still here');
+  title.textContent = getTranslationSync('sidebarCollapseNudgeTitle');
 
   const body = document.createElement('div');
   body.className = `${BASE_NUDGE_CLASS}__body`;
-  body.textContent = t(
-    'sidebarCollapseNudgeBody',
-    'A slim bar stays in the sidebar. Click it anytime to expand this section again.',
-  );
+  body.textContent = getTranslationSync('sidebarCollapseNudgeBody');
 
   const actions = document.createElement('div');
   actions.className = `${BASE_NUDGE_CLASS}__actions`;
@@ -64,7 +55,7 @@ function mountSidebarCollapseNudge(anchor: HTMLElement): void {
   const dismissBtn = document.createElement('button');
   dismissBtn.type = 'button';
   dismissBtn.className = `${BASE_NUDGE_CLASS}__btn ${BASE_NUDGE_CLASS}__btn--primary`;
-  dismissBtn.textContent = t('sidebarCollapseNudgeDismiss', 'Got it');
+  dismissBtn.textContent = getTranslationSync('sidebarCollapseNudgeDismiss');
 
   actions.appendChild(dismissBtn);
   card.appendChild(title);

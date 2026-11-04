@@ -1058,7 +1058,7 @@ export class NativeConversationMenus {
    * Get delete/confirm keywords from i18n settings to avoid hardcoding
    */
   private getDeleteKeywords(): string[] {
-    const rawPatterns = getTranslationSyncUnsafe('batch_delete_match_patterns') || '';
+    const rawPatterns = getTranslationSyncUnsafe('batch_delete_match_patterns');
     // Split on both ASCII and CJK fullwidth commas (and a couple of common
     // separators) so locales authored with `，` / `、` / `；` don't end up as
     // one giant unsplittable string.
