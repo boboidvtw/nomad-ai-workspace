@@ -8,7 +8,7 @@ const LOCALE_DIR = resolve(process.cwd(), 'src/locales');
 function keysUsedByFolderModules(): string[] {
   const keys = new Set<string>();
   for (const file of readdirSync(FOLDER_DIR)) {
-    if (!/\.ts$/.test(file)) continue;
+    if (!file.endsWith('.ts')) continue;
     const source = readFileSync(resolve(FOLDER_DIR, file), 'utf8');
     for (const match of source.matchAll(/\bt\('([A-Za-z0-9_]+)'\)/g)) keys.add(match[1]);
   }

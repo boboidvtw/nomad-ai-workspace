@@ -1505,6 +1505,14 @@
     "message": "미분류에 저장됨",
     "description": "Notification after dropping a prompt onto the Uncategorized item"
   },
+  "folder_import_in_progress": {
+    "message": "이미 가져오는 중입니다",
+    "description": "Notification when an import is started while another import is still running"
+  },
+  "folder_export_in_progress": {
+    "message": "이미 내보내는 중입니다",
+    "description": "Notification when an export is started while another export is still running"
+  },
   "timelineLevelTitle": {
     "message": "노드 레벨",
     "description": "Title for timeline node level context menu"

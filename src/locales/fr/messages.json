@@ -1505,6 +1505,14 @@
     "message": "Enregistré dans Non classé",
     "description": "Notification after dropping a prompt onto the Uncategorized item"
   },
+  "folder_import_in_progress": {
+    "message": "Importation déjà en cours",
+    "description": "Notification when an import is started while another import is still running"
+  },
+  "folder_export_in_progress": {
+    "message": "Exportation déjà en cours",
+    "description": "Notification when an export is started while another export is still running"
+  },
   "timelineLevelTitle": {
     "message": "Niveau du nœud",
     "description": "Title for timeline node level context menu"
