@@ -64,6 +64,39 @@ By adopting **方案 A 原生整合 (Native In-Process Integration)**, Nomad AI 
 
 ---
 
+## 6. Schedule Calendar & Shipping Lifecycle (2026-11-04)
+
+### 6.1 Schedule calendar
+
+`buildScheduleCalendar` (`packages/core/src/tasks/schedule-calendar.js`) turns schedules into day buckets without running the scheduler loop:
+
+- **Planned**: occurrences start at `max(nextRunAt, now)`, because an overdue schedule fires on the next poll, then repeat every `intervalMs`. Disabled schedules have no plan. `cronExpr` is stored but never evaluated by the scheduler, so the calendar ignores it too.
+- **Ran**: tasks whose `metadata.triggeredByScheduleId` names the schedule, counted per status.
+- **Extras**: dated entries from other modules (shipping readbacks and targets).
+- Days are keyed in the viewer's IANA `timeZone` (DST-aware), or by `tzOffsetMinutes` (`Date#getTimezoneOffset()`, within ±1440) when no zone is given; a range covers at most 62 days and each schedule at most 100,000 occurrences (`truncated` lists the ones cut).
+
+### 6.2 Shipping lifecycle (borrowed from Cumora SHIPPING.md, MIT)
+
+`ShippingLedger` (`packages/core/src/shipping/`) owns every gate; the routes and the Dashboard cannot bypass it. Gate contents and side rules are listed in USER_GUIDE §7.14. Local adaptations:
+
+| Cumora                                                        | Nomad                                                                      |
+| :------------------------------------------------------------ | :------------------------------------------------------------------------- |
+| Postgres constraints for builder/verifier separation          | checked in `updateSquare` and `planRelease`                                |
+| Staging/canary/production releases, digest-pinned GKE rollout | one release plan + smoke check per feature                                 |
+| Multi-replica maintenance worker for overdue readbacks        | `markOverdue` on a 60 s timer in the daemon and the Studio                 |
+| Agents run `cumora ship ...` commands from their prompt       | not ported; agents settle squares through linked tasks and the review gate |
+| Tenant-owned links validated server side                      | single user; square `covers` must name the feature's invariants            |
+
+**Review gate link**: `TaskDispatcher` `onTaskEvent` forwards `task:approved` / `task:rejected` to `ShippingLedger.onTaskEvent`. A linked square passes (approved) or fails (rejected) with the reviewer and feedback as evidence; an approval by one of the feature's builders is refused and logged as `task-link-refused`.
+
+**Gates are cumulative**: the gate into a state re-runs every earlier gate, the builder list freezes at building, and squares cannot be added once ready, so a later edit cannot slip past a passed gate.
+
+**Separation is advisory**: the caller states `actor`, and the machine has one API token, so builder/verifier separation catches mistakes rather than enforcing access. An approval must be recorded by the approver (`approvedBy` equals the caller's actor).
+
+**Two writers**: the daemon and the Studio each hold a ledger on `~/.nomad/shipping.json`. Every entry point reloads the file when its mtime differs from the one this process last wrote (taken with `fstat` before the rename) or read. Writes are atomic (temp file + rename); two writes within the same instant can still race, which is acceptable for one person. An unreadable file is copied to `shipping.json.corrupt-<ms>` before the next write replaces it; failed writes return `SHIPPING_STORAGE_FAILED_008`.
+
+---
+
 ## 5. Verification & Acceptance Criteria
 
 1. **Core Unit Tests**: 100% test pass for task creation, state transitions, lease acquisition, heartbeat timeout, dependency blocking, approval gate, and execution flow.

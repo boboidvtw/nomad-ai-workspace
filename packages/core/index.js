@@ -23,6 +23,8 @@
 /** @typedef {import('./src/bots/bot-roster').Bot} Bot */
 /** @typedef {import('./src/bots/bot-routes').BotServices} BotServices */
 /** @typedef {import('./src/tasks/agensh-routes').AgenshServices} AgenshServices */
+/** @typedef {import('./src/tasks/schedule-calendar').CalendarServices} CalendarServices */
+/** @typedef {import('./src/shipping/shipping-routes').ShippingServices} ShippingServices */
 /** @typedef {import('./src/constants').MonitoredService} MonitoredService */
 /** @typedef {import('./src/theme/theme-presets').ThemePreset} ThemePreset */
 /** @typedef {import('./src/constants').PlatformConfig} PlatformConfig */
@@ -133,7 +135,21 @@ const {
   P2PBus,
   SharedContextPool,
   handleAgenshRequest,
+  MAX_RANGE_DAYS,
+  buildScheduleCalendar,
+  handleCalendarRequest,
 } = require('./src/tasks/index');
+
+// Shipping lifecycle (borrowed from Cumora SHIPPING.md)
+const {
+  SHIP_STATE,
+  SHIP_FLOW,
+  SQUARE_KINDS,
+  REQUIRED_PROOF_KINDS,
+  ShippingLedger,
+  DEFAULT_SHIPPING_PATH,
+  handleShippingRequest,
+} = require('./src/shipping/index');
 
 // Bots (SPEC-AGENT-BOTS)
 const {
@@ -281,6 +297,16 @@ module.exports = {
   P2PBus,
   SharedContextPool,
   handleAgenshRequest,
+  MAX_RANGE_DAYS,
+  buildScheduleCalendar,
+  handleCalendarRequest,
+  SHIP_STATE,
+  SHIP_FLOW,
+  SQUARE_KINDS,
+  REQUIRED_PROOF_KINDS,
+  ShippingLedger,
+  DEFAULT_SHIPPING_PATH,
+  handleShippingRequest,
   // Bots
   BOT_STATE,
   DEFAULT_ROSTER_PATH,

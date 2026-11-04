@@ -1763,6 +1763,12 @@
           <button class="tab-btn" onclick="filterCategory('bots')" data-category="bots">
             🤖 Bots
           </button>
+          <button class="tab-btn" onclick="filterCategory('calendar')" data-category="calendar">
+            📅 排程行事曆
+          </button>
+          <button class="tab-btn" onclick="filterCategory('shipping')" data-category="shipping">
+            🚢 交付
+          </button>
           <button class="tab-btn" onclick="filterCategory('ai')" data-category="ai">
             🧠 AI 決策與推論 <span class="tab-count">3</span>
           </button>
@@ -1786,6 +1792,8 @@
          SERVICES GRID
          ======================================================== -->
       <!-- @nomad:bots-panel -->
+      <!-- @nomad:calendar-panel -->
+      <!-- @nomad:shipping-panel -->
 
       <!-- ========================================================
          TASK CONTROL PLANE & KANBAN SECTION (Paperclip Native)
@@ -3846,6 +3854,17 @@
         const servicesContainer = document.getElementById('services-container');
         const botsSection = document.getElementById('bots-section');
         if (botsSection) botsSection.style.display = cat === 'bots' ? 'block' : 'none';
+        const panels = { calendar: window.NomadCalendar, shipping: window.NomadShipping };
+        Object.keys(panels).forEach((name) => {
+          const section = document.getElementById(name + '-section');
+          if (section) section.style.display = cat === name ? 'block' : 'none';
+        });
+        if (panels[cat]) {
+          if (taskPlane) taskPlane.style.display = 'none';
+          if (servicesContainer) servicesContainer.style.display = 'none';
+          panels[cat].show();
+          return;
+        }
 
         if (cat === 'bots') {
           if (taskPlane) taskPlane.style.display = 'none';

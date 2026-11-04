@@ -32,6 +32,9 @@ const {
   P2PBus,
   SharedContextPool,
   handleAgenshRequest,
+  handleCalendarRequest,
+  ShippingLedger,
+  handleShippingRequest,
   DEFAULT_DAEMON_PORT,
   resolveAuthToken,
   isLoopbackModelTarget,
@@ -68,7 +71,9 @@ class LocalSyncBridge {
    * @param {import('@nomad/core').McpGateway} [options.mcpGateway] - Shared MCP gateway (defaults to a new one with core's default roots)
    * @param {import('@nomad/core').BotRoster} [options.roster]
    * @param {import('@nomad/core').TaskDispatcher} [options.dispatcher]
+   * @param {string} [options.tasksPath] - tasks.json location (tests use a temp file)
    * @param {import('@nomad/core').RecurringScheduler} [options.scheduler]
+   * @param {import('@nomad/core').ShippingLedger} [options.shipping]
    */
   constructor(options = {}) {
     this.port = options.port || 8765;
@@ -108,8 +113,11 @@ class LocalSyncBridge {
       options.dispatcher ||
       new TaskDispatcher({
         roster: this.roster,
-        onTaskEvent: (/** @type {string} */ eventType, /** @type {unknown} */ task) => {
+        storagePath: options.tasksPath,
+        onTaskEvent: (/** @type {string} */ eventType, /** @type {any} */ task) => {
           this.broadcast(eventType, task);
+          // Review-gate decisions settle the shipping squares linked to the task.
+          if (this.shipping) this.shipping.onTaskEvent(eventType, task);
         },
       });
     // Restore persisted tasks from disk
@@ -136,6 +144,24 @@ class LocalSyncBridge {
       });
     this.scheduler.loadFromDisk();
     this.botServices.scheduler = this.scheduler;
+
+    // Shipping lifecycle (evidence -> delivery, borrowed from Cumora) and the schedule calendar
+    this.shipping =
+      options.shipping ||
+      new ShippingLedger({
+        onEvent: (/** @type {string} */ eventType, /** @type {unknown} */ data) => {
+          this.broadcast(eventType, data);
+        },
+      });
+    if (!options.shipping) this.shipping.loadFromDisk();
+    /** @type {import('@nomad/core').ShippingServices} */
+    this.shippingServices = { shipping: this.shipping };
+    /** @type {import('@nomad/core').CalendarServices} */
+    this.calendarServices = {
+      scheduler: this.scheduler,
+      dispatcher: this.dispatcher,
+      shipping: this.shipping,
+    };
 
     // Agensh Decentralized Swarm Services (RFC-0002)
     this.worktreeManager = new WorktreeManager({
@@ -257,6 +283,7 @@ class LocalSyncBridge {
   start() {
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => this.handleRequest(req, res));
+      this.shipping.start();
 
       const server = this.server;
       server.on('error', (/** @type {NodeJS.ErrnoException} */ err) => {
@@ -282,6 +309,7 @@ class LocalSyncBridge {
 
   stop() {
     if (this.scheduler) this.scheduler.stop();
+    if (this.shipping) this.shipping.stop();
     this.unregisterFromDaemon(this.daemonPort);
     return /** @type {Promise<void>} */ (
       new Promise((resolve) => {
@@ -831,6 +859,25 @@ class LocalSyncBridge {
         services: this.agenshServices,
       });
       if (agenshRes) return this.sendJson(res, agenshRes.status, agenshRes.payload);
+
+      // Shipping lifecycle: /api/shipping/*
+      const shippingRes = await handleShippingRequest({
+        method: req.method || 'GET',
+        pathname,
+        searchParams: parsedUrl.searchParams,
+        readBody: () => this.readJsonBody(req),
+        services: this.shippingServices,
+      });
+      if (shippingRes) return this.sendJson(res, shippingRes.status, shippingRes.payload);
+
+      // Schedule calendar: /api/calendar
+      const calendarRes = await handleCalendarRequest({
+        method: req.method || 'GET',
+        pathname,
+        searchParams: parsedUrl.searchParams,
+        services: this.calendarServices,
+      });
+      if (calendarRes) return this.sendJson(res, calendarRes.status, calendarRes.payload);
 
       // Task Control Plane & Agent Dispatcher Endpoints (Paperclip Native Integration)
       if (pathname === '/api/roster' && req.method === 'GET') {

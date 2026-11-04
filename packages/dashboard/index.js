@@ -13,6 +13,10 @@ const BOTS_PANEL_PATH = path.join(__dirname, 'bots-panel.html');
 const BOTS_PANEL_MARKER = '<!-- @nomad:bots-panel -->';
 const SERVICE_PANEL_PATH = path.join(__dirname, 'service-panel.html');
 const SERVICE_PANEL_MARKER = '<!-- @nomad:service-panel -->';
+const CALENDAR_PANEL_PATH = path.join(__dirname, 'calendar-panel.html');
+const CALENDAR_PANEL_MARKER = '<!-- @nomad:calendar-panel -->';
+const SHIPPING_PANEL_PATH = path.join(__dirname, 'shipping-panel.html');
+const SHIPPING_PANEL_MARKER = '<!-- @nomad:shipping-panel -->';
 
 /**
  * @param {string} html
@@ -32,8 +36,12 @@ function inlinePanel(html, marker, filePath) {
  * @returns {string}
  */
 function composeDashboard(html) {
-  const withBots = inlinePanel(html, BOTS_PANEL_MARKER, BOTS_PANEL_PATH);
-  return inlinePanel(withBots, SERVICE_PANEL_MARKER, SERVICE_PANEL_PATH);
+  return [
+    [BOTS_PANEL_MARKER, BOTS_PANEL_PATH],
+    [SERVICE_PANEL_MARKER, SERVICE_PANEL_PATH],
+    [CALENDAR_PANEL_MARKER, CALENDAR_PANEL_PATH],
+    [SHIPPING_PANEL_MARKER, SHIPPING_PANEL_PATH],
+  ].reduce((page, [marker, file]) => inlinePanel(page, marker, file), html);
 }
 
 /**

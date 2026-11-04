@@ -8,6 +8,8 @@
 
 ### ✨ 新增 (Added)
 
+- **排程行事曆**：Dashboard 新增「📅 排程行事曆」分頁，用月曆顯示每個排程預計何時執行、已經跑過幾次（失敗標紅），以及交付功能的回讀到期日與目標日，依你的時區切日。API：`GET /api/calendar`。
+- **交付生命週期（借鏡 [Cumora](https://github.com/yetone/cumora) SHIPPING.md，MIT）**：Dashboard 新增「🚢 交付」分頁，功能從草稿走到上線後回讀，每一關都要證據。建造者不能讓自己的方格通過；方格失敗會自動建立摩擦與回歸項目；回讀逾期會自動標記。證據方格可連結任務，任務在 review gate 核准就通過。API：`/api/shipping/*`，資料存在 `~/.nomad/shipping.json`。
 - **會議室協作規則（借鏡 [Cumora](https://github.com/yetone/cumora)，MIT）**：
   - 成員沒有新內容時可回 `[PASS]` 讓位，逐字稿顯示為「讓位」，不放進下一位的上下文。
   - 與最近 12 則逐字相同的發言（忽略大小寫、空白與句尾標點）會被攔截，顯示為刪除線，不進上下文。

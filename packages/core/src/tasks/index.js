@@ -23,6 +23,11 @@ const { DEFAULT_MAX_CONCURRENT_WORKTREES, WorktreeManager } = require('./worktre
 const { CONTRACT_LOCKED_REGEX, P2PBus } = require('./p2p-bus');
 const { SharedContextPool } = require('./shared-context-pool');
 const { handleAgenshRequest } = require('./agensh-routes');
+const {
+  MAX_RANGE_DAYS,
+  buildScheduleCalendar,
+  handleCalendarRequest,
+} = require('./schedule-calendar');
 
 module.exports = {
   TASK_STATUS,
@@ -46,4 +51,7 @@ module.exports = {
   P2PBus,
   SharedContextPool,
   handleAgenshRequest,
+  MAX_RANGE_DAYS,
+  buildScheduleCalendar,
+  handleCalendarRequest,
 };
