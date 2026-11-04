@@ -54,7 +54,6 @@ type ManagerInternals = {
   libraryTableObserver: MutationObserver | null;
   libraryDropZoneInjected: boolean;
   showNotification: (message: string, level?: 'info' | 'warning' | 'error') => void;
-  timestamp: () => string;
   setupMessageListener: () => void;
   setupAccountContextPoller: () => void;
   installRouteChangeListener: () => void;
@@ -156,11 +155,6 @@ describe('M12 — notification and export timestamp string integrity', () => {
     expect(el?.className).toMatch(/^gv-notification gv-notification-(info|warning|error)$/);
     expect(el?.className).not.toMatch(/\s{2,}|^\s|\s$/);
     expect(el?.textContent).toBe('[Gemini Voyager] boom');
-  });
-
-  it('produces an export timestamp without embedded spaces', () => {
-    const { internals } = createManager();
-    expect(internals.timestamp()).toMatch(/^\d{8}-\d{6}$/);
   });
 });
 

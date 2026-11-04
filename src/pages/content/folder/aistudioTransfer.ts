@@ -1,10 +1,8 @@
 /**
- * Pure pieces of AI Studio folder import, export and cloud sync. The flows that touch
- * the data session stay in the manager, which owns its account-switch guards.
+ * Pure pieces of AI Studio folder cloud sync. The flows that touch the data session
+ * stay in the manager, which owns its account-switch guards.
  */
 import browser from 'webextension-polyfill';
-
-import type { FolderData } from './types';
 
 type Translate = (key: string) => string;
 
@@ -72,36 +70,4 @@ export async function getCloudTooltip(kind: 'upload' | 'sync', t: Translate): Pr
     console.warn('[AIStudioFolderManager] Failed to get sync state for tooltip:', e);
   }
   return t(keys.label);
-}
-
-/**
- * Merge an imported file into the current folders: new folders are added, and
- * folders both sides have keep their conversations plus any the file adds.
- * Neither input is modified.
- */
-export function mergeImportedFolderData(base: FolderData, incoming: FolderData): FolderData {
-  const folders = [...base.folders];
-  const folderContents = { ...base.folderContents };
-  const existingIds = new Set(folders.map((x) => x.id));
-  for (const f of incoming.folders) {
-    if (!existingIds.has(f.id)) {
-      folders.push(f);
-      folderContents[f.id] = [...(incoming.folderContents[f.id] || [])];
-    } else {
-      // Merge conversations
-      const merged = [...(folderContents[f.id] || [])];
-      const seen = new Set(merged.map((c) => c.conversationId));
-      for (const c of incoming.folderContents[f.id] || []) {
-        if (!seen.has(c.conversationId)) merged.push(c);
-      }
-      folderContents[f.id] = merged;
-    }
-  }
-  return { ...base, folders, folderContents };
-}
-
-/** Local time as YYYYMMDD-HHMMSS, for export file names. */
-export function exportTimestamp(d: Date = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 }

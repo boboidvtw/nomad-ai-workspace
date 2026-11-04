@@ -24,8 +24,8 @@ import { AIStudioLibraryMultiSelect } from './aistudioLibraryMultiSelect';
 import { AIStudioPromptListBinding } from './aistudioPromptListBinding';
 import { AIStudioSidebarWidth, SIDEBAR_WIDTH_KEY } from './aistudioSidebarWidth';
 import { AISTUDIO_FOLDER_STYLE_ID, injectAIStudioFolderStyles } from './aistudioStyles';
-import { exportTimestamp, getCloudTooltip, mergeImportedFolderData } from './aistudioTransfer';
-import { downloadJSON, validateFolderData, waitForElement } from './aistudioUtils';
+import { getCloudTooltip } from './aistudioTransfer';
+import { validateFolderData, waitForElement } from './aistudioUtils';
 import type { FolderData } from './types';
 
 const NOTIFICATION_TIMEOUT_MS = 5000;
@@ -1028,56 +1028,6 @@ export class AIStudioFolderManager {
     } catch {
       location.href = url;
     }
-  }
-
-  private handleExport(): void {
-    const payload = {
-      format: 'gemini-voyager.folders.v1',
-      exportedAt: new Date().toISOString(),
-      data: this.data,
-    };
-    downloadJSON(payload, `gemini-voyager-folders-${this.timestamp()}.json`);
-  }
-
-  private handleImport(): void {
-    const session = this.dataSession;
-    const scopeRequest = this.accountScopeRequest;
-    if (!session || !this.canEdit) return;
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json';
-    input.addEventListener(
-      'change',
-      async () => {
-        const f = input.files && input.files[0];
-        if (!f) return;
-        try {
-          const text = await f.text();
-          if (this.dataSession !== session || this.accountScopeRequest !== scopeRequest) return;
-          const json = JSON.parse(text);
-          const next = (json && (json.data || json)) as FolderData;
-          if (!next || !Array.isArray(next.folders) || typeof next.folderContents !== 'object') {
-            alert(this.t('folder_import_invalid_format'));
-            return;
-          }
-          // Merge mode by default: simple union without duplicates
-          const draft = mergeImportedFolderData(this.cloneFolderData(this.data), next);
-          const saved = await this.replaceData(draft);
-          if (this.dataSession !== session || this.accountScopeRequest !== scopeRequest) return;
-          if (!saved) return;
-          alert(this.t('folder_import_success'));
-        } catch {
-          if (this.dataSession !== session || this.accountScopeRequest !== scopeRequest) return;
-          alert(this.t('folder_import_error'));
-        }
-      },
-      { once: true },
-    );
-    input.click();
-  }
-
-  private timestamp(): string {
-    return exportTimestamp();
   }
 
   private async loadFolderEnabledSetting(): Promise<void> {
