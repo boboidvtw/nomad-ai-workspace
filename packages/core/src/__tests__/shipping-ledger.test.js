@@ -523,14 +523,14 @@ describe('Shipping ledger - board, calendar and storage', () => {
         {
           kind: 'readback',
           at: '2026-11-06T00:00:00.000Z',
-          title: 'Readback: Room decisions',
+          title: 'Room decisions',
           featureId: f.id,
           status: 'pending',
         },
         {
           kind: 'target',
           at: '2026-11-20T00:00:00.000Z',
-          title: 'Target: Calendar view',
+          title: 'Calendar view',
           featureId: ledger.board().features.find((x) => x.title === 'Calendar view')?.id,
           status: 'draft',
         },

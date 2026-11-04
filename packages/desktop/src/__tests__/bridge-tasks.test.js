@@ -140,7 +140,7 @@ describe('Bridge: Task Control Plane & Multi-Agent Dispatcher', () => {
       const target = cal.data.data.days
         .flatMap((/** @type {any} */ d) => d.items)
         .find((/** @type {any} */ i) => i.kind === 'target');
-      assert.strictEqual(target.title, 'Target: Bridge feature');
+      assert.strictEqual(target.title, 'Bridge feature');
     } finally {
       await bridge.stop();
     }

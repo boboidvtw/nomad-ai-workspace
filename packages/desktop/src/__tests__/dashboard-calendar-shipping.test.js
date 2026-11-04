@@ -81,7 +81,7 @@ function fakeData(url) {
               kind: 'readback',
               at: '2026-11-05T12:00:00.000Z',
               firstAt: '2026-11-05T12:00:00.000Z',
-              title: 'Readback: <img src=x onerror=alert(1)>',
+              title: '<img src=x onerror=alert(1)>',
               featureId: 'feat-1',
               status: 'pending',
             },
@@ -181,9 +181,10 @@ test('Calendar tab: month grid shows planned, past runs and readbacks for the lo
   assert.ok(cell, 'the 5th has a cell');
   const chips = [...cell.querySelectorAll('.cal-chip')].map((c) => c.textContent);
   assert.deepStrictEqual(chips, [
-    '預計 服務定時健康巡檢 ×288',
-    '已跑 服務定時健康巡檢 ×3',
-    '回讀 Readback: <img src=x onerror=alert(1)>',
+    // The count leads so it survives the ellipsis in a narrow cell.
+    '預計 ×288 服務定時健康巡檢',
+    '已跑 ×3 服務定時健康巡檢',
+    '回讀 <img src=x onerror=alert(1)>',
   ]);
   assert.strictEqual(cell.querySelector('img'), null, 'API text is never parsed as HTML');
   assert.ok(cell.querySelector('.cal-chip.run.has-failed'), 'a day with failed runs is flagged');

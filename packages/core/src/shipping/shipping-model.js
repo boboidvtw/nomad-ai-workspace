@@ -299,6 +299,7 @@ function contractFields(input) {
 
 /**
  * Dated shipping entries for the schedule calendar: readback due dates and targets.
+ * The title is the feature's own; the calendar labels the kind.
  * @param {Iterable<Feature>} features
  * @param {string} from
  * @param {string} to
@@ -316,7 +317,7 @@ function calendarEntriesOf(features, from, to) {
       entries.push({
         kind: 'readback',
         at: f.readback.dueAt,
-        title: `Readback: ${f.title}`,
+        title: f.title,
         featureId: f.id,
         status: f.readback.status,
       });
@@ -329,7 +330,7 @@ function calendarEntriesOf(features, from, to) {
       entries.push({
         kind: 'target',
         at: f.target,
-        title: `Target: ${f.title}`,
+        title: f.title,
         featureId: f.id,
         status: f.state,
       });

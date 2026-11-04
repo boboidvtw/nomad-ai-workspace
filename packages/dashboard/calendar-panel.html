@@ -203,7 +203,8 @@
     function chipText(item) {
       var label = KIND_LABEL[item.kind] || item.kind;
       var counted = item.kind === 'planned' || item.kind === 'run';
-      return label + ' ' + item.title + (counted ? ' ×' + item.count : '');
+      // The count leads so it survives the ellipsis in a narrow cell.
+      return label + (counted ? ' ×' + item.count : '') + ' ' + item.title;
     }
     function chip(item) {
       var failed = item.kind === 'run' && item.statuses && item.statuses.failed > 0;

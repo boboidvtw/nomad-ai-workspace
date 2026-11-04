@@ -101,6 +101,7 @@ export const TERMINAL_STATES: readonly ("learned" | "archived")[];
 export function contractFields(input: Record<string, unknown>): import("../result").UnitResult<Partial<Feature>>;
 /**
  * Dated shipping entries for the schedule calendar: readback due dates and targets.
+ * The title is the feature's own; the calendar labels the kind.
  * @param {Iterable<Feature>} features
  * @param {string} from
  * @param {string} to
