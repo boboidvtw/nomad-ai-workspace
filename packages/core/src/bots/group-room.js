@@ -5,6 +5,11 @@
  *   - messages sent while members are replying queue behind the current drive;
  *   - Stop holds every member (the turn already running finishes, no new turns start);
  *   - mentioning a held member releases it, and `@all` / `@everyone` releases the room.
+ * Coordination rules borrowed from Cumora (yetone/cumora, MIT):
+ *   - a member may yield with `[PASS]` instead of restating others (glance-protocol.ts);
+ *   - a reply that repeats a recent message verbatim is held out of the transcript
+ *     context (docs/COORDINATION.md §5b "verbatim-dup HOLD");
+ *   - `DECISION:` lines are collected as the room's decisions (convene.ts 'decision').
  * Governed by AGENTS.md Section 6 Result Pattern & Error Codes.
  */
 
@@ -22,6 +27,11 @@ const MAX_LOG_ENTRIES = 200;
 const CONTEXT_ENTRIES = 12;
 const MAX_POST_LENGTH = 8000;
 const RELEASE_ALL = new Set(['all', 'everyone']);
+const MAX_DECISIONS = 50;
+const MAX_DECISION_LENGTH = 500;
+const PASS_PATTERN = /^\[?\s*pass\s*\]?[.!。]?$/i;
+const DECISION_PATTERN =
+  /^\s*(?:[-*]\s*)?(?:\*\*)?(?:DECISION|決議|决议)(?:\*\*)?\s*[:：]\s*(.+)$/i;
 
 /**
  * @typedef {'round-robin' | 'debate'} RoomStrategy
@@ -31,6 +41,12 @@ const RELEASE_ALL = new Set(['all', 'everyone']);
  * @property {string} speaker - 'user' or a bot id
  * @property {string} text
  * @property {boolean} [error]
+ * @property {'passed' | 'held'} [kind] - passed: the member yielded; held: a verbatim repeat
+ *
+ * @typedef {Object} RoomDecision
+ * @property {string} at
+ * @property {string} by - bot id
+ * @property {string} text
  *
  * @typedef {Object} GroupRoom
  * @property {string} id
@@ -40,6 +56,7 @@ const RELEASE_ALL = new Set(['all', 'everyone']);
  * @property {'idle' | 'running' | 'stopped'} status
  * @property {string[]} held - members that Stop paused
  * @property {RoomLogEntry[]} log
+ * @property {RoomDecision[]} decisions
  * @property {string} createdAt
  */
 
@@ -50,8 +67,7 @@ const RELEASE_ALL = new Set(['all', 'everyone']);
  * @param {(id: string) => string} nameOf
  */
 function buildMemberPrompt(strategy, bot, room, nameOf) {
-  const transcript = room.log
-    .slice(-CONTEXT_ENTRIES)
+  const transcript = contextEntries(room)
     .map((entry) => `[${entry.speaker === 'user' ? 'User' : nameOf(entry.speaker)}]: ${entry.text}`)
     .join('\n\n');
   const others = room.memberIds
@@ -65,9 +81,58 @@ function buildMemberPrompt(strategy, bot, room, nameOf) {
   return [
     `You are ${bot.displayName || bot.name} (@${bot.handle}) in the group room "${room.name}" with ${others || 'no one else'}.`,
     task,
+    'If you have nothing new to add, reply with exactly [PASS] and nothing else.',
+    'If the room settles something, add one line per decision starting with "DECISION: ".',
     '--- Room transcript ---',
     transcript,
   ].join('\n\n');
+}
+
+/**
+ * The entries members see: yields and held repeats are left out.
+ * @param {GroupRoom} room
+ * @returns {RoomLogEntry[]}
+ */
+function contextEntries(room) {
+  return room.log.filter((entry) => !entry.kind).slice(-CONTEXT_ENTRIES);
+}
+
+/** @param {string} text */
+function normalizeForDuplicate(text) {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[\s.!?。！？]+$/u, '')
+    .trim();
+}
+
+/** @param {string} text */
+function isPass(text) {
+  return PASS_PATTERN.test(text.trim());
+}
+
+/**
+ * @param {GroupRoom} room
+ * @param {string} text
+ */
+function isRecentDuplicate(room, text) {
+  const normalized = normalizeForDuplicate(text);
+  if (!normalized) return false;
+  return contextEntries(room).some(
+    (entry) => !entry.error && normalizeForDuplicate(entry.text) === normalized,
+  );
+}
+
+/**
+ * @param {string} text
+ * @returns {string[]}
+ */
+function extractDecisions(text) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => DECISION_PATTERN.exec(line)?.[1]?.trim() || '')
+    .filter(Boolean)
+    .map((decision) => decision.slice(0, MAX_DECISION_LENGTH));
 }
 
 class GroupRoomManager {
@@ -114,6 +179,7 @@ class GroupRoomManager {
       status: 'idle',
       held: [],
       log: [],
+      decisions: [],
       createdAt: new Date().toISOString(),
     };
     this.rooms.set(room.id, room);
@@ -255,11 +321,35 @@ class GroupRoomManager {
       reply = err(ErrorCodes.TASK_EXECUTION_FAILED_007, e instanceof Error ? e.message : String(e));
     }
     if (reply.success) {
-      this.append(room, { speaker: memberId, text: reply.data.text });
+      this.recordReply(room, memberId, reply.data.text);
     } else {
       this.append(room, { speaker: memberId, text: reply.message, error: true });
     }
     this.emit('room:turn', { roomId: room.id, memberId, status: 'settled' });
+  }
+
+  /**
+   * Logs a member reply, applying the yield, duplicate and decision rules.
+   * @param {GroupRoom} room
+   * @param {string} memberId
+   * @param {string} text
+   */
+  recordReply(room, memberId, text) {
+    if (isPass(text)) {
+      this.append(room, { speaker: memberId, text: '', kind: 'passed' });
+      return;
+    }
+    if (isRecentDuplicate(room, text)) {
+      this.append(room, { speaker: memberId, text, kind: 'held' });
+      return;
+    }
+    this.append(room, { speaker: memberId, text });
+    const found = extractDecisions(text);
+    if (found.length === 0) return;
+    const at = new Date().toISOString();
+    const added = found.map((decision) => ({ at, by: memberId, text: decision }));
+    this.update(room, { decisions: [...room.decisions, ...added].slice(-MAX_DECISIONS) });
+    for (const decision of added) this.emit('room:decision', { roomId: room.id, decision });
   }
 
   /** @param {string} id */
@@ -304,7 +394,13 @@ class GroupRoomManager {
 
   /** @param {GroupRoom} room */
   snapshot(room) {
-    return { ...room, memberIds: [...room.memberIds], held: [...room.held], log: [...room.log] };
+    return {
+      ...room,
+      memberIds: [...room.memberIds],
+      held: [...room.held],
+      log: [...room.log],
+      decisions: [...room.decisions],
+    };
   }
 
   persist() {
@@ -338,6 +434,7 @@ class GroupRoomManager {
           status: raw.held?.length === raw.memberIds.length ? 'stopped' : 'idle',
           held: Array.isArray(raw.held) ? raw.held : [],
           log: Array.isArray(raw.log) ? raw.log.slice(-MAX_LOG_ENTRIES) : [],
+          decisions: Array.isArray(raw.decisions) ? raw.decisions.slice(-MAX_DECISIONS) : [],
         });
       }
       return ok({ loaded: true, count: this.rooms.size });
@@ -354,4 +451,6 @@ module.exports = {
   DEFAULT_ROOMS_PATH,
   GroupRoomManager,
   buildMemberPrompt,
+  extractDecisions,
+  isPass,
 };
