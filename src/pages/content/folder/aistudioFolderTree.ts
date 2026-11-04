@@ -313,7 +313,7 @@ export class AIStudioFolderTree {
 
       const uncatHeader = document.createElement('div');
       uncatHeader.className = 'gv-folder-uncategorized-header';
-      uncatHeader.innerHTML = `<span class="google-symbols" data-icon="inbox" style="margin-right: 6px;">inbox</span>${t('folder_uncategorized') || 'Uncategorized'}`;
+      uncatHeader.innerHTML = `<span class="google-symbols" data-icon="inbox" style="margin-right: 6px;">inbox</span>${t('folder_uncategorized')}`;
       uncatSection.appendChild(uncatHeader);
 
       const uncatContent = document.createElement('div');

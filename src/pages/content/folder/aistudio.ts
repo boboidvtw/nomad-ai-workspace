@@ -1057,7 +1057,7 @@ export class AIStudioFolderManager {
           const json = JSON.parse(text);
           const next = (json && (json.data || json)) as FolderData;
           if (!next || !Array.isArray(next.folders) || typeof next.folderContents !== 'object') {
-            alert(this.t('folder_import_invalid_format') || 'Invalid file format');
+            alert(this.t('folder_import_invalid_format'));
             return;
           }
           // Merge mode by default: simple union without duplicates
@@ -1065,10 +1065,10 @@ export class AIStudioFolderManager {
           const saved = await this.replaceData(draft);
           if (this.dataSession !== session || this.accountScopeRequest !== scopeRequest) return;
           if (!saved) return;
-          alert(this.t('folder_import_success') || 'Imported');
+          alert(this.t('folder_import_success'));
         } catch {
           if (this.dataSession !== session || this.accountScopeRequest !== scopeRequest) return;
-          alert(this.t('folder_import_error') || 'Import failed');
+          alert(this.t('folder_import_error'));
         }
       },
       { once: true },
@@ -1430,7 +1430,7 @@ export class AIStudioFolderManager {
       }
 
       if (!response.data) {
-        this.showNotification(this.t('syncNoData') || 'No data in cloud', 'info');
+        this.showNotification(this.t('syncNoData'), 'info');
         return;
       }
 

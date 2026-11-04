@@ -95,7 +95,7 @@ export function mountLibraryDropZone(options: LibraryDropZoneOptions): () => voi
       transition: background 0.15s, border-color 0.15s;
       border: 2px dashed rgba(138, 180, 248, 0.4);
     `;
-    rootItem.innerHTML = `<span class="google-symbols" data-icon="inbox">inbox</span>${t('folder_uncategorized') || 'Uncategorized'}`;
+    rootItem.innerHTML = `<span class="google-symbols" data-icon="inbox">inbox</span>${t('folder_uncategorized')}`;
 
     const onDropToRoot = async (e: DragEvent) => {
       e.preventDefault();
@@ -132,7 +132,7 @@ export function mountLibraryDropZone(options: LibraryDropZoneOptions): () => voi
 
       const saved = await save();
       if (!saved || getScopeRequest() !== scopeRequest) return;
-      showNotification(t('conversation_saved_to_root') || 'Saved to Uncategorized', 'info');
+      showNotification(t('conversation_saved_to_root'), 'info');
     };
 
     rootItem.addEventListener('dragenter', (e) => {
@@ -160,7 +160,7 @@ export function mountLibraryDropZone(options: LibraryDropZoneOptions): () => voi
     if (getData().folders.length === 0) {
       const defaultFolder: Folder = {
         id: uid(),
-        name: t('folder_default_name') || 'My Folder',
+        name: t('folder_default_name'),
         parentId: null,
         isExpanded: true,
         createdAt: now(),
@@ -263,10 +263,7 @@ export function mountLibraryDropZone(options: LibraryDropZoneOptions): () => voi
 
         const saved = await save();
         if (!saved || getScopeRequest() !== scopeRequest) return;
-        showNotification(
-          `${t('conversation_added_to_folder') || 'Added to'} "${folder.name}"`,
-          'info',
-        );
+        showNotification(`${t('conversation_added_to_folder')} "${folder.name}"`, 'info');
       });
 
       return folderItem;

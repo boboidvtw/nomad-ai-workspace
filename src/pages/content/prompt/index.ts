@@ -672,8 +672,8 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     docsLink.target = '_blank';
     docsLink.rel = 'noreferrer';
     docsLink.href = 'https://github.com/boboidvtw/nomad-ai-workspace#readme';
-    docsLink.title = i18n.t('officialDocs') || '官方文件';
-    docsLink.textContent = i18n.t('officialDocs') || '官方文件';
+    docsLink.title = i18n.t('officialDocs');
+    docsLink.textContent = i18n.t('officialDocs');
 
     const supportLink = document.createElement('a');
     supportLink.className = 'gv-pm-support';
@@ -711,23 +711,21 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     const addForm = elFromHTML(
       `<form class="gv-pm-add-form gv-hidden">
         <input class="gv-pm-input-name" type="text" maxlength="60" required aria-required="true" placeholder="${escapeHtml(
-          i18n.t('pm_name_placeholder') || 'Name',
+          i18n.t('pm_name_placeholder'),
         )}" />
         <textarea class="gv-pm-input-text" placeholder="${escapeHtml(
-          i18n.t('pm_prompt_placeholder') || 'Prompt text',
+          i18n.t('pm_prompt_placeholder'),
         )}" rows="3"></textarea>
         <button type="button" class="gv-pm-convert-braces gv-hidden">${escapeHtml(
-          i18n.t('pm_convert_braces') || 'Turn {name} into {{name}}',
+          i18n.t('pm_convert_braces'),
         )}</button>
         <input class="gv-pm-input-tags" type="text" placeholder="${escapeHtml(
-          i18n.t('pm_tags_placeholder') || 'Tags (comma separated)',
+          i18n.t('pm_tags_placeholder'),
         )}" />
         <div class="gv-pm-add-actions">
           <span class="gv-pm-inline-hint" aria-live="polite"></span>
-          <button type="submit" class="gv-pm-save">${escapeHtml(i18n.t('pm_save') || 'Save')}</button>
-          <button type="button" class="gv-pm-cancel">${escapeHtml(
-            i18n.t('pm_cancel') || 'Cancel',
-          )}</button>
+          <button type="submit" class="gv-pm-save">${escapeHtml(i18n.t('pm_save'))}</button>
+          <button type="button" class="gv-pm-cancel">${escapeHtml(i18n.t('pm_cancel'))}</button>
         </div>
       </form>`,
     );
@@ -844,9 +842,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       viewModeBtn.classList.toggle('gv-pm-view-mode-compact', isCompact);
       viewModeBtn.replaceChildren(isCompact ? createLayoutGridIcon(15) : createListIcon(15));
       // Tooltip describes the action the click will perform, not the current state.
-      const nextTip = isCompact
-        ? i18n.t('pm_view_comfortable') || 'Switch to comfortable view'
-        : i18n.t('pm_view_compact') || 'Switch to compact list';
+      const nextTip = isCompact ? i18n.t('pm_view_comfortable') : i18n.t('pm_view_compact');
       viewModeBtn.title = nextTip;
       viewModeBtn.setAttribute('aria-label', nextTip);
       viewModeBtn.setAttribute('aria-pressed', isCompact ? 'true' : 'false');
@@ -1070,7 +1066,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
         highlightRecords = highlightRecords.filter((record) => record.id !== item.id);
       }
       renderStarredList();
-      setNotice(i18n.t('pm_deleted') || 'Deleted', 'ok');
+      setNotice(i18n.t('pm_deleted'), 'ok');
     }
 
     function renderStarredList(): void {
@@ -1086,7 +1082,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
 
       if (starredLoading) {
         const loading = createEl('div', 'gv-pm-empty gv-pm-starred-empty');
-        loading.textContent = i18n.t('loading') || 'Loading...';
+        loading.textContent = i18n.t('loading');
         list.appendChild(loading);
         return;
       }
@@ -1164,7 +1160,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       }
       tagsWrap.innerHTML = '';
       const allBtn = createEl('button', 'gv-pm-tag');
-      allBtn.textContent = i18n.t('pm_all_tags') || 'All';
+      allBtn.textContent = i18n.t('pm_all_tags');
       allBtn.classList.toggle('active', selectedTags.size === 0);
       allBtn.addEventListener('click', () => {
         selectedTags = new Set();
@@ -1226,15 +1222,15 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
     function confirmDelete(it: PromptItem, anchor: HTMLElement): void {
       rowSurfaces.openConfirm({
         anchor,
-        message: i18n.t('pm_delete_confirm') || 'Delete this prompt?',
-        confirmLabel: i18n.t('pm_delete') || 'Delete',
-        cancelLabel: i18n.t('pm_cancel') || 'Cancel',
+        message: i18n.t('pm_delete_confirm'),
+        confirmLabel: i18n.t('pm_delete'),
+        cancelLabel: i18n.t('pm_cancel'),
         onConfirm: () => {
           items = items.filter((x) => x.id !== it.id);
           void writeStorage(STORAGE_KEYS.items, items);
           renderTags();
           renderList();
-          setNotice(i18n.t('pm_deleted') || 'Deleted', 'ok');
+          setNotice(i18n.t('pm_deleted'), 'ok');
         },
       });
     }
@@ -1278,7 +1274,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       rowActivators.clear();
       if (filtered.length === 0) {
         const empty = createEl('div', 'gv-pm-empty');
-        empty.textContent = i18n.t('pm_empty') || 'No prompts yet';
+        empty.textContent = i18n.t('pm_empty');
         list.appendChild(empty);
         // Nothing to scroll back to; avoid setting scrollTop on an empty list.
         return;
@@ -1354,12 +1350,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
             expandInputCollapseIfNeeded,
             insertTextIntoChatInput,
           }).then((result) => {
-            setNotice(
-              result === 'inserted'
-                ? i18n.t('pm_inserted') || 'Inserted'
-                : i18n.t('pm_copied') || 'Copied',
-              'ok',
-            );
+            setNotice(result === 'inserted' ? i18n.t('pm_inserted') : i18n.t('pm_copied'), 'ok');
           });
         };
 
@@ -1386,11 +1377,9 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
               // and that setting is off by default - so a fixed "Insert" told
               // most users the composer was about to change when the body was
               // only going to the clipboard.
-              insert: insertOnClick
-                ? i18n.t('pm_fill_insert') || 'Insert'
-                : i18n.t('pm_fill_copy') || 'Copy',
-              keepRaw: i18n.t('pm_fill_keep_raw') || 'Keep as is',
-              title: i18n.t('pm_fill_title') || 'Fill in the variables',
+              insert: insertOnClick ? i18n.t('pm_fill_insert') : i18n.t('pm_fill_copy'),
+              keepRaw: i18n.t('pm_fill_keep_raw'),
+              title: i18n.t('pm_fill_title'),
             },
             onSubmit: (filled) => {
               templateFill = null;
@@ -1424,7 +1413,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
 
         // Edit button
         const editBtn = createEl('button', 'gv-pm-edit');
-        editBtn.setAttribute('aria-label', i18n.t('pm_edit') || 'Edit');
+        editBtn.setAttribute('aria-label', i18n.t('pm_edit'));
         //editBtn.textContent = '✏️';
         editBtn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -1435,8 +1424,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
         if (nameConflictIds.has(it.id)) {
           row.classList.add('gv-pm-item-name-conflict');
           const conflict = createEl('span', 'gv-pm-chip gv-pm-name-conflict');
-          conflict.textContent =
-            i18n.t('pm_name_conflict_badge') || 'Duplicate name — rename to use /';
+          conflict.textContent = i18n.t('pm_name_conflict_badge');
           meta.appendChild(conflict);
         }
         for (const t of it.tags) {
@@ -1453,7 +1441,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
         // Actions container at row bottom-right
         const actions = createEl('div', 'gv-pm-actions');
         const del = createEl('button', 'gv-pm-del');
-        del.title = i18n.t('pm_delete') || 'Delete';
+        del.title = i18n.t('pm_delete');
         del.addEventListener('click', (e) => {
           e.stopPropagation();
           confirmDelete(it, del);
@@ -1470,7 +1458,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
         } else if (filtered.length > 1) {
           const reorderBtn = createEl('button', 'gv-pm-reorder');
           reorderBtn.type = 'button';
-          reorderBtn.title = i18n.t('pm_reorder') || 'Drag to reorder (↑/↓ keys)';
+          reorderBtn.title = i18n.t('pm_reorder');
           reorderBtn.setAttribute('aria-label', reorderBtn.title);
           reorder.bind(row, reorderBtn, it.id);
           actions.appendChild(reorderBtn);
@@ -1481,9 +1469,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
         // visible at rest, and it sits flush with the row's trailing edge.
         const pinBtn = createEl('button', 'gv-pm-pin');
         pinBtn.type = 'button';
-        pinBtn.title = isPinned(it)
-          ? i18n.t('pm_unpin') || 'Unpin'
-          : i18n.t('pm_pin') || 'Pin to top';
+        pinBtn.title = isPinned(it) ? i18n.t('pm_unpin') : i18n.t('pm_pin');
         pinBtn.setAttribute('aria-label', pinBtn.title);
         pinBtn.setAttribute('aria-pressed', isPinned(it) ? 'true' : 'false');
         pinBtn.addEventListener('click', (e) => {
@@ -1548,7 +1534,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       lockBtn.classList.toggle('active', locked);
       lockBtn.setAttribute('aria-pressed', locked ? 'true' : 'false');
       lockBtn.replaceChildren(locked ? createLockIcon(15) : createLockOpenIcon(15));
-      lockBtn.title = locked ? i18n.t('pm_unlock') || 'Unlock' : i18n.t('pm_lock') || 'Lock';
+      lockBtn.title = locked ? i18n.t('pm_unlock') : i18n.t('pm_lock');
       lockBtn.setAttribute('aria-label', lockBtn.title);
       panel.classList.toggle('gv-locked', locked);
     }
@@ -1562,10 +1548,10 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
 
       settingsBtn.textContent = i18n.t('pm_settings');
       settingsBtn.title = i18n.t('pm_settings_tooltip');
-      docsLink.textContent = i18n.t('officialDocs') || '官方文件';
-      docsLink.title = i18n.t('officialDocs') || '官方文件';
+      docsLink.textContent = i18n.t('officialDocs');
+      docsLink.title = i18n.t('officialDocs');
       (addForm.querySelector('.gv-pm-convert-braces') as HTMLButtonElement).textContent =
-        i18n.t('pm_convert_braces') || 'Turn {name} into {{name}}';
+        i18n.t('pm_convert_braces');
       (addForm.querySelector('.gv-pm-input-name') as HTMLInputElement).placeholder =
         i18n.t('pm_name_placeholder');
       (addForm.querySelector('.gv-pm-input-text') as HTMLTextAreaElement).placeholder =
@@ -1888,7 +1874,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
           items = newItems;
           renderTags();
           renderActiveList();
-          setNotice(i18n.t('syncSuccess') || 'Synced', 'ok');
+          setNotice(i18n.t('syncSuccess'), 'ok');
         }
       }
       if (
@@ -1927,10 +1913,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
         // Check if extension context is still valid
         if (!browser.runtime?.id) {
           // Extension context invalidated, show fallback message
-          setNotice(
-            i18n.t('pm_settings_fallback') || '请点击浏览器工具栏中的扩展图标打开设置',
-            'err',
-          );
+          setNotice(i18n.t('pm_settings_fallback'), 'err');
           return;
         }
 
@@ -1940,25 +1923,16 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
         };
         if (!response?.ok) {
           // If programmatic opening failed, show a helpful message
-          setNotice(
-            i18n.t('pm_settings_fallback') || '请点击浏览器工具栏中的扩展图标打开设置',
-            'err',
-          );
+          setNotice(i18n.t('pm_settings_fallback'), 'err');
         }
       } catch (err) {
         // Silently handle extension context errors
         if (isExtensionContextInvalidatedError(err)) {
-          setNotice(
-            i18n.t('pm_settings_fallback') || '请点击浏览器工具栏中的扩展图标打开设置',
-            'err',
-          );
+          setNotice(i18n.t('pm_settings_fallback'), 'err');
           return;
         }
         console.warn('[PromptManager] Failed to open settings:', err);
-        setNotice(
-          i18n.t('pm_settings_fallback') || '请点击浏览器工具栏中的扩展图标打开设置',
-          'err',
-        );
+        setNotice(i18n.t('pm_settings_fallback'), 'err');
       }
     });
 
@@ -1979,12 +1953,12 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
       const tagsRaw = (addForm.querySelector('.gv-pm-input-tags') as HTMLInputElement).value;
       const tags = dedupeTags((tagsRaw || '').split(',').map((s) => s.trim()));
       if (!name) {
-        setInlineHint(i18n.t('pm_name_required') || 'Prompt name is required', 'err');
+        setInlineHint(i18n.t('pm_name_required'), 'err');
         nameInput.focus();
         return;
       }
       if (isPromptNameTaken(items, name, editingId)) {
-        setInlineHint(i18n.t('pm_name_duplicate') || 'Prompt name already exists', 'err');
+        setInlineHint(i18n.t('pm_name_duplicate'), 'err');
         nameInput.focus();
         return;
       }
@@ -1994,7 +1968,7 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
           (x) => x.id !== editingId && x.text.trim().toLowerCase() === text.trim().toLowerCase(),
         );
         if (dup) {
-          setInlineHint(i18n.t('pm_duplicate') || 'Duplicate prompt', 'err');
+          setInlineHint(i18n.t('pm_duplicate'), 'err');
           return;
         }
         const target = items.find((x) => x.id === editingId);
@@ -2004,14 +1978,14 @@ export async function startPromptManager(): Promise<{ destroy: () => void }> {
           target.name = name;
           target.updatedAt = Date.now();
           await writeStorage(STORAGE_KEYS.items, items);
-          setNotice(i18n.t('pm_saved') || 'Saved', 'ok');
+          setNotice(i18n.t('pm_saved'), 'ok');
         }
         editingId = null;
       } else {
         // prevent duplicates (case-insensitive, same text)
         const exists = items.some((x) => x.text.trim().toLowerCase() === text.trim().toLowerCase());
         if (exists) {
-          setInlineHint(i18n.t('pm_duplicate') || 'Duplicate prompt', 'err');
+          setInlineHint(i18n.t('pm_duplicate'), 'err');
           return;
         }
         const it: PromptItem = { id: uid(), name, text, tags, createdAt: Date.now() };

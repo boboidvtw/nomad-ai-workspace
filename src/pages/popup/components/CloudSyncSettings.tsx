@@ -287,7 +287,7 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
     async (value: string) => {
       try {
         await chrome.storage.local.set({ [StorageKeys.GOOGLE_CLIENT_ID]: value.trim() });
-        setStatusMessage({ text: t('pm_saved') || 'Saved', kind: 'ok' });
+        setStatusMessage({ text: t('pm_saved'), kind: 'ok' });
       } catch (error) {
         console.error('[CloudSyncSettings] Failed to save custom Client ID:', error);
         setStatusMessage({ text: 'Failed to save Client ID', kind: 'err' });
@@ -328,7 +328,7 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
   // Format upload timestamp for display
   const formatLastUpload = useCallback(
     (timestamp: number | null): string => {
-      if (!timestamp) return t('neverUploaded') || 'Never uploaded';
+      if (!timestamp) return t('neverUploaded');
       const date = new Date(timestamp);
       const now = new Date();
       const diffMs = now.getTime() - date.getTime();
@@ -349,7 +349,7 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
         timeStr = date.toLocaleDateString();
       }
 
-      return (t('lastUploaded') || 'Uploaded {time}').replace('{time}', timeStr);
+      return t('lastUploaded').replace('{time}', timeStr);
     },
     [t],
   );
@@ -965,7 +965,7 @@ export function CloudSyncSettings({ sourceTabId }: CloudSyncSettingsProps = {}) 
                     className="h-9 px-3 text-xs"
                     onClick={() => handleSaveClientId(customClientId)}
                   >
-                    {t('pm_save') || 'Save'}
+                    {t('pm_save')}
                   </Button>
                 </div>
               </div>
