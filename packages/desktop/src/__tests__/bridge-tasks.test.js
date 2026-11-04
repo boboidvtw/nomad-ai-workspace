@@ -3,6 +3,10 @@ const AUTH = { Authorization: 'Bearer ' + process.env.NOMAD_DAEMON_TOKEN };
 const { describe, it } = require('node:test');
 const assert = require('node:assert');
 const http = require('node:http');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { ShippingLedger } = require('@nomad/core');
 const { LocalSyncBridge } = require('../bridge');
 
 function makeRequest(port, method, path, body = null) {
@@ -100,6 +104,43 @@ describe('Bridge: Task Control Plane & Multi-Agent Dispatcher', () => {
       });
       assert.strictEqual(runRes.status, 200);
       assert.strictEqual(runRes.data.data.status, 'completed');
+    } finally {
+      await bridge.stop();
+    }
+  });
+
+  it('serves /api/shipping and /api/calendar like the daemon does', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nomad-bridge-ship-'));
+    const bridge = new LocalSyncBridge({
+      port: 19985,
+      tasksPath: path.join(dir, 'tasks.json'),
+      shipping: new ShippingLedger({ storagePath: path.join(dir, 'shipping.json') }),
+    });
+    await bridge.start();
+    try {
+      const created = await makeRequest(bridge.port, 'POST', '/api/shipping', {
+        title: 'Bridge feature',
+        target: '2026-11-20T00:00:00.000Z',
+      });
+      assert.strictEqual(created.status, 200);
+      const blocked = await makeRequest(
+        bridge.port,
+        'POST',
+        `/api/shipping/${created.data.data.id}/advance`,
+        {},
+      );
+      assert.strictEqual(blocked.status, 409);
+      assert.deepStrictEqual(blocked.data.details.missing, ['problem', 'outcome', 'contract']);
+      const cal = await makeRequest(
+        bridge.port,
+        'GET',
+        '/api/calendar?from=2026-11-19T00:00:00.000Z&to=2026-11-21T00:00:00.000Z&tz=-480',
+      );
+      assert.strictEqual(cal.status, 200);
+      const target = cal.data.data.days
+        .flatMap((/** @type {any} */ d) => d.items)
+        .find((/** @type {any} */ i) => i.kind === 'target');
+      assert.strictEqual(target.title, 'Bridge feature');
     } finally {
       await bridge.stop();
     }

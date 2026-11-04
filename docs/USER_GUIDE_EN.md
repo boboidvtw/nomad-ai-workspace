@@ -422,6 +422,56 @@ curl -s -X POST -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://1
 
 ---
 
+### 7.13 Schedule Calendar
+
+The Dashboard's "📅 排程行事曆" tab shows recurring schedules on a month grid, split into days in your computer's time zone:
+
+| Chip              | Meaning                                | Source                                                                         |
+| :---------------- | :------------------------------------- | :----------------------------------------------------------------------------- |
+| 預計 ×N (planned) | the schedule will run N times that day | projected from its next run time and interval; disabled schedules are left out |
+| 已跑 ×N (ran)     | the schedule created N tasks that day  | tasks' `metadata.triggeredByScheduleId`; red when any failed                   |
+| 回讀 (readback)   | a shipping readback is due             | see 7.14                                                                       |
+| 目標 (target)     | a shipping target date                 | see 7.14                                                                       |
+
+Days follow the browser's IANA time zone, so DST changes land on the right day. Click a day for details: first run time, assignee, and task counts per status. Very dense schedules (for example every second) are projected for their first 100,000 runs only, and the page says so.
+
+```bash
+curl -s -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" \
+  "http://127.0.0.1:8765/api/calendar?from=2026-11-01T00:00:00Z&to=2026-12-01T00:00:00Z&tz=-480"
+```
+
+`timeZone` is an optional IANA zone; `tz` is `Date#getTimezoneOffset()` (Taipei is -480, within ±1440) and is used only without `timeZone`. One request covers at most 62 days.
+
+### 7.14 Shipping Lifecycle
+
+The "🚢 交付" tab follows a feature from idea to a confirmed result after release, and every gate needs evidence. It borrows the workflow from [Cumora](https://github.com/yetone/cumora)'s SHIPPING.md (MIT):
+
+`draft → contract → building → verifying → ready → releasing → watching → learned`, plus `paused` and `archived`.
+
+| To enter  | It needs                                                                                   |
+| :-------- | :----------------------------------------------------------------------------------------- |
+| contract  | problem, desired outcome, contract                                                         |
+| building  | at least one builder and one invariant                                                     |
+| verifying | every required invariant covered by an evidence square; every required square has an owner |
+| ready     | every required square passed, including passed user-path, trace and release-note squares   |
+| releasing | release notes, rollback plan, measurable baseline, approver                                |
+| watching  | a passed smoke check; the readback is due 24 hours later                                   |
+| learned   | a passed readback and no failing regression for the feature                                |
+
+**Rules**:
+
+- A square needs evidence to pass or fail. A builder cannot pass their own square or approve their own release, and only the approver can record an approval.
+- The builder list is fixed once building starts. A ready feature takes no new squares, and moving a square back from passed returns it to verifying. Every gate re-checks all earlier gates.
+- A readback can pass only once it is due (24 hours after the smoke check); a failure can be recorded at any time.
+- The caller states the actor and the machine has one token, so the separation rules guard against mistakes rather than enforce access.
+- A failed square creates a friction item and a failing regression automatically; failing the same square again updates those instead of adding more.
+- A failed smoke check or readback sends the feature back to building and reopens every square; a failed readback is critical friction.
+- A readback not recorded by its due time is marked overdue with one medium friction item (checked every minute).
+- A square can be linked to a task: approving that task in the Task Control Plane review gate passes the square, rejecting it fails the square, and the reviewer and feedback become the evidence.
+- Every change is appended to an event log that is never edited. Data lives in `~/.nomad/shipping.json` (mode 0600). The daemon and the Studio share the file and reload it after the other one writes.
+
+**API**: `/api/shipping` (list, create), `/api/shipping/<id>` (read, PATCH the contract), `/api/shipping/<id>/{advance,pause,resume,archive,invariants,squares,release,smoke,readback,regressions}`, `/api/shipping/<id>/squares/<square id>` (record a result), `.../link` (link a task), `/api/shipping/friction`, `/api/shipping/regressions/<id>`. A closed gate returns 409 with `details.missing`.
+
 ## 8. 🔄 How to Reload After Updates
 
 1. Open Chrome extension management page at `chrome://extensions/`.

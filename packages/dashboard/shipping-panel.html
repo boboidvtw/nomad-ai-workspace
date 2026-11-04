@@ -1,0 +1,798 @@
+<!--
+  Nomad Dashboard - Shipping panel (evidence-to-delivery lifecycle, borrowed from Cumora, MIT)
+  Inlined into index.html at the shipping-panel marker by composeDashboard().
+  The server owns every gate (/api/shipping/*); this panel only shows what is missing and posts
+  actions. Text from the API (titles, evidence, AI output) is always set with textContent.
+-->
+<style>
+  .ship-layout {
+    display: grid;
+    grid-template-columns: minmax(240px, 320px) 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 900px) {
+    .ship-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+  .ship-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 0.9rem;
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+  }
+  .ship-card h3 {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+  .ship-row {
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .ship-row.active {
+    border-color: var(--primary);
+  }
+  .ship-pill {
+    display: inline-block;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+    margin-right: 4px;
+  }
+  .ship-pill.risk-high,
+  .ship-pill.risk-critical,
+  .ship-pill.failed,
+  .ship-pill.failing {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  .ship-pill.passed,
+  .ship-pill.passing {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .ship-flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: 0.68rem;
+  }
+  .ship-flow span {
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--text-subtle);
+  }
+  .ship-flow span.current {
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+  .ship-gate {
+    border: 1px dashed var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem;
+    font-size: 0.78rem;
+  }
+  .ship-gate ul,
+  .ship-list {
+    margin: 0.3rem 0 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+  }
+  .ship-square {
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem;
+    display: grid;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+  }
+  .ship-evidence {
+    color: var(--text-muted);
+    white-space: pre-wrap;
+  }
+  .ship-form {
+    display: grid;
+    gap: 0.4rem;
+  }
+  .ship-form input,
+  .ship-form textarea,
+  .ship-form select {
+    background: var(--bg-surface);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.5rem;
+    font: inherit;
+    font-size: 0.78rem;
+  }
+  .ship-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+  }
+  .ship-buttons .bots-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.74rem;
+  }
+</style>
+
+<section
+  class="task-plane-section"
+  id="shipping-section"
+  style="display: none"
+  aria-labelledby="shipping-title"
+>
+  <div class="task-header">
+    <div>
+      <h2 id="shipping-title">🚢 交付</h2>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px">
+        從契約到上線後回讀：每一關要有證據才放行，建造者不能讓自己的方格通過（借鏡 Cumora）
+      </div>
+    </div>
+    <div class="ship-buttons">
+      <label class="bots-note">我的身分 <input id="ship-actor" value="operator" size="12" /></label>
+      <button class="bots-btn ghost" type="button" id="ship-refresh">重新整理</button>
+    </div>
+  </div>
+  <div class="bots-note" id="ship-status" role="status"></div>
+  <div class="ship-layout">
+    <div class="ship-card">
+      <h3>功能清單（依風險排序）</h3>
+      <div id="ship-portfolio" role="list" style="display: grid; gap: 0.4rem"></div>
+      <form class="ship-form" id="ship-create">
+        <h3>＋ 新功能</h3>
+        <input name="title" placeholder="標題" required />
+        <textarea name="problem" rows="2" placeholder="要解決的問題"></textarea>
+        <textarea name="outcome" rows="2" placeholder="期望結果"></textarea>
+        <textarea name="contract" rows="2" placeholder="契約：做什麼、不做什麼"></textarea>
+        <input name="builders" placeholder="建造者（逗號分隔，例：agent-claude）" />
+        <select name="risk" aria-label="風險">
+          <option value="low">低風險</option>
+          <option value="medium" selected>中風險</option>
+          <option value="high">高風險</option>
+          <option value="critical">極高風險</option>
+        </select>
+        <input name="target" type="date" aria-label="目標日" />
+        <button class="bots-btn" type="submit">建立</button>
+      </form>
+    </div>
+    <div class="ship-card" id="ship-detail" aria-live="polite">
+      <div class="bots-note">選一個功能查看關卡與證據。</div>
+    </div>
+  </div>
+  <div class="ship-layout">
+    <div class="ship-card">
+      <h3>摩擦收件匣</h3>
+      <div id="ship-friction"></div>
+    </div>
+    <div class="ship-card">
+      <h3>回歸項目</h3>
+      <div id="ship-regressions"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    'use strict';
+    var STATE_LABEL = {
+      draft: '草稿',
+      contract: '契約',
+      building: '建造中',
+      verifying: '驗證中',
+      ready: '就緒',
+      releasing: '發布中',
+      watching: '觀察中',
+      learned: '已學到',
+      paused: '暫停',
+      archived: '封存',
+    };
+    var FLOW = [
+      'draft',
+      'contract',
+      'building',
+      'verifying',
+      'ready',
+      'releasing',
+      'watching',
+      'learned',
+    ];
+    var KINDS = ['test', 'user-path', 'trace', 'release-note', 'manual'];
+    var state = {
+      board: { features: [], friction: [], regressions: [] },
+      selectedId: null,
+      feature: null,
+    };
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+    function el(tag, props, children) {
+      var node = document.createElement(tag);
+      Object.keys(props || {}).forEach(function (key) {
+        if (key === 'text') node.textContent = props[key];
+        else if (key === 'className') node.className = props[key];
+        else if (key.indexOf('on') === 0) node.addEventListener(key.slice(2), props[key]);
+        else node.setAttribute(key, props[key]);
+      });
+      (children || []).forEach(function (child) {
+        if (child) node.appendChild(child);
+      });
+      return node;
+    }
+    function button(label, onclick, extra) {
+      return el(
+        'button',
+        Object.assign(
+          { type: 'button', className: 'bots-btn ghost', text: label, onclick: onclick },
+          extra || {},
+        ),
+      );
+    }
+    function pill(text, cls) {
+      return el('span', { className: 'ship-pill ' + (cls || ''), text: text });
+    }
+    function actor() {
+      return ($('ship-actor').value || '').trim() || 'operator';
+    }
+    function say(text) {
+      $('ship-status').textContent = text || '';
+    }
+
+    async function api(method, path, body) {
+      var base = typeof getApiBase === 'function' ? await getApiBase() : '';
+      var res = await fetch(base + path, {
+        method: method,
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      return res.json().catch(function () {
+        return { success: false, message: 'Invalid response' };
+      });
+    }
+
+    /** Posts an action, shows the server's reason when a gate refuses it, then reloads. */
+    async function act(path, body) {
+      var json = await api('POST', path, Object.assign({}, body, { actor: actor() }));
+      say(json.success ? '' : json.message || '操作失敗');
+      await load();
+      return json;
+    }
+
+    function askEvidence(question) {
+      var answer = window.prompt(question);
+      return answer === null ? null : String(answer).trim();
+    }
+
+    // ------------------------------------------------------------ portfolio
+
+    function renderPortfolio() {
+      var box = $('ship-portfolio');
+      box.replaceChildren();
+      if (state.board.features.length === 0) {
+        box.appendChild(el('div', { className: 'bots-note', text: '還沒有功能。' }));
+      }
+      state.board.features.forEach(function (f) {
+        box.appendChild(
+          el(
+            'button',
+            {
+              type: 'button',
+              role: 'listitem',
+              className: 'ship-row' + (f.id === state.selectedId ? ' active' : ''),
+              'data-feature-id': f.id,
+              onclick: function () {
+                select(f.id);
+              },
+            },
+            [
+              el('strong', { text: f.title }),
+              el('span', {}, [
+                pill(STATE_LABEL[f.state] || f.state),
+                pill(f.activeRisk, 'risk-' + f.activeRisk),
+              ]),
+            ],
+          ),
+        );
+      });
+    }
+
+    function renderFriction() {
+      var box = $('ship-friction');
+      box.replaceChildren();
+      var open = state.board.friction.filter(function (x) {
+        return x.status === 'open';
+      });
+      if (open.length === 0)
+        box.appendChild(el('div', { className: 'bots-note', text: '沒有未處理的摩擦。' }));
+      var list = el('ul', { className: 'ship-list' });
+      open.forEach(function (x) {
+        list.appendChild(
+          el('li', {}, [
+            pill(x.severity, 'risk-' + x.severity),
+            el('span', { text: x.title + ' ' }),
+            button('已處理', function () {
+              act('/api/shipping/friction/' + encodeURIComponent(x.id) + '/resolve', {});
+            }),
+          ]),
+        );
+      });
+      box.appendChild(list);
+    }
+
+    function renderRegressions() {
+      var box = $('ship-regressions');
+      box.replaceChildren();
+      if (state.board.regressions.length === 0)
+        box.appendChild(el('div', { className: 'bots-note', text: '沒有回歸項目。' }));
+      var list = el('ul', { className: 'ship-list' });
+      state.board.regressions.forEach(function (r) {
+        var path = '/api/shipping/regressions/' + encodeURIComponent(r.id);
+        list.appendChild(
+          el('li', {}, [
+            pill(r.status, r.status),
+            el('span', { text: r.title + (r.command ? '（' + r.command + '）' : '') + ' ' }),
+            button('通過', function () {
+              var ev = askEvidence('回歸測試的結果（例如測試輸出）');
+              if (ev) act(path, { status: 'passing', evidence: ev });
+            }),
+            button('失敗', function () {
+              var ev = askEvidence('失敗的證據');
+              if (ev) act(path, { status: 'failing', evidence: ev });
+            }),
+          ]),
+        );
+      });
+      box.appendChild(list);
+    }
+
+    // --------------------------------------------------------------- detail
+
+    function flowBar(f) {
+      var index = FLOW.indexOf(f.state === 'paused' ? f.pausedFrom : f.state);
+      return el(
+        'div',
+        { className: 'ship-flow', 'aria-label': '生命週期' },
+        FLOW.map(function (s, i) {
+          return el('span', {
+            className: i < index ? 'done' : i === index ? 'current' : '',
+            text: STATE_LABEL[s],
+          });
+        }),
+      );
+    }
+
+    function gateBox(f) {
+      var box = el('div', { className: 'ship-gate', id: 'ship-gate' });
+      if (!f.nextGate) {
+        box.textContent = f.state === 'paused' ? '已暫停，恢復後才能推進。' : '這個功能已經結束。';
+        return box;
+      }
+      box.appendChild(
+        el('strong', { text: '下一關：→ ' + (STATE_LABEL[f.nextGate.to] || f.nextGate.to) }),
+      );
+      if (f.nextGate.missing.length === 0) {
+        box.appendChild(el('div', { text: '條件都滿足了。' }));
+        return box;
+      }
+      var list = el('ul');
+      f.nextGate.missing.forEach(function (m) {
+        list.appendChild(el('li', { text: m }));
+      });
+      box.appendChild(list);
+      return box;
+    }
+
+    function stateButtons(f) {
+      var base = '/api/shipping/' + encodeURIComponent(f.id);
+      var advance = el('button', {
+        type: 'button',
+        className: 'bots-btn',
+        id: 'ship-advance',
+        text: f.nextGate ? '推進到' + (STATE_LABEL[f.nextGate.to] || f.nextGate.to) : '推進',
+        onclick: function () {
+          act(base + '/advance', {});
+        },
+      });
+      advance.disabled = !f.nextGate || f.nextGate.missing.length > 0;
+      var row = el('div', { className: 'ship-buttons' }, [advance]);
+      if (f.state === 'paused')
+        row.appendChild(
+          button('恢復', function () {
+            act(base + '/resume', {});
+          }),
+        );
+      else if (f.nextGate)
+        row.appendChild(
+          button('暫停', function () {
+            act(base + '/pause', {});
+          }),
+        );
+      if (f.state !== 'archived') {
+        row.appendChild(
+          button('封存', function () {
+            if (window.confirm('封存後就不能再修改，確定？')) act(base + '/archive', {});
+          }),
+        );
+      }
+      return row;
+    }
+
+    function contractCard(f) {
+      var form = el('form', { className: 'ship-form' });
+      [
+        ['problem', '問題'],
+        ['outcome', '期望結果'],
+        ['contract', '契約'],
+      ].forEach(function (pair) {
+        var area = el('textarea', {
+          name: pair[0],
+          rows: '2',
+          'aria-label': pair[1],
+          placeholder: pair[1],
+        });
+        area.value = f[pair[0]] || '';
+        form.appendChild(area);
+      });
+      var builders = el('input', {
+        name: 'builders',
+        'aria-label': '建造者',
+        placeholder: '建造者（逗號分隔）',
+      });
+      builders.value = f.builders.join(', ');
+      form.appendChild(builders);
+      form.appendChild(
+        el('button', { type: 'submit', className: 'bots-btn ghost', text: '儲存契約' }),
+      );
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var data = new FormData(form);
+        var json = await api('PATCH', '/api/shipping/' + encodeURIComponent(f.id), {
+          problem: data.get('problem'),
+          outcome: data.get('outcome'),
+          contract: data.get('contract'),
+          builders: String(data.get('builders') || '')
+            .split(',')
+            .map(function (s) {
+              return s.trim();
+            })
+            .filter(Boolean),
+          actor: actor(),
+        });
+        say(json.success ? '契約已儲存' : json.message);
+        await load();
+      });
+      return el('div', {}, [el('h3', { text: '契約' }), form]);
+    }
+
+    function invariantsCard(f) {
+      var list = el('ul', { className: 'ship-list' });
+      f.invariants.forEach(function (inv) {
+        list.appendChild(
+          el('li', { text: inv.text + (inv.required ? '' : '（選填）') + ' · ' + inv.id }),
+        );
+      });
+      var input = el('input', {
+        placeholder: '新的不變條件（必須一直成立的事）',
+        'aria-label': '新的不變條件',
+      });
+      var add = button('加入', function () {
+        if (input.value.trim())
+          act('/api/shipping/' + encodeURIComponent(f.id) + '/invariants', { text: input.value });
+      });
+      return el('div', {}, [
+        el('h3', { text: '不變條件' }),
+        list,
+        el('div', { className: 'ship-form' }, [input, add]),
+      ]);
+    }
+
+    function squareRow(f, sq) {
+      var path =
+        '/api/shipping/' + encodeURIComponent(f.id) + '/squares/' + encodeURIComponent(sq.id);
+      var meta =
+        sq.kind +
+        ' · 負責：' +
+        (sq.owner || '（未指定）') +
+        (sq.taskId ? ' · 任務 ' + sq.taskId : '') +
+        (sq.required ? '' : ' · 選填');
+      var children = [
+        el('div', {}, [pill(sq.status, sq.status), el('strong', { text: sq.title })]),
+        el('div', { className: 'bots-note', text: meta }),
+      ];
+      if (sq.evidence)
+        children.push(
+          el('div', {
+            className: 'ship-evidence',
+            text: '證據（' + (sq.by || '?') + '）：' + sq.evidence,
+          }),
+        );
+      children.push(
+        el('div', { className: 'ship-buttons' }, [
+          button(
+            '執行中',
+            function () {
+              act(path, { status: 'running' });
+            },
+            { 'data-action': 'running' },
+          ),
+          button(
+            '通過',
+            function () {
+              var ev = askEvidence('通過的證據（測試輸出、截圖位置、實測結果）');
+              if (ev) act(path, { status: 'passed', evidence: ev });
+            },
+            { 'data-action': 'passed' },
+          ),
+          button(
+            '失敗',
+            function () {
+              var ev = askEvidence('失敗的證據（會自動建立摩擦與回歸項目）');
+              if (ev) act(path, { status: 'failed', evidence: ev });
+            },
+            { 'data-action': 'failed' },
+          ),
+          button(
+            '連結任務',
+            function () {
+              var taskId = askEvidence(
+                '任務 ID：這個任務在 review gate 核准就讓方格通過、退回就失敗',
+              );
+              if (taskId !== null) act(path + '/link', { taskId: taskId });
+            },
+            { 'data-action': 'link' },
+          ),
+        ]),
+      );
+      return el('div', { className: 'ship-square', 'data-square-id': sq.id }, children);
+    }
+
+    function squareForm(f) {
+      var form = el('form', { className: 'ship-form' });
+      var title = el('input', {
+        name: 'title',
+        placeholder: '方格標題（要驗證什麼）',
+        'aria-label': '方格標題',
+      });
+      var kind = el('select', { name: 'kind', 'aria-label': '種類' });
+      KINDS.forEach(function (k) {
+        kind.appendChild(el('option', { value: k, text: k }));
+      });
+      var owner = el('input', {
+        name: 'owner',
+        placeholder: '負責驗證的人',
+        'aria-label': '負責人',
+      });
+      owner.value = 'operator';
+      var covers = el('div', { className: 'ship-buttons' });
+      f.invariants.forEach(function (inv) {
+        var box = el('input', { type: 'checkbox', value: inv.id });
+        covers.appendChild(
+          el('label', { className: 'bots-note' }, [box, document.createTextNode(' ' + inv.text)]),
+        );
+      });
+      [
+        title,
+        kind,
+        owner,
+        covers,
+        el('button', { type: 'submit', className: 'bots-btn ghost', text: '加入方格' }),
+      ].forEach(function (n) {
+        form.appendChild(n);
+      });
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var picked = [].slice.call(covers.querySelectorAll('input:checked')).map(function (c) {
+          return c.value;
+        });
+        act('/api/shipping/' + encodeURIComponent(f.id) + '/squares', {
+          title: title.value,
+          kind: kind.value,
+          owner: owner.value,
+          covers: picked,
+        });
+      });
+      return form;
+    }
+
+    function releaseCard(f) {
+      var base = '/api/shipping/' + encodeURIComponent(f.id);
+      var box = el('div', {}, [el('h3', { text: '發布與回讀' })]);
+      if (f.state === 'ready') {
+        var form = el('form', { className: 'ship-form' });
+        var fields = [
+          ['notes', '發布說明'],
+          ['rollbackPlan', '回滾方式'],
+          ['baseline', '可量測的基準'],
+          ['approvedBy', '核准者（不能是建造者）'],
+        ];
+        fields.forEach(function (pair) {
+          var input = el('input', { name: pair[0], placeholder: pair[1], 'aria-label': pair[1] });
+          if (f.release && f.release[pair[0]]) input.value = f.release[pair[0]];
+          form.appendChild(input);
+        });
+        form.appendChild(
+          el('button', { type: 'submit', className: 'bots-btn ghost', text: '儲存發布計畫' }),
+        );
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var data = new FormData(form);
+          act(base + '/release', {
+            notes: data.get('notes'),
+            rollbackPlan: data.get('rollbackPlan'),
+            baseline: data.get('baseline'),
+            approvedBy: data.get('approvedBy'),
+          });
+        });
+        box.appendChild(form);
+      } else if (f.state === 'releasing') {
+        box.appendChild(
+          el('div', {
+            className: 'bots-note',
+            text: '上線後做冒煙測試：通過才進入觀察期，失敗退回建造中。',
+          }),
+        );
+        box.appendChild(resultButtons(base + '/smoke', '冒煙測試'));
+      } else if (f.state === 'watching' && f.readback) {
+        box.appendChild(
+          el('div', {
+            text:
+              '回讀到期：' +
+              new Date(f.readback.dueAt).toLocaleString() +
+              '（' +
+              f.readback.status +
+              '）',
+          }),
+        );
+        box.appendChild(resultButtons(base + '/readback', '回讀'));
+      } else {
+        box.appendChild(el('div', { className: 'bots-note', text: '就緒後才能規劃發布。' }));
+      }
+      return box;
+    }
+
+    function resultButtons(path, label) {
+      return el('div', { className: 'ship-buttons' }, [
+        button(label + '通過', function () {
+          var ev = askEvidence(label + '通過的證據');
+          if (ev) act(path, { status: 'passed', evidence: ev });
+        }),
+        button(label + '失敗', function () {
+          var ev = askEvidence(label + '失敗的證據');
+          if (ev) act(path, { status: 'failed', evidence: ev });
+        }),
+      ]);
+    }
+
+    function eventsCard(f) {
+      var list = el('ul', { className: 'ship-list' });
+      f.events
+        .slice(-20)
+        .reverse()
+        .forEach(function (e) {
+          list.appendChild(
+            el('li', {
+              text:
+                new Date(e.at).toLocaleString() +
+                ' · ' +
+                e.actor +
+                ' · ' +
+                e.type +
+                ' · ' +
+                e.detail,
+            }),
+          );
+        });
+      return el('div', {}, [el('h3', { text: '事件紀錄（只增不改）' }), list]);
+    }
+
+    function renderDetail() {
+      var box = $('ship-detail');
+      box.replaceChildren();
+      var f = state.feature;
+      if (!f) {
+        box.appendChild(el('div', { className: 'bots-note', text: '選一個功能查看關卡與證據。' }));
+        return;
+      }
+      box.appendChild(
+        el('div', {}, [
+          el('h3', { text: f.title }),
+          pill(STATE_LABEL[f.state] || f.state),
+          pill('建造者：' + (f.builders.join(', ') || '（未指定）')),
+        ]),
+      );
+      box.appendChild(flowBar(f));
+      box.appendChild(gateBox(f));
+      box.appendChild(stateButtons(f));
+      box.appendChild(contractCard(f));
+      box.appendChild(invariantsCard(f));
+      var squares = el('div', { style: 'display: grid; gap: 0.4rem' }, [
+        el('h3', { text: '證據方格' }),
+      ]);
+      f.squares.forEach(function (sq) {
+        squares.appendChild(squareRow(f, sq));
+      });
+      squares.appendChild(squareForm(f));
+      box.appendChild(squares);
+      box.appendChild(releaseCard(f));
+      box.appendChild(eventsCard(f));
+    }
+
+    // ---------------------------------------------------------------- data
+
+    async function select(id) {
+      state.selectedId = id;
+      var json = await api('GET', '/api/shipping/' + encodeURIComponent(id));
+      state.feature = json.success ? json.data : null;
+      if (!json.success) say(json.message);
+      renderPortfolio();
+      renderDetail();
+    }
+
+    async function load() {
+      var json = await api('GET', '/api/shipping');
+      if (!json.success) {
+        say('讀不到交付資料：' + (json.message || '未知錯誤'));
+        return;
+      }
+      state.board = json.data;
+      renderPortfolio();
+      renderFriction();
+      renderRegressions();
+      if (state.selectedId) await select(state.selectedId);
+    }
+
+    $('ship-refresh').addEventListener('click', function () {
+      load();
+    });
+    $('ship-create').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var form = e.target;
+      var data = new FormData(form);
+      var target = data.get('target');
+      var json = await api('POST', '/api/shipping', {
+        title: data.get('title'),
+        problem: data.get('problem'),
+        outcome: data.get('outcome'),
+        contract: data.get('contract'),
+        builders: String(data.get('builders') || '')
+          .split(',')
+          .map(function (s) {
+            return s.trim();
+          })
+          .filter(Boolean),
+        risk: data.get('risk'),
+        target: target ? new Date(target + 'T00:00:00').toISOString() : null,
+        actor: actor(),
+      });
+      say(json.success ? '已建立「' + json.data.title + '」' : json.message);
+      if (json.success) {
+        form.reset();
+        state.selectedId = json.data.id;
+      }
+      await load();
+    });
+
+    window.NomadShipping = { show: load };
+  })();
+</script>

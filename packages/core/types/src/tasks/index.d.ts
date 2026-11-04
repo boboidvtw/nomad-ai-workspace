@@ -19,4 +19,7 @@ import { CONTRACT_LOCKED_REGEX } from "./p2p-bus";
 import { P2PBus } from "./p2p-bus";
 import { SharedContextPool } from "./shared-context-pool";
 import { handleAgenshRequest } from "./agensh-routes";
-export { TASK_STATUS, TASK_PRIORITY, validateTransition, createTaskEntity, AGENT_STATUS, DEFAULT_ROSTER, AgentRoster, TaskDispatcher, ApprovalGate, TaskRunner, RecurringScheduler, DEFAULT_PRESET_SCHEDULES, DEFAULT_SCHEDULES_PATH, routineLabel, WEBVIEW_PLATFORMS, DEFAULT_MAX_CONCURRENT_WORKTREES, WorktreeManager, CONTRACT_LOCKED_REGEX, P2PBus, SharedContextPool, handleAgenshRequest };
+import { MAX_RANGE_DAYS } from "./schedule-calendar";
+import { buildScheduleCalendar } from "./schedule-calendar";
+import { handleCalendarRequest } from "./schedule-calendar";
+export { TASK_STATUS, TASK_PRIORITY, validateTransition, createTaskEntity, AGENT_STATUS, DEFAULT_ROSTER, AgentRoster, TaskDispatcher, ApprovalGate, TaskRunner, RecurringScheduler, DEFAULT_PRESET_SCHEDULES, DEFAULT_SCHEDULES_PATH, routineLabel, WEBVIEW_PLATFORMS, DEFAULT_MAX_CONCURRENT_WORKTREES, WorktreeManager, CONTRACT_LOCKED_REGEX, P2PBus, SharedContextPool, handleAgenshRequest, MAX_RANGE_DAYS, buildScheduleCalendar, handleCalendarRequest };
