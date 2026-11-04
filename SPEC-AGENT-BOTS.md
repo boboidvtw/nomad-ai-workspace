@@ -320,6 +320,7 @@ M7 只依賴 M0、M1；M8 依賴 M1–M4
 - Hermes 防迴圈實作：`~/Developer/hermes-agent/gateway/bot_loop_guard.py`
 - herdr：<https://github.com/herdrdev/herdr>（v0.9.3，2026-09-29；`skills/herdr/SKILL.md`）
 - 前置規格：[SPEC-TASK-CONTROL-PLANE.md](SPEC-TASK-CONTROL-PLANE.md)
+- Cumora：<https://github.com/yetone/cumora>（MIT，2026-11-01 的 main；`docs/COORDINATION.md`、`server/src/agents/glance-protocol.ts`、`convene.ts`），比較見 §12
 
 ---
 
@@ -363,3 +364,15 @@ M7 只依賴 M0、M1；M8 依賴 M1–M4
 | 永久對話跨重啟（5 次任務加 1 次重啟）            | 需要實機                                                                                                                            | 跑一次腳本 → 重啟 Studio → 再跑一次；摘要的「same chat as last report」欄應為 yes                                      |
 | herdr runner 實際執行                            | 本機沒有安裝 herdr；CLI 契約取自 herdr v0.9.3 原始碼（`src/cli/agent.rs`、`src/api/schema/response.rs`），測試使用模擬的 `execFile` | 安裝 herdr，建立名稱與 `@handle` 相同的 agent，從 Bots 分頁派工                                                        |
 | Dashboard Bots 分頁                              | **已用假資料的 bridge 在瀏覽器實測**：名單、詳情編輯、@mention 派送（含 HTML 跳脫）、會議室輪流發言、SSE 更新都正常                 | —                                                                                                                      |
+
+## 12. 借鏡 Cumora 的會議室協作規則（2026-11-04）
+
+Cumora 是「agent 與人同在一個團隊聊天室」的開源產品。它的成員**同時**被喚醒，所以需要伺服器仲裁；Nomad 的會議室**依序**驅動成員，後一位看得到前一位的回覆，不會撞車。因此只移植「判斷」層，不移植併發防線。
+
+| Cumora 機制                              | Nomad 做法                                                                                | 位置                                |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------- |
+| Glance yield rules：沒有新內容就不發言   | 提示詞加入讓位規則；回覆只有 `[PASS]` 時記為 `kind: 'passed'`，不放進上下文               | `group-room.js` `isPass`            |
+| Verbatim-dup HOLD（COORDINATION.md §5b） | 與最近 12 則正規化後相同的回覆記為 `kind: 'held'`，保留原文給 UI，不放進上下文            | `group-room.js` `isRecentDuplicate` |
+| Convene 逐字稿的 `decision` 類型         | `DECISION:` / `決議：` 行收進 `room.decisions`（最多 50 條），並發出 `room:decision` 事件 | `group-room.js` `extractDecisions`  |
+
+不移植：seen-cursor 新鮮度閘門、併發上限與 AdaptivePacer（依序驅動用不到）；每個 agent 的真實 Email、雲端 pod、行動 App（需要伺服器，違反本機優先）。行事曆與 Shipping 證據生命週期留待後續評估。

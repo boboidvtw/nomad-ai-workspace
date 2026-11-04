@@ -7,6 +7,18 @@ export type RoomLogEntry = {
     speaker: string;
     text: string;
     error?: boolean | undefined;
+    /**
+     * - passed: the member yielded; held: a verbatim repeat
+     */
+    kind?: "passed" | "held" | undefined;
+};
+export type RoomDecision = {
+    at: string;
+    /**
+     * - bot id
+     */
+    by: string;
+    text: string;
 };
 export type GroupRoom = {
     id: string;
@@ -19,6 +31,7 @@ export type GroupRoom = {
      */
     held: string[];
     log: RoomLogEntry[];
+    decisions: RoomDecision[];
     createdAt: string;
 };
 export const DEFAULT_ROOMS_PATH: string;
@@ -59,6 +72,7 @@ export class GroupRoomManager {
         memberIds: string[];
         held: string[];
         log: RoomLogEntry[];
+        decisions: RoomDecision[];
         id: string;
         name: string;
         strategy: RoomStrategy;
@@ -70,6 +84,7 @@ export class GroupRoomManager {
         memberIds: string[];
         held: string[];
         log: RoomLogEntry[];
+        decisions: RoomDecision[];
         id: string;
         name: string;
         strategy: RoomStrategy;
@@ -96,6 +111,7 @@ export class GroupRoomManager {
         memberIds: string[];
         held: string[];
         log: RoomLogEntry[];
+        decisions: RoomDecision[];
         id: string;
         name: string;
         strategy: RoomStrategy;
@@ -129,6 +145,13 @@ export class GroupRoomManager {
      * @param {string} memberId
      */
     driveMember(room: GroupRoom, memberId: string): Promise<void>;
+    /**
+     * Logs a member reply, applying the yield, duplicate and decision rules.
+     * @param {GroupRoom} room
+     * @param {string} memberId
+     * @param {string} text
+     */
+    recordReply(room: GroupRoom, memberId: string, text: string): void;
     /** @param {string} id */
     nameOf(id: string): string;
     /**
@@ -152,6 +175,7 @@ export class GroupRoomManager {
         memberIds: string[];
         held: string[];
         log: RoomLogEntry[];
+        decisions: RoomDecision[];
         id: string;
         name: string;
         strategy: RoomStrategy;
@@ -176,6 +200,12 @@ export class GroupRoomManager {
  * @property {string} speaker - 'user' or a bot id
  * @property {string} text
  * @property {boolean} [error]
+ * @property {'passed' | 'held'} [kind] - passed: the member yielded; held: a verbatim repeat
+ *
+ * @typedef {Object} RoomDecision
+ * @property {string} at
+ * @property {string} by - bot id
+ * @property {string} text
  *
  * @typedef {Object} GroupRoom
  * @property {string} id
@@ -185,6 +215,7 @@ export class GroupRoomManager {
  * @property {'idle' | 'running' | 'stopped'} status
  * @property {string[]} held - members that Stop paused
  * @property {RoomLogEntry[]} log
+ * @property {RoomDecision[]} decisions
  * @property {string} createdAt
  */
 /**
@@ -194,3 +225,10 @@ export class GroupRoomManager {
  * @param {(id: string) => string} nameOf
  */
 export function buildMemberPrompt(strategy: RoomStrategy, bot: import("./bot-roster").Bot, room: GroupRoom, nameOf: (id: string) => string): string;
+/**
+ * @param {string} text
+ * @returns {string[]}
+ */
+export function extractDecisions(text: string): string[];
+/** @param {string} text */
+export function isPass(text: string): boolean;

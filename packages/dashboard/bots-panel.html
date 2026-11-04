@@ -188,6 +188,14 @@
   .bots-list li.error {
     border-left-color: var(--danger);
   }
+  .bots-list li.passed,
+  .bots-list li.held {
+    opacity: 0.6;
+    font-style: italic;
+  }
+  .bots-list li.held {
+    text-decoration: line-through;
+  }
   .bots-h4 {
     font-size: 0.8rem;
     color: var(--text-muted);
@@ -283,6 +291,8 @@
       </div>
       <div>
         <ul class="bots-list" id="bots-room-log" style="max-height: 360px"></ul>
+        <h4 class="bots-h4" id="bots-room-decisions-title" hidden>📌 決議</h4>
+        <ul class="bots-list" id="bots-room-decisions" aria-label="會議室決議"></ul>
         <textarea
           id="bots-room-text"
           placeholder="對會議室說話；@member 只叫一位，@all 解除暫停"
@@ -698,17 +708,42 @@
       var log = $('bots-room-log');
       log.replaceChildren();
       (room ? room.log : []).forEach(function (entry) {
-        var bot = botById(entry.speaker);
         log.appendChild(
-          el('li', { className: entry.error ? 'error' : '' }, [
-            el('strong', {
-              text: (entry.speaker === 'user' ? '你' : bot ? nameOf(bot) : entry.speaker) + '：',
-            }),
-            el('span', { text: entry.text }),
+          el('li', { className: entry.error ? 'error' : entry.kind || '' }, [
+            el('strong', { text: speakerName(entry.speaker) + '：' }),
+            el('span', { text: roomEntryText(entry) }),
           ]),
         );
       });
       log.scrollTop = log.scrollHeight;
+      renderRoomDecisions(room);
+    }
+
+    function speakerName(id) {
+      if (id === 'user') return '你';
+      var bot = botById(id);
+      return bot ? nameOf(bot) : id;
+    }
+
+    function roomEntryText(entry) {
+      if (entry.kind === 'passed') return '（讓位：沒有新內容）';
+      if (entry.kind === 'held') return '（重複發言，已攔截）' + entry.text;
+      return entry.text;
+    }
+
+    function renderRoomDecisions(room) {
+      var list = $('bots-room-decisions');
+      var decisions = room && Array.isArray(room.decisions) ? room.decisions : [];
+      list.replaceChildren();
+      $('bots-room-decisions-title').hidden = decisions.length === 0;
+      decisions.forEach(function (decision) {
+        list.appendChild(
+          el('li', {}, [
+            el('strong', { text: speakerName(decision.by) + '：' }),
+            el('span', { text: decision.text }),
+          ]),
+        );
+      });
     }
 
     async function loadRooms() {
@@ -788,7 +823,7 @@
       state.events.addEventListener('bot:removed', function () {
         loadBots();
       });
-      ['room:message', 'room:status'].forEach(function (type) {
+      ['room:message', 'room:status', 'room:decision'].forEach(function (type) {
         state.events.addEventListener(type, function (event) {
           try {
             refreshRoom(JSON.parse(event.data).roomId);
