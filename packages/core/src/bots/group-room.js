@@ -29,6 +29,7 @@ const MAX_POST_LENGTH = 8000;
 const RELEASE_ALL = new Set(['all', 'everyone']);
 const MAX_DECISIONS = 50;
 const MAX_DECISION_LENGTH = 500;
+const PROMPT_DECISIONS = 20;
 const PASS_PATTERN = /^\[?\s*pass\s*\]?[.!。]?$/i;
 const DECISION_PATTERN =
   /^\s*(?:[-*]\s*)?(?:\*\*)?(?:DECISION|決議|决议)(?:\*\*)?\s*[:：]\s*(.+)$/i;
@@ -83,9 +84,22 @@ function buildMemberPrompt(strategy, bot, room, nameOf) {
     task,
     'If you have nothing new to add, reply with exactly [PASS] and nothing else.',
     'If the room settles something, add one line per decision starting with "DECISION: ".',
+    ...decisionsSection(room),
     '--- Room transcript ---',
     transcript,
   ].join('\n\n');
+}
+
+/**
+ * Settled decisions, so members still see them once their reply leaves the transcript window.
+ * @param {GroupRoom} room
+ * @returns {string[]} one prompt block, or none while the room has no decisions
+ */
+function decisionsSection(room) {
+  const recent = room.decisions.slice(-PROMPT_DECISIONS);
+  if (recent.length === 0) return [];
+  const lines = recent.map((decision) => `- ${decision.text}`).join('\n');
+  return [`Decisions so far (do not reopen them unless the user asks):\n${lines}`];
 }
 
 /**
@@ -133,6 +147,22 @@ function extractDecisions(text) {
     .map((line) => DECISION_PATTERN.exec(line)?.[1]?.trim() || '')
     .filter(Boolean)
     .map((decision) => decision.slice(0, MAX_DECISION_LENGTH));
+}
+
+/**
+ * Drops decisions the room already holds (case, spacing and end punctuation ignored).
+ * @param {GroupRoom} room
+ * @param {string[]} found
+ * @returns {string[]}
+ */
+function newDecisions(room, found) {
+  const seen = new Set(room.decisions.map((decision) => normalizeForDuplicate(decision.text)));
+  return found.filter((decision) => {
+    const key = normalizeForDuplicate(decision);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 class GroupRoomManager {
@@ -344,7 +374,7 @@ class GroupRoomManager {
       return;
     }
     this.append(room, { speaker: memberId, text });
-    const found = extractDecisions(text);
+    const found = newDecisions(room, extractDecisions(text));
     if (found.length === 0) return;
     const at = new Date().toISOString();
     const added = found.map((decision) => ({ at, by: memberId, text: decision }));

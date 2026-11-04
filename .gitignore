@@ -37,3 +37,6 @@ pnpm-debug.log*
 
 # Vitest coverage reports
 coverage/
+
+# Archify explainer and workflow pages (local only)
+.archify/
