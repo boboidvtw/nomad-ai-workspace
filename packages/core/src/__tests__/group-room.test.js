@@ -248,6 +248,52 @@ describe('Bots - group rooms', () => {
       assert.ok(events.some((e) => e.type === 'room:decision'));
     });
 
+    it('does not record a decision the room already has', async () => {
+      const { rooms, room, events } = setup({
+        replies: {
+          'agent-claude': ['DECISION: Use SQLite for v1'],
+          'agent-grok': ['Agreed.\nDECISION: use sqlite for v1.\nDECISION: Ship on Friday'],
+        },
+      });
+      rooms.post(room.id, { text: 'decide' });
+      await rooms.whenIdle(room.id);
+
+      assert.deepStrictEqual(
+        rooms.get(room.id).data.decisions.map((d) => [d.by, d.text]),
+        [
+          ['agent-claude', 'Use SQLite for v1'],
+          ['agent-grok', 'Ship on Friday'],
+        ],
+      );
+      assert.strictEqual(events.filter((e) => e.type === 'room:decision').length, 2);
+    });
+
+    it('shows members the decisions made so far, even after they leave the transcript window', async () => {
+      const { rooms, room, prompts } = setup({
+        replies: { 'agent-claude': ['DECISION: Use SQLite for v1'] },
+      });
+      rooms.post(room.id, { text: 'decide' });
+      await rooms.whenIdle(room.id);
+      // Repeated default replies are held, so the user's follow-ups alone must fill the window.
+      for (let i = 0; i < 12; i += 1) {
+        rooms.post(room.id, { text: `follow-up ${i}` });
+        await rooms.whenIdle(room.id);
+      }
+
+      const last = prompts[prompts.length - 1].text;
+      const [head, transcript] = last.split('--- Room transcript ---');
+      assert.doesNotMatch(transcript, /Use SQLite for v1/, 'decision reply has left the window');
+      assert.match(head, /Decisions so far/);
+      assert.match(head, /- Use SQLite for v1/);
+    });
+
+    it('leaves the decisions section out while the room has none', async () => {
+      const { rooms, room, prompts } = setup();
+      rooms.post(room.id, { text: 'hello' });
+      await rooms.whenIdle(room.id);
+      assert.doesNotMatch(prompts[0].text, /Decisions so far/);
+    });
+
     it('loads rooms saved before decisions existed', () => {
       const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nomad-rooms-'));
       const file = path.join(dir, 'rooms.json');

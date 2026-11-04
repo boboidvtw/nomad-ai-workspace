@@ -375,4 +375,9 @@ Cumora 是「agent 與人同在一個團隊聊天室」的開源產品。它的�
 | Verbatim-dup HOLD（COORDINATION.md §5b） | 與最近 12 則正規化後相同的回覆記為 `kind: 'held'`，保留原文給 UI，不放進上下文            | `group-room.js` `isRecentDuplicate` |
 | Convene 逐字稿的 `decision` 類型         | `DECISION:` / `決議：` 行收進 `room.decisions`（最多 50 條），並發出 `room:decision` 事件 | `group-room.js` `extractDecisions`  |
 
+決議的兩條補充規則（2026-11-04 實測後加入）：
+
+- **去重**：正規化後（忽略大小寫、空白與句尾標點）與既有決議相同的不再收錄，也不發事件（`newDecisions`）。
+- **回傳給成員**：最近 20 條決議放在提示詞的 `Decisions so far` 區塊。逐字稿只送最近 12 則，所以不另外放，成員就會忘掉早期的決議（`decisionsSection`）。
+
 不移植：seen-cursor 新鮮度閘門、併發上限與 AdaptivePacer（依序驅動用不到）；每個 agent 的真實 Email、雲端 pod、行動 App（需要伺服器，違反本機優先）。行事曆與 Shipping 證據生命週期留待後續評估。
