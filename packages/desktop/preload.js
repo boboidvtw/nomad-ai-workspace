@@ -90,6 +90,14 @@ contextBridge.exposeInMainWorld('nomadDesktop', {
   chatLocalModel: (/** @type {unknown} */ options) =>
     ipcRenderer.invoke('nomad:chat-local-model', options),
 
+  // Desktop Agent (local model + agent-desktop)
+  desktopAgentRun: (/** @type {unknown} */ options) =>
+    ipcRenderer.invoke('nomad:desktop-agent-run', options),
+  desktopAgentStop: () => ipcRenderer.invoke('nomad:desktop-agent-stop'),
+  onDesktopAgentStep: (/** @type {IpcListener} */ callback) => {
+    ipcRenderer.on('nomad:desktop-agent-step', (event, data) => callback(data));
+  },
+
   // Roadmap P3: MCP Gateway & Local RAG Knowledge Base
   getMcpTools: () => ipcRenderer.invoke('nomad:get-mcp-tools'),
   callMcpTool: (/** @type {unknown} */ options) =>

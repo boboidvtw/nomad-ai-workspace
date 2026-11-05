@@ -85,6 +85,7 @@ const mcpGateway = new McpGateway({
 const knowledgeBase = new KnowledgeBase();
 const { SessionManager, isPlaceholderTitle } = require('./src/session-manager');
 const { runSandboxTests } = require('./src/sandbox-gate');
+const { registerDesktopAgentIpc } = require('./src/desktop-agent-ipc');
 
 const EXTENSION_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'dist_chrome')
@@ -1163,6 +1164,9 @@ ipcMain.handle('nomad:chat-local-model', async (event, options) => {
   const client = new LocalModelClient({ endpoint: `http://${host}:${port}/v1` });
   return await client.chatCompletion(options);
 });
+
+// Desktop Agent: a local model drives agent-desktop to operate a macOS app
+registerDesktopAgentIpc({ ipcMain, getWindow: () => mainWindow });
 
 // P3: MCP Gateway & Local RAG IPC
 ipcMain.handle('nomad:get-mcp-tools', () => {
