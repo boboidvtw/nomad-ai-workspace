@@ -27,7 +27,7 @@ export class ServiceController {
             writeLauncher(name: string, command: string | undefined): string;
             exec(bin: string, args: string[] | undefined, { cwd, timeoutMs, logName }: {
                 cwd?: string;
-                timeoutMs?: number;
+                timeoutMs? /** @type {() => void} */: number;
                 logName?: string;
             }): Promise<{
                 code: number;
@@ -54,7 +54,7 @@ export class ServiceController {
         writeLauncher(name: string, command: string | undefined): string;
         exec(bin: string, args: string[] | undefined, { cwd, timeoutMs, logName }: {
             cwd?: string;
-            timeoutMs?: number;
+            timeoutMs? /** @type {() => void} */: number;
             logName?: string;
         }): Promise<{
             code: number;
@@ -92,6 +92,16 @@ export class ServiceController {
         state: string;
         canStart: boolean;
         canStop: boolean;
+        ui: string;
+        id: string;
+        label: string;
+        confirmStart: string | undefined;
+        confirmStop: string | undefined;
+    } | {
+        state: string;
+        canStart: boolean;
+        canStop: boolean;
+        ui?: undefined;
         id: string;
         label: string;
         confirmStart: string | undefined;
@@ -111,6 +121,16 @@ export class ServiceController {
             state: string;
             canStart: boolean;
             canStop: boolean;
+            ui: string;
+            id: string;
+            label: string;
+            confirmStart: string | undefined;
+            confirmStop: string | undefined;
+        } | {
+            state: string;
+            canStart: boolean;
+            canStop: boolean;
+            ui?: undefined;
             id: string;
             label: string;
             confirmStart: string | undefined;

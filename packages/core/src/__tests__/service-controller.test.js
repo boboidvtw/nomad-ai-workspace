@@ -109,6 +109,40 @@ test('start: runs the registered command and ends running once the check passes'
   assert.strictEqual((await ctl.list()).data.services[0].state, 'running');
 });
 
+test('list: a running service offers its web UI; a stopped one does not', async () => {
+  const runner = createRunner();
+  const withUi = { ...PORT_SERVICE, ui: 'http://127.0.0.1:9001' };
+  const ctl = createController([withUi], runner);
+  assert.strictEqual((await ctl.list()).data.services[0].ui, undefined);
+  runner.ports.add(9001);
+  assert.strictEqual((await ctl.list()).data.services[0].ui, 'http://127.0.0.1:9001');
+});
+
+test('start: a service with a web UI opens it in a window once it is up', async () => {
+  const runner = createRunner({
+    exec: async (bin, args) => {
+      runner.calls.push(['exec', bin, args]);
+      runner.ports.add(9001);
+      return { code: 0 };
+    },
+  });
+  const ctl = createController([{ ...PORT_SERVICE, ui: 'http://127.0.0.1:9001' }], runner);
+  await ctl.start('alpha');
+  await ctl.whenIdle('alpha');
+  assert.deepStrictEqual(runner.calls, [
+    ['exec', '/bin/alpha-start', ['--up']],
+    ['exec', '/usr/bin/open', ['http://127.0.0.1:9001']],
+  ]);
+});
+
+test('start: a web UI is not opened when the service never comes up', async () => {
+  const runner = createRunner();
+  const ctl = createController([{ ...PORT_SERVICE, ui: 'http://127.0.0.1:9001' }], runner);
+  await ctl.start('alpha');
+  await ctl.whenIdle('alpha');
+  assert.ok(!runner.calls.some((c) => c[1] === '/usr/bin/open'));
+});
+
 test('start: already running does nothing', async () => {
   const runner = createRunner();
   runner.ports.add(9001);
@@ -412,4 +446,19 @@ test('registry: the Hermes gateway is found however hermes launches it', () => {
   assert.doesNotMatch('zsh -c "hermes gateway run; tail -f log"', check);
   assert.doesNotMatch('zsh -c "hermes gateway run --quiet && tail -f log"', check);
   assert.doesNotMatch('hermes gateway runner', check);
+});
+
+test('registry: Hermes runs as a CLI in Terminal and offers its web UI on this machine only', () => {
+  const services = buildServiceRegistry('/home/u');
+  const byId = Object.fromEntries(services.map((s) => [s.id, s]));
+  assert.deepStrictEqual(byId['hermes-cli'].start, { kind: 'terminal', command: 'hermes' });
+  assert.strictEqual(byId['hermes-cli'].stop, null);
+  assert.ok(byId['hermes-cli'].noStopReason);
+  assert.strictEqual(byId['hermes-web'].ui, 'http://127.0.0.1:9119');
+  for (const service of services) {
+    if (!service.ui) continue;
+    const url = new URL(service.ui);
+    assert.strictEqual(url.protocol, 'http:', service.id);
+    assert.strictEqual(url.hostname, '127.0.0.1', service.id);
+  }
 });

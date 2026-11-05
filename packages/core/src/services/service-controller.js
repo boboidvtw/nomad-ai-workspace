@@ -87,7 +87,8 @@ class ServiceController {
       return { ...base, state: 'failed', canStart: !running, canStop: running, message: failure };
     }
     const state = running ? 'running' : 'stopped';
-    return { ...base, state, canStart: !running, canStop: running && Boolean(service.stop) };
+    const ui = running && service.ui ? { ui: service.ui } : {};
+    return { ...base, ...ui, state, canStart: !running, canStop: running && Boolean(service.stop) };
   }
 
   async list() {
@@ -186,6 +187,9 @@ class ServiceController {
       await this.runExec(service, start);
     }
     await this.waitFor(service, true);
+    // Started from a button, so the person wants to use it: open its web UI in a window.
+    // A failed `open` is logged but does not fail a start that already succeeded.
+    if (service.ui) await this.runner.exec(OPEN_BIN, [service.ui], { logName: service.id });
   }
 
   /** @param {ServiceDefinition} service */
