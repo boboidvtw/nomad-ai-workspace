@@ -496,11 +496,11 @@ SHIP: create "<標題>" --problem "..." --outcome "..." --contract "..."
 
 **事前準備**：
 
-| 項目               | 做法                                                                                                                                                  |
-| :----------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 安裝 agent-desktop | `npm i -g agent-desktop`；Studio 會在 PATH、`~/.local/bin`、`/opt/homebrew/bin`、`/usr/local/bin` 找它，也可用環境變數 `NOMAD_AGENT_DESKTOP_BIN` 指定 |
-| 輔助使用權限       | 系統設定 → 隱私權與安全性 → 輔助使用，加入 **Nomad AI Studio**（執行 `agent-desktop permissions --guide` 會帶你過去）                                 |
-| 本機模型           | LM Studio 載入支援 tool calling 的模型並啟動 server（`lms server start`），實測 `qwen3.8-27b-uncensored-mlx` 可用                                     |
+| 項目               | 做法                                                                                                                                                                                                                                     |
+| :----------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 安裝 agent-desktop | `npm i -g agent-desktop`；Studio 會在 PATH、`~/.local/bin`、`/opt/homebrew/bin`、`/usr/local/bin` 找它，也可用環境變數 `NOMAD_AGENT_DESKTOP_BIN` 指定                                                                                    |
+| 輔助使用權限       | 系統設定 → 隱私權與安全性 → 輔助使用，加入 **Nomad AI Studio**（執行 `agent-desktop permissions --guide` 會帶你過去）。**打包版（`/Applications`）要另外授權**：從終端機啟動的開發版會沿用終端機的權限，所以開發版能用不代表打包版有權限 |
+| 本機模型           | LM Studio 載入支援 tool calling 的模型並啟動 server（`lms server start`），實測 `qwen3.8-27b-uncensored-mlx` 可用                                                                                                                        |
 
 **使用方式**：側邊欄「⚙️ 設定」分頁 →「🖥️ 本機模型操作桌面 App」（在「本機大模型雙軌引擎」下方）。填 App 名稱（例 `Finder`）、模型（空白＝server 上第一個模型）、步數上限（預設 8，最多 20）與任務 →「▶ 執行」。每一步的工具呼叫與結果會即時列出，最後顯示答案；「■ 中止」會在目前這一步結束後停止。端點沿用上方「本機推論端點」的主機與埠，只接受本機位址。
 
