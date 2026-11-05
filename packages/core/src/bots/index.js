@@ -18,6 +18,7 @@ const {
 } = require('./message-router');
 const { DEFAULT_ROOMS_PATH, GroupRoomManager } = require('./group-room');
 const { createHerdrRunner } = require('./herdr-runner');
+const { applyShipCommands, extractShipLines, shipPromptSection } = require('./ship-commands');
 const {
   NEW_CHAT_URLS,
   normalizeChatUrl,
@@ -40,6 +41,9 @@ module.exports = {
   DEFAULT_ROOMS_PATH,
   GroupRoomManager,
   createHerdrRunner,
+  applyShipCommands,
+  extractShipLines,
+  shipPromptSection,
   NEW_CHAT_URLS,
   normalizeChatUrl,
   isConversationUrl,

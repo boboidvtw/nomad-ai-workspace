@@ -63,8 +63,8 @@ export class ShippingSignals {
         updatedAt: string;
         status: "open" | "passing" | "failing";
         title: string;
-        command: string;
         featureId: string;
+        command: string;
         expected: string;
         evidence: string | null;
     }>;
@@ -74,8 +74,8 @@ export class ShippingSignals {
         updatedAt: string;
         status: "open" | "passing" | "failing";
         title: string;
-        command: string;
         featureId: string;
+        command: string;
         expected: string;
         evidence: string | null;
     };
@@ -88,8 +88,8 @@ export class ShippingSignals {
         updatedAt: string;
         status: "open" | "passing" | "failing";
         title: string;
-        command: string;
         featureId: string;
+        command: string;
         expected: string;
         evidence: string | null;
     };

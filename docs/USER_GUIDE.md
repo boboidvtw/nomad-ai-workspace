@@ -474,6 +474,20 @@ curl -s -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" \
 - 方格可以「連結任務」：該任務在任務派遣中心的 review gate 被核准，方格就自動通過，退回則失敗；證據會寫入核准者與回饋。
 - 每次變更都寫進只增不改的事件紀錄。資料存在 `~/.nomad/shipping.json`（權限 0600）；daemon 與 Studio 共用這個檔案，一邊寫入後另一邊會自動重讀。
 
+**會議室裡的 Bot 也能回報**：把方格的負責人設成 Bot 的 `@handle`（例如 `@grok`），它在會議室的回覆裡寫 `SHIP:` 開頭的行就會執行：
+
+```text
+SHIP: square <功能 id> <方格 id> running|passed|failed --evidence "檢查了什麼"
+SHIP: friction <功能 id|none> "<標題>" --severity low|medium|high|critical
+SHIP: regression <功能 id> "<標題>" --command "..." --expected "..."
+SHIP: create "<標題>" --problem "..." --outcome "..." --contract "..."
+```
+
+- 身分由會議室認定為回覆的 Bot，不能冒充；Bot 只能回報指派給自己的方格，不能改已通過的方格，建造者不能讓自己的方格通過。
+- `create` 只把發起的 Bot 列為建造者，標題與進行中的功能重複會被拒絕；`friction`、`regression` 只能寫在 Bot 參與且未結案的功能上（`friction none` 例外）。
+- 推進狀態、發布、核准、冒煙測試、回讀仍只能由你在交付分頁操作。
+- 一則回覆的結果合成一筆以「🚢 交付」寫回逐字稿，被拒絕會顯示原因，Bot 下一輪看得到；每位成員的提示詞會列出指派給它的方格。一則回覆最多執行 5 條。
+
 **API**：`/api/shipping`（清單、建立）、`/api/shipping/<id>`（讀取、PATCH 契約）、`/api/shipping/<id>/{advance,pause,resume,archive,invariants,squares,release,smoke,readback,regressions}`、`/api/shipping/<id>/squares/<方格 id>`（記錄結果）、`.../link`（連結任務）、`/api/shipping/friction`、`/api/shipping/regressions/<id>`。關卡沒過會回 409，`details.missing` 列出缺什麼。
 
 ## 8. 🔄 更新後重新載入方式 (How to Reload)

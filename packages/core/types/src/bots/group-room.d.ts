@@ -2,7 +2,7 @@ export type RoomStrategy = "round-robin" | "debate";
 export type RoomLogEntry = {
     at: string;
     /**
-     * - 'user' or a bot id
+     * - 'user', a bot id, or 'shipping' for SHIP: results
      */
     speaker: string;
     text: string;
@@ -42,14 +42,17 @@ export class GroupRoomManager {
      * @param {import('./message-router').DeliverFn} options.deliver
      * @param {string} [options.storagePath] - rooms.json; enables auto-persist when set
      * @param {(type: string, data: unknown) => void} [options.onEvent]
+     * @param {import('../shipping/shipping-ledger').ShippingLedger | null} [options.shipping] - enables SHIP: lines
      */
     constructor(options: {
         roster: import("./bot-roster").BotRoster;
         deliver: import("./message-router").DeliverFn;
         storagePath?: string | undefined;
         onEvent?: ((type: string, data: unknown) => void) | undefined;
+        shipping?: import("../shipping/shipping-ledger").ShippingLedger | null | undefined;
     });
     roster: import("./bot-roster").BotRoster;
+    shipping: import("../shipping/shipping-ledger").ShippingLedger | null;
     deliver: import("./message-router").DeliverFn;
     storagePath: string | null;
     onEvent: ((type: string, data: unknown) => void) | null;
@@ -152,6 +155,26 @@ export class GroupRoomManager {
      * @param {string} text
      */
     recordReply(room: GroupRoom, memberId: string, text: string): void;
+    /**
+     * @param {GroupRoom} room
+     * @param {string} memberId
+     * @param {string} text
+     */
+    recordDecisions(room: GroupRoom, memberId: string, text: string): void;
+    /**
+     * The shipping block of a member prompt, or none without a ledger.
+     * @param {import('./bot-roster').Bot} bot
+     * @returns {string[]}
+     */
+    shippingSection(bot: import("./bot-roster").Bot): string[];
+    /**
+     * Runs the reply's SHIP: lines as the replying bot and logs the results as one room entry, so
+     * the member sees a refusal on its next turn without the results crowding out the transcript.
+     * @param {GroupRoom} room
+     * @param {string} memberId
+     * @param {string} text
+     */
+    runShipCommands(room: GroupRoom, memberId: string, text: string): void;
     /** @param {string} id */
     nameOf(id: string): string;
     /**
@@ -197,7 +220,7 @@ export class GroupRoomManager {
  *
  * @typedef {Object} RoomLogEntry
  * @property {string} at
- * @property {string} speaker - 'user' or a bot id
+ * @property {string} speaker - 'user', a bot id, or 'shipping' for SHIP: results
  * @property {string} text
  * @property {boolean} [error]
  * @property {'passed' | 'held'} [kind] - passed: the member yielded; held: a verbatim repeat
@@ -223,8 +246,9 @@ export class GroupRoomManager {
  * @param {import('./bot-roster').Bot} bot
  * @param {GroupRoom} room
  * @param {(id: string) => string} nameOf
+ * @param {string[]} [extraSections] - e.g. the shipping block
  */
-export function buildMemberPrompt(strategy: RoomStrategy, bot: import("./bot-roster").Bot, room: GroupRoom, nameOf: (id: string) => string): string;
+export function buildMemberPrompt(strategy: RoomStrategy, bot: import("./bot-roster").Bot, room: GroupRoom, nameOf: (id: string) => string, extraSections?: string[]): string;
 /**
  * @param {string} text
  * @returns {string[]}

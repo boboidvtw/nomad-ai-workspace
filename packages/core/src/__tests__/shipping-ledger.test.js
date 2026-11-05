@@ -284,6 +284,12 @@ describe('Shipping ledger - evidence squares', () => {
       }),
       ErrorCodes.SHIPPING_SEPARATION_VIOLATION_005,
     );
+    for (const alias of ['@agent-claude', 'Agent-Claude']) {
+      fails(
+        ledger.updateSquare(f.id, sq.id, { status: 'passed', evidence: 'mine', actor: alias }),
+        ErrorCodes.SHIPPING_SEPARATION_VIOLATION_005,
+      );
+    }
     fails(
       ledger.updateSquare(f.id, sq.id, { status: 'passed', evidence: '', actor: 'operator' }),
       ErrorCodes.SHIPPING_EVIDENCE_REQUIRED_006,
