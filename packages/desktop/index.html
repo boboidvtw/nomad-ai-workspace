@@ -1782,34 +1782,101 @@
     <!-- Unified Right Sidebar Drawer (Occupies dedicated space, not occluded by WebContentsViews) -->
     <div class="right-sidebar" id="right-sidebar">
       <div class="sidebar-header">
-        <div class="sidebar-tabs">
-          <button class="btn-tab active" id="tab-btn-orch" onclick="switchSidebarTab('orch')">
+        <div class="sidebar-tabs" role="tablist" aria-label="側邊欄分頁">
+          <button
+            class="btn-tab active"
+            id="tab-btn-orch"
+            role="tab"
+            aria-label="圓桌"
+            aria-controls="tab-content-orch"
+            aria-selected="true"
+            onclick="switchSidebarTab('orch')"
+          >
             🤝 圓桌
           </button>
-          <button class="btn-tab" id="tab-btn-ws" onclick="switchSidebarTab('ws')">
+          <button
+            class="btn-tab"
+            id="tab-btn-ws"
+            role="tab"
+            aria-label="工作區"
+            aria-controls="tab-content-ws"
+            aria-selected="false"
+            onclick="switchSidebarTab('ws')"
+          >
             📁 工作區
           </button>
-          <button class="btn-tab" id="tab-btn-canvas" onclick="switchSidebarTab('canvas')">
+          <button
+            class="btn-tab"
+            id="tab-btn-canvas"
+            role="tab"
+            aria-label="畫布"
+            aria-controls="tab-content-canvas"
+            aria-selected="false"
+            onclick="switchSidebarTab('canvas')"
+          >
             🎨 畫布
           </button>
-          <button class="btn-tab" id="tab-btn-diff" onclick="switchSidebarTab('diff')">
+          <button
+            class="btn-tab"
+            id="tab-btn-diff"
+            role="tab"
+            aria-label="比對"
+            aria-controls="tab-content-diff"
+            aria-selected="false"
+            onclick="switchSidebarTab('diff')"
+          >
             ⚖️ 比對
           </button>
-          <button class="btn-tab" id="tab-btn-zoom" onclick="switchSidebarTab('zoom')">
+          <button
+            class="btn-tab"
+            id="tab-btn-zoom"
+            role="tab"
+            aria-label="縮放"
+            aria-controls="tab-content-zoom"
+            aria-selected="false"
+            onclick="switchSidebarTab('zoom')"
+          >
             🔍 縮放
           </button>
-          <button class="btn-tab" id="tab-btn-hud" onclick="switchSidebarTab('hud')">
+          <button
+            class="btn-tab"
+            id="tab-btn-hud"
+            role="tab"
+            aria-label="監控"
+            aria-controls="tab-content-hud"
+            aria-selected="false"
+            onclick="switchSidebarTab('hud')"
+          >
             🖥️ 監控
           </button>
-          <button class="btn-tab" id="tab-btn-settings" onclick="switchSidebarTab('settings')">
+          <button
+            class="btn-tab"
+            id="tab-btn-settings"
+            role="tab"
+            aria-label="設定"
+            aria-controls="tab-content-settings"
+            aria-selected="false"
+            onclick="switchSidebarTab('settings')"
+          >
             ⚙️ 設定
           </button>
         </div>
-        <span
-          style="cursor: pointer; color: var(--text-muted); font-size: 15px; padding: 2px 6px"
+        <button
+          type="button"
+          aria-label="關閉側邊欄"
+          title="關閉側邊欄"
+          style="
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 15px;
+            padding: 2px 6px;
+          "
           onclick="closeSidebar()"
-          >✕</span
         >
+          ✕
+        </button>
       </div>
 
       <!-- TAB 1: AI ORCHESTRATION -->
@@ -3956,9 +4023,15 @@
 
       function switchSidebarTab(tab) {
         state.activeSidebarTab = tab;
-        document.querySelectorAll('.btn-tab').forEach((b) => b.classList.remove('active'));
+        document.querySelectorAll('.btn-tab').forEach((b) => {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
         const tabBtn = document.getElementById('tab-btn-' + tab);
-        if (tabBtn) tabBtn.classList.add('active');
+        if (tabBtn) {
+          tabBtn.classList.add('active');
+          tabBtn.setAttribute('aria-selected', 'true');
+        }
 
         ['orch', 'ws', 'canvas', 'diff', 'zoom', 'hud', 'settings'].forEach((t) => {
           const el = document.getElementById('tab-content-' + t);

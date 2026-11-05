@@ -486,6 +486,22 @@ SHIP: create "<title>" --problem "..." --outcome "..." --contract "..."
 
 **API**: `/api/shipping` (list, create), `/api/shipping/<id>` (read, PATCH the contract), `/api/shipping/<id>/{advance,pause,resume,archive,invariants,squares,release,smoke,readback,regressions}`, `/api/shipping/<id>/squares/<square id>` (record a result), `.../link` (link a task), `/api/shipping/friction`, `/api/shipping/regressions/<id>`. A closed gate returns 409 with `details.missing`.
 
+### 7.15 Local Model Operates Desktop Apps (Desktop Agent)
+
+A local model on LM Studio reads a macOS app's accessibility tree, clicks and types through [agent-desktop](https://github.com/vercel-labs/agent-desktop) (Apache-2.0). The model and the screen content stay on this computer.
+
+**Before you start**:
+
+| Item                  | How                                                                                                                                                                                                                                                                                                                         |
+| :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Install agent-desktop | `npm i -g agent-desktop`; Studio looks in PATH, `~/.local/bin`, `/opt/homebrew/bin` and `/usr/local/bin`, or set `NOMAD_AGENT_DESKTOP_BIN`                                                                                                                                                                                  |
+| Accessibility access  | System Settings → Privacy & Security → Accessibility, add **Nomad AI Studio** (`agent-desktop permissions --guide` opens it). **The packaged app in `/Applications` needs its own grant**: a dev build started from a terminal inherits the terminal's access, so a working dev build does not mean the packaged app has it |
+| Local model           | Load a model with tool calling in LM Studio and start the server (`lms server start`); `qwen3.8-27b-uncensored-mlx` is tested                                                                                                                                                                                               |
+
+**Use**: sidebar "⚙️ 設定" tab → "🖥️ 本機模型操作桌面 App". Enter the app name (e.g. `Finder`), the model (blank = first model on the server), the step limit (default 8, max 20) and the task → "▶ 執行". Each tool call and result is listed as it happens, then the answer; "■ 中止" stops after the current step. The endpoint is the host and port of "本機推論端點" above, local addresses only.
+
+The model has four tools only: `snapshot`, `click`, `type` and `done`. It cannot press shortcuts, open or quit apps, delete or save, so open the app and its window first. `WINDOW_NOT_FOUND`, `APP_NOT_FOUND` and `PERM_DENIED` end the run at once. agent-desktop keeps snapshot records in `~/.agent-desktop/`; delete them when not needed.
+
 ## 8. 🔄 How to Reload After Updates
 
 1. Open Chrome extension management page at `chrome://extensions/`.
