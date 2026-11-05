@@ -493,6 +493,21 @@
         background: rgba(var(--fg-rgb), 0.15);
         color: var(--text-strong);
       }
+      .btn-ws-op:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      .desktop-agent-input {
+        min-width: 0;
+        font-size: 11px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        background: rgba(var(--well-rgb), 0.3);
+        border: 1px solid rgba(var(--fg-rgb), 0.1);
+        color: var(--text-strong);
+        font-family: inherit;
+        resize: vertical;
+      }
       .btn-ws-restore {
         background: rgba(var(--accent-rgb), 0.15);
         color: var(--accent-color);
@@ -2972,6 +2987,93 @@
           </div>
         </div>
 
+        <!-- Section 3.55: Desktop Agent (local model drives agent-desktop) -->
+        <div class="section-title">🖥️ 本機模型操作桌面 App (Desktop Agent)</div>
+        <div
+          id="desktop-agent-panel"
+          style="
+            background: rgba(var(--panel-rgb), 0.45);
+            border: 1px solid rgba(var(--fg-rgb), 0.08);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          "
+        >
+          <div style="font-size: 11px; color: var(--text-muted)">
+            用上方本機推論端點的模型，透過 agent-desktop 操作 macOS
+            App。只能讀畫面、點擊、輸入文字；不能按快捷鍵、開關 App 或存檔。
+          </div>
+          <div style="display: flex; gap: 8px">
+            <input
+              type="text"
+              id="desktop-agent-app"
+              value="Finder"
+              placeholder="App 名稱"
+              title="App 名稱"
+              class="desktop-agent-input"
+              style="flex: 2"
+            />
+            <input
+              type="text"
+              id="desktop-agent-model"
+              placeholder="模型（空白=第一個）"
+              title="模型 ID"
+              class="desktop-agent-input"
+              style="flex: 3"
+            />
+            <input
+              type="number"
+              id="desktop-agent-steps"
+              value="8"
+              min="1"
+              max="20"
+              title="步數上限"
+              class="desktop-agent-input"
+              style="flex: 1"
+            />
+          </div>
+          <textarea
+            id="desktop-agent-task"
+            rows="2"
+            class="desktop-agent-input"
+            placeholder="例：在 Finder 側欄點「應用程式」，回報前 3 個 App 名稱"
+          ></textarea>
+          <div style="display: flex; gap: 8px">
+            <button
+              id="desktop-agent-run"
+              class="btn-ws-op"
+              onclick="handleDesktopAgentRun()"
+              style="flex: 1; font-weight: 600"
+            >
+              ▶ 執行
+            </button>
+            <button
+              id="desktop-agent-stop"
+              class="btn-ws-op"
+              onclick="handleDesktopAgentStop()"
+              disabled
+              style="flex: 1"
+            >
+              ■ 中止
+            </button>
+          </div>
+          <div
+            id="desktop-agent-log"
+            style="
+              font-size: 11px;
+              font-family: ui-monospace, monospace;
+              color: var(--text-soft);
+              max-height: 220px;
+              overflow-y: auto;
+              display: flex;
+              flex-direction: column;
+              gap: 3px;
+            "
+          ></div>
+        </div>
+
         <!-- Section 3.6: Model Context Protocol (MCP) Host -->
         <div class="section-title">🔌 Nomad MCP 宿主網關 (Tools Protocol)</div>
         <div
@@ -5269,6 +5371,84 @@
             text.innerText = `無法連線至 ${host}:${port}。請確認 LM Studio 或 Ollama 服務已在本地啟動。`;
           }
         }
+      }
+
+      // --- Desktop Agent (local model + agent-desktop) ---
+      function appendDesktopAgentLine(text, tone) {
+        const log = document.getElementById('desktop-agent-log');
+        if (!log) return;
+        const line = document.createElement('div');
+        line.textContent = text;
+        if (tone === 'ok') line.style.color = 'var(--tint-emerald-400)';
+        if (tone === 'bad') line.style.color = 'var(--tint-red-400)';
+        if (tone === 'warn') line.style.color = 'var(--tint-amber-400)';
+        log.appendChild(line);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      function formatDesktopAgentStep(step) {
+        const t = `${(step.elapsedMs / 1000).toFixed(1)}s`;
+        if (step.kind === 'tool') {
+          const args = step.args && Object.keys(step.args).length ? JSON.stringify(step.args) : '';
+          const tone = step.ok === true ? '' : step.ok === 'unknown' ? 'warn' : 'bad';
+          return [`[${step.step}] ${step.tool}(${args}) → ${step.summary} · ${t}`, tone];
+        }
+        if (step.kind === 'note')
+          return [`[${step.step}] 模型沒呼叫工具：${step.summary || ''}`, 'warn'];
+        if (step.kind === 'done') return [`✅ 答案：${step.summary} · ${t}`, 'ok'];
+        return null;
+      }
+
+      if (window.nomadDesktop && window.nomadDesktop.onDesktopAgentStep) {
+        window.nomadDesktop.onDesktopAgentStep((step) => {
+          const line = step && formatDesktopAgentStep(step);
+          if (line) appendDesktopAgentLine(line[0], line[1]);
+        });
+      }
+
+      async function handleDesktopAgentRun() {
+        const task = document.getElementById('desktop-agent-task')?.value.trim() || '';
+        if (!task) return appendDesktopAgentLine('請先輸入任務', 'bad');
+        const runBtn = document.getElementById('desktop-agent-run');
+        const stopBtn = document.getElementById('desktop-agent-stop');
+        const log = document.getElementById('desktop-agent-log');
+        if (log) log.textContent = '';
+        if (runBtn) runBtn.disabled = true;
+        if (stopBtn) stopBtn.disabled = false;
+        appendDesktopAgentLine('執行中…每一步約 10–30 秒');
+        try {
+          const res = await window.nomadDesktop.desktopAgentRun({
+            task,
+            app: document.getElementById('desktop-agent-app')?.value.trim() || 'Finder',
+            model: document.getElementById('desktop-agent-model')?.value.trim() || '',
+            maxSteps: Number(document.getElementById('desktop-agent-steps')?.value || 8),
+            host: document.getElementById('local-model-host')?.value || '127.0.0.1',
+            port: Number(document.getElementById('local-model-port')?.value || 1234),
+          });
+          const reasons = {
+            aborted: '已中止',
+            max_steps: '超過步數上限仍未完成',
+            model_error: '模型錯誤',
+            desktop_error: '桌面操作無法繼續',
+          };
+          if (!res || !res.ok) {
+            const why = (res && (reasons[res.reason] || res.reason)) || '失敗';
+            appendDesktopAgentLine(`❌ ${why}${res && res.error ? '：' + res.error : ''}`, 'bad');
+          } else {
+            appendDesktopAgentLine(
+              `完成：${res.steps} 步，${(res.elapsedMs / 1000).toFixed(1)} 秒（${res.model}）`,
+              'ok',
+            );
+          }
+        } finally {
+          if (runBtn) runBtn.disabled = false;
+          if (stopBtn) stopBtn.disabled = true;
+        }
+      }
+
+      async function handleDesktopAgentStop() {
+        await window.nomadDesktop.desktopAgentStop();
+        appendDesktopAgentLine('已送出中止，等目前這一步結束…', 'warn');
       }
 
       // --- P3: MCP & RAG Handlers ---
