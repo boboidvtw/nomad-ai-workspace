@@ -383,21 +383,24 @@ curl -s http://127.0.0.1:8555/v1/systemone -H 'content-type: application/json' -
 
 Every card has ▶ 啟動 (start), ■ 關閉 (stop) and 📖 操作說明 (how-to). Status comes from real local checks. After a press the card shows 啟動中…, then 執行中 or the reason it failed.
 
-| Card                    | Start                            | Stop                  | Notes                                               |
-| :---------------------- | :------------------------------- | :-------------------- | :-------------------------------------------------- |
-| Laya                    | Starts port 8555                 | Stops the service     |                                                     |
-| LM Studio               | Opens the API on 1234            | Stops only the API    | Load a model separately                             |
-| ComfyUI                 | Starts port 8188                 | Stops that process    |                                                     |
-| Hermes Web              | Starts the UI on 9119            | Stops it              | First run builds the UI                             |
-| Hermes Telegram gateway | Connects to Telegram             | Disconnects           | It starts answering messages, so it asks first      |
-| MAIH                    | Builds and starts all containers | `docker compose down` | First run takes minutes; volumes are kept           |
-| PostgreSQL              | Starts the database              | `docker compose down` | Also stops Adminer; data is kept                    |
-| Redis                   | Starts Redis                     | `docker compose down` | Data is kept                                        |
-| Adminer                 | Starts with PostgreSQL           | Stops only Adminer    |                                                     |
-| Obsidian                | Opens the app                    | Quits the app         |                                                     |
-| Nomad AI Studio         | Opens the app                    | Quits the app         | Closes the Dashboard too, so it asks first          |
-| Claude Code, Codex      | Opens a new terminal window      | Not offered           | End them in the terminal, so other sessions survive |
-| Nomad orchestrator      | Unavailable                      | Unavailable           | Its install path no longer exists                   |
+| Card                    | Start                                    | Stop                  | Notes                                               |
+| :---------------------- | :--------------------------------------- | :-------------------- | :-------------------------------------------------- |
+| Laya                    | Starts port 8555                         | Stops the service     |                                                     |
+| LM Studio               | Opens the API on 1234                    | Stops only the API    | Load a model separately                             |
+| ComfyUI                 | Starts port 8188                         | Stops that process    |                                                     |
+| Hermes Agent (terminal) | Opens a terminal window running `hermes` | Not offered           | Type `/exit` in the window to end it                |
+| Hermes Web              | Starts the UI on 9119 and opens it       | Stops it              | First run builds the UI; opens it once started      |
+| Hermes Telegram gateway | Connects to Telegram                     | Disconnects           | It starts answering messages, so it asks first      |
+| MAIH                    | Builds and starts all containers         | `docker compose down` | First run takes minutes; volumes are kept           |
+| PostgreSQL              | Starts the database                      | `docker compose down` | Also stops Adminer; data is kept                    |
+| Redis                   | Starts Redis                             | `docker compose down` | Data is kept                                        |
+| Adminer                 | Starts with PostgreSQL                   | Stops only Adminer    |                                                     |
+| Obsidian                | Opens the app                            | Quits the app         |                                                     |
+| Nomad AI Studio         | Opens the app                            | Quits the app         | Closes the Dashboard too, so it asks first          |
+| Claude Code, Codex      | Opens a new terminal window              | Not offered           | End them in the terminal, so other sessions survive |
+| Nomad orchestrator      | Unavailable                              | Unavailable           | Its install path no longer exists                   |
+
+A service with a web UI (Hermes Web for now) opens it in the system browser once a ▶ 啟動 start completes; while it is already running, press 🌐 開啟介面 (open UI).
 
 Docker services open OrbStack first. When OrbStack starts, other containers set to restart automatically (such as cumora) come up too. Stopping a service does not stop OrbStack, so quit it yourself when idle.
 

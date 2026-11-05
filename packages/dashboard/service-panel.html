@@ -120,11 +120,11 @@
       },
       {
         card: 'card-hermes',
-        services: ['hermes-web', 'hermes-gateway'],
+        services: ['hermes-cli', 'hermes-web', 'hermes-gateway'],
         guide: [
-          'Hermes Web 是管理介面（9119 埠），只在本機使用。第一次啟動要建置，可能需要幾分鐘。',
+          '只想對話時，按「Hermes Agent（終端機）」的「開啟」，會開一個終端機視窗執行 hermes；離開時在視窗輸入 /exit。',
+          'Hermes Web 是管理介面（9119 埠），只在本機使用。第一次啟動要建置，可能需要幾分鐘；啟動完成會自動開啟介面，之後也可以按「🌐 開啟介面」。',
           'Telegram 閘道會連上 Telegram 並開始回覆訊息，所以啟動前會先詢問。',
-          '只想對話時，不必啟動這兩項，在終端機執行 hermes 即可。',
           '紀錄在 ~/.hermes/logs/agent.log。',
         ],
       },
@@ -229,6 +229,17 @@
         });
         row.appendChild(button);
       });
+      var ui = document.createElement('button');
+      ui.className = 'svc-btn';
+      ui.type = 'button';
+      ui.dataset.action = 'ui';
+      ui.textContent = '🌐 開啟介面';
+      ui.hidden = true;
+      ui.addEventListener('click', function () {
+        var service = state.byId[id];
+        if (service && service.ui) window.open(service.ui, '_blank', 'noopener');
+      });
+      row.appendChild(ui);
       var message = document.createElement('div');
       message.className = 'svc-message';
       message.hidden = true;
@@ -279,6 +290,9 @@
       start.disabled = !service.canStart;
       stop.disabled = !service.canStop;
       start.textContent = service.state === 'ready' ? '▶ 開啟' : '▶ 啟動';
+      var ui = row.querySelector('[data-action="ui"]');
+      ui.hidden = !service.ui;
+      ui.title = service.ui || '';
       message.textContent = service.message || '';
       message.hidden = !service.message;
     }

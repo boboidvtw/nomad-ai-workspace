@@ -388,20 +388,23 @@ curl -s http://127.0.0.1:8555/v1/systemone -H 'content-type: application/json' -
 
 每張卡片都有「▶ 啟動」「■ 關閉」按鈕和「📖 操作說明」。狀態由本機程式實際檢查，按下後會顯示「啟動中…」，完成後變成「執行中」或失敗原因。
 
-| 卡片                 | 啟動                 | 關閉                  | 備註                                 |
-| :------------------- | :------------------- | :-------------------- | :----------------------------------- |
-| Laya                 | 啟動 8555 服務       | 停止服務              |                                      |
-| LM Studio            | 開啟 1234 本機 API   | 只停 API              | 模型要另外載入                       |
-| ComfyUI              | 啟動 8188            | 停止該程序            |                                      |
-| Hermes Web           | 啟動 9119 管理介面   | 停止                  | 第一次要建置                         |
-| Hermes Telegram 閘道 | 連上 Telegram        | 中斷連線              | 會開始回覆訊息，所以啟動前會詢問     |
-| MAIH                 | 建置並啟動全部容器   | `docker compose down` | 第一次需要幾分鐘，資料保留在 volume  |
-| PostgreSQL           | 啟動資料庫           | `docker compose down` | 關閉時 Adminer 一起停，資料保留      |
-| Redis                | 啟動 Redis           | `docker compose down` | 資料保留                             |
-| Adminer              | 連同 PostgreSQL 啟動 | 只停 Adminer          |                                      |
-| Obsidian             | 開啟 App             | 結束 App              |                                      |
-| Nomad AI Studio      | 開啟 App             | 結束 App              | 會連 Dashboard 一起關，所以會詢問    |
-| Claude Code、Codex   | 開新的終端機視窗     | 不提供                | 請在終端機結束，以免中斷其他工作階段 |
+| 卡片                   | 啟動                          | 關閉                  | 備註                                 |
+| :--------------------- | :---------------------------- | :-------------------- | :----------------------------------- |
+| Laya                   | 啟動 8555 服務                | 停止服務              |                                      |
+| LM Studio              | 開啟 1234 本機 API            | 只停 API              | 模型要另外載入                       |
+| ComfyUI                | 啟動 8188                     | 停止該程序            |                                      |
+| Hermes Agent（終端機） | 開新的終端機視窗執行 `hermes` | 不提供                | 在視窗輸入 `/exit` 結束              |
+| Hermes Web             | 啟動 9119 管理介面            | 停止                  | 第一次要建置；啟動完成自動開啟介面   |
+| Hermes Telegram 閘道   | 連上 Telegram                 | 中斷連線              | 會開始回覆訊息，所以啟動前會詢問     |
+| MAIH                   | 建置並啟動全部容器            | `docker compose down` | 第一次需要幾分鐘，資料保留在 volume  |
+| PostgreSQL             | 啟動資料庫                    | `docker compose down` | 關閉時 Adminer 一起停，資料保留      |
+| Redis                  | 啟動 Redis                    | `docker compose down` | 資料保留                             |
+| Adminer                | 連同 PostgreSQL 啟動          | 只停 Adminer          |                                      |
+| Obsidian               | 開啟 App                      | 結束 App              |                                      |
+| Nomad AI Studio        | 開啟 App                      | 結束 App              | 會連 Dashboard 一起關，所以會詢問    |
+| Claude Code、Codex     | 開新的終端機視窗              | 不提供                | 請在終端機結束，以免中斷其他工作階段 |
+
+有網頁介面的服務（目前是 Hermes Web）按「▶ 啟動」並啟動完成後，會自動用系統瀏覽器開啟介面；已經在執行時，按「🌐 開啟介面」開啟。
 
 Docker 類服務會先自動開啟 OrbStack。OrbStack 啟動時，其他設定自動重啟的容器（例如 cumora）也會一起起來。關閉服務不會關閉 OrbStack，不用時請自行關閉。如果 OrbStack 在啟動途中重啟（例如自動更新），會自動再試一次；仍失敗才顯示「請再試一次」。
 

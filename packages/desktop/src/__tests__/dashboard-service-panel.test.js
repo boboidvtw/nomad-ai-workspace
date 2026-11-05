@@ -33,6 +33,21 @@ function fakeServices() {
       confirmStart: '確定嗎？',
     },
     {
+      id: 'hermes-web',
+      label: 'Hermes Web',
+      state: 'running',
+      canStart: false,
+      canStop: true,
+      ui: 'http://127.0.0.1:9119',
+    },
+    {
+      id: 'hermes-cli',
+      label: 'Hermes Agent（終端機）',
+      state: 'ready',
+      canStart: true,
+      canStop: false,
+    },
+    {
       id: 'comfyui',
       label: 'ComfyUI',
       state: 'unavailable',
@@ -45,12 +60,17 @@ function fakeServices() {
 
 async function loadDashboard({ confirmResult = true } = {}) {
   const posts = [];
+  const opened = [];
   const dom = new JSDOM(HTML, {
     url: 'http://127.0.0.1:8765/dashboard',
     runScripts: 'dangerously',
     virtualConsole: new VirtualConsole(),
     beforeParse(window) {
       window.confirm = () => confirmResult;
+      window.open = (url, target, features) => {
+        opened.push([url, target, features]);
+        return null;
+      };
       window.EventSource = class {
         close() {}
       };
@@ -68,7 +88,7 @@ async function loadDashboard({ confirmResult = true } = {}) {
   });
   openWindows.push(dom.window);
   await new Promise((resolve) => setTimeout(resolve, 60));
-  return { document: dom.window.document, window: dom.window, posts };
+  return { document: dom.window.document, window: dom.window, posts, opened };
 }
 
 // The dashboard's refresh timers would otherwise keep the test process alive.
@@ -111,6 +131,32 @@ test('Service panel: buttons send only the id, and follow the reported state', a
   ]);
 });
 
+test('Service panel: Hermes opens a Terminal from its card', async () => {
+  const { document, posts } = await loadDashboard();
+  const row = document.querySelector('#card-hermes .svc-row[data-service="hermes-cli"]');
+  const start = row.querySelector('[data-action="start"]');
+  assert.strictEqual(start.textContent, '▶ 開啟');
+  start.click();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.deepStrictEqual(posts, [
+    { url: 'http://127.0.0.1:8765/api/services/hermes-cli/start', body: undefined },
+  ]);
+});
+
+test('Service panel: a running service with a web UI can open it in a window', async () => {
+  const { document, opened, posts } = await loadDashboard();
+  const web = document.querySelector('.svc-row[data-service="hermes-web"] [data-action="ui"]');
+  assert.ok(web && !web.hidden);
+  assert.strictEqual(web.textContent, '🌐 開啟介面');
+  web.click();
+  assert.deepStrictEqual(opened, [['http://127.0.0.1:9119', '_blank', 'noopener']]);
+  assert.deepStrictEqual(posts, []);
+  const laya = document.querySelector('.svc-row[data-service="laya"] [data-action="ui"]');
+  assert.ok(laya.hidden);
+  // One way in: the old always-on link opened a dead page while Hermes Web was stopped.
+  assert.strictEqual(document.querySelectorAll('#card-hermes a[href*="9119"]').length, 0);
+});
+
 test('Service panel: an unavailable service shows why and cannot be pressed', async () => {
   const { document } = await loadDashboard();
   const row = document.querySelector('.svc-row[data-service="comfyui"]');
@@ -130,7 +176,8 @@ test('Service panel: declining the warning sends nothing', async () => {
 test('Summary: online count comes from real states, with no fixed bonus', async () => {
   const { document } = await loadDashboard();
   assert.ok(!INDEX.includes('currentOnline += 4'));
-  assert.strictEqual(document.getElementById('hud-online-count').textContent, '0');
+  // Only hermes-web runs in fakeServices; ready CLI entries are not counted.
+  assert.strictEqual(document.getElementById('hud-online-count').textContent, '1');
 });
 
 test('Commands: nothing points at tools or services this machine does not have', () => {

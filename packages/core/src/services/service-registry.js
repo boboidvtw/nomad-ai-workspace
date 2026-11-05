@@ -43,6 +43,7 @@ const BUILD_TIMEOUT_MS = 900000;
  * @property {string} [confirmStart]
  * @property {string} [confirmStop]
  * @property {string} [noStopReason]
+ * @property {string} [ui] - Local web UI, offered while the service runs
  */
 
 /**
@@ -130,9 +131,17 @@ function buildServiceRegistry(home) {
       stop: { kind: 'process', port: 8188, marker: 'main.py' },
     },
     {
+      id: 'hermes-cli',
+      label: 'Hermes Agent（終端機）',
+      start: { kind: 'terminal', command: 'hermes' },
+      stop: null,
+      noStopReason: TERMINAL_STOP_HINT,
+    },
+    {
       id: 'hermes-web',
       label: 'Hermes Web',
       check: { type: 'port', port: 9119 },
+      ui: 'http://127.0.0.1:9119',
       timeoutMs: 180000,
       start: {
         kind: 'daemon',

@@ -41,6 +41,10 @@ export type ServiceDefinition = {
     confirmStart?: string | undefined;
     confirmStop?: string | undefined;
     noStopReason?: string | undefined;
+    /**
+     * - Local web UI, offered while the service runs
+     */
+    ui?: string | undefined;
 };
 /**
  * @param {string} home
