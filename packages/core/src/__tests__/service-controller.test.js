@@ -396,10 +396,20 @@ test('registry: the Hermes gateway is found however hermes launches it', () => {
   const launcher =
     '/Users/u/.hermes/tools/python-3.14.9/bin/python3 -I -c import os, re, sys\n' +
     'from hermes_cli.main import main\nsys.exit(main())\n gateway run';
-  for (const cmd of [launcher, '/usr/local/bin/python3 /Users/u/.local/bin/hermes gateway run']) {
+  // `hermes gateway ensure` (v0.22.7, seen live) starts the gateway with trailing flags.
+  const ensured =
+    '/Users/u/.hermes/tools/python-3.14.9/bin/python3 -m hermes_cli.main --profile default ' +
+    'gateway run --quiet';
+  for (const cmd of [
+    launcher,
+    '/usr/local/bin/python3 /Users/u/.local/bin/hermes gateway run',
+    ensured,
+  ]) {
     assert.match(cmd, check);
     assert.match(cmd, new RegExp(stop.pattern, 's'));
     assert.ok(cmd.includes(stop.marker));
   }
   assert.doesNotMatch('zsh -c "hermes gateway run; tail -f log"', check);
+  assert.doesNotMatch('zsh -c "hermes gateway run --quiet && tail -f log"', check);
+  assert.doesNotMatch('hermes gateway runner', check);
 });
