@@ -490,6 +490,32 @@ SHIP: create "<標題>" --problem "..." --outcome "..." --contract "..."
 
 **API**：`/api/shipping`（清單、建立）、`/api/shipping/<id>`（讀取、PATCH 契約）、`/api/shipping/<id>/{advance,pause,resume,archive,invariants,squares,release,smoke,readback,regressions}`、`/api/shipping/<id>/squares/<方格 id>`（記錄結果）、`.../link`（連結任務）、`/api/shipping/friction`、`/api/shipping/regressions/<id>`。關卡沒過會回 409，`details.missing` 列出缺什麼。
 
+### 7.15 本機模型操作桌面 App (Desktop Agent)
+
+用 LM Studio 上的本機模型，透過 [agent-desktop](https://github.com/vercel-labs/agent-desktop)（Apache-2.0）讀取 macOS App 的輔助使用樹、點擊與輸入文字。模型與畫面內容都不離開這台電腦。
+
+**事前準備**：
+
+| 項目               | 做法                                                                                                                                                  |
+| :----------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 安裝 agent-desktop | `npm i -g agent-desktop`；Studio 會在 PATH、`~/.local/bin`、`/opt/homebrew/bin`、`/usr/local/bin` 找它，也可用環境變數 `NOMAD_AGENT_DESKTOP_BIN` 指定 |
+| 輔助使用權限       | 系統設定 → 隱私權與安全性 → 輔助使用，加入 **Nomad AI Studio**（執行 `agent-desktop permissions --guide` 會帶你過去）                                 |
+| 本機模型           | LM Studio 載入支援 tool calling 的模型並啟動 server（`lms server start`），實測 `qwen3.8-27b-uncensored-mlx` 可用                                     |
+
+**使用方式**：側邊欄「⚙️ 設定」分頁 →「🖥️ 本機模型操作桌面 App」（在「本機大模型雙軌引擎」下方）。填 App 名稱（例 `Finder`）、模型（空白＝server 上第一個模型）、步數上限（預設 8，最多 20）與任務 →「▶ 執行」。每一步的工具呼叫與結果會即時列出，最後顯示答案；「■ 中止」會在目前這一步結束後停止。端點沿用上方「本機推論端點」的主機與埠，只接受本機位址。
+
+**模型能做的事只有四個**：`snapshot`（讀畫面）、`click`、`type`、`done`。沒有快捷鍵、開關 App、刪除或存檔，所以要先自己把 App 和視窗打開。
+
+| 現象                                                           | 說明                                                                         |
+| :------------------------------------------------------------- | :--------------------------------------------------------------------------- |
+| 點擊結果「unknown」                                            | macOS 常回報「結果不確定」但其實成功，模型會被要求重新讀畫面確認，而不是重點 |
+| 文字區點擊被拒（`POLICY_DENIED`）                              | TextEdit 等文字區常見；直接 `type` 即可，模型通常會自己改用                  |
+| 立刻結束：`WINDOW_NOT_FOUND` / `APP_NOT_FOUND` / `PERM_DENIED` | App 沒開視窗、沒在執行或沒有輔助使用權限；模型無法自行處理，先手動排除       |
+| 多個視窗                                                       | 自動挑目前焦點（或第一個可見）的視窗                                         |
+| 速度                                                           | 27B 模型每步約 10–30 秒；實測 Finder 4 步約 90 秒、TextEdit 5 步約 40 秒     |
+
+**隱私**：畫面內容只送到本機模型，Studio 的 log 只記工具名稱與成功與否。agent-desktop 會把 snapshot 紀錄存在 `~/.agent-desktop/`，不需要時可以刪掉。
+
 ## 8. 🔄 更新後重新載入方式 (How to Reload)
 
 1. 開啟 Chrome 擴充功能管理頁面：`chrome://extensions/`。
