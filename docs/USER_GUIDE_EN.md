@@ -470,6 +470,20 @@ The "🚢 交付" tab follows a feature from idea to a confirmed result after re
 - A square can be linked to a task: approving that task in the Task Control Plane review gate passes the square, rejecting it fails the square, and the reviewer and feedback become the evidence.
 - Every change is appended to an event log that is never edited. Data lives in `~/.nomad/shipping.json` (mode 0600). The daemon and the Studio share the file and reload it after the other one writes.
 
+**Bots in a group room can report too**: set a square's owner to a bot's `@handle` (for example `@grok`) and the bot can run `SHIP:` lines in its room reply:
+
+```text
+SHIP: square <feature id> <square id> running|passed|failed --evidence "what you checked"
+SHIP: friction <feature id|none> "<title>" --severity low|medium|high|critical
+SHIP: regression <feature id> "<title>" --command "..." --expected "..."
+SHIP: create "<title>" --problem "..." --outcome "..." --contract "..."
+```
+
+- The room decides the actor (the replying bot), so a bot cannot speak for someone else. A bot reports only on squares assigned to it, cannot change a square that has passed, and cannot pass a square it builds.
+- `create` lists only the bot as a builder and refuses a title a live feature already has. `friction` and `regression` work only on live features the bot builds or owns a square of (`friction none` is always allowed).
+- Moving a feature, releases, approvals, smoke checks and readbacks stay with you in the Shipping tab.
+- The results of one reply are written back to the transcript as one "🚢 交付" entry, with the reason when refused, so the bot sees it next turn. Each member's prompt lists the squares assigned to it. At most 5 commands run per reply.
+
 **API**: `/api/shipping` (list, create), `/api/shipping/<id>` (read, PATCH the contract), `/api/shipping/<id>/{advance,pause,resume,archive,invariants,squares,release,smoke,readback,regressions}`, `/api/shipping/<id>/squares/<square id>` (record a result), `.../link` (link a task), `/api/shipping/friction`, `/api/shipping/regressions/<id>`. A closed gate returns 409 with `details.missing`.
 
 ## 8. 🔄 How to Reload After Updates

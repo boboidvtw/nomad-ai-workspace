@@ -380,4 +380,21 @@ Cumora 是「agent 與人同在一個團隊聊天室」的開源產品。它的�
 - **去重**：正規化後（忽略大小寫、空白與句尾標點）與既有決議相同的不再收錄，也不發事件（`newDecisions`）。
 - **回傳給成員**：最近 20 條決議放在提示詞的 `Decisions so far` 區塊。逐字稿只送最近 12 則，所以不另外放，成員就會忘掉早期的決議（`decisionsSection`）。
 
-不移植：seen-cursor 新鮮度閘門、併發上限與 AdaptivePacer（依序驅動用不到）；每個 agent 的真實 Email、雲端 pod、行動 App（需要伺服器，違反本機優先）。行事曆與 Shipping 證據生命週期留待後續評估。
+不移植：seen-cursor 新鮮度閘門、併發上限與 AdaptivePacer（依序驅動用不到）；每個 agent 的真實 Email、雲端 pod、行動 App（需要伺服器，違反本機優先）。行事曆與 Shipping 證據生命週期已在 PR #75 移植（見使用指南 7.14）。
+
+### 12.1 會議室裡的 ship 指令（2026-11-05）
+
+Cumora 把 `cumora ship list|show|create|square|friction|regression` 放進 agent 的回合提示詞，agent 用 CLI 執行（`server/src/agents/cli.ts` `cmdShip`）。Nomad 的 Bot 多半是網頁聊天，不能跑 CLI，所以改成讀回覆裡的 `SHIP:` 行（`bots/ship-commands.js`），沿用 `DECISION:` 的做法。
+
+| 規則     | 做法                                                                                                                                                                                            |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 指令範圍 | 與 Cumora 給 agent 的相同：`create`、`square`、`friction`、`regression`。`advance`、`release`、`approve`、`smoke`、`readback`、`pause`、`resume`、`archive` 一律拒絕                            |
+| 身分     | actor 由會議室決定為回覆者的 `@handle`，不讀自稱身分（比 HTTP API 的 actor 欄位更可信）                                                                                                         |
+| 授權     | 只能回報方格負責人是自己（`@handle` 或 bot id）的方格；負責人由人在交付分頁指派，等於指派就是授權                                                                                               |
+| 職責分離 | 建造者不能讓方格通過（先在指令層用 handle 與 id 比對，再由 ledger 檢查一次）；`create` 只把發起的 Bot 列為建造者（忽略 `--builders`，避免把審查者塞進建造者名單），標題與進行中的功能重複時拒絕 |
+| 關卡     | 全部交給 `ShippingLedger`：通過與失敗要證據、失敗自動建立摩擦與回歸、狀態限制。已通過的方格 Bot 不能改（改回會讓就緒的功能退回驗證中，由人決定）                                                |
+| 數量     | 每則回覆最多 5 條；`friction` / `regression` 只能寫在 Bot 參與（建造者或方格負責人）且未結案的功能上，`friction none` 例外                                                                      |
+| 回饋     | 一則回覆的結果合成一筆 `speaker: 'shipping'` 寫回逐字稿（有拒絕時 `error: true`），避免擠掉 12 則上下文；回顯的文字去掉換行與控制字元並截到 200 字；另發 `room:shipping` 事件                   |
+| 讀取     | 不提供 `list` / `show`：提示詞直接附上指派給該 Bot 的方格（最多 10 個，標題截短並加引號、標示為資料）與指令語法                                                                                 |
+
+只在會議室生效；一對一 `@mention` 的回覆不執行 `SHIP:` 行。

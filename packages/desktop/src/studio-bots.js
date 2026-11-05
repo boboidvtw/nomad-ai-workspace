@@ -124,10 +124,12 @@ function createStudioBots(deps) {
     runTask,
     /**
      * Exposes routing and rooms on the bridge's /api/bots/* routes and room events on SSE.
-     * @param {{ botServices: import('@nomad/core').BotServices, broadcast?: (type: string, data: unknown) => void }} bridge
+     * Room members report shipping work through the bridge's ledger (SHIP: lines).
+     * @param {{ botServices: import('@nomad/core').BotServices, broadcast?: (type: string, data: unknown) => void, shipping?: import('@nomad/core').ShippingLedger }} bridge
      */
     attach(bridge) {
       if (!enabled) return;
+      rooms.shipping = bridge.shipping || null;
       bridge.botServices.router = router;
       bridge.botServices.rooms = rooms;
       bridge.botServices.capabilities = async () => ({

@@ -11,6 +11,8 @@
 - **本機模型操作桌面 App（Desktop Agent）**：Studio 側邊欄「⚙️ 設定」新增「🖥️ 本機模型操作桌面 App」，由 LM Studio 的本機模型透過 [agent-desktop](https://github.com/vercel-labs/agent-desktop)（Apache-2.0）操作 macOS App，畫面逐步顯示每次工具呼叫與結果。只開放讀畫面、點擊、輸入文字與完成四個工具，預設 8 步上限、可中止；App 沒開或沒權限時立即停止並說明原因。實測 Finder 與 TextEdit 任務皆完成。見使用手冊 7.15。
 - **排程行事曆**：Dashboard 新增「📅 排程行事曆」分頁，用月曆顯示每個排程預計何時執行、已經跑過幾次（失敗標紅），以及交付功能的回讀到期日與目標日，依你的時區切日。API：`GET /api/calendar`。
 - **交付生命週期（借鏡 [Cumora](https://github.com/yetone/cumora) SHIPPING.md，MIT）**：Dashboard 新增「🚢 交付」分頁，功能從草稿走到上線後回讀，每一關都要證據。建造者不能讓自己的方格通過；方格失敗會自動建立摩擦與回歸項目；回讀逾期會自動標記。證據方格可連結任務，任務在 review gate 核准就通過。API：`/api/shipping/*`，資料存在 `~/.nomad/shipping.json`。
+- **Bots 從會議室推進交付方格（借鏡 Cumora 的 `cumora ship` 指令）**：會議室成員可以在回覆裡寫 `SHIP:` 開頭的行回報交付工作，支援 `square`（running / passed / failed，附 `--evidence`）、`friction`、`regression`、`create`。身分由會議室認定為回覆的 `@handle`，不採自稱；Bot 只能回報指派給它（方格負責人）的方格、不能改已通過的方格，建造者不能讓自己的方格通過，摩擦與回歸只能寫在它參與的功能上，推進狀態、發布、核准、冒煙測試與回讀仍只限人在「🚢 交付」分頁操作。執行結果寫回逐字稿（標示「🚢 交付」），被拒絕時 Bot 下一輪看得到原因；每位成員的提示詞會列出指派給它的方格。
+- **交付分權比對更嚴格**：建造者、核准者比對忽略大小寫與開頭的 `@`，`@Claude` 不再能繞過列為 `claude` 的建造者。
 - **會議室協作規則（借鏡 [Cumora](https://github.com/yetone/cumora)，MIT）**：
   - 成員沒有新內容時可回 `[PASS]` 讓位，逐字稿顯示為「讓位」，不放進下一位的上下文。
   - 與最近 12 則逐字相同的發言（忽略大小寫、空白與句尾標點）會被攔截，顯示為刪除線，不進上下文。

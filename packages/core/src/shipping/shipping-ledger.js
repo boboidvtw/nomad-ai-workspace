@@ -213,7 +213,7 @@ class ShippingLedger {
     if (!M.SQUARE_STATUSES.includes(status)) return invalid(`Unknown square status "${status}"`);
     const actor = actorOf(input);
     const evidence = M.text(input.evidence);
-    if (status === 'passed' && feature.builders.includes(actor)) {
+    if (status === 'passed' && M.isBuilder(feature.builders, actor)) {
       return err(
         ErrorCodes.SHIPPING_SEPARATION_VIOLATION_005,
         `${actor} builds this feature and cannot pass its square`,
@@ -349,13 +349,13 @@ class ShippingLedger {
     if (feature.state !== M.SHIP_STATE.READY)
       return wrongState('Plan a release once the feature is ready');
     const approvedBy = M.text(input?.approvedBy) || null;
-    if (approvedBy && approvedBy !== actorOf(input)) {
+    if (approvedBy && !M.sameActor(approvedBy, actorOf(input))) {
       return err(
         ErrorCodes.SHIPPING_SEPARATION_VIOLATION_005,
         `Only ${approvedBy} can record their own approval`,
       );
     }
-    if (approvedBy && feature.builders.includes(approvedBy)) {
+    if (approvedBy && M.isBuilder(feature.builders, approvedBy)) {
       return err(
         ErrorCodes.SHIPPING_SEPARATION_VIOLATION_005,
         `${approvedBy} builds this feature and cannot approve its release`,

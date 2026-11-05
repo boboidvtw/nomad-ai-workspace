@@ -173,6 +173,22 @@ function textList(value) {
   return Array.isArray(value) ? [...new Set(value.map(text).filter(Boolean))] : [];
 }
 
+/**
+ * Whether two actor names are the same person or bot (case and a leading @ ignored), so
+ * "@Claude" cannot slip past a builder listed as "claude".
+ * @param {unknown} a
+ * @param {unknown} b
+ */
+function sameActor(a, b) {
+  const key = (/** @type {unknown} */ v) => text(v).replace(/^@/, '').toLowerCase();
+  return key(a) !== '' && key(a) === key(b);
+}
+
+/** @param {string[]} builders @param {unknown} actor */
+function isBuilder(builders, actor) {
+  return builders.some((b) => sameActor(b, actor));
+}
+
 /** @param {Severity | string} severity */
 function severityRank(severity) {
   return SEVERITIES.indexOf(/** @type {Severity} */ (severity)) + 1;
@@ -358,6 +374,8 @@ module.exports = {
   missing,
   text,
   textList,
+  sameActor,
+  isBuilder,
   severityRank,
   nextState,
   gateMissing,

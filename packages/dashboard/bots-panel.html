@@ -721,6 +721,7 @@
 
     function speakerName(id) {
       if (id === 'user') return '你';
+      if (id === 'shipping') return '🚢 交付';
       var bot = botById(id);
       return bot ? nameOf(bot) : id;
     }

@@ -245,6 +245,15 @@ export function missing(what: string, id: string): import("../result").UnitFailu
 export function text(value: unknown): string;
 /** @param {unknown} value @returns {string[]} */
 export function textList(value: unknown): string[];
+/**
+ * Whether two actor names are the same person or bot (case and a leading @ ignored), so
+ * "@Claude" cannot slip past a builder listed as "claude".
+ * @param {unknown} a
+ * @param {unknown} b
+ */
+export function sameActor(a: unknown, b: unknown): boolean;
+/** @param {string[]} builders @param {unknown} actor */
+export function isBuilder(builders: string[], actor: unknown): boolean;
 /** @param {Severity | string} severity */
 export function severityRank(severity: Severity | string): number;
 /** @param {ShipState} state @returns {ShipState | null} */

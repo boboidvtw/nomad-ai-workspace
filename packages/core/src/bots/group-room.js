@@ -9,7 +9,8 @@
  *   - a member may yield with `[PASS]` instead of restating others (glance-protocol.ts);
  *   - a reply that repeats a recent message verbatim is held out of the transcript
  *     context (docs/COORDINATION.md §5b "verbatim-dup HOLD");
- *   - `DECISION:` lines are collected as the room's decisions (convene.ts 'decision').
+ *   - `DECISION:` lines are collected as the room's decisions (convene.ts 'decision');
+ *   - `SHIP:` lines report shipping work when a ledger is attached (see ship-commands.js).
  * Governed by AGENTS.md Section 6 Result Pattern & Error Codes.
  */
 
@@ -21,6 +22,7 @@ const { ok, err } = require('../result');
 const { PRIVATE_DIR_MODE, PRIVATE_FILE_MODE } = require('../constants');
 const { ErrorCodes } = require('../error-codes');
 const { parseMentions } = require('./message-router');
+const { applyShipCommands, shipLogText, shipPromptSection } = require('./ship-commands');
 
 const DEFAULT_ROOMS_PATH = path.join(os.homedir(), '.nomad', 'rooms.json');
 const MAX_LOG_ENTRIES = 200;
@@ -39,7 +41,7 @@ const DECISION_PATTERN =
  *
  * @typedef {Object} RoomLogEntry
  * @property {string} at
- * @property {string} speaker - 'user' or a bot id
+ * @property {string} speaker - 'user', a bot id, or 'shipping' for SHIP: results
  * @property {string} text
  * @property {boolean} [error]
  * @property {'passed' | 'held'} [kind] - passed: the member yielded; held: a verbatim repeat
@@ -66,8 +68,9 @@ const DECISION_PATTERN =
  * @param {import('./bot-roster').Bot} bot
  * @param {GroupRoom} room
  * @param {(id: string) => string} nameOf
+ * @param {string[]} [extraSections] - e.g. the shipping block
  */
-function buildMemberPrompt(strategy, bot, room, nameOf) {
+function buildMemberPrompt(strategy, bot, room, nameOf, extraSections = []) {
   const transcript = contextEntries(room)
     .map((entry) => `[${entry.speaker === 'user' ? 'User' : nameOf(entry.speaker)}]: ${entry.text}`)
     .join('\n\n');
@@ -85,6 +88,7 @@ function buildMemberPrompt(strategy, bot, room, nameOf) {
     'If you have nothing new to add, reply with exactly [PASS] and nothing else.',
     'If the room settles something, add one line per decision starting with "DECISION: ".',
     ...decisionsSection(room),
+    ...extraSections,
     '--- Room transcript ---',
     transcript,
   ].join('\n\n');
@@ -172,9 +176,11 @@ class GroupRoomManager {
    * @param {import('./message-router').DeliverFn} options.deliver
    * @param {string} [options.storagePath] - rooms.json; enables auto-persist when set
    * @param {(type: string, data: unknown) => void} [options.onEvent]
+   * @param {import('../shipping/shipping-ledger').ShippingLedger | null} [options.shipping] - enables SHIP: lines
    */
   constructor(options) {
     this.roster = options.roster;
+    this.shipping = options.shipping || null;
     this.deliver = options.deliver;
     this.storagePath = options.storagePath || null;
     this.onEvent = options.onEvent || null;
@@ -342,7 +348,13 @@ class GroupRoomManager {
       return;
     }
     const bot = /** @type {import('./bot-roster').Bot} */ (botRes.data);
-    const prompt = buildMemberPrompt(room.strategy, bot, room, (id) => this.nameOf(id));
+    const prompt = buildMemberPrompt(
+      room.strategy,
+      bot,
+      room,
+      (id) => this.nameOf(id),
+      this.shippingSection(bot),
+    );
     this.emit('room:turn', { roomId: room.id, memberId, status: 'started' });
     let reply;
     try {
@@ -374,12 +386,63 @@ class GroupRoomManager {
       return;
     }
     this.append(room, { speaker: memberId, text });
+    this.recordDecisions(room, memberId, text);
+    try {
+      this.runShipCommands(room, memberId, text);
+    } catch (e) {
+      console.warn('[GroupRoom] SHIP: lines failed:', e instanceof Error ? e.message : e);
+    }
+  }
+
+  /**
+   * @param {GroupRoom} room
+   * @param {string} memberId
+   * @param {string} text
+   */
+  recordDecisions(room, memberId, text) {
     const found = newDecisions(room, extractDecisions(text));
     if (found.length === 0) return;
     const at = new Date().toISOString();
     const added = found.map((decision) => ({ at, by: memberId, text: decision }));
     this.update(room, { decisions: [...room.decisions, ...added].slice(-MAX_DECISIONS) });
     for (const decision of added) this.emit('room:decision', { roomId: room.id, decision });
+  }
+
+  /**
+   * The shipping block of a member prompt, or none without a ledger.
+   * @param {import('./bot-roster').Bot} bot
+   * @returns {string[]}
+   */
+  shippingSection(bot) {
+    if (!this.shipping) return [];
+    try {
+      return shipPromptSection(this.shipping, { id: bot.id, handle: bot.handle });
+    } catch (e) {
+      console.warn('[GroupRoom] Shipping prompt failed:', e instanceof Error ? e.message : e);
+      return [];
+    }
+  }
+
+  /**
+   * Runs the reply's SHIP: lines as the replying bot and logs the results as one room entry, so
+   * the member sees a refusal on its next turn without the results crowding out the transcript.
+   * @param {GroupRoom} room
+   * @param {string} memberId
+   * @param {string} text
+   */
+  runShipCommands(room, memberId, text) {
+    if (!this.shipping) return;
+    const botRes = this.roster.getAgent(memberId);
+    if (!botRes.success) return;
+    const bot = /** @type {import('./bot-roster').Bot} */ (botRes.data);
+    const outcomes = applyShipCommands(this.shipping, text, { id: bot.id, handle: bot.handle });
+    if (outcomes.length === 0) return;
+    this.append(room, {
+      speaker: 'shipping',
+      text: shipLogText(bot.handle, outcomes),
+      ...(outcomes.every((o) => o.ok) ? {} : { error: true }),
+    });
+    this.emit('room:shipping', { roomId: room.id, memberId, outcomes });
   }
 
   /** @param {string} id */
