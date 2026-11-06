@@ -175,11 +175,13 @@ function toWireMessages(messages) {
 
 /**
  * @param {string} app
+ * @param {string} [windowTitle]
  * @returns {string}
  */
-function buildSystemPrompt(app) {
+function buildSystemPrompt(app, windowTitle = '') {
+  const scope = windowTitle ? ` (window '${windowTitle}')` : '';
   return (
-    `You operate the macOS app '${app}' via tools. Loop: snapshot -> act -> snapshot to verify. ` +
+    `You operate the macOS app '${app}'${scope} via tools. Loop: snapshot -> act -> snapshot to verify. ` +
     'Refs are only valid for the latest snapshot. Only click what the task requires; ' +
     'never open files or apps unless asked. Reading information needs no click. ' +
     'Call done as soon as the task is verified.'
@@ -216,19 +218,79 @@ function stripThinking(/** @type {string} */ text) {
 }
 
 /**
+ * Per-run settings and window choice. Refs belong to one snapshot of one window, so once a
+ * window is picked every later snapshot stays on it instead of jumping to whichever is
+ * focused. `headed` allows physical typing as a last resort (it takes focus and the cursor).
+ * @typedef {{ windowTitle: string, windowId: string, headed: boolean }} RunScope
+ */
+
+/**
  * @param {DesktopExec} exec
  * @param {string} app
  * @param {AbortSignal | undefined} signal
+ * @returns {Promise<any[]>}
+ */
+async function listWindows(exec, app, signal) {
+  const windows = await exec(['list-windows', '--app', app], { signal });
+  return Array.isArray(windows?.data) ? windows.data : [];
+}
+
+/**
+ * @param {DesktopExec} exec
+ * @param {string} app
+ * @param {AbortSignal | undefined} signal
+ * @param {RunScope} scope
  * @returns {Promise<{ content: string, summary: string, ok: boolean, fatal?: string }>}
  */
-async function takeSnapshot(exec, app, signal) {
+async function takeSnapshot(exec, app, signal, scope) {
   // No -i: list item names live in `value` and -i drops them.
-  let env = await exec(['snapshot', '--app', app], { signal });
+  /** @type {DesktopEnvelope | undefined} */
+  let env;
+  if (scope.windowId) {
+    env = await exec(['snapshot', '--app', app, '--window-id', scope.windowId], { signal });
+    // The picked window was closed: choose again below.
+    if (!env?.ok && errorOf(env).code === 'WINDOW_NOT_FOUND') scope.windowId = '';
+  }
+  if (!scope.windowId && scope.windowTitle) {
+    const wanted = scope.windowTitle.toLowerCase();
+    const list = await listWindows(exec, app, signal);
+    const pick =
+      list.find(
+        (w) =>
+          w?.visible &&
+          String(w.title || '')
+            .toLowerCase()
+            .includes(wanted),
+      ) ||
+      list.find((w) =>
+        String(w.title || '')
+          .toLowerCase()
+          .includes(wanted),
+      );
+    if (!pick?.id) {
+      const error = {
+        code: 'WINDOW_NOT_FOUND',
+        message: `no window titled '${scope.windowTitle}'`,
+      };
+      const content = JSON.stringify({ ok: false, error });
+      return {
+        content,
+        summary: content.slice(0, SUMMARY_CHARS),
+        ok: false,
+        fatal: `WINDOW_NOT_FOUND: ${app} has no window titled '${scope.windowTitle}'; open it first`,
+      };
+    }
+    scope.windowId = String(pick.id);
+    env = await exec(['snapshot', '--app', app, '--window-id', scope.windowId], { signal });
+  }
+  if (!env) env = await exec(['snapshot', '--app', app], { signal });
   if (!env?.ok && /AMBIGUOUS_TARGET/i.test(`${errorOf(env).code} ${errorOf(env).message}`)) {
-    const windows = await exec(['list-windows', '--app', app], { signal });
-    const list = Array.isArray(windows?.data) ? windows.data : [];
+    const list = await listWindows(exec, app, signal);
     const pick = list.find((w) => w?.is_focused) || list.find((w) => w?.visible) || list[0];
-    if (pick?.id) env = await exec(['snapshot', '--app', app, '--window-id', pick.id], { signal });
+    if (pick?.id) {
+      scope.windowId = String(pick.id);
+      env = await exec(['snapshot', '--app', app, '--window-id', scope.windowId], { signal });
+    }
   }
   if (!env?.ok || !env.data?.tree) {
     const error = errorOf(env);
@@ -244,22 +306,53 @@ async function takeSnapshot(exec, app, signal) {
 }
 
 /**
+ * Types text. Web fields in Safari and Chromium often accept keystrokes without applying
+ * them, which agent-desktop reports as "Post-action state does not match" even when the text
+ * did land. Order: (1) if the field already ends with the text, report success rather than
+ * typing twice; (2) write current value + text with set-value, which needs no focus or
+ * cursor (works for single-line fields, not Safari <textarea>); (3) only when the run allows
+ * it, type physically with --headed. Anything else, or every tier failing, returns the
+ * original error.
+ * @param {DesktopExec} exec
+ * @param {string} ref
+ * @param {string} text
+ * @param {AbortSignal | undefined} signal
+ * @param {boolean} headed
+ * @returns {Promise<DesktopEnvelope>}
+ */
+async function typeText(exec, ref, text, signal, headed) {
+  // --stdin keeps the text out of the process arguments.
+  const env = await exec(['type', ref, '--stdin'], { stdin: text, signal });
+  if (env?.ok || !/does not match the requested change/i.test(errorOf(env).message)) return env;
+  const current = await exec(['get', ref, '--property', 'value'], { signal });
+  const before = current?.ok && typeof current.data?.value === 'string' ? current.data.value : '';
+  if (text && before.endsWith(text)) return { ok: true };
+  const set = await exec(['set-value', ref, '--stdin'], { stdin: before + text, signal });
+  if (set?.ok) return set;
+  if (headed) {
+    const physical = await exec(['type', ref, '--stdin', '--headed'], { stdin: text, signal });
+    if (physical?.ok) return physical;
+  }
+  return env;
+}
+
+/**
  * @param {DesktopExec} exec
  * @param {string} name
  * @param {Record<string, unknown>} args
  * @param {string} app
  * @param {AbortSignal | undefined} signal
+ * @param {RunScope} scope
  * @returns {Promise<{ content: string, summary: string, ok: boolean | string, fatal?: string }>}
  */
-async function runTool(exec, name, args, app, signal) {
-  if (name === 'snapshot') return takeSnapshot(exec, app, signal);
+async function runTool(exec, name, args, app, signal, scope) {
+  if (name === 'snapshot') return takeSnapshot(exec, app, signal, scope);
   if (name === 'click' || name === 'type') {
     const ref = fixRef(args.ref);
     const env =
       name === 'click'
         ? await exec(['click', ref], { signal })
-        : // --stdin keeps the text out of the process arguments.
-          await exec(['type', ref, '--stdin'], { stdin: String(args.text ?? ''), signal });
+        : await typeText(exec, ref, String(args.text ?? ''), signal, scope.headed);
     const content = actionResult(env, ref);
     return { content, summary: content.slice(0, SUMMARY_CHARS), ok: JSON.parse(content).ok };
   }
@@ -272,16 +365,31 @@ async function runTool(exec, name, args, app, signal) {
  */
 function createDesktopAgent({ exec, chat, now = Date.now }) {
   /**
-   * @param {{ task: string, app: string, model: string, maxSteps?: number, signal?: AbortSignal, onStep?: (step: AgentStep) => void }} options
+   * @param {{ task: string, app: string, model: string, windowTitle?: string, headed?: boolean, maxSteps?: number, signal?: AbortSignal, onStep?: (step: AgentStep) => void }} options
    * @returns {Promise<AgentResult>}
    */
-  async function run({ task, app, model, maxSteps, signal, onStep = () => {} }) {
+  async function run({
+    task,
+    app,
+    model,
+    windowTitle = '',
+    headed = false,
+    maxSteps,
+    signal,
+    onStep = () => {},
+  }) {
     const started = now();
+    /** @type {RunScope} */
+    const scope = {
+      windowTitle: String(windowTitle).trim(),
+      windowId: '',
+      headed: headed === true,
+    };
     const limit = clampSteps(maxSteps);
     const elapsed = () => now() - started;
     /** @type {AgentMessage[]} */
     let messages = [
-      { role: 'system', content: buildSystemPrompt(app) },
+      { role: 'system', content: buildSystemPrompt(app, scope.windowTitle) },
       { role: 'user', content: task },
     ];
     /** @param {Omit<AgentResult, 'elapsedMs'>} r */
@@ -356,7 +464,7 @@ function createDesktopAgent({ exec, chat, now = Date.now }) {
               summary: argError,
               ok: false,
             }
-          : await runTool(exec, name, args, app, signal);
+          : await runTool(exec, name, args, app, signal, scope);
         onStep({
           step,
           kind: 'tool',

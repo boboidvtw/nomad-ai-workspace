@@ -3084,6 +3084,14 @@
             />
             <input
               type="text"
+              id="desktop-agent-window"
+              placeholder="視窗標題（可空白）"
+              title="App 有多個視窗時，只操作標題含這段文字的視窗"
+              class="desktop-agent-input"
+              style="flex: 2"
+            />
+            <input
+              type="text"
               id="desktop-agent-model"
               placeholder="模型（空白=第一個）"
               title="模型 ID"
@@ -3101,6 +3109,13 @@
               style="flex: 1"
             />
           </div>
+          <label
+            style="display: flex; gap: 6px; align-items: center; font-size: 12px"
+            title="網頁輸入框（尤其 Safari 的多行文字框）有時只能用實體鍵盤輸入；這會搶走焦點與游標，執行期間請勿操作電腦"
+          >
+            <input type="checkbox" id="desktop-agent-headed" />
+            允許實體輸入（網頁多行文字框用；會搶焦點，執行時請勿操作）
+          </label>
           <textarea
             id="desktop-agent-task"
             rows="2"
@@ -5493,6 +5508,8 @@
           const res = await window.nomadDesktop.desktopAgentRun({
             task,
             app: document.getElementById('desktop-agent-app')?.value.trim() || 'Finder',
+            windowTitle: document.getElementById('desktop-agent-window')?.value.trim() || '',
+            headed: Boolean(document.getElementById('desktop-agent-headed')?.checked),
             model: document.getElementById('desktop-agent-model')?.value.trim() || '',
             maxSteps: Number(document.getElementById('desktop-agent-steps')?.value || 8),
             host: document.getElementById('local-model-host')?.value || '127.0.0.1',

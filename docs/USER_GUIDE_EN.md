@@ -503,7 +503,7 @@ A local model on LM Studio reads a macOS app's accessibility tree, clicks and ty
 
 **Use**: sidebar "⚙️ 設定" tab → "🖥️ 本機模型操作桌面 App". Enter the app name (e.g. `Finder`), the model (blank = first model on the server), the step limit (default 8, max 20) and the task → "▶ 執行". Each tool call and result is listed as it happens, then the answer; "■ 中止" stops after the current step. The endpoint is the host and port of "本機推論端點" above, local addresses only.
 
-The model has four tools only: `snapshot`, `click`, `type` and `done`. It cannot press shortcuts, open or quit apps, delete or save, so open the app and its window first. `WINDOW_NOT_FOUND`, `APP_NOT_FOUND` and `PERM_DENIED` end the run at once. agent-desktop keeps snapshot records in `~/.agent-desktop/`; delete them when not needed.
+The model has four tools only: `snapshot`, `click`, `type` and `done`. It cannot press shortcuts, open or quit apps, delete or save, so open the app and its window first. `WINDOW_NOT_FOUND`, `APP_NOT_FOUND` and `PERM_DENIED` end the run at once. When an app has several windows, type part of a title into the "window title" field to work in that window only; the run stays on it (blank = the focused or first visible window, also fixed for the whole run). If typing into a web field (Safari, Chromium) is reported as not matching, the agent first checks whether the text landed, then writes the value with `set-value` (works for single-line fields). Safari multi-line text areas need "Allow physical input", which takes focus and the cursor, so leave the computer alone while it runs. agent-desktop keeps snapshot records in `~/.agent-desktop/`; delete them when not needed.
 
 ## 8. 🔄 How to Reload After Updates
 

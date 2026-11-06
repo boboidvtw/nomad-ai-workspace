@@ -16,24 +16,28 @@ const APP_NAME_RE = /^[\p{L}\p{N} ._-]{1,64}$/u;
 
 /**
  * @param {unknown} options
- * @returns {{ task: string, app: string, model: string, host: string, port: number, maxSteps: number } | { error: string }}
+ * @returns {{ task: string, app: string, windowTitle: string, headed: boolean, model: string, host: string, port: number, maxSteps: number } | { error: string }}
  */
 function validateRunOptions(options) {
   const o =
     options && typeof options === 'object' ? /** @type {Record<string, unknown>} */ (options) : {};
   const task = String(o.task ?? '').trim();
   const app = String(o.app ?? '').trim();
+  const windowTitle = String(o.windowTitle ?? '').trim();
   const host = String(o.host || '127.0.0.1');
   const port = Number(o.port || 1234);
   if (!task) return { error: 'task is required' };
   if (task.length > 2000) return { error: 'task is too long (max 2000 chars)' };
   if (!APP_NAME_RE.test(app)) return { error: 'app must be an app name such as Finder' };
+  if (windowTitle.length > 100) return { error: 'windowTitle is too long (max 100 chars)' };
   // The model server must be on this machine: snapshots carry private desktop content.
   if (!['127.0.0.1', 'localhost', '::1'].includes(host)) return { error: 'host must be local' };
   if (!Number.isInteger(port) || port < 1 || port > 65535) return { error: 'invalid port' };
   return {
     task,
     app,
+    windowTitle,
+    headed: o.headed === true,
     host,
     port,
     model: String(o.model ?? '').trim(),
@@ -87,6 +91,8 @@ function registerDesktopAgentIpc({ ipcMain, getWindow }) {
       const result = await agent.run({
         task: opts.task,
         app: opts.app,
+        windowTitle: opts.windowTitle,
+        headed: opts.headed,
         model,
         maxSteps: opts.maxSteps,
         signal: controller.signal,
