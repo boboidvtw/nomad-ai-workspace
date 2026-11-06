@@ -455,6 +455,9 @@ test('registry: Hermes runs as a CLI in Terminal and offers its web UI on this m
   assert.strictEqual(byId['hermes-cli'].stop, null);
   assert.ok(byId['hermes-cli'].noStopReason);
   assert.strictEqual(byId['hermes-web'].ui, 'http://127.0.0.1:9119');
+  assert.strictEqual(byId.comfyui.ui, 'http://127.0.0.1:8188');
+  assert.strictEqual(byId.adminer.ui, 'http://127.0.0.1:8080');
+  assert.strictEqual(byId.lmstudio.ui, undefined, 'LM Studio 1234 is an API with no web page');
   for (const service of services) {
     if (!service.ui) continue;
     const url = new URL(service.ui);

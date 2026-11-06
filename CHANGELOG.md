@@ -8,6 +8,7 @@
 
 ### ✨ 新增 (Added)
 
+- **ComfyUI、Adminer 比照 Hermes 開啟介面**：兩張卡的固定連結（服務沒開也能點、會開到打不開的頁面）改成服務清單的 `ui`：按「▶ 啟動」完成後自動開啟，執行中才顯示「🌐 開啟介面」。LM Studio 的 1234 是純 API 沒有網頁，所以移除原本的連結。
 - **Dashboard 一鍵開啟 Hermes Agent**：Hermes 卡片新增「Hermes Agent（終端機）」，按「▶ 開啟」會開一個終端機視窗執行 `hermes`，不必再自己開終端機。有網頁介面的服務（目前是 Hermes Web 的 http://127.0.0.1:9119）按「▶ 啟動」完成後會自動用系統瀏覽器開啟介面；已在執行時可按新的「🌐 開啟介面」，取代原本服務沒開也能點的固定連結。介面網址寫死在服務清單，只允許本機位址。見使用手冊 7.12。
 - **本機模型操作桌面 App（Desktop Agent）**：Studio 側邊欄「⚙️ 設定」新增「🖥️ 本機模型操作桌面 App」，由 LM Studio 的本機模型透過 [agent-desktop](https://github.com/vercel-labs/agent-desktop)（Apache-2.0）操作 macOS App，畫面逐步顯示每次工具呼叫與結果。只開放讀畫面、點擊、輸入文字與完成四個工具，預設 8 步上限、可中止；App 沒開或沒權限時立即停止並說明原因。實測 Finder 與 TextEdit 任務皆完成。見使用手冊 7.15。
 - **排程行事曆**：Dashboard 新增「📅 排程行事曆」分頁，用月曆顯示每個排程預計何時執行、已經跑過幾次（失敗標紅），以及交付功能的回讀到期日與目標日，依你的時區切日。API：`GET /api/calendar`。
