@@ -122,6 +122,15 @@ export class GroupRoomManager {
         createdAt: string;
     }> | import("../result").UnitFailure<"BOT_ROOM_NOT_FOUND_009">;
     /**
+     * Deletes a room and its transcript. A room whose members are replying is refused
+     * (stop it and wait first), so a running drive never writes to a room that is gone.
+     * @param {string} roomId
+     * @returns {import('../result').UnitResult<{ removed: string }>}
+     */
+    remove(roomId: string): import("../result").UnitResult<{
+        removed: string;
+    }>;
+    /**
      * @param {string} roomId
      * @returns {Promise<void>}
      */
