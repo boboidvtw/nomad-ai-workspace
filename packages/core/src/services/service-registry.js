@@ -120,6 +120,7 @@ function buildServiceRegistry(home) {
       id: 'comfyui',
       label: 'ComfyUI',
       check: { type: 'port', port: 8188 },
+      ui: 'http://127.0.0.1:8188',
       requires: { paths: [path.join(comfy, 'venv')] },
       timeoutMs: 120000,
       start: {
@@ -170,14 +171,17 @@ function buildServiceRegistry(home) {
     ),
     composeService('postgres', 'PostgreSQL', postgres, 5432, ['up', '-d', 'postgres'], ['down']),
     composeService('redis', 'Redis', redis, 6379, ['up', '-d'], ['down']),
-    composeService(
-      'adminer',
-      'Adminer',
-      postgres,
-      8080,
-      ['up', '-d', 'adminer'],
-      ['stop', 'adminer'],
-    ),
+    {
+      ...composeService(
+        'adminer',
+        'Adminer',
+        postgres,
+        8080,
+        ['up', '-d', 'adminer'],
+        ['stop', 'adminer'],
+      ),
+      ui: 'http://127.0.0.1:8080',
+    },
     macAppService('obsidian', 'Obsidian', 'Obsidian', 'Obsidian\\.app/Contents/MacOS/Obsidian$'),
     {
       ...macAppService(
