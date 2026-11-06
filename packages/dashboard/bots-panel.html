@@ -311,6 +311,9 @@
         <div class="bots-actions" style="margin-top: 0.5rem">
           <button class="bots-btn" type="button" id="bots-room-post" disabled>送出</button>
           <button class="bots-btn ghost" type="button" id="bots-room-stop" disabled>⏸ Stop</button>
+          <button class="bots-btn ghost" type="button" id="bots-room-delete" disabled>
+            🗑 刪除會議室
+          </button>
           <span class="bots-note" id="bots-room-status"></span>
         </div>
       </div>
@@ -705,6 +708,7 @@
       });
       $('bots-room-post').disabled = !room;
       $('bots-room-stop').disabled = !room;
+      $('bots-room-delete').disabled = !room;
       var log = $('bots-room-log');
       log.replaceChildren();
       (room ? room.log : []).forEach(function (entry) {
@@ -812,6 +816,26 @@
       refreshRoom(state.roomId);
     }
 
+    async function deleteRoom() {
+      var room = state.rooms.find(function (r) {
+        return r.id === state.roomId;
+      });
+      if (!room) return;
+      if (!window.confirm('刪除會議室「' + room.name + '」？逐字稿與決議會一併刪除，無法復原。'))
+        return;
+      var res = await api('DELETE', '/api/bots/rooms/' + encodeURIComponent(room.id));
+      if (res.success) {
+        state.roomId = null;
+        $('bots-room-status').textContent = '已刪除會議室';
+        await loadRooms();
+      } else {
+        $('bots-room-status').textContent =
+          res.httpStatus === 409
+            ? '成員還在回覆，先按 Stop 等它結束再刪除'
+            : res.message || '刪除失敗';
+      }
+    }
+
     async function listen() {
       if (state.events || typeof EventSource === 'undefined') return;
       var base = typeof getApiBase === 'function' ? await getApiBase() : '';
@@ -823,6 +847,9 @@
       });
       state.events.addEventListener('bot:removed', function () {
         loadBots();
+      });
+      state.events.addEventListener('room:removed', function () {
+        loadRooms();
       });
       ['room:message', 'room:status', 'room:decision'].forEach(function (type) {
         state.events.addEventListener(type, function (event) {
@@ -845,6 +872,7 @@
       $('bots-room-create').addEventListener('click', createRoom);
       $('bots-room-post').addEventListener('click', postRoom);
       $('bots-room-stop').addEventListener('click', stopRoom);
+      $('bots-room-delete').addEventListener('click', deleteRoom);
     }
 
     window.NomadBots = {

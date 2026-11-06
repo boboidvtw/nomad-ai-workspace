@@ -154,6 +154,7 @@ async function handleRoomRequest(method, parts, readBody, services) {
     return respond(err(ErrorCodes.BOT_ROOM_NOT_FOUND_009, 'Room id is not valid URL encoding'));
   }
   if (parts.length === 1 && method === 'GET') return respond(rooms.get(roomId));
+  if (parts.length === 1 && method === 'DELETE') return respond(rooms.remove(roomId));
   if (parts[1] === 'messages' && method === 'POST') {
     return respond(await rooms.post(roomId, await readBody()));
   }

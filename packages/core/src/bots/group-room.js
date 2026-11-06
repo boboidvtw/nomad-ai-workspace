@@ -272,6 +272,28 @@ class GroupRoomManager {
   }
 
   /**
+   * Deletes a room and its transcript. A room whose members are replying is refused
+   * (stop it and wait first), so a running drive never writes to a room that is gone.
+   * @param {string} roomId
+   * @returns {import('../result').UnitResult<{ removed: string }>}
+   */
+  remove(roomId) {
+    const room = this.rooms.get(roomId);
+    if (!room) return err(ErrorCodes.BOT_ROOM_NOT_FOUND_009, `Room '${roomId}' not found`);
+    if (room.status === 'running' || this.drives.has(roomId)) {
+      return err(
+        ErrorCodes.BOT_ROOM_BUSY_012,
+        `Room '${roomId}' is still replying; stop it and try again`,
+      );
+    }
+    this.rooms.delete(roomId);
+    this.queues.delete(roomId);
+    this.persist();
+    this.emit('room:removed', { roomId });
+    return ok({ removed: roomId });
+  }
+
+  /**
    * @param {string} roomId
    * @returns {Promise<void>}
    */

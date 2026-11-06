@@ -179,6 +179,50 @@ describe('Bots - group rooms', () => {
     await rooms.whenIdle(room.id);
     assert.strictEqual((await call('GET', '/api/bots/rooms/nope'))?.status, 404);
   });
+  it('deletes an idle room, persists the removal and announces it', async () => {
+    const storagePath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'rooms-')), 'rooms.json');
+    const { rooms, room, events } = setup({ storagePath });
+    const other = rooms.create({ name: 'Keep me', memberIds: ['agent-claude'] }).data;
+
+    const res = rooms.remove(room.id);
+    assert.strictEqual(res.success, true);
+    assert.strictEqual(rooms.get(room.id).success, false);
+    assert.deepStrictEqual(
+      rooms.list().map((r) => r.id),
+      [other.id],
+    );
+    assert.deepStrictEqual(
+      JSON.parse(fs.readFileSync(storagePath, 'utf8')).rooms.map((/** @type {any} */ r) => r.id),
+      [other.id],
+    );
+    assert.ok(events.some((e) => e.type === 'room:removed' && e.data.roomId === room.id));
+    assert.strictEqual(rooms.remove(room.id).errorCode, 'BOT_ROOM_NOT_FOUND_009');
+  });
+
+  it('refuses to delete a room whose members are still replying', async () => {
+    const { rooms, room } = setup({ delayMs: 20 });
+    rooms.post(room.id, { text: 'hi' });
+    const busy = rooms.remove(room.id);
+    assert.strictEqual(busy.success, false);
+    assert.strictEqual(busy.errorCode, 'BOT_ROOM_BUSY_012');
+    await rooms.whenIdle(room.id);
+    assert.strictEqual(rooms.remove(room.id).success, true);
+  });
+
+  it('deletes a room over DELETE /api/bots/rooms/:id', async () => {
+    const { rooms, roster, room } = setup();
+    const call = (/** @type {string} */ method, /** @type {string} */ pathname) =>
+      handleBotRequest({
+        method,
+        pathname,
+        searchParams: new URLSearchParams(),
+        readBody: async () => ({}),
+        services: { roster, rooms },
+      });
+    assert.strictEqual((await call('DELETE', `/api/bots/rooms/${room.id}`))?.status, 200);
+    assert.strictEqual((await call('DELETE', `/api/bots/rooms/${room.id}`))?.status, 404);
+  });
+
   // Borrowed from Cumora's coordination rules (glance-protocol.ts, COORDINATION.md §5b, convene.ts).
   describe('coordination (borrowed from Cumora)', () => {
     it('tells members they may pass and how to record a decision', async () => {
