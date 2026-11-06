@@ -199,6 +199,119 @@ test('run: type sends text on stdin, never in argv', async () => {
   });
 });
 
+const NOT_APPLIED = {
+  ok: false,
+  error: {
+    code: 'ACTION_FAILED',
+    message: 'Post-action state does not match the requested change',
+  },
+};
+
+test('run: type falls back to set-value (current + text, via stdin) when a web field ignores typing', async () => {
+  /** @type {any[]} */
+  const execCalls = [];
+  const exec = async (/** @type {string[]} */ args, /** @type {any} */ opts = {}) => {
+    execCalls.push({ args, stdin: opts.stdin });
+    if (args[0] === 'type') return NOT_APPLIED;
+    if (args[0] === 'get') return { ok: true, data: { value: 'Ada ' } };
+    return { ok: true };
+  };
+  const { chat, seen } = scriptedChat([
+    { tool_calls: [call('type', { ref: 's1:e1', text: 'Lovelace' })] },
+    { tool_calls: [call('done', { answer: 'ok' })] },
+  ]);
+  await createDesktopAgent({ exec, chat }).run({ task: 't', app: 'Safari', model: 'm' });
+  assert.deepStrictEqual(
+    execCalls.map((c) => c.args),
+    [
+      ['type', '@s1:e1', '--stdin'],
+      ['get', '@s1:e1', '--property', 'value'],
+      ['set-value', '@s1:e1', '--stdin'],
+    ],
+  );
+  assert.strictEqual(execCalls[2].stdin, 'Ada Lovelace');
+  const toolReply = JSON.parse(seen[1].find((/** @type {any} */ m) => m.role === 'tool').content);
+  assert.strictEqual(toolReply.ok, true);
+});
+
+test('run: type that landed despite the warning is not typed again', async () => {
+  /** @type {string[]} */
+  const verbs = [];
+  const exec = async (/** @type {string[]} */ args) => {
+    verbs.push(args[0]);
+    if (args[0] === 'type') return NOT_APPLIED;
+    return { ok: true, data: { value: 'Ada Lovelace' } };
+  };
+  const { chat, seen } = scriptedChat([
+    { tool_calls: [call('type', { ref: '@s1:e1', text: 'Lovelace' })] },
+    { tool_calls: [call('done', { answer: 'ok' })] },
+  ]);
+  await createDesktopAgent({ exec, chat }).run({ task: 't', app: 'Safari', model: 'm' });
+  assert.deepStrictEqual(verbs, ['type', 'get']);
+  const toolReply = JSON.parse(seen[1].find((/** @type {any} */ m) => m.role === 'tool').content);
+  assert.strictEqual(toolReply.ok, true);
+});
+
+test('run: physical typing is the last resort and only when the run allows it', async () => {
+  for (const headed of [false, true]) {
+    /** @type {string[][]} */
+    const calls = [];
+    const exec = async (/** @type {string[]} */ args) => {
+      calls.push(args);
+      if (args[0] === 'get') return { ok: true, data: { value: '' } };
+      return args.includes('--headed') ? { ok: true } : NOT_APPLIED;
+    };
+    const { chat, seen } = scriptedChat([
+      { tool_calls: [call('type', { ref: '@s1:e1', text: 'hi' })] },
+      { tool_calls: [call('done', { answer: 'ok' })] },
+    ]);
+    await createDesktopAgent({ exec, chat }).run({
+      task: 't',
+      app: 'Safari',
+      model: 'm',
+      headed,
+    });
+    assert.strictEqual(
+      calls.some((c) => c.includes('--headed')),
+      headed,
+      `headed=${headed}`,
+    );
+    const reply = JSON.parse(seen[1].find((/** @type {any} */ m) => m.role === 'tool').content);
+    assert.strictEqual(reply.ok, headed);
+  }
+});
+
+test('run: type reports the original failure when the set-value fallback also fails', async () => {
+  const exec = async (/** @type {string[]} */ args) => {
+    if (args[0] === 'type') return NOT_APPLIED;
+    if (args[0] === 'get') return { ok: true, data: { value: null } };
+    return { ok: false, error: { code: 'ACTION_FAILED', message: 'read-only field' } };
+  };
+  const { chat, seen } = scriptedChat([
+    { tool_calls: [call('type', { ref: '@s1:e1', text: 'x' })] },
+    { tool_calls: [call('done', { answer: 'ok' })] },
+  ]);
+  await createDesktopAgent({ exec, chat }).run({ task: 't', app: 'Safari', model: 'm' });
+  const toolReply = JSON.parse(seen[1].find((/** @type {any} */ m) => m.role === 'tool').content);
+  assert.strictEqual(toolReply.ok, false);
+  assert.strictEqual(toolReply.error.code, 'ACTION_FAILED');
+});
+
+test('run: other type failures do not trigger the fallback', async () => {
+  /** @type {string[]} */
+  const verbs = [];
+  const exec = async (/** @type {string[]} */ args) => {
+    verbs.push(args[0]);
+    return { ok: false, error: { code: 'POLICY_DENIED', message: 'headless' } };
+  };
+  const { chat } = scriptedChat([
+    { tool_calls: [call('type', { ref: '@s1:e1', text: 'x' })] },
+    { tool_calls: [call('done', { answer: 'ok' })] },
+  ]);
+  await createDesktopAgent({ exec, chat }).run({ task: 't', app: 'TextEdit', model: 'm' });
+  assert.deepStrictEqual(verbs, ['type']);
+});
+
 test('run: tools outside the whitelist are refused without touching the desktop', async () => {
   /** @type {string[][]} */
   const execCalls = [];
@@ -266,6 +379,113 @@ test('run: multiple windows → retries the snapshot with --window-id', async ()
   assert.deepStrictEqual(execCalls.at(-1), ['snapshot', '--app', 'TextEdit', '--window-id', 'w-2']);
 });
 
+/**
+ * A fake agent-desktop with two TextEdit windows.
+ * @param {string[][]} execCalls
+ */
+function twoWindowExec(execCalls) {
+  const windows = [
+    { id: 'w-1', title: 'Notes.txt', visible: true, is_focused: true },
+    { id: 'w-2', title: 'Budget 2026', visible: true },
+  ];
+  return async (/** @type {string[]} */ args) => {
+    execCalls.push(args);
+    if (args[0] === 'list-windows') return { ok: true, data: windows };
+    const id = args[args.indexOf('--window-id') + 1];
+    if (id === 'w-gone') {
+      return { ok: false, error: { code: 'WINDOW_NOT_FOUND', message: 'closed' } };
+    }
+    return { ok: true, data: { tree: { role: 'window', name: id || 'ambiguous' } } };
+  };
+}
+
+test('run: windowTitle picks the matching window and every later snapshot stays on it', async () => {
+  /** @type {string[][]} */
+  const execCalls = [];
+  const { chat } = scriptedChat([
+    { tool_calls: [call('snapshot')] },
+    { tool_calls: [call('snapshot')] },
+    { tool_calls: [call('done', { answer: 'ok' })] },
+  ]);
+  const r = await createDesktopAgent({ exec: twoWindowExec(execCalls), chat }).run({
+    task: 't',
+    app: 'TextEdit',
+    model: 'm',
+    windowTitle: 'budget',
+  });
+  assert.strictEqual(r.ok, true);
+  const snapshots = execCalls.filter((a) => a[0] === 'snapshot');
+  assert.deepStrictEqual(snapshots, [
+    ['snapshot', '--app', 'TextEdit', '--window-id', 'w-2'],
+    ['snapshot', '--app', 'TextEdit', '--window-id', 'w-2'],
+  ]);
+  assert.strictEqual(execCalls.filter((a) => a[0] === 'list-windows').length, 1);
+});
+
+test('run: no window with that title ends the run instead of using another window', async () => {
+  /** @type {string[][]} */
+  const execCalls = [];
+  const { chat } = scriptedChat([{ tool_calls: [call('snapshot')] }]);
+  const r = await createDesktopAgent({ exec: twoWindowExec(execCalls), chat }).run({
+    task: 't',
+    app: 'TextEdit',
+    model: 'm',
+    windowTitle: 'Nope',
+  });
+  assert.deepStrictEqual([r.ok, r.reason], [false, 'desktop_error']);
+  assert.match(String(r.error), /Nope/);
+  assert.ok(!execCalls.some((a) => a[0] === 'snapshot'), 'never snapshots a different window');
+});
+
+test('run: an ambiguous app keeps the window it chose for the following snapshots', async () => {
+  /** @type {string[][]} */
+  const execCalls = [];
+  const { chat } = scriptedChat([
+    { tool_calls: [call('snapshot')] },
+    { tool_calls: [call('snapshot')] },
+    { tool_calls: [call('done', { answer: 'ok' })] },
+  ]);
+  const exec = async (/** @type {string[]} */ args) => {
+    execCalls.push(args);
+    if (args[0] === 'list-windows') {
+      return { ok: true, data: [{ id: 'w-9', visible: true, is_focused: true }] };
+    }
+    if (args.includes('--window-id')) return { ok: true, data: { tree: { role: 'window' } } };
+    return { ok: false, error: { code: 'AMBIGUOUS_TARGET', message: '2 windows' } };
+  };
+  await createDesktopAgent({ exec, chat }).run({ task: 't', app: 'TextEdit', model: 'm' });
+  assert.deepStrictEqual(execCalls.at(-1), ['snapshot', '--app', 'TextEdit', '--window-id', 'w-9']);
+  assert.strictEqual(execCalls.filter((a) => a[0] === 'list-windows').length, 1);
+});
+
+test('run: a closed window is chosen again by title', async () => {
+  /** @type {string[][]} */
+  const execCalls = [];
+  const base = twoWindowExec(execCalls);
+  let snapshots = 0;
+  const exec = async (/** @type {string[]} */ args) => {
+    if (args[0] === 'snapshot' && ++snapshots === 2) {
+      // The window cached by the first snapshot disappears before the second one.
+      execCalls.push(args);
+      return { ok: false, error: { code: 'WINDOW_NOT_FOUND', message: 'closed' } };
+    }
+    return base(args);
+  };
+  const { chat } = scriptedChat([
+    { tool_calls: [call('snapshot')] },
+    { tool_calls: [call('snapshot')] },
+    { tool_calls: [call('done', { answer: 'ok' })] },
+  ]);
+  await createDesktopAgent({ exec, chat }).run({
+    task: 't',
+    app: 'TextEdit',
+    model: 'm',
+    windowTitle: 'Budget',
+  });
+  assert.strictEqual(execCalls.filter((a) => a[0] === 'list-windows').length, 2);
+  assert.deepStrictEqual(execCalls.at(-1), ['snapshot', '--app', 'TextEdit', '--window-id', 'w-2']);
+});
+
 test('run: a model error ends the run with the message', async () => {
   const exec = async () => ({ ok: true });
   const chat = async () => {
@@ -280,11 +500,21 @@ test('validateRunOptions: requires a task and an app name, keeps the model serve
   assert.deepStrictEqual(validateRunOptions({ task: ' list apps ', app: 'Finder' }), {
     task: 'list apps',
     app: 'Finder',
+    windowTitle: '',
+    headed: false,
     host: '127.0.0.1',
     port: 1234,
     model: '',
     maxSteps: 8,
   });
+  assert.strictEqual(
+    /** @type {any} */ (validateRunOptions({ task: 'x', app: 'Finder', windowTitle: ' 報表 ' }))
+      .windowTitle,
+    '報表',
+  );
+  assert.ok(
+    'error' in validateRunOptions({ task: 'x', app: 'Finder', windowTitle: 'w'.repeat(101) }),
+  );
   assert.ok('error' in validateRunOptions({ task: '', app: 'Finder' }));
   assert.ok('error' in validateRunOptions({ task: 'x', app: 'Finder; rm -rf ~' }));
   assert.ok('error' in validateRunOptions({ task: 'x', app: 'Finder', host: '10.0.0.5' }));
