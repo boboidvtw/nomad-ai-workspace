@@ -223,21 +223,24 @@ describe('Schedule calendar', () => {
   });
 
   it('serves the calendar over GET /api/calendar', async () => {
-    const scheduler = { listSchedules: () => [schedule({})] };
+    // The calendar plans from max(nextRunAt, real now), so the window must lie in the future.
+    const dayStart = Math.floor(Date.now() / (24 * HOUR)) * 24 * HOUR + 24 * HOUR;
+    const iso = (/** @type {number} */ offsetMs) => new Date(dayStart + offsetMs).toISOString();
+    const scheduler = { listSchedules: () => [schedule({ nextRunAt: iso(HOUR) })] };
     const dispatcher = { listTasks: () => [] };
     const shipping = {
       calendarEntries: () => [
         {
           kind: 'readback',
-          at: '2026-11-05T12:00:00.000Z',
+          at: iso(12 * HOUR),
           title: 'Readback: Login',
           featureId: 'f1',
         },
       ],
     };
     const params = new URLSearchParams({
-      from: '2026-11-05T00:00:00.000Z',
-      to: '2026-11-06T00:00:00.000Z',
+      from: iso(0),
+      to: iso(24 * HOUR),
       tz: '0',
     });
     const res = await handleCalendarRequest({
