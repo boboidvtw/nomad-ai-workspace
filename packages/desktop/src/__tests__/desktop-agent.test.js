@@ -437,6 +437,51 @@ test('run: no window with that title ends the run instead of using another windo
   assert.ok(!execCalls.some((a) => a[0] === 'snapshot'), 'never snapshots a different window');
 });
 
+test('run: window titles hidden by macOS ends the run with a Screen Recording hint', async () => {
+  /** @type {string[][]} */
+  const execCalls = [];
+  const { chat } = scriptedChat([{ tool_calls: [call('snapshot')] }]);
+  // Without Screen Recording, CoreGraphics returns windows with empty titles.
+  const exec = async (/** @type {string[]} */ args) => {
+    execCalls.push(args);
+    if (args[0] === 'list-windows') {
+      return {
+        ok: true,
+        data: [
+          { id: 'w-1', visible: true, title: '' },
+          { id: 'w-2', title: '' },
+        ],
+      };
+    }
+    return { ok: true, data: { tree: { role: 'window' } } };
+  };
+  const r = await createDesktopAgent({ exec, chat }).run({
+    task: 't',
+    app: 'Finder',
+    model: 'm',
+    windowTitle: '下載',
+  });
+  assert.deepStrictEqual([r.ok, r.reason], [false, 'desktop_error']);
+  assert.match(String(r.error), /^SCREEN_RECORDING_REQUIRED: .*Screen Recording/);
+  assert.ok(!execCalls.some((a) => a[0] === 'snapshot'), 'never snapshots an unverified window');
+});
+
+test('run: a failed window listing reports its own error, not a missing window', async () => {
+  const { chat } = scriptedChat([{ tool_calls: [call('snapshot')] }]);
+  const exec = async (/** @type {string[]} */ args) =>
+    args[0] === 'list-windows'
+      ? { ok: false, error: { code: 'PERM_DENIED', message: 'no accessibility' } }
+      : { ok: true, data: { tree: { role: 'window' } } };
+  const r = await createDesktopAgent({ exec, chat }).run({
+    task: 't',
+    app: 'Finder',
+    model: 'm',
+    windowTitle: '下載',
+  });
+  assert.deepStrictEqual([r.ok, r.reason], [false, 'desktop_error']);
+  assert.match(String(r.error), /^PERM_DENIED: .*Accessibility/);
+});
+
 test('run: an ambiguous app keeps the window it chose for the following snapshots', async () => {
   /** @type {string[][]} */
   const execCalls = [];

@@ -515,6 +515,7 @@ SHIP: create "<標題>" --problem "..." --outcome "..." --contract "..."
 | 文字區點擊被拒（`POLICY_DENIED`）                              | TextEdit 等文字區常見；直接 `type` 即可，模型通常會自己改用                                                                                     |
 | 立刻結束：`WINDOW_NOT_FOUND` / `APP_NOT_FOUND` / `PERM_DENIED` | App 沒開視窗、沒在執行或沒有輔助使用權限；模型無法自行處理，先手動排除                                                                          |
 | 多個視窗                                                       | 在「視窗標題」欄填一段標題就只操作該視窗並固定不換；空白時自動挑目前焦點（或第一個可見）的視窗，同樣整個任務固定不換                            |
+| 視窗標題回報 `SCREEN_RECORDING_REQUIRED`                       | macOS 只讓有「螢幕錄製」權限的 App 讀視窗標題：到系統設定 › 隱私權與安全性 › 螢幕錄製，允許 Nomad AI Studio 後重開 App；或把「視窗標題」留空    |
 | 網頁輸入框打字顯示失敗                                         | Safari／Chromium 常見。會先檢查文字是否已寫入，再用 set-value 寫入（單行欄位可用）；Safari 多行文字框要勾「允許實體輸入」，執行期間不要操作電腦 |
 | 速度                                                           | 27B 模型每步約 10–30 秒；實測 Finder 4 步約 90 秒、TextEdit 5 步約 40 秒                                                                        |
 
