@@ -18,7 +18,9 @@
     "bots-panel.html",
     "service-panel.html",
     "calendar-panel.html",
-    "shipping-panel.html"
+    "shipping-panel.html",
+    "github-panel.html",
+    "github-inventory.json"
   ],
   "dependencies": {
     "@nomad/core": "*"

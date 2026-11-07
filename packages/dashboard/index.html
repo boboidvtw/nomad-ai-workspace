@@ -1769,6 +1769,9 @@
           <button class="tab-btn" onclick="filterCategory('shipping')" data-category="shipping">
             🚢 交付
           </button>
+          <button class="tab-btn" onclick="filterCategory('github')" data-category="github">
+            🐙 GitHub 盤點
+          </button>
           <button class="tab-btn" onclick="filterCategory('ai')" data-category="ai">
             🧠 AI 決策與推論 <span class="tab-count">3</span>
           </button>
@@ -1794,6 +1797,7 @@
       <!-- @nomad:bots-panel -->
       <!-- @nomad:calendar-panel -->
       <!-- @nomad:shipping-panel -->
+      <!-- @nomad:github-panel -->
 
       <!-- ========================================================
          TASK CONTROL PLANE & KANBAN SECTION (Paperclip Native)
@@ -3842,7 +3846,11 @@
         const servicesContainer = document.getElementById('services-container');
         const botsSection = document.getElementById('bots-section');
         if (botsSection) botsSection.style.display = cat === 'bots' ? 'block' : 'none';
-        const panels = { calendar: window.NomadCalendar, shipping: window.NomadShipping };
+        const panels = {
+          calendar: window.NomadCalendar,
+          shipping: window.NomadShipping,
+          github: window.NomadGithub,
+        };
         Object.keys(panels).forEach((name) => {
           const section = document.getElementById(name + '-section');
           if (section) section.style.display = cat === name ? 'block' : 'none';
