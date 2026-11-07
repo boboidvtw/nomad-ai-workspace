@@ -1,0 +1,444 @@
+<!--
+  Nomad Dashboard - GitHub inventory panel
+  Inlined into index.html at the github-panel marker by composeDashboard().
+  Shows a snapshot of the account's forks (with what to do about each) and starred repos
+  (category, staleness, risk). The data comes from github-inventory.json, inlined at the
+  github-inventory-data marker below. Text from the data is always set with textContent.
+-->
+<style>
+  .gh-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+  .gh-tile {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.75rem;
+  }
+  .gh-tile b {
+    display: block;
+    font-size: 1.35rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .gh-tile span {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+  }
+  .gh-tabs {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .gh-tabs .bots-btn[aria-selected='true'] {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+  .gh-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 0.75rem;
+  }
+  .gh-toolbar input,
+  .gh-toolbar select {
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--text);
+  }
+  .gh-toolbar input[type='search'] {
+    flex: 1 1 14rem;
+    min-width: 0;
+  }
+  .gh-group h3 {
+    margin: 1rem 0 0.2rem;
+    font-size: 0.9rem;
+  }
+  .gh-group-note {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+  }
+  .gh-list {
+    display: grid;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+  .gh-row {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.75rem;
+    display: grid;
+    gap: 0.2rem;
+  }
+  .gh-row-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: baseline;
+  }
+  .gh-row-head a {
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+  .gh-row-head a:hover {
+    text-decoration: underline;
+  }
+  .gh-meta {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-subtle);
+  }
+  .gh-desc {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .gh-advice {
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+  .gh-badge {
+    font-size: 0.66rem;
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+  }
+  .gh-badge.high {
+    border-color: #dc2626;
+    color: #dc2626;
+  }
+  .gh-badge.tos,
+  .gh-badge.legal,
+  .gh-badge.watch {
+    border-color: #d97706;
+    color: #d97706;
+  }
+  .gh-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.6rem;
+  }
+</style>
+
+<section
+  class="task-plane-section"
+  id="github-section"
+  style="display: none"
+  aria-labelledby="github-title"
+>
+  <div class="task-header">
+    <div>
+      <h2 id="github-title">🐙 GitHub 盤點</h2>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px" id="gh-subtitle">
+        Fork 該怎麼處理、星標的分類、過時與風險
+      </div>
+    </div>
+  </div>
+  <div class="gh-tiles" id="gh-tiles"></div>
+  <div class="gh-tabs" role="tablist" aria-label="盤點分頁">
+    <button
+      class="bots-btn ghost"
+      type="button"
+      role="tab"
+      data-gh-tab="forks"
+      aria-selected="true"
+    >
+      Fork
+    </button>
+    <button
+      class="bots-btn ghost"
+      type="button"
+      role="tab"
+      data-gh-tab="stars"
+      aria-selected="false"
+    >
+      星標
+    </button>
+    <button
+      class="bots-btn ghost"
+      type="button"
+      role="tab"
+      data-gh-tab="deleted"
+      aria-selected="false"
+    >
+      已刪除
+    </button>
+  </div>
+  <div id="gh-forks" role="tabpanel"></div>
+  <div id="gh-stars" role="tabpanel" hidden>
+    <div class="gh-cats" id="gh-cats"></div>
+    <div class="gh-toolbar">
+      <input type="search" id="gh-search" placeholder="搜尋名稱或描述" aria-label="搜尋星標" />
+      <select id="gh-cat" aria-label="分類"></select>
+      <select id="gh-flag" aria-label="篩選">
+        <option value="">全部</option>
+        <option value="risk">有風險</option>
+        <option value="archived">上游已封存</option>
+        <option value="stale">超過一年沒更新</option>
+      </select>
+      <span class="gh-meta" id="gh-star-count" aria-live="polite"></span>
+    </div>
+    <div class="gh-list" id="gh-star-list"></div>
+  </div>
+  <div id="gh-deleted" role="tabpanel" hidden></div>
+</section>
+
+<script type="application/json" id="gh-inventory-data">
+  /*@nomad:github-inventory-data*/
+</script>
+
+<script>
+  (function () {
+    var STAR_LIMIT = 200;
+    var data = null;
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+    function el(tag, cls, text) {
+      var node = document.createElement(tag);
+      if (cls) node.className = cls;
+      if (text != null) node.textContent = String(text);
+      return node;
+    }
+    function num(n) {
+      return Number(n || 0).toLocaleString('en-US');
+    }
+    function link(fullName) {
+      var a = el('a', null, fullName);
+      a.href = 'https://github.com/' + fullName;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      return a;
+    }
+
+    function readData() {
+      var node = $('gh-inventory-data');
+      try {
+        return JSON.parse(node ? node.textContent : '');
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function renderTiles() {
+      var s = data.summary;
+      var tiles = [
+        [s.forks, 'Fork'],
+        [s.stars, '星標'],
+        [s.archivedStars, '星標上游已封存'],
+        [s.staleStars, '星標超過一年沒更新'],
+        [
+          data.stars.filter(function (x) {
+            return x.risk;
+          }).length,
+          '風險星標',
+        ],
+        [s.secretLeaks, '機密外洩'],
+      ];
+      var box = $('gh-tiles');
+      box.replaceChildren();
+      tiles.forEach(function (t) {
+        var tile = el('div', 'gh-tile');
+        tile.append(el('b', null, num(t[0])), el('span', null, t[1]));
+        box.append(tile);
+      });
+      $('gh-subtitle').textContent =
+        data.account +
+        ' 的快照（' +
+        data.snapshotAt +
+        '）：Fork 該怎麼處理、星標的分類、過時與風險';
+    }
+
+    function forkRow(f) {
+      var row = el('div', 'gh-row');
+      var head = el('div', 'gh-row-head');
+      head.append(link(data.account + '/' + f.name));
+      head.append(el('span', 'gh-meta', '← ' + f.upstream + ' ★' + num(f.upStars)));
+      if (f.upArchived) head.append(el('span', 'gh-badge high', '上游已封存'));
+      row.append(head);
+      row.append(
+        el(
+          'div',
+          'gh-meta',
+          '領先 ' +
+            num(f.ahead) +
+            ' ／ 落後 ' +
+            num(f.behind) +
+            ' · ' +
+            (f.license || '無授權資訊') +
+            ' · 最後 push ' +
+            f.myPushed,
+        ),
+      );
+      row.append(el('div', 'gh-advice', f.advice));
+      return row;
+    }
+
+    function renderForks() {
+      var box = $('gh-forks');
+      box.replaceChildren();
+      Object.keys(data.groups).forEach(function (key) {
+        var items = data.forks.filter(function (f) {
+          return f.group === key;
+        });
+        if (!items.length) return;
+        var group = el('div', 'gh-group');
+        var g = data.groups[key];
+        group.append(el('h3', null, g.label + '（' + items.length + '）'));
+        group.append(el('div', 'gh-group-note', '建議：' + g.action));
+        var list = el('div', 'gh-list');
+        items.forEach(function (f) {
+          list.append(forkRow(f));
+        });
+        group.append(list);
+        box.append(group);
+      });
+    }
+
+    function renderCategories() {
+      var counts = {};
+      data.stars.forEach(function (s) {
+        counts[s.category] = (counts[s.category] || 0) + 1;
+      });
+      var select = $('gh-cat');
+      select.replaceChildren(new Option('全部分類', ''));
+      var chips = $('gh-cats');
+      chips.replaceChildren();
+      Object.keys(data.categories)
+        .sort(function (a, b) {
+          return (counts[b] || 0) - (counts[a] || 0);
+        })
+        .forEach(function (id) {
+          if (!counts[id]) return;
+          var label = data.categories[id];
+          select.append(new Option(label + '（' + counts[id] + '）', id));
+          chips.append(el('span', 'gh-badge', label + ' ' + counts[id]));
+        });
+      chips.append(el('span', 'gh-meta', '分類依關鍵字自動判斷，有誤差'));
+    }
+
+    function matches(s, query, cat, flag) {
+      if (cat && s.category !== cat) return false;
+      if (flag === 'risk' && !s.risk) return false;
+      if (flag === 'archived' && !s.archived) return false;
+      if (flag === 'stale' && !s.stale) return false;
+      if (!query) return true;
+      return (s.name + ' ' + (s.desc || '')).toLowerCase().indexOf(query) !== -1;
+    }
+
+    function starRow(s) {
+      var row = el('div', 'gh-row');
+      var head = el('div', 'gh-row-head');
+      head.append(
+        link(s.name),
+        el('span', 'gh-meta', '★' + num(s.stars) + ' · ' + (s.lang || '—')),
+      );
+      if (s.risk) head.append(el('span', 'gh-badge ' + s.risk, data.riskLabels[s.risk] || s.risk));
+      if (s.archived) head.append(el('span', 'gh-badge', '已封存'));
+      else if (s.stale) head.append(el('span', 'gh-badge', '超過一年沒更新'));
+      row.append(head);
+      if (s.desc) row.append(el('div', 'gh-desc', s.desc));
+      if (s.riskNote) row.append(el('div', 'gh-advice', s.riskNote));
+      row.append(el('div', 'gh-meta', '星標於 ' + s.starredAt + ' · 最後 push ' + s.pushed));
+      return row;
+    }
+
+    function renderStars() {
+      var query = $('gh-search').value.trim().toLowerCase();
+      var cat = $('gh-cat').value;
+      var flag = $('gh-flag').value;
+      var hits = data.stars.filter(function (s) {
+        return matches(s, query, cat, flag);
+      });
+      hits.sort(function (a, b) {
+        return (b.risk ? 1 : 0) - (a.risk ? 1 : 0) || b.starredAt.localeCompare(a.starredAt);
+      });
+      var list = $('gh-star-list');
+      list.replaceChildren();
+      hits.slice(0, STAR_LIMIT).forEach(function (s) {
+        list.append(starRow(s));
+      });
+      $('gh-star-count').textContent =
+        hits.length > STAR_LIMIT
+          ? '顯示前 ' + STAR_LIMIT + ' 筆，共 ' + hits.length + ' 筆，請縮小篩選'
+          : '共 ' + hits.length + ' 筆';
+    }
+
+    function renderDeleted() {
+      var box = $('gh-deleted');
+      box.replaceChildren();
+      box.append(
+        el(
+          'div',
+          'gh-group-note',
+          '這些 fork 沒有自己的 commit，已經刪除。上游都還在，可以用下面的指令重新 fork。',
+        ),
+      );
+      var list = el('div', 'gh-list');
+      data.deleted.forEach(function (d) {
+        var row = el('div', 'gh-row');
+        var head = el('div', 'gh-row-head');
+        head.append(
+          el('b', null, data.account + '/' + d.name),
+          el('span', 'gh-meta', '刪除於 ' + d.at),
+        );
+        row.append(head, el('code', 'gh-meta', 'gh repo fork ' + d.upstream + ' --clone=false'));
+        list.append(row);
+      });
+      box.append(list);
+    }
+
+    function selectTab(name) {
+      document.querySelectorAll('[data-gh-tab]').forEach(function (btn) {
+        btn.setAttribute('aria-selected', String(btn.dataset.ghTab === name));
+      });
+      ['forks', 'stars', 'deleted'].forEach(function (id) {
+        $('gh-' + id).hidden = id !== name;
+      });
+    }
+
+    var rendered = false;
+    function show() {
+      if (rendered) return;
+      data = readData();
+      if (!data) {
+        $('gh-forks').replaceChildren(
+          el('div', 'bots-note', '讀不到盤點資料（github-inventory.json）。'),
+        );
+        return;
+      }
+      renderTiles();
+      renderForks();
+      renderCategories();
+      renderStars();
+      renderDeleted();
+      rendered = true;
+    }
+
+    document.querySelectorAll('[data-gh-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        selectTab(btn.dataset.ghTab);
+      });
+    });
+    $('gh-search').addEventListener('input', renderStars);
+    $('gh-cat').addEventListener('change', renderStars);
+    $('gh-flag').addEventListener('change', renderStars);
+
+    window.NomadGithub = { show: show };
+  })();
+</script>

@@ -17,6 +17,23 @@ const CALENDAR_PANEL_PATH = path.join(__dirname, 'calendar-panel.html');
 const CALENDAR_PANEL_MARKER = '<!-- @nomad:calendar-panel -->';
 const SHIPPING_PANEL_PATH = path.join(__dirname, 'shipping-panel.html');
 const SHIPPING_PANEL_MARKER = '<!-- @nomad:shipping-panel -->';
+const GITHUB_PANEL_PATH = path.join(__dirname, 'github-panel.html');
+const GITHUB_PANEL_MARKER = '<!-- @nomad:github-panel -->';
+const GITHUB_DATA_PATH = path.join(__dirname, 'github-inventory.json');
+const GITHUB_DATA_MARKER = '/*@nomad:github-inventory-data*/';
+
+/**
+ * Inlines the GitHub inventory snapshot into its JSON script tag.
+ * `<` is escaped so the data can never close the script element.
+ * @param {string} html
+ * @returns {string}
+ */
+function inlineGithubData(html) {
+  if (!html.includes(GITHUB_DATA_MARKER) || !fs.existsSync(GITHUB_DATA_PATH)) return html;
+  const data = JSON.parse(fs.readFileSync(GITHUB_DATA_PATH, 'utf-8'));
+  const json = JSON.stringify(data).replace(/</g, '\\u003c');
+  return html.replace(GITHUB_DATA_MARKER, () => json);
+}
 
 /**
  * @param {string} html
@@ -36,12 +53,14 @@ function inlinePanel(html, marker, filePath) {
  * @returns {string}
  */
 function composeDashboard(html) {
-  return [
+  const page = [
     [BOTS_PANEL_MARKER, BOTS_PANEL_PATH],
     [SERVICE_PANEL_MARKER, SERVICE_PANEL_PATH],
     [CALENDAR_PANEL_MARKER, CALENDAR_PANEL_PATH],
     [SHIPPING_PANEL_MARKER, SHIPPING_PANEL_PATH],
-  ].reduce((page, [marker, file]) => inlinePanel(page, marker, file), html);
+    [GITHUB_PANEL_MARKER, GITHUB_PANEL_PATH],
+  ].reduce((acc, [marker, file]) => inlinePanel(acc, marker, file), html);
+  return inlineGithubData(page);
 }
 
 /**
