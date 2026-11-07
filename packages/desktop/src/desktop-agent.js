@@ -16,6 +16,8 @@ const MAX_STEPS_LIMIT = 20;
 const MAX_SNAPSHOT_CHARS = 40_000; // ~15k tokens; older snapshots are dropped from history
 const STALE_SNAPSHOT_TEXT = '[older snapshot omitted; refs from it are stale]';
 const SUMMARY_CHARS = 200;
+// Windows snapshotted to read their accessibility title when CoreGraphics hides it.
+const MAX_TITLE_PROBES = 5;
 
 /**
  * Snapshot errors the model cannot fix with the allowed tools (it cannot launch apps or
@@ -26,8 +28,6 @@ const FATAL_SNAPSHOT_HINTS = Object.freeze({
   WINDOW_NOT_FOUND: 'the app has no open window; open one first',
   PERM_DENIED:
     'Accessibility permission is missing for the app that runs agent-desktop (System Settings > Privacy & Security); run `agent-desktop permissions --guide`',
-  SCREEN_RECORDING_REQUIRED:
-    'macOS hides window titles from apps without Screen Recording permission; allow Nomad AI Studio in System Settings > Privacy & Security > Screen Recording, or leave the window title blank',
 });
 
 /** The only tools the model is offered or allowed to call. */
@@ -255,35 +255,45 @@ function windowFailure(code, message) {
 
 /**
  * Finds the window whose title contains `windowTitle`, preferring a visible one.
- * Titles come from CoreGraphics, which blanks them for apps without Screen Recording
- * permission, so "every title is empty" is reported as that, not as a missing window.
+ * list-windows reads titles from CoreGraphics, which macOS hides from apps without Screen
+ * Recording permission (the title comes back empty or as the app name). Those windows are
+ * snapshotted instead: the root's accessibility name is readable with Accessibility alone
+ * (the snapshot's `window.title` comes from CoreGraphics too, so it is hidden as well);
+ * the matching snapshot is returned so it is not taken twice.
  * @param {DesktopExec} exec
  * @param {string} app
  * @param {AbortSignal | undefined} signal
  * @param {string} windowTitle
- * @returns {Promise<{ id: string } | { failure: ReturnType<typeof windowFailure> }>}
+ * @returns {Promise<{ id: string, env?: DesktopEnvelope } | { failure: ReturnType<typeof windowFailure> }>}
  */
 async function findWindowByTitle(exec, app, signal, windowTitle) {
-  const env = await exec(['list-windows', '--app', app], { signal });
-  if (!env?.ok) {
-    const error = errorOf(env);
+  const listed = await exec(['list-windows', '--app', app], { signal });
+  if (!listed?.ok) {
+    const error = errorOf(listed);
     return { failure: windowFailure(error.code, error.message) };
   }
-  const list = Array.isArray(env.data) ? env.data : [];
+  const list = Array.isArray(listed.data) ? listed.data : [];
   const wanted = windowTitle.toLowerCase();
-  const matches = (/** @type {any} */ w) =>
-    String(w?.title || '')
+  const matches = (/** @type {unknown} */ title) =>
+    String(title || '')
       .toLowerCase()
       .includes(wanted);
-  const pick = list.find((w) => w?.visible && matches(w)) || list.find(matches);
+  const pick =
+    list.find((w) => w?.visible && matches(w.title)) || list.find((w) => matches(w?.title));
   if (pick?.id) return { id: String(pick.id) };
-  if (list.length && list.every((w) => !String(w?.title || '').trim())) {
-    return {
-      failure: windowFailure(
-        'SCREEN_RECORDING_REQUIRED',
-        `${list.length} windows have no readable title`,
-      ),
-    };
+
+  const hidden = list.filter((w) => {
+    const title = String(w?.title || '')
+      .trim()
+      .toLowerCase();
+    const appName = String(w?.app_name || app).toLowerCase();
+    return w?.id && (!title || title === appName || title === app.toLowerCase());
+  });
+  for (const w of hidden.slice(0, MAX_TITLE_PROBES)) {
+    const env = await exec(['snapshot', '--app', app, '--window-id', String(w.id)], { signal });
+    if (env?.ok && (matches(env.data?.tree?.name) || matches(env.data?.window?.title))) {
+      return { id: String(w.id), env };
+    }
   }
   const failure = windowFailure('WINDOW_NOT_FOUND', `no window titled '${windowTitle}'`);
   return {
@@ -314,7 +324,9 @@ async function takeSnapshot(exec, app, signal, scope) {
     const found = await findWindowByTitle(exec, app, signal, scope.windowTitle);
     if ('failure' in found) return found.failure;
     scope.windowId = found.id;
-    env = await exec(['snapshot', '--app', app, '--window-id', scope.windowId], { signal });
+    env =
+      found.env ||
+      (await exec(['snapshot', '--app', app, '--window-id', scope.windowId], { signal }));
   }
   if (!env) env = await exec(['snapshot', '--app', app], { signal });
   if (!env?.ok && /AMBIGUOUS_TARGET/i.test(`${errorOf(env).code} ${errorOf(env).message}`)) {

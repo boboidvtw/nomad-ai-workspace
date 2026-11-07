@@ -437,23 +437,63 @@ test('run: no window with that title ends the run instead of using another windo
   assert.ok(!execCalls.some((a) => a[0] === 'snapshot'), 'never snapshots a different window');
 });
 
-test('run: window titles hidden by macOS ends the run with a Screen Recording hint', async () => {
+test('run: titles hidden by macOS are matched against the window title in its snapshot', async () => {
   /** @type {string[][]} */
   const execCalls = [];
-  const { chat } = scriptedChat([{ tool_calls: [call('snapshot')] }]);
-  // Without Screen Recording, CoreGraphics returns windows with empty titles.
+  const { chat } = scriptedChat([
+    { tool_calls: [call('snapshot')] },
+    { tool_calls: [call('snapshot')] },
+    { tool_calls: [call('done', { answer: 'ok' })] },
+  ]);
+  // Without Screen Recording, CoreGraphics titles (list-windows and the snapshot's
+  // `window`) fall back to the app name; the root's accessibility name is still real.
+  const ax = { 'w-1': '最近項目', 'w-2': '下載項目' };
   const exec = async (/** @type {string[]} */ args) => {
     execCalls.push(args);
     if (args[0] === 'list-windows') {
       return {
         ok: true,
         data: [
-          { id: 'w-1', visible: true, title: '' },
-          { id: 'w-2', title: '' },
+          { id: 'w-1', visible: true, title: 'Finder', app_name: 'Finder' },
+          { id: 'w-2', visible: true, title: '', app_name: 'Finder' },
         ],
       };
     }
-    return { ok: true, data: { tree: { role: 'window' } } };
+    const id = /** @type {'w-1' | 'w-2'} */ (args[args.indexOf('--window-id') + 1]);
+    return {
+      ok: true,
+      data: { window: { id, title: 'Finder' }, tree: { role: 'window', name: ax[id] } },
+    };
+  };
+  const r = await createDesktopAgent({ exec, chat }).run({
+    task: 't',
+    app: 'Finder',
+    model: 'm',
+    windowTitle: '下載',
+  });
+  assert.strictEqual(r.ok, true);
+  const snapshots = execCalls.filter((a) => a[0] === 'snapshot');
+  // w-1 and w-2 are probed once each; the second model snapshot stays on w-2.
+  assert.deepStrictEqual(
+    snapshots.map((a) => a.at(-1)),
+    ['w-1', 'w-2', 'w-2'],
+  );
+  assert.strictEqual(execCalls.filter((a) => a[0] === 'list-windows').length, 1);
+});
+
+test('run: hidden titles with no snapshot match end the run and probe at most 5 windows', async () => {
+  /** @type {string[][]} */
+  const execCalls = [];
+  const { chat } = scriptedChat([{ tool_calls: [call('snapshot')] }]);
+  const exec = async (/** @type {string[]} */ args) => {
+    execCalls.push(args);
+    if (args[0] === 'list-windows') {
+      return {
+        ok: true,
+        data: Array.from({ length: 8 }, (_, i) => ({ id: `w-${i}`, title: 'Finder' })),
+      };
+    }
+    return { ok: true, data: { window: { title: 'Other' }, tree: { role: 'window' } } };
   };
   const r = await createDesktopAgent({ exec, chat }).run({
     task: 't',
@@ -462,8 +502,8 @@ test('run: window titles hidden by macOS ends the run with a Screen Recording hi
     windowTitle: '下載',
   });
   assert.deepStrictEqual([r.ok, r.reason], [false, 'desktop_error']);
-  assert.match(String(r.error), /^SCREEN_RECORDING_REQUIRED: .*Screen Recording/);
-  assert.ok(!execCalls.some((a) => a[0] === 'snapshot'), 'never snapshots an unverified window');
+  assert.match(String(r.error), /^WINDOW_NOT_FOUND: .*下載/);
+  assert.strictEqual(execCalls.filter((a) => a[0] === 'snapshot').length, 5);
 });
 
 test('run: a failed window listing reports its own error, not a missing window', async () => {

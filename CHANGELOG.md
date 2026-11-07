@@ -8,7 +8,7 @@
 
 ### 🐛 修正 (Fixed)
 
-- **Desktop Agent 用視窗標題找不到視窗**：macOS 不給沒有「螢幕錄製」權限的 App 讀視窗標題，打包版因此每次都誤報 `WINDOW_NOT_FOUND`。現在所有視窗標題都讀不到時，改回報 `SCREEN_RECORDING_REQUIRED` 並說明去哪裡授權（或把視窗標題留空）；`list-windows` 本身失敗（例如 `PERM_DENIED`）時，也會回報它原本的錯誤，不再一律說找不到視窗。
+- **Desktop Agent 用視窗標題找不到視窗**：macOS 不給沒有「螢幕錄製」權限的 App 讀 CoreGraphics 的視窗標題（會變成空白或 App 名稱），打包版因此每次都誤報 `WINDOW_NOT_FOUND`。現在比對不到時，會對標題被隱藏的視窗（最多 5 個）各取一次快照，改用輔助使用 API 讀到的真實標題比對，選中的快照直接沿用，不必再授權螢幕錄製；`list-windows` 本身失敗（例如 `PERM_DENIED`）時，也會回報原本的錯誤，不再一律說找不到視窗。實測打包版（只有輔助使用授權）依「下載」選中 Finder「下載項目」視窗。
 - **刪除會議室後看不到「已刪除會議室」**：重新載入會議室清單（包括伺服器送來的 `room:removed` 事件）會清空狀態列。現在它只清掉自己寫的「會議室需要在 Nomad Studio 內使用」。
 
 ### ✨ 新增 (Added)
