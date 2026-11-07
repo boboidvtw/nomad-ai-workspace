@@ -751,13 +751,18 @@
       });
     }
 
+    var ROOMS_UNAVAILABLE = '會議室需要在 Nomad Studio 內使用';
+
     async function loadRooms() {
       var res = await api('GET', '/api/bots/rooms');
+      var status = $('bots-room-status');
       if (res.success) {
         state.rooms = res.data;
-        $('bots-room-status').textContent = '';
+        // Clear only our own note: a reload (e.g. the room:removed event) must not wipe
+        // the result of the action the user just took.
+        if (status.textContent === ROOMS_UNAVAILABLE) status.textContent = '';
       } else if (res.httpStatus === 503) {
-        $('bots-room-status').textContent = '會議室需要在 Nomad Studio 內使用';
+        status.textContent = ROOMS_UNAVAILABLE;
       }
       renderRooms();
     }

@@ -6,6 +6,11 @@
 
 ## [Unreleased]
 
+### 🐛 修正 (Fixed)
+
+- **Desktop Agent 用視窗標題找不到視窗**：macOS 不給沒有「螢幕錄製」權限的 App 讀視窗標題，打包版因此每次都誤報 `WINDOW_NOT_FOUND`。現在所有視窗標題都讀不到時，改回報 `SCREEN_RECORDING_REQUIRED` 並說明去哪裡授權（或把視窗標題留空）；`list-windows` 本身失敗（例如 `PERM_DENIED`）時，也會回報它原本的錯誤，不再一律說找不到視窗。
+- **刪除會議室後看不到「已刪除會議室」**：重新載入會議室清單（包括伺服器送來的 `room:removed` 事件）會清空狀態列。現在它只清掉自己寫的「會議室需要在 Nomad Studio 內使用」。
+
 ### ✨ 新增 (Added)
 
 - **Desktop Agent：指定視窗、網頁輸入框備援**：App 有多個視窗時，可在新的「視窗標題」欄填一段標題，只操作標題含這段文字的視窗，整個任務固定在同一個視窗（找不到就立即結束，不會改操作別的視窗；視窗被關掉會依標題重選）。`type` 在 Safari／Chromium 網頁欄位被回報「結果不符」時，會先確認文字是否其實已寫入（避免重複輸入），再改用 `set-value`（不搶焦點，單行欄位可用）；Safari 多行文字框只能實體輸入，需勾選新的「允許實體輸入」（會搶焦點與游標）。實測 Finder 三個視窗依標題選中、系統設定唯讀讀取側邊欄成功；Safari 表單的工具層正常，但 27B 本機模型端到端仍會在送出後重複輸入而未收尾。評估過 `agent-desktop mcp`，維持現行 CLI 迴圈，原因見 `docs/out-of-scope/desktop-agent-mcp.md`。

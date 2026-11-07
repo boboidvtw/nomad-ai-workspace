@@ -26,6 +26,8 @@ const FATAL_SNAPSHOT_HINTS = Object.freeze({
   WINDOW_NOT_FOUND: 'the app has no open window; open one first',
   PERM_DENIED:
     'Accessibility permission is missing for the app that runs agent-desktop (System Settings > Privacy & Security); run `agent-desktop permissions --guide`',
+  SCREEN_RECORDING_REQUIRED:
+    'macOS hides window titles from apps without Screen Recording permission; allow Nomad AI Studio in System Settings > Privacy & Security > Screen Recording, or leave the window title blank',
 });
 
 /** The only tools the model is offered or allowed to call. */
@@ -236,6 +238,63 @@ async function listWindows(exec, app, signal) {
 }
 
 /**
+ * @param {string} code
+ * @param {string} message
+ * @returns {{ content: string, summary: string, ok: false, fatal: string }}
+ */
+function windowFailure(code, message) {
+  const content = JSON.stringify({ ok: false, error: { code, message } });
+  const hint = FATAL_SNAPSHOT_HINTS[/** @type {keyof typeof FATAL_SNAPSHOT_HINTS} */ (code)];
+  return {
+    content,
+    summary: content.slice(0, SUMMARY_CHARS),
+    ok: false,
+    fatal: `${code}: ${hint || message}`,
+  };
+}
+
+/**
+ * Finds the window whose title contains `windowTitle`, preferring a visible one.
+ * Titles come from CoreGraphics, which blanks them for apps without Screen Recording
+ * permission, so "every title is empty" is reported as that, not as a missing window.
+ * @param {DesktopExec} exec
+ * @param {string} app
+ * @param {AbortSignal | undefined} signal
+ * @param {string} windowTitle
+ * @returns {Promise<{ id: string } | { failure: ReturnType<typeof windowFailure> }>}
+ */
+async function findWindowByTitle(exec, app, signal, windowTitle) {
+  const env = await exec(['list-windows', '--app', app], { signal });
+  if (!env?.ok) {
+    const error = errorOf(env);
+    return { failure: windowFailure(error.code, error.message) };
+  }
+  const list = Array.isArray(env.data) ? env.data : [];
+  const wanted = windowTitle.toLowerCase();
+  const matches = (/** @type {any} */ w) =>
+    String(w?.title || '')
+      .toLowerCase()
+      .includes(wanted);
+  const pick = list.find((w) => w?.visible && matches(w)) || list.find(matches);
+  if (pick?.id) return { id: String(pick.id) };
+  if (list.length && list.every((w) => !String(w?.title || '').trim())) {
+    return {
+      failure: windowFailure(
+        'SCREEN_RECORDING_REQUIRED',
+        `${list.length} windows have no readable title`,
+      ),
+    };
+  }
+  const failure = windowFailure('WINDOW_NOT_FOUND', `no window titled '${windowTitle}'`);
+  return {
+    failure: {
+      ...failure,
+      fatal: `WINDOW_NOT_FOUND: ${app} has no window titled '${windowTitle}'; open it first`,
+    },
+  };
+}
+
+/**
  * @param {DesktopExec} exec
  * @param {string} app
  * @param {AbortSignal | undefined} signal
@@ -252,35 +311,9 @@ async function takeSnapshot(exec, app, signal, scope) {
     if (!env?.ok && errorOf(env).code === 'WINDOW_NOT_FOUND') scope.windowId = '';
   }
   if (!scope.windowId && scope.windowTitle) {
-    const wanted = scope.windowTitle.toLowerCase();
-    const list = await listWindows(exec, app, signal);
-    const pick =
-      list.find(
-        (w) =>
-          w?.visible &&
-          String(w.title || '')
-            .toLowerCase()
-            .includes(wanted),
-      ) ||
-      list.find((w) =>
-        String(w.title || '')
-          .toLowerCase()
-          .includes(wanted),
-      );
-    if (!pick?.id) {
-      const error = {
-        code: 'WINDOW_NOT_FOUND',
-        message: `no window titled '${scope.windowTitle}'`,
-      };
-      const content = JSON.stringify({ ok: false, error });
-      return {
-        content,
-        summary: content.slice(0, SUMMARY_CHARS),
-        ok: false,
-        fatal: `WINDOW_NOT_FOUND: ${app} has no window titled '${scope.windowTitle}'; open it first`,
-      };
-    }
-    scope.windowId = String(pick.id);
+    const found = await findWindowByTitle(exec, app, signal, scope.windowTitle);
+    if ('failure' in found) return found.failure;
+    scope.windowId = found.id;
     env = await exec(['snapshot', '--app', app, '--window-id', scope.windowId], { signal });
   }
   if (!env) env = await exec(['snapshot', '--app', app], { signal });
