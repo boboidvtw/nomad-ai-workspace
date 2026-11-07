@@ -7,7 +7,9 @@ const { composeDashboard } = require('@nomad/dashboard');
 
 const DASHBOARD_DIR = path.join(__dirname, '../../../dashboard');
 const INDEX = fs.readFileSync(path.join(DASHBOARD_DIR, 'index.html'), 'utf8');
-const SNAPSHOT = JSON.parse(fs.readFileSync(path.join(DASHBOARD_DIR, 'github-inventory.json'), 'utf8'));
+const SNAPSHOT = JSON.parse(
+  fs.readFileSync(path.join(DASHBOARD_DIR, 'github-inventory.json'), 'utf8'),
+);
 const HTML = composeDashboard(INDEX);
 /** @type {any[]} */
 const openWindows = [];
@@ -24,19 +26,73 @@ const FIXTURE = {
   riskLabels: { high: '疑似惡意' },
   deleted: [{ name: 'gone', upstream: 'up/gone', at: '2026-11-07' }],
   forks: [
-    { name: 'mine', upstream: 'up/mine', upStars: 10, upArchived: true, license: 'MIT', lang: 'C',
-      ahead: 5, behind: 0, myPushed: '2026-11-01', group: 'active', advice: 'Detach it' },
-    { name: 'old', upstream: 'up/old', upStars: 1, upArchived: false, license: null, lang: null,
-      ahead: 1, behind: 900, myPushed: '2025-01-01', group: 'noise', advice: 'Archive it' },
+    {
+      name: 'mine',
+      upstream: 'up/mine',
+      upStars: 10,
+      upArchived: true,
+      license: 'MIT',
+      lang: 'C',
+      ahead: 5,
+      behind: 0,
+      myPushed: '2026-11-01',
+      group: 'active',
+      advice: 'Detach it',
+    },
+    {
+      name: 'old',
+      upstream: 'up/old',
+      upStars: 1,
+      upArchived: false,
+      license: null,
+      lang: null,
+      ahead: 1,
+      behind: 900,
+      myPushed: '2025-01-01',
+      group: 'noise',
+      advice: 'Archive it',
+    },
   ],
   stars: [
-    { name: 'a/agent', stars: 5, lang: 'Python', starredAt: '2026-10-01', pushed: '2026-11-01',
-      archived: false, stale: false, desc: 'An agent', category: 'agents', risk: null, riskNote: null },
-    { name: 'b/lure', stars: 9, lang: 'C++', starredAt: '2026-09-01', pushed: '2026-11-01',
-      archived: false, stale: false, desc: '<img src=x onerror=alert(1)>', category: 'other',
-      risk: 'high', riskNote: 'Do not run it' },
-    { name: 'c/old', stars: 2, lang: null, starredAt: '2024-01-01', pushed: '2023-01-01',
-      archived: true, stale: true, desc: 'Old thing', category: 'other', risk: null, riskNote: null },
+    {
+      name: 'a/agent',
+      stars: 5,
+      lang: 'Python',
+      starredAt: '2026-10-01',
+      pushed: '2026-11-01',
+      archived: false,
+      stale: false,
+      desc: 'An agent',
+      category: 'agents',
+      risk: null,
+      riskNote: null,
+    },
+    {
+      name: 'b/lure',
+      stars: 9,
+      lang: 'C++',
+      starredAt: '2026-09-01',
+      pushed: '2026-11-01',
+      archived: false,
+      stale: false,
+      desc: '<img src=x onerror=alert(1)>',
+      category: 'other',
+      risk: 'high',
+      riskNote: 'Do not run it',
+    },
+    {
+      name: 'c/old',
+      stars: 2,
+      lang: null,
+      starredAt: '2024-01-01',
+      pushed: '2023-01-01',
+      archived: true,
+      stale: true,
+      desc: 'Old thing',
+      category: 'other',
+      risk: null,
+      riskNote: null,
+    },
   ],
 };
 
@@ -63,7 +119,8 @@ async function loadDashboard(opts = {}) {
   openWindows.push(dom.window);
   await new Promise((resolve) => setTimeout(resolve, 60));
   const { document } = dom.window;
-  if (opts.fixture) document.getElementById('gh-inventory-data').textContent = JSON.stringify(opts.fixture);
+  if (opts.fixture)
+    document.getElementById('gh-inventory-data').textContent = JSON.stringify(opts.fixture);
   dom.window.filterCategory('github');
   return { window: dom.window, document };
 }

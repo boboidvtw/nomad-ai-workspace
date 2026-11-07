@@ -150,13 +150,31 @@
   </div>
   <div class="gh-tiles" id="gh-tiles"></div>
   <div class="gh-tabs" role="tablist" aria-label="盤點分頁">
-    <button class="bots-btn ghost" type="button" role="tab" data-gh-tab="forks" aria-selected="true">
+    <button
+      class="bots-btn ghost"
+      type="button"
+      role="tab"
+      data-gh-tab="forks"
+      aria-selected="true"
+    >
       Fork
     </button>
-    <button class="bots-btn ghost" type="button" role="tab" data-gh-tab="stars" aria-selected="false">
+    <button
+      class="bots-btn ghost"
+      type="button"
+      role="tab"
+      data-gh-tab="stars"
+      aria-selected="false"
+    >
       星標
     </button>
-    <button class="bots-btn ghost" type="button" role="tab" data-gh-tab="deleted" aria-selected="false">
+    <button
+      class="bots-btn ghost"
+      type="button"
+      role="tab"
+      data-gh-tab="deleted"
+      aria-selected="false"
+    >
       已刪除
     </button>
   </div>
@@ -224,7 +242,12 @@
         [s.stars, '星標'],
         [s.archivedStars, '星標上游已封存'],
         [s.staleStars, '星標超過一年沒更新'],
-        [data.stars.filter(function (x) { return x.risk; }).length, '風險星標'],
+        [
+          data.stars.filter(function (x) {
+            return x.risk;
+          }).length,
+          '風險星標',
+        ],
         [s.secretLeaks, '機密外洩'],
       ];
       var box = $('gh-tiles');
@@ -235,7 +258,10 @@
         box.append(tile);
       });
       $('gh-subtitle').textContent =
-        data.account + ' 的快照（' + data.snapshotAt + '）：Fork 該怎麼處理、星標的分類、過時與風險';
+        data.account +
+        ' 的快照（' +
+        data.snapshotAt +
+        '）：Fork 該怎麼處理、星標的分類、過時與風險';
     }
 
     function forkRow(f) {
@@ -249,8 +275,14 @@
         el(
           'div',
           'gh-meta',
-          '領先 ' + num(f.ahead) + ' ／ 落後 ' + num(f.behind) + ' · ' + (f.license || '無授權資訊') +
-            ' · 最後 push ' + f.myPushed,
+          '領先 ' +
+            num(f.ahead) +
+            ' ／ 落後 ' +
+            num(f.behind) +
+            ' · ' +
+            (f.license || '無授權資訊') +
+            ' · 最後 push ' +
+            f.myPushed,
         ),
       );
       row.append(el('div', 'gh-advice', f.advice));
@@ -261,14 +293,18 @@
       var box = $('gh-forks');
       box.replaceChildren();
       Object.keys(data.groups).forEach(function (key) {
-        var items = data.forks.filter(function (f) { return f.group === key; });
+        var items = data.forks.filter(function (f) {
+          return f.group === key;
+        });
         if (!items.length) return;
         var group = el('div', 'gh-group');
         var g = data.groups[key];
         group.append(el('h3', null, g.label + '（' + items.length + '）'));
         group.append(el('div', 'gh-group-note', '建議：' + g.action));
         var list = el('div', 'gh-list');
-        items.forEach(function (f) { list.append(forkRow(f)); });
+        items.forEach(function (f) {
+          list.append(forkRow(f));
+        });
         group.append(list);
         box.append(group);
       });
@@ -276,13 +312,17 @@
 
     function renderCategories() {
       var counts = {};
-      data.stars.forEach(function (s) { counts[s.category] = (counts[s.category] || 0) + 1; });
+      data.stars.forEach(function (s) {
+        counts[s.category] = (counts[s.category] || 0) + 1;
+      });
       var select = $('gh-cat');
       select.replaceChildren(new Option('全部分類', ''));
       var chips = $('gh-cats');
       chips.replaceChildren();
       Object.keys(data.categories)
-        .sort(function (a, b) { return (counts[b] || 0) - (counts[a] || 0); })
+        .sort(function (a, b) {
+          return (counts[b] || 0) - (counts[a] || 0);
+        })
         .forEach(function (id) {
           if (!counts[id]) return;
           var label = data.categories[id];
@@ -304,7 +344,10 @@
     function starRow(s) {
       var row = el('div', 'gh-row');
       var head = el('div', 'gh-row-head');
-      head.append(link(s.name), el('span', 'gh-meta', '★' + num(s.stars) + ' · ' + (s.lang || '—')));
+      head.append(
+        link(s.name),
+        el('span', 'gh-meta', '★' + num(s.stars) + ' · ' + (s.lang || '—')),
+      );
       if (s.risk) head.append(el('span', 'gh-badge ' + s.risk, data.riskLabels[s.risk] || s.risk));
       if (s.archived) head.append(el('span', 'gh-badge', '已封存'));
       else if (s.stale) head.append(el('span', 'gh-badge', '超過一年沒更新'));
@@ -319,13 +362,17 @@
       var query = $('gh-search').value.trim().toLowerCase();
       var cat = $('gh-cat').value;
       var flag = $('gh-flag').value;
-      var hits = data.stars.filter(function (s) { return matches(s, query, cat, flag); });
+      var hits = data.stars.filter(function (s) {
+        return matches(s, query, cat, flag);
+      });
       hits.sort(function (a, b) {
         return (b.risk ? 1 : 0) - (a.risk ? 1 : 0) || b.starredAt.localeCompare(a.starredAt);
       });
       var list = $('gh-star-list');
       list.replaceChildren();
-      hits.slice(0, STAR_LIMIT).forEach(function (s) { list.append(starRow(s)); });
+      hits.slice(0, STAR_LIMIT).forEach(function (s) {
+        list.append(starRow(s));
+      });
       $('gh-star-count').textContent =
         hits.length > STAR_LIMIT
           ? '顯示前 ' + STAR_LIMIT + ' 筆，共 ' + hits.length + ' 筆，請縮小篩選'
@@ -336,13 +383,20 @@
       var box = $('gh-deleted');
       box.replaceChildren();
       box.append(
-        el('div', 'gh-group-note', '這些 fork 沒有自己的 commit，已經刪除。上游都還在，可以用下面的指令重新 fork。'),
+        el(
+          'div',
+          'gh-group-note',
+          '這些 fork 沒有自己的 commit，已經刪除。上游都還在，可以用下面的指令重新 fork。',
+        ),
       );
       var list = el('div', 'gh-list');
       data.deleted.forEach(function (d) {
         var row = el('div', 'gh-row');
         var head = el('div', 'gh-row-head');
-        head.append(el('b', null, data.account + '/' + d.name), el('span', 'gh-meta', '刪除於 ' + d.at));
+        head.append(
+          el('b', null, data.account + '/' + d.name),
+          el('span', 'gh-meta', '刪除於 ' + d.at),
+        );
         row.append(head, el('code', 'gh-meta', 'gh repo fork ' + d.upstream + ' --clone=false'));
         list.append(row);
       });
@@ -363,7 +417,9 @@
       if (rendered) return;
       data = readData();
       if (!data) {
-        $('gh-forks').replaceChildren(el('div', 'bots-note', '讀不到盤點資料（github-inventory.json）。'));
+        $('gh-forks').replaceChildren(
+          el('div', 'bots-note', '讀不到盤點資料（github-inventory.json）。'),
+        );
         return;
       }
       renderTiles();
@@ -375,7 +431,9 @@
     }
 
     document.querySelectorAll('[data-gh-tab]').forEach(function (btn) {
-      btn.addEventListener('click', function () { selectTab(btn.dataset.ghTab); });
+      btn.addEventListener('click', function () {
+        selectTab(btn.dataset.ghTab);
+      });
     });
     $('gh-search').addEventListener('input', renderStars);
     $('gh-cat').addEventListener('change', renderStars);
