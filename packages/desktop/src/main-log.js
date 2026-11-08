@@ -77,16 +77,45 @@ const TEED_METHODS = [
   ['error', 'error'],
 ];
 
+/** Errors that mean the terminal on the other end of stdout/stderr has gone away. */
+const BROKEN_PIPE_CODES = new Set(['EPIPE', 'ERR_STREAM_DESTROYED']);
+
+/**
+ * Listens for errors on the console's streams. Started from a terminal (`npm start`), stdout
+ * and stderr are pipes: closing the terminal makes the next write fail with EPIPE, and an
+ * 'error' event with no listener is an uncaught exception that pops a dialog. After a broken
+ * pipe the console stops writing to the terminal; the log file keeps every line.
+ * @param {ReadonlyArray<import('events').EventEmitter>} streams
+ * @param {{ write: (level: string, args: unknown[]) => void }} logger
+ * @returns {{ broken: () => boolean }}
+ */
+function guardStreams(streams, logger) {
+  let broken = false;
+  for (const stream of streams) {
+    stream.on('error', (/** @type {NodeJS.ErrnoException} */ error) => {
+      if (BROKEN_PIPE_CODES.has(String(error && error.code))) {
+        broken = true;
+        return;
+      }
+      logger.write('warn', ['console stream error:', error]);
+    });
+  }
+  return { broken: () => broken };
+}
+
 /**
  * Wraps the console methods so each call also lands in the log file.
  * @param {Pick<Console, 'log'|'info'|'warn'|'error'>} target
  * @param {{ write: (level: string, args: unknown[]) => void }} logger
+ * @param {{ streams?: ReadonlyArray<import('events').EventEmitter> }} [options] - the streams
+ *   behind `target` (process.stdout/stderr for the real console), guarded against EPIPE
  */
-function teeConsole(target, logger) {
+function teeConsole(target, logger, { streams = [] } = {}) {
+  const pipe = guardStreams(streams, logger);
   for (const [method, level] of TEED_METHODS) {
     const original = target[method].bind(target);
     target[method] = (...args) => {
-      original(...args);
+      if (!pipe.broken()) original(...args);
       logger.write(level, args);
     };
   }

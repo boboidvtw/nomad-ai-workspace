@@ -15,7 +15,7 @@ const { store } = require('./src/store');
 const { createFileLogger, teeConsole } = require('./src/main-log');
 
 const mainLog = createFileLogger({ dir: app.getPath('logs') });
-teeConsole(console, mainLog);
+teeConsole(console, mainLog, { streams: [process.stdout, process.stderr] });
 process.on('uncaughtExceptionMonitor', (err, origin) => {
   mainLog.write('fatal', [`${origin}:`, err]);
 });

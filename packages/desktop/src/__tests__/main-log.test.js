@@ -79,3 +79,74 @@ test('Main log: teeConsole forwards to the original console and the file', () =>
   assert.deepStrictEqual(seen, ['log:a 1', 'warn:b', 'error:c']);
   assert.deepStrictEqual(written, ['info:a 1', 'warn:b', 'error:c']);
 });
+
+const { spawn } = require('node:child_process');
+const { EventEmitter } = require('node:events');
+
+/**
+ * Runs a child that tees its console like main.js does, then logs for a while after the
+ * parent closes the child's stdout pipe - what closing the terminal does to `npm start`.
+ * @param {string} dir
+ */
+function runChildAfterTerminalCloses(dir) {
+  const script = `
+    const { createFileLogger, teeConsole } = require(${JSON.stringify(path.join(__dirname, '../main-log.js'))});
+    const logger = createFileLogger({ dir: ${JSON.stringify(dir)} });
+    teeConsole(console, logger, { streams: [process.stdout, process.stderr] });
+    let n = 0;
+    const timer = setInterval(() => {
+      console.info('tick', n++);
+      if (n === 40) { clearInterval(timer); console.info('done'); }
+    }, 5);
+  `;
+  const child = spawn(process.execPath, ['-e', script], { stdio: ['ignore', 'pipe', 'pipe'] });
+  let stderr = '';
+  child.stderr.on('data', (chunk) => (stderr += chunk));
+  child.stdout.once('data', () => child.stdout.destroy());
+  return new Promise((resolve) => child.on('exit', (code) => resolve({ code, stderr })));
+}
+
+test('Main log: closing the terminal does not crash the process with EPIPE', async () => {
+  const dir = tmpDir();
+  const { code, stderr } = await runChildAfterTerminalCloses(dir);
+  assert.strictEqual(code, 0, `child crashed: ${stderr}`);
+  assert.doesNotMatch(stderr, /EPIPE/);
+  assert.match(fs.readFileSync(path.join(dir, 'main.log'), 'utf8'), /\[info\] done\n/);
+});
+
+test('Main log: after a broken pipe the console stops writing there but the file keeps going', () => {
+  const dir = tmpDir();
+  const logger = createFileLogger({ dir, now: FIXED });
+  const stdout = new EventEmitter();
+  /** @type {unknown[][]} */
+  const printed = [];
+  const target = {
+    log() {},
+    info: (/** @type {unknown[]} */ ...a) => printed.push(a),
+    warn() {},
+    error() {},
+  };
+  teeConsole(target, logger, { streams: [stdout] });
+
+  target.info('before');
+  const epipe = Object.assign(new Error('write EPIPE'), { code: 'EPIPE' });
+  assert.doesNotThrow(() => stdout.emit('error', epipe), 'an EPIPE never becomes uncaught');
+  target.info('after');
+
+  assert.deepStrictEqual(printed, [['before']]);
+  const text = fs.readFileSync(logger.file, 'utf8');
+  assert.match(text, /\[info\] before\n/);
+  assert.match(text, /\[info\] after\n/);
+});
+
+test('Main log: other stdio errors are logged to the file instead of crashing', () => {
+  const dir = tmpDir();
+  const logger = createFileLogger({ dir, now: FIXED });
+  const stderr = new EventEmitter();
+  const target = { log() {}, info() {}, warn() {}, error() {} };
+  teeConsole(target, logger, { streams: [stderr] });
+
+  const odd = Object.assign(new Error('write EIO'), { code: 'EIO' });
+  assert.doesNotThrow(() => stderr.emit('error', odd));
+  assert.match(fs.readFileSync(logger.file, 'utf8'), /\[warn\] .*write EIO/);
+});
