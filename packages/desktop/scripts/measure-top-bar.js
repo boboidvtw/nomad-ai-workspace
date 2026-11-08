@@ -24,7 +24,7 @@ const MEASURE = `(() => {
     bar.querySelector('.brand').getBoundingClientRect().width +
     shown.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0) +
     gap * Math.max(shown.length - 1, 0);
-  const wrapped = [...bar.querySelectorAll('.brand, .controls > *, .btn-mode, .chip')]
+  const wrapped = [...bar.querySelectorAll('.brand, .controls > *')]
     .filter((el) => el.offsetParent && el.getBoundingClientRect().height > ${ROW_HEIGHT})
     .map((el) => el.id || el.className);
   return { overflow: bar.scrollWidth - bar.clientWidth, need: Math.ceil(need), wrapped };

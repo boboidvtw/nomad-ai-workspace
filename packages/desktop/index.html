@@ -74,40 +74,50 @@
         -webkit-app-region: no-drag;
       }
 
-      .btn-group {
-        display: flex;
-        background: rgba(var(--fg-rgb), 0.05);
+      .top-select {
+        appearance: none;
+        -webkit-appearance: none;
+        background-color: rgba(var(--fg-rgb), 0.05);
+        background-image:
+          linear-gradient(45deg, transparent 50%, currentColor 50%),
+          linear-gradient(135deg, currentColor 50%, transparent 50%);
+        background-position:
+          calc(100% - 13px) 50%,
+          calc(100% - 9px) 50%;
+        background-size: 4px 4px;
+        background-repeat: no-repeat;
         border: 1px solid rgba(var(--fg-rgb), 0.1);
         border-radius: 8px;
-        padding: 2px;
-      }
-      .btn-mode {
-        background: transparent;
-        border: none;
-        color: var(--text-muted);
-        padding: 5px 11px;
+        color: var(--accent-color);
+        font: inherit;
         font-size: 12px;
         font-weight: 600;
-        border-radius: 6px;
+        padding: 5px 24px 5px 10px;
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
         cursor: pointer;
         transition: all 0.15s ease;
       }
-      .btn-mode:hover {
-        color: var(--text-strong);
-        background: rgba(var(--fg-rgb), 0.05);
+      .top-select:hover {
+        border-color: rgba(var(--fg-rgb), 0.22);
+        background-color: rgba(var(--fg-rgb), 0.08);
       }
-      .btn-mode.active {
-        background: rgba(var(--accent-rgb), 0.2);
-        color: var(--accent-color);
-        box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.2);
+      .top-select:focus-visible {
+        outline: 2px solid rgba(var(--accent-rgb), 0.6);
+        outline-offset: 1px;
+      }
+      .top-select option {
+        color: var(--text-strong);
+        background: var(--bg-base);
+      }
+      .top-select.is-evolver {
+        color: var(--tint-violet-300);
+        border-color: rgba(167, 139, 250, 0.45);
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);
       }
 
-      /* Platform Chips */
-      .platform-chips {
-        display: flex;
-        gap: 5px;
-        align-items: center;
-      }
+      /* Platform chips (still used in orchestration step rows) */
       .chip {
         background: rgba(var(--fg-rgb), 0.04);
         border: 1px solid rgba(var(--fg-rgb), 0.08);
@@ -187,33 +197,29 @@
       }
       .top-bar .pill-info,
       .top-bar .brand,
-      .top-bar .btn-group,
-      .top-bar .platform-chips,
-      .top-bar .btn-mode,
-      .top-bar .chip {
+      .top-bar .top-select {
         white-space: nowrap;
         flex-shrink: 0;
       }
-      /* The top bar needs ~2190px with every label. Narrower windows drop labels in tiers
+      /* The top bar needs ~1570px with every label (layout and platforms are dropdowns). Narrower windows drop labels in tiers
          (each element keeps an icon or dot plus a tooltip) so nothing wraps into vertical
          text and the bar fits down to the 960px minimum window width. Thresholds are
          measured with scripts/measure-top-bar.js. */
       .pill-icon-narrow {
         display: none;
       }
-      @media (max-width: 2320px) {
+      @media (max-width: 1600px) {
         .pill-compact .pill-label,
         #shortcut-pill {
           display: none;
         }
       }
-      @media (max-width: 2000px) {
-        .top-bar .btn-mode .lbl-full,
+      @media (max-width: 1290px) {
         .top-bar .badge-super {
           display: none;
         }
       }
-      @media (max-width: 1700px) {
+      @media (max-width: 1170px) {
         .pill-compact-narrow .pill-label {
           display: none;
         }
@@ -224,26 +230,23 @@
           gap: 6px;
         }
       }
-      @media (max-width: 1540px) {
+      @media (max-width: 1010px) {
         .top-bar .brand-name {
           display: none;
         }
       }
-      @media (max-width: 1420px) {
-        .top-bar .chip-label {
-          display: none;
-        }
-        .top-bar .chip {
-          padding: 4px 7px;
+      @media (max-width: 980px) {
+        .top-bar .top-select {
+          max-width: 120px;
         }
       }
-      @media (max-width: 1120px) {
-        .top-bar .btn-mode .lbl-short,
+      @media (max-width: 960px) {
         .pill-compact-tight .pill-label {
           display: none;
         }
-        .top-bar .btn-mode {
-          padding: 5px 8px;
+        .top-bar .top-select {
+          max-width: 96px;
+          padding-left: 8px;
         }
         #top-workspace-title {
           max-width: 72px !important;
@@ -1293,21 +1296,6 @@
       }
 
       /* RFC-0001: Nomad Evolver Studio — Tri-Pane Agent IDE & Evolution HUD */
-      .btn-mode-evolver {
-        color: var(--tint-violet-300) !important;
-        border: 1px solid rgba(167, 139, 250, 0.28) !important;
-        margin-left: 2px;
-      }
-      .btn-mode-evolver.active {
-        background: linear-gradient(
-          135deg,
-          rgba(139, 92, 246, 0.32),
-          rgba(var(--accent-rgb), 0.25)
-        ) !important;
-        color: var(--text-strong) !important;
-        border-color: var(--accent-color) !important;
-        box-shadow: 0 0 14px rgba(139, 92, 246, 0.35) !important;
-      }
       .evolver-workbench {
         display: none;
         width: 100%;
@@ -1575,105 +1563,38 @@
       </div>
 
       <div class="controls">
-        <!-- Layout Modes -->
-        <div class="btn-group">
-          <!-- Labels shrink on narrow windows: full (單欄專注) -> short (單欄) -> mini (單) -->
-          <button
-            class="btn-mode active"
-            id="btn-focus"
-            onclick="handleLayoutClick('focus')"
-            title="單欄專注"
-          >
-            單<span class="lbl-short">欄</span><span class="lbl-full">專注</span>
-          </button>
-          <button
-            class="btn-mode"
-            id="btn-dual"
-            onclick="handleLayoutClick('dual')"
-            title="雙欄並排"
-          >
-            雙<span class="lbl-short">欄</span><span class="lbl-full">並排</span>
-          </button>
-          <button
-            class="btn-mode"
-            id="btn-triple"
-            onclick="handleLayoutClick('triple')"
-            title="三欄對比"
-          >
-            三<span class="lbl-short">欄</span><span class="lbl-full">對比</span>
-          </button>
-          <button
-            class="btn-mode"
-            id="btn-quad"
-            onclick="handleLayoutClick('quad')"
-            title="四宮格競技"
-          >
-            四<span class="lbl-short">宮</span><span class="lbl-full">格競技</span>
-          </button>
-          <button
-            class="btn-mode"
-            id="btn-hexa"
-            onclick="handleLayoutClick('hexa')"
-            title="六宮格矩陣"
-          >
-            六<span class="lbl-short">宮</span><span class="lbl-full">格矩陣</span>
-          </button>
-          <button
-            class="btn-mode btn-mode-evolver"
-            id="btn-evolver"
-            onclick="handleLayoutClick('evolver')"
-            title="自進化 IDE：切換至 Antigravity IDE + Claude Desktop 自進化工作台 (RFC-0001)"
-          >
-            🧬<span class="lbl-full"> 自進化</span><span class="lbl-short"> IDE</span>
-          </button>
-        </div>
-
-        <!-- Platform Active Chips -->
-        <div class="platform-chips">
-          <div
-            class="chip chip-chatgpt active"
-            id="chip-chatgpt"
-            onclick="togglePlatform('chatgpt')"
-            title="ChatGPT"
-          >
-            <span class="dot dot-chatgpt"></span><span class="chip-label">ChatGPT</span>
-          </div>
-          <div
-            class="chip chip-claude"
-            id="chip-claude"
-            onclick="togglePlatform('claude')"
-            title="Claude"
-          >
-            <span class="dot dot-claude"></span><span class="chip-label">Claude</span>
-          </div>
-          <div
-            class="chip chip-gemini"
-            id="chip-gemini"
-            onclick="togglePlatform('gemini')"
-            title="Gemini"
-          >
-            <span class="dot dot-gemini"></span><span class="chip-label">Gemini</span>
-          </div>
-          <div class="chip chip-grok" id="chip-grok" onclick="togglePlatform('grok')" title="Grok">
-            <span class="dot dot-grok"></span><span class="chip-label">Grok</span>
-          </div>
-          <div
-            class="chip chip-copilot"
-            id="chip-copilot"
-            onclick="togglePlatform('copilot')"
-            title="Copilot"
-          >
-            <span class="dot dot-copilot"></span><span class="chip-label">Copilot</span>
-          </div>
-          <div
-            class="chip chip-perplexity"
-            id="chip-perplexity"
-            onclick="togglePlatform('perplexity')"
-            title="Perplexity"
-          >
-            <span class="dot dot-perplexity"></span><span class="chip-label">Perplexity</span>
-          </div>
-        </div>
+        <!-- Layout mode and platforms are native <select>s: their menus are drawn by the OS,
+             so they open above the AI views instead of under them. -->
+        <select
+          class="top-select"
+          id="layout-select"
+          onchange="handleLayoutClick(this.value)"
+          title="版面模式"
+          aria-label="版面模式"
+        >
+          <option value="focus">單欄專注</option>
+          <option value="dual">雙欄並排</option>
+          <option value="triple">三欄對比</option>
+          <option value="quad">四宮格競技</option>
+          <option value="hexa">六宮格矩陣</option>
+          <option value="evolver">🧬 自進化 IDE</option>
+          <option value="custom" hidden disabled>自訂</option>
+        </select>
+        <select
+          class="top-select"
+          id="platform-select"
+          onchange="handlePlatformPick(this)"
+          title="顯示的 AI 平台：選一個加入，再選一次移除"
+          aria-label="AI 平台"
+        >
+          <option value="" hidden>ChatGPT</option>
+          <option value="chatgpt">ChatGPT</option>
+          <option value="claude">Claude</option>
+          <option value="gemini">Gemini</option>
+          <option value="grok">Grok</option>
+          <option value="copilot">Copilot</option>
+          <option value="perplexity">Perplexity</option>
+        </select>
 
         <!-- Split Ratio selector for Dual Mode -->
         <div class="ratio-group" id="dual-ratios" style="display: none">
@@ -3776,10 +3697,14 @@
       }
 
       function renderUI() {
-        // 1. Layout Mode buttons
-        document.querySelectorAll('.btn-mode').forEach((b) => b.classList.remove('active'));
-        const activeBtn = document.getElementById('btn-' + state.layout);
-        if (activeBtn) activeBtn.classList.add('active');
+        // 1. Layout mode dropdown
+        const layoutSelect = document.getElementById('layout-select');
+        if (layoutSelect) {
+          const customOpt = layoutSelect.querySelector('option[value="custom"]');
+          if (customOpt) customOpt.textContent = `自訂 ${state.activePlatforms.length} 欄`;
+          layoutSelect.value = state.layout;
+          layoutSelect.classList.toggle('is-evolver', state.layout === 'evolver');
+        }
 
         // 2. Dual ratios visibility
         const ratioGroup = document.getElementById('dual-ratios');
@@ -3795,17 +3720,8 @@
           if (rBtn) rBtn.classList.add('active');
         }
 
-        // 3. Platform Chips
-        ALL_PLATFORMS.forEach((p) => {
-          const chip = document.getElementById('chip-' + p);
-          if (chip) {
-            if (state.activePlatforms.includes(p)) {
-              chip.classList.add('active');
-            } else {
-              chip.classList.remove('active');
-            }
-          }
-        });
+        // 3. Platform dropdown: a check marks each shown platform, the closed box sums them up
+        renderPlatformSelect();
 
         // 4. Zoom Values in Popover
         ALL_PLATFORMS.forEach((p) => {
@@ -3924,6 +3840,38 @@
         renderUI();
         loadAppearanceUI();
         loadShortcutsUI();
+      }
+
+      function platformName(p) {
+        const opt = document.querySelector(`#platform-select option[value="${p}"]`);
+        return opt ? opt.dataset.name || opt.textContent.trim() : p;
+      }
+
+      function platformSummary(active) {
+        const names = active.map(platformName);
+        if (names.length <= 2) return names.join('、');
+        return `${names[0]} 等 ${names.length} 個`;
+      }
+
+      function renderPlatformSelect() {
+        const sel = document.getElementById('platform-select');
+        if (!sel) return;
+        const active = state.activePlatforms;
+        for (const opt of sel.options) {
+          if (!opt.value) continue;
+          opt.dataset.name ??= opt.textContent.trim();
+          opt.textContent = `${active.includes(opt.value) ? '✓' : '\u3000'} ${opt.dataset.name}`;
+        }
+        sel.options[0].textContent = platformSummary(active);
+        sel.value = '';
+        sel.title = `顯示中：${active.map(platformName).join('、')}（選一個加入，再選一次移除）`;
+      }
+
+      // The platform dropdown acts like the old chips: picking a platform toggles it.
+      function handlePlatformPick(sel) {
+        const platform = sel.value;
+        sel.value = '';
+        if (platform) togglePlatform(platform);
       }
 
       function setRatio(ratio) {
