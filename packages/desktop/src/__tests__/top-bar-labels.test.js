@@ -81,42 +81,89 @@ test('Top bar: pills that drop their label on narrow windows keep an icon and a 
   assert.match(HTML, /\.top-bar \.pill-info,[^{]*\{\s*white-space: nowrap;\s*flex-shrink: 0;/);
 });
 
-test('Top bar: brand, layout buttons and platform chips never wrap or shrink', () => {
+test('Top bar: brand and the two dropdowns never wrap or shrink', () => {
   const rule = HTML.match(
     /((?:\s*\.top-bar [.\w-]+,?)+)\s*\{\s*white-space: nowrap;\s*flex-shrink: 0;/,
   );
   assert.ok(rule, 'nowrap rule exists');
-  for (const sel of ['.brand', '.btn-group', '.platform-chips', '.btn-mode', '.chip']) {
+  for (const sel of ['.brand', '.top-select']) {
     assert.ok(rule[1].includes(`.top-bar ${sel}`), `${sel} is covered`);
   }
 });
 
-test('Top bar: layout buttons keep their full name while showing a short label', async () => {
+/** @param {any} sel */
+const optionTexts = (sel) => [...sel.options].filter((o) => !o.hidden).map((o) => o.textContent);
+
+test('Top bar: layouts are one native dropdown, so the menu opens above the AI views', async () => {
   const win = await loadShell();
-  const expected = {
-    'btn-focus': '單欄專注',
-    'btn-dual': '雙欄並排',
-    'btn-triple': '三欄對比',
-    'btn-quad': '四宮格競技',
-    'btn-hexa': '六宮格矩陣',
-    'btn-evolver': '🧬 自進化 IDE',
-  };
-  for (const [id, name] of Object.entries(expected)) {
-    const btn = win.document.getElementById(id);
-    assert.strictEqual(btn.textContent.replace(/\s+/g, ' ').trim(), name, id);
-    assert.ok(btn.title.includes(name.replace('🧬 ', '')), `${id} tooltip names the layout`);
-    assert.ok(btn.querySelector('.lbl-full'), `${id} has a part to drop on narrow windows`);
-  }
+  const doc = win.document;
+  assert.strictEqual(doc.querySelectorAll('.top-bar .btn-mode').length, 0, 'no layout buttons');
+  const sel = doc.getElementById('layout-select');
+  assert.strictEqual(sel.tagName, 'SELECT');
+  assert.ok(sel.title && sel.getAttribute('aria-label'), 'has a tooltip and a label');
+  assert.deepStrictEqual(optionTexts(sel), [
+    '單欄專注',
+    '雙欄並排',
+    '三欄對比',
+    '四宮格競技',
+    '六宮格矩陣',
+    '🧬 自進化 IDE',
+  ]);
+  assert.strictEqual(sel.value, 'focus');
+
+  sel.value = 'triple';
+  sel.dispatchEvent(new win.Event('change'));
+  assert.strictEqual(win.eval('state.layout'), 'triple');
+  assert.deepStrictEqual([...win.eval('state.activePlatforms')], ['chatgpt', 'claude', 'gemini']);
+
+  sel.value = 'evolver';
+  sel.dispatchEvent(new win.Event('change'));
+  assert.ok(sel.classList.contains('is-evolver'), 'IDE keeps its own look');
 });
 
-test('Top bar: platform chips keep a dot and a tooltip when the name is hidden', async () => {
+test('Top bar: a custom platform mix shows as its own layout entry', async () => {
   const win = await loadShell();
-  const chips = [...win.document.querySelectorAll('.top-bar .platform-chips .chip')];
-  assert.strictEqual(chips.length, 6);
-  for (const chip of chips) {
-    const name = chip.querySelector('.chip-label');
-    assert.ok(name, `${chip.id} wraps its name in .chip-label`);
-    assert.ok(chip.querySelector('.dot'), `${chip.id} keeps its dot`);
-    assert.strictEqual(chip.title, name.textContent.trim(), `${chip.id} tooltip`);
-  }
+  win.eval(
+    "state.layout = 'custom'; state.activePlatforms = ['chatgpt','claude','gemini','grok','copilot']; renderUI();",
+  );
+  const sel = win.document.getElementById('layout-select');
+  assert.strictEqual(sel.value, 'custom');
+  assert.strictEqual(sel.selectedOptions[0].textContent.trim(), '自訂 5 欄');
+});
+
+test('Top bar: platforms are one native dropdown that toggles the picked platform', async () => {
+  const win = await loadShell();
+  const doc = win.document;
+  assert.strictEqual(doc.querySelectorAll('.top-bar .chip').length, 0, 'no platform chips');
+  const sel = doc.getElementById('platform-select');
+  assert.strictEqual(sel.tagName, 'SELECT');
+  assert.ok(sel.title && sel.getAttribute('aria-label'), 'has a tooltip and a label');
+  assert.deepStrictEqual(optionTexts(sel), [
+    '✓ ChatGPT',
+    '\u3000 Claude',
+    '\u3000 Gemini',
+    '\u3000 Grok',
+    '\u3000 Copilot',
+    '\u3000 Perplexity',
+  ]);
+  const summary = () => sel.selectedOptions[0].textContent.trim();
+  assert.strictEqual(sel.value, '', 'the closed dropdown shows the summary');
+  assert.strictEqual(summary(), 'ChatGPT');
+
+  // Picking a hidden platform in focus swaps it in, like the old chips did.
+  sel.value = 'gemini';
+  sel.dispatchEvent(new win.Event('change'));
+  assert.deepStrictEqual([...win.eval('state.activePlatforms')], ['gemini']);
+  assert.strictEqual(sel.value, '', 'resets to the summary after a pick');
+  assert.strictEqual(summary(), 'Gemini');
+
+  win.eval("handleLayoutClick('triple')");
+  assert.strictEqual(summary(), 'ChatGPT 等 3 個');
+  assert.ok(optionTexts(sel).includes('✓ Gemini'));
+
+  // Picking a shown platform removes it.
+  sel.value = 'claude';
+  sel.dispatchEvent(new win.Event('change'));
+  assert.deepStrictEqual([...win.eval('state.activePlatforms')], ['chatgpt', 'gemini']);
+  assert.strictEqual(summary(), 'ChatGPT、Gemini');
 });
