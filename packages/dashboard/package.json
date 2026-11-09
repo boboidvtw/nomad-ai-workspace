@@ -20,6 +20,7 @@
     "calendar-panel.html",
     "shipping-panel.html",
     "github-panel.html",
+    "neural-panel.html",
     "github-inventory.json"
   ],
   "dependencies": {

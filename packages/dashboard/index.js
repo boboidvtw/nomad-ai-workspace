@@ -19,6 +19,8 @@ const SHIPPING_PANEL_PATH = path.join(__dirname, 'shipping-panel.html');
 const SHIPPING_PANEL_MARKER = '<!-- @nomad:shipping-panel -->';
 const GITHUB_PANEL_PATH = path.join(__dirname, 'github-panel.html');
 const GITHUB_PANEL_MARKER = '<!-- @nomad:github-panel -->';
+const NEURAL_PANEL_PATH = path.join(__dirname, 'neural-panel.html');
+const NEURAL_PANEL_MARKER = '<!-- @nomad:neural-panel -->';
 const GITHUB_DATA_PATH = path.join(__dirname, 'github-inventory.json');
 const GITHUB_DATA_MARKER = '/*@nomad:github-inventory-data*/';
 
@@ -59,6 +61,7 @@ function composeDashboard(html) {
     [CALENDAR_PANEL_MARKER, CALENDAR_PANEL_PATH],
     [SHIPPING_PANEL_MARKER, SHIPPING_PANEL_PATH],
     [GITHUB_PANEL_MARKER, GITHUB_PANEL_PATH],
+    [NEURAL_PANEL_MARKER, NEURAL_PANEL_PATH],
   ].reduce((acc, [marker, file]) => inlinePanel(acc, marker, file), html);
   return inlineGithubData(page);
 }
