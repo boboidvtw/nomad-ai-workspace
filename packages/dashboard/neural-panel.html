@@ -1,0 +1,1009 @@
+<!--
+  Nomad Dashboard - Neural map panel
+  Inlined into index.html at the neural-panel marker by composeDashboard().
+  Draws the local stack as a living neural network: the Studio core, one hub per module
+  (service categories from ALL_ITEMS, the agent roster, recent tasks) and a node per item.
+  Live state comes from GET /api/services, /api/roster and /api/tasks; signal pulses run
+  along every link and task nodes connect to the agent they are assigned to.
+  Text from the API is drawn on the canvas or set with textContent, never as HTML.
+  An accessible node list mirrors the canvas, so the map also works without canvas support.
+-->
+<style>
+  .neural-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+  }
+  .neural-stage {
+    position: relative;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(var(--primary-rgb), 0.1), transparent 65%),
+      var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    min-height: 520px;
+  }
+  .neural-canvas {
+    display: block;
+    width: 100%;
+    height: 520px;
+    cursor: default;
+  }
+  .neural-canvas.is-pointing {
+    cursor: pointer;
+  }
+  .neural-crumbs {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+  .neural-crumbs button {
+    background: none;
+    border: none;
+    color: var(--tint-indigo);
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+  }
+  .neural-crumbs button:disabled {
+    color: var(--text);
+    cursor: default;
+  }
+  .neural-legend {
+    position: absolute;
+    bottom: 10px;
+    left: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    font-size: 0.7rem;
+    color: var(--text-subtle);
+  }
+  .neural-legend i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .neural-side {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-height: 520px;
+    overflow-y: auto;
+  }
+  .neural-detail h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+  .neural-kind {
+    font-size: 0.7rem;
+    color: var(--text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .neural-state {
+    display: inline-block;
+    font-size: 0.72rem;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    margin-top: 4px;
+  }
+  .neural-desc {
+    font-size: 0.8rem;
+    color: var(--text-soft);
+    line-height: 1.5;
+  }
+  .neural-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .neural-tags span {
+    font-size: 0.66rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(var(--primary-rgb), 0.14);
+    color: var(--text-soft);
+  }
+  .neural-links-title {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+  }
+  .neural-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .neural-list button {
+    width: 100%;
+    text-align: left;
+    background: rgba(var(--well-rgb), 0.18);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.76rem;
+    padding: 4px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .neural-list button:hover,
+  .neural-list button:focus-visible,
+  .neural-list button[aria-current='true'] {
+    border-color: var(--card-border-hover);
+  }
+  .neural-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: none;
+  }
+  @media (max-width: 900px) {
+    .neural-wrap {
+      grid-template-columns: 1fr;
+    }
+    .neural-canvas,
+    .neural-stage {
+      height: 420px;
+      min-height: 420px;
+    }
+  }
+</style>
+
+<section
+  class="task-plane-section"
+  id="neural-section"
+  style="display: none"
+  aria-labelledby="neural-title"
+>
+  <div class="task-header">
+    <div>
+      <h2 id="neural-title">🧬 神經網絡</h2>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px">
+        整個本機工作站的即時關係圖：點模組展開、點節點看詳情，Esc 逐層返回
+      </div>
+    </div>
+    <div>
+      <button class="bots-btn ghost" type="button" id="neural-refresh">重新整理</button>
+    </div>
+  </div>
+  <div class="bots-note" id="neural-status" role="status"></div>
+  <div class="neural-wrap">
+    <div class="neural-stage">
+      <canvas class="neural-canvas" id="neural-canvas" aria-hidden="true"></canvas>
+      <nav class="neural-crumbs" id="neural-crumbs" aria-label="神經網絡層級"></nav>
+      <div class="neural-legend" aria-hidden="true">
+        <span><i style="background: var(--tint-green)"></i>執行中 / 完成</span>
+        <span><i style="background: var(--tint-cyan)"></i>忙碌 / 進行中</span>
+        <span><i style="background: var(--tint-amber)"></i>啟動中 / 待審</span>
+        <span><i style="background: var(--tint-red)"></i>失敗 / 阻塞</span>
+        <span
+          ><i style="border: 1.5px solid var(--text-subtle); box-sizing: border-box"></i>未啟動 /
+          離線（空心）</span
+        >
+      </div>
+    </div>
+    <aside class="neural-side">
+      <div class="neural-detail" id="neural-detail" aria-live="polite"></div>
+      <div class="neural-links-title" id="neural-list-title">節點</div>
+      <ul class="neural-list" id="neural-list"></ul>
+    </aside>
+  </div>
+</section>
+
+<script>
+  (function () {
+    'use strict';
+    var POLL_MS = 5000;
+    var MAX_TASKS = 24;
+    var CORE_ID = 'core';
+    var HUB_DEFS = [
+      { id: 'hub-ai', group: 'ai', label: '🧠 AI 決策與推論' },
+      { id: 'hub-agents', group: 'agents', label: '🤖 智慧代理' },
+      { id: 'hub-infra', group: 'infra', label: '🐳 基礎設施' },
+      { id: 'hub-tools', group: 'tools', label: '📚 知識庫與工具' },
+      { id: 'hub-other', group: 'other', label: '🔌 其他服務' },
+      { id: 'hub-roster', group: 'roster', label: '👥 Agent 名冊' },
+      { id: 'hub-tasks', group: 'tasks', label: '📋 近期任務' },
+    ];
+    /** status → [tint token, label] */
+    var STATUS = {
+      running: ['green', '執行中'],
+      ready: ['green', '可開啟'],
+      completed: ['green', '已完成'],
+      busy: ['cyan', '忙碌'],
+      in_progress: ['cyan', '進行中'],
+      idle: ['violet', '待命'],
+      todo: ['violet', '待辦'],
+      starting: ['amber', '啟動中'],
+      stopping: ['amber', '關閉中'],
+      review: ['amber', '待審查'],
+      paused: ['amber', '暫停'],
+      failed: ['red', '失敗'],
+      blocked: ['red', '阻塞'],
+      stopped: ['muted', '未啟動'],
+      offline: ['muted', '離線'],
+      unavailable: ['muted', '無法使用'],
+      unknown: ['muted', '狀態未知'],
+      hub: ['indigo', '模組'],
+      core: ['indigo', '核心'],
+    };
+    var KIND_LABEL = {
+      core: 'Studio 核心',
+      hub: '模組',
+      service: '服務',
+      agent: 'Agent',
+      task: '任務',
+    };
+
+    // ---------- graph model (pure) ----------
+
+    function str(value) {
+      return value === undefined || value === null ? '' : String(value);
+    }
+
+    /** The Studio serving this page is the core node, never a leaf. */
+    var CORE_SERVICE = 'nomad-studio';
+
+    /** Service ids behind a card: the service panel's mapping, else the card id minus `card-`. */
+    function cardServices(item, cards) {
+      var entry = (cards || []).find(function (c) {
+        return c && c.card === item.id;
+      });
+      return entry && Array.isArray(entry.services) && entry.services.length
+        ? entry.services.map(String)
+        : [String(item.id).replace(/^card-/, '')];
+    }
+
+    function cardLeaves(item, ids, byId) {
+      return ids.map(function (key) {
+        var live = byId[key];
+        return {
+          id: 'svc:' + key,
+          kind: 'service',
+          group: item.category || 'other',
+          // A card with several services names each node after its own service.
+          label: ids.length > 1 && live ? str(live.label || key) : str(item.title),
+          desc: str(item.desc),
+          tags: Array.isArray(item.tags) ? item.tags.map(str) : [],
+          status: live ? str(live.state) || 'unknown' : 'unknown',
+        };
+      });
+    }
+
+    function serviceLeaves(items, services, cards) {
+      var byId = {};
+      (services || []).forEach(function (s) {
+        if (s && s.id) byId[String(s.id)] = s;
+      });
+      var used = {};
+      used[CORE_SERVICE] = true;
+      var leaves = [];
+      (items || [])
+        .filter(function (item) {
+          return item && item.type === 'service' && item.id;
+        })
+        .forEach(function (item) {
+          var ids = cardServices(item, cards);
+          ids.forEach(function (key) {
+            used[key] = true;
+          });
+          leaves = leaves.concat(cardLeaves(item, ids, byId));
+        });
+      Object.keys(byId).forEach(function (key) {
+        if (used[key]) return;
+        var s = byId[key];
+        leaves.push({
+          id: 'svc:' + key,
+          kind: 'service',
+          group: 'other',
+          label: str(s.label || key),
+          desc: str(s.message),
+          tags: [],
+          status: str(s.state) || 'unknown',
+        });
+      });
+      return leaves;
+    }
+
+    function agentLeaves(agents) {
+      return (agents || [])
+        .filter(function (a) {
+          return a && a.id;
+        })
+        .map(function (a) {
+          return {
+            id: 'agent:' + a.id,
+            kind: 'agent',
+            group: 'roster',
+            label: str(a.name || a.id),
+            desc: [str(a.role), str(a.platform)].filter(Boolean).join(' · '),
+            tags: Array.isArray(a.skills) ? a.skills.map(str) : [],
+            status: str(a.status) || 'unknown',
+          };
+        });
+    }
+
+    function taskLeaves(tasks) {
+      return (tasks || [])
+        .filter(function (t) {
+          return t && t.id && t.status !== 'cancelled';
+        })
+        .slice()
+        .sort(function (a, b) {
+          return str(b.updatedAt).localeCompare(str(a.updatedAt));
+        })
+        .slice(0, MAX_TASKS)
+        .map(function (t) {
+          return {
+            id: 'task:' + t.id,
+            kind: 'task',
+            group: 'tasks',
+            label: str(t.title || t.id),
+            desc: str(t.description),
+            tags: [str(t.priority)].filter(Boolean),
+            status: str(t.status) || 'unknown',
+            assignee: t.assignee ? String(t.assignee) : null,
+          };
+        });
+    }
+
+    /**
+     * @param {{ items?: any[], cards?: Array<{ card: string, services: string[] }>,
+     *   services?: any[], agents?: any[], tasks?: any[] }} input
+     * @returns {{ nodes: any[], edges: Array<{ from: string, to: string, kind: string }> }}
+     */
+    function buildGraph(input) {
+      var src = input || {};
+      var leaves = serviceLeaves(src.items, src.services, src.cards)
+        .concat(agentLeaves(src.agents))
+        .concat(taskLeaves(src.tasks));
+      var hubs = HUB_DEFS.filter(function (hub) {
+        return leaves.some(function (leaf) {
+          return leaf.group === hub.group;
+        });
+      }).map(function (hub) {
+        return { id: hub.id, kind: 'hub', group: hub.group, label: hub.label, status: 'hub' };
+      });
+      var hubByGroup = {};
+      hubs.forEach(function (hub) {
+        hubByGroup[hub.group] = hub.id;
+      });
+      leaves.forEach(function (leaf) {
+        if (!hubByGroup[leaf.group]) leaf.group = 'other';
+      });
+      var core = {
+        id: CORE_ID,
+        kind: 'core',
+        group: 'core',
+        label: 'Nomad Studio',
+        status: 'core',
+      };
+      var edges = hubs.map(function (hub) {
+        return { from: CORE_ID, to: hub.id, kind: 'core' };
+      });
+      var known = {};
+      leaves.forEach(function (leaf) {
+        known[leaf.id] = true;
+        edges.push({ from: hubByGroup[leaf.group], to: leaf.id, kind: 'member' });
+      });
+      leaves.forEach(function (leaf) {
+        if (leaf.kind === 'task' && leaf.assignee && known['agent:' + leaf.assignee]) {
+          edges.push({ from: leaf.id, to: 'agent:' + leaf.assignee, kind: 'assign' });
+        }
+      });
+      return { nodes: [core].concat(hubs, leaves), edges: edges };
+    }
+
+    // ---------- state ----------
+
+    var state = {
+      graph: { nodes: [], edges: [] },
+      focus: null,
+      selected: null,
+      hover: null,
+      pos: {},
+      target: {},
+      timer: null,
+      raf: 0,
+    };
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+    function el(tag, className, text) {
+      var node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+    function visible() {
+      var section = $('neural-section');
+      return !!section && section.style.display !== 'none';
+    }
+    function reducedMotion() {
+      return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+    function nodeById(id) {
+      return state.graph.nodes.find(function (n) {
+        return n.id === id;
+      });
+    }
+    function neighbours(id) {
+      var out = [];
+      state.graph.edges.forEach(function (e) {
+        if (e.from === id) out.push({ id: e.to, kind: e.kind });
+        else if (e.to === id) out.push({ id: e.from, kind: e.kind });
+      });
+      return out;
+    }
+    function statusInfo(status) {
+      return STATUS[status] || STATUS.unknown;
+    }
+    function tintVar(tint) {
+      return tint === 'muted' ? 'var(--text-subtle)' : 'var(--tint-' + tint + ')';
+    }
+
+    // ---------- layout ----------
+
+    function stageSize() {
+      var canvas = $('neural-canvas');
+      var w = (canvas && canvas.clientWidth) || 900;
+      var h = (canvas && canvas.clientHeight) || 520;
+      return { w: w, h: h };
+    }
+
+    function childrenOf(hubId) {
+      return state.graph.edges
+        .filter(function (e) {
+          return e.kind === 'member' && e.from === hubId;
+        })
+        .map(function (e) {
+          return e.to;
+        });
+    }
+
+    function hubs() {
+      return state.graph.nodes.filter(function (n) {
+        return n.kind === 'hub';
+      });
+    }
+
+    function placeOverview(w, h) {
+      var out = {};
+      var cx = w / 2;
+      var cy = h / 2;
+      var ring = Math.min(w, h) * 0.3;
+      out[CORE_ID] = { x: cx, y: cy, r: 26 };
+      var list = hubs();
+      list.forEach(function (hub, i) {
+        var a = -Math.PI / 2 + (i / Math.max(list.length, 1)) * Math.PI * 2;
+        var hx = cx + Math.cos(a) * ring * 1.25;
+        var hy = cy + Math.sin(a) * ring;
+        out[hub.id] = { x: hx, y: hy, r: 15 };
+        var kids = childrenOf(hub.id);
+        var spread = Math.min(Math.PI * 1.1, 0.32 * kids.length);
+        kids.forEach(function (id, k) {
+          var t = kids.length === 1 ? 0 : k / (kids.length - 1) - 0.5;
+          var ka = a + t * spread;
+          var kr = 46 + (k % 2) * 16;
+          out[id] = { x: hx + Math.cos(ka) * kr, y: hy + Math.sin(ka) * kr, r: 5 };
+        });
+      });
+      return out;
+    }
+
+    function placeFocus(w, h, hubId) {
+      var out = {};
+      var cx = w / 2;
+      var cy = h / 2 + 10;
+      out[hubId] = { x: cx, y: cy, r: 22 };
+      out[CORE_ID] = { x: 46, y: 56, r: 12 };
+      var others = hubs().filter(function (hub) {
+        return hub.id !== hubId;
+      });
+      others.forEach(function (hub, i) {
+        out[hub.id] = { x: w - 22, y: 50 + i * 34, r: 8, dock: true };
+        childrenOf(hub.id).forEach(function (id) {
+          out[id] = { x: w - 30, y: 50 + i * 34, r: 0 };
+        });
+      });
+      var kids = childrenOf(hubId);
+      var perRing = 14;
+      kids.forEach(function (id, k) {
+        var ringIdx = Math.floor(k / perRing);
+        var inRing = Math.min(perRing, kids.length - ringIdx * perRing);
+        var a = -Math.PI / 2 + ((k % perRing) / inRing) * Math.PI * 2 + ringIdx * 0.2;
+        var rad = Math.min(w, h) * (0.3 + ringIdx * 0.12);
+        out[id] = { x: cx + Math.cos(a) * rad * 1.3, y: cy + Math.sin(a) * rad, r: 9 };
+      });
+      return out;
+    }
+
+    function relayout() {
+      var size = stageSize();
+      state.target = state.focus
+        ? placeFocus(size.w, size.h, state.focus)
+        : placeOverview(size.w, size.h);
+      Object.keys(state.target).forEach(function (id) {
+        if (!state.pos[id] || reducedMotion()) {
+          var t = state.target[id];
+          state.pos[id] = { x: t.x, y: t.y, r: t.r };
+        }
+      });
+    }
+
+    // ---------- drawing ----------
+
+    function cssColor(name, fallback) {
+      var v = getComputedStyle(document.documentElement).getPropertyValue(name);
+      return (v && v.trim()) || fallback;
+    }
+
+    function palette() {
+      return {
+        green: cssColor('--tint-green', '#6ee7b7'),
+        cyan: cssColor('--tint-cyan', '#67e8f9'),
+        violet: cssColor('--tint-violet', '#c4b5fd'),
+        amber: cssColor('--tint-amber', '#fcd34d'),
+        red: cssColor('--tint-red', '#fca5a5'),
+        indigo: cssColor('--tint-indigo', '#a5b4fc'),
+        muted: cssColor('--text-subtle', '#64748b'),
+        text: cssColor('--text', '#e2e8f0'),
+      };
+    }
+
+    function curve(a, b) {
+      var mx = (a.x + b.x) / 2;
+      var my = (a.y + b.y) / 2;
+      var dx = b.x - a.x;
+      var dy = b.y - a.y;
+      return { x: mx - dy * 0.12, y: my + dx * 0.12 };
+    }
+
+    function pointOn(a, c, b, t) {
+      var u = 1 - t;
+      return {
+        x: u * u * a.x + 2 * u * t * c.x + t * t * b.x,
+        y: u * u * a.y + 2 * u * t * c.y + t * t * b.y,
+      };
+    }
+
+    /** Position to draw a link from: a collapsed node borrows its hub's spot. */
+    function endpoint(id) {
+      var p = state.pos[id];
+      if (p && p.r >= 0.5) return p;
+      var member = state.graph.edges.find(function (e) {
+        return e.kind === 'member' && e.to === id;
+      });
+      var hub = member && state.pos[member.from];
+      return hub && hub.r >= 0.5 ? hub : null;
+    }
+
+    function isLit(edge) {
+      var key = state.selected || state.hover;
+      return !!key && (edge.from === key || edge.to === key);
+    }
+
+    function drawEdges(ctx, colors, time, still) {
+      state.graph.edges.forEach(function (edge, i) {
+        var a = endpoint(edge.from);
+        var b = endpoint(edge.to);
+        if (!a || !b || a === b) return;
+        var c = curve(a, b);
+        var lit = isLit(edge);
+        var leaf = nodeById(edge.kind === 'assign' ? edge.from : edge.to);
+        var tone = colors[statusInfo(leaf && leaf.status)[0]] || colors.indigo;
+        ctx.strokeStyle = edge.kind === 'assign' ? colors.cyan : tone;
+        ctx.globalAlpha = lit ? 0.85 : edge.kind === 'assign' ? 0.35 : 0.2;
+        ctx.lineWidth = lit ? 1.8 : 1;
+        ctx.setLineDash(edge.kind === 'assign' ? [4, 4] : []);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.quadraticCurveTo(c.x, c.y, b.x, b.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (still) return;
+        var speed = leaf && /running|busy|in_progress/.test(leaf.status) ? 0.45 : 0.18;
+        var t = (time * 0.001 * speed + i * 0.137) % 1;
+        var p = pointOn(a, c, b, t);
+        ctx.globalAlpha = lit ? 1 : 0.7;
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, lit ? 2.6 : 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function drawCore(ctx, p, colors, time, still) {
+      var spin = still ? 0 : time * 0.0004;
+      [1.9, 2.6].forEach(function (k, i) {
+        ctx.strokeStyle = colors.indigo;
+        ctx.globalAlpha = 0.35 - i * 0.12;
+        ctx.setLineDash([3, 6]);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * k, spin * (i ? -1 : 1), spin * (i ? -1 : 1) + Math.PI * 2);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+
+    function drawNodes(ctx, colors, time, still) {
+      var breathe = still ? 1 : 1 + Math.sin(time * 0.002) * 0.08;
+      state.graph.nodes.forEach(function (node) {
+        var p = state.pos[node.id];
+        if (!p || p.r < 0.5) return;
+        var tone = colors[statusInfo(node.status)[0]] || colors.muted;
+        var active = node.id === state.selected || node.id === state.hover;
+        var leaf = node.kind !== 'core' && node.kind !== 'hub';
+        var r = p.r * (leaf ? 1 : breathe) * (active ? 1.25 : 1);
+        if (node.kind === 'core') drawCore(ctx, p, colors, time, still);
+        // Dormant nodes (stopped / offline / unknown) are hollow and unlit, so the state
+        // reads without telling two dark tints apart.
+        var dormant = statusInfo(node.status)[0] === 'muted';
+        ctx.shadowColor = tone;
+        ctx.shadowBlur = dormant ? 0 : node.kind === 'core' ? 28 : active ? 18 : 10;
+        ctx.fillStyle = tone;
+        ctx.globalAlpha = dormant ? 0.18 : node.kind === 'hub' || node.kind === 'core' ? 0.9 : 0.8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.fill();
+        if (dormant) {
+          ctx.globalAlpha = 0.9;
+          ctx.strokeStyle = tone;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+        if (showLabel(node, active)) {
+          ctx.fillStyle = colors.text;
+          ctx.font = (leaf ? '11px' : '12px') + ' system-ui, sans-serif';
+          if (state.target[node.id] && state.target[node.id].dock) {
+            ctx.textAlign = 'right';
+            ctx.fillText(clip(node.label, 12), p.x - r - 8, p.y + 4);
+          } else {
+            ctx.textAlign = 'center';
+            ctx.fillText(clip(node.label, 22), p.x, p.y + r + 14);
+          }
+        }
+      });
+    }
+
+    function showLabel(node, active) {
+      if (active || node.kind === 'core' || node.kind === 'hub') return true;
+      return !!state.focus && childrenOf(state.focus).indexOf(node.id) !== -1;
+    }
+
+    function clip(text, max) {
+      var s = str(text);
+      return s.length > max ? s.slice(0, max - 1) + '…' : s;
+    }
+
+    function step() {
+      var moving = false;
+      Object.keys(state.target).forEach(function (id) {
+        var p = state.pos[id];
+        var t = state.target[id];
+        ['x', 'y', 'r'].forEach(function (k) {
+          var d = t[k] - p[k];
+          if (Math.abs(d) > 0.3) moving = true;
+          p[k] += d * 0.14;
+        });
+      });
+      return moving;
+    }
+
+    function frame(time) {
+      state.raf = 0;
+      var canvas = $('neural-canvas');
+      var ctx = canvas && canvas.getContext ? canvas.getContext('2d') : null;
+      if (!ctx || !visible()) return;
+      var size = stageSize();
+      var dpr = window.devicePixelRatio || 1;
+      if (canvas.width !== Math.round(size.w * dpr)) {
+        canvas.width = Math.round(size.w * dpr);
+        canvas.height = Math.round(size.h * dpr);
+        relayout();
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, size.w, size.h);
+      var still = reducedMotion();
+      var moving = step();
+      var colors = palette();
+      drawEdges(ctx, colors, time || 0, still);
+      drawNodes(ctx, colors, time || 0, still);
+      if (!still || moving) state.raf = requestAnimationFrame(frame);
+    }
+
+    function requestFrame() {
+      if (!state.raf && typeof requestAnimationFrame === 'function') {
+        state.raf = requestAnimationFrame(frame);
+      }
+    }
+
+    // ---------- DOM side panel ----------
+
+    function renderCrumbs() {
+      var nav = $('neural-crumbs');
+      nav.textContent = '';
+      var root = el('button', '', '全景');
+      root.type = 'button';
+      root.disabled = !state.focus;
+      root.addEventListener('click', function () {
+        setFocus(null);
+      });
+      nav.appendChild(root);
+      if (state.focus) {
+        nav.appendChild(el('span', '', '›'));
+        var hub = nodeById(state.focus);
+        var cur = el('button', '', hub ? hub.label : '');
+        cur.type = 'button';
+        cur.disabled = true;
+        nav.appendChild(cur);
+      }
+    }
+
+    function listButton(node) {
+      var li = el('li');
+      var btn = el('button');
+      btn.type = 'button';
+      btn.dataset.node = node.id;
+      if (node.id === state.selected || node.id === state.focus) {
+        btn.setAttribute('aria-current', 'true');
+      }
+      var dot = el('span', 'neural-dot');
+      dot.style.background = tintVar(statusInfo(node.status)[0]);
+      btn.appendChild(dot);
+      btn.appendChild(el('span', '', node.label));
+      btn.addEventListener('click', function () {
+        activate(node.id);
+      });
+      btn.addEventListener('mouseenter', function () {
+        state.hover = node.id;
+        requestFrame();
+      });
+      btn.addEventListener('mouseleave', function () {
+        state.hover = null;
+        requestFrame();
+      });
+      li.appendChild(btn);
+      return li;
+    }
+
+    function renderList() {
+      var list = $('neural-list');
+      list.textContent = '';
+      var ids = state.focus
+        ? childrenOf(state.focus)
+        : hubs().map(function (h) {
+            return h.id;
+          });
+      $('neural-list-title').textContent = state.focus ? '此模組的節點' : '模組';
+      ids.forEach(function (id) {
+        var node = nodeById(id);
+        if (node) list.appendChild(listButton(node));
+      });
+    }
+
+    function renderDetail() {
+      var box = $('neural-detail');
+      box.textContent = '';
+      var node = nodeById(state.selected || state.focus || CORE_ID);
+      if (!node) return;
+      box.appendChild(el('div', 'neural-kind', KIND_LABEL[node.kind] || node.kind));
+      box.appendChild(el('h3', '', node.label));
+      var info = statusInfo(node.status);
+      var badge = el('span', 'neural-state', info[1]);
+      badge.style.color = tintVar(info[0]);
+      box.appendChild(badge);
+      if (node.kind === 'core' || node.kind === 'hub') {
+        box.appendChild(el('div', 'neural-desc', summary(node)));
+      }
+      if (node.desc) box.appendChild(el('div', 'neural-desc', node.desc));
+      if (node.tags && node.tags.length) {
+        var tags = el('div', 'neural-tags');
+        node.tags.forEach(function (t) {
+          tags.appendChild(el('span', '', t));
+        });
+        box.appendChild(tags);
+      }
+      var links = neighbours(node.id).filter(function (n) {
+        return n.kind === 'assign';
+      });
+      if (links.length) {
+        box.appendChild(
+          el('div', 'neural-links-title', node.kind === 'agent' ? '指派的任務' : '指派給'),
+        );
+        var ul = el('ul', 'neural-list');
+        links.forEach(function (link) {
+          var other = nodeById(link.id);
+          if (other) ul.appendChild(listButton(other));
+        });
+        box.appendChild(ul);
+      }
+    }
+
+    function summary(node) {
+      var ids =
+        node.kind === 'core'
+          ? state.graph.nodes.filter(function (n) {
+              return n.kind !== 'core' && n.kind !== 'hub';
+            })
+          : childrenOf(node.id).map(nodeById);
+      var live = ids.filter(function (n) {
+        return n && /running|ready|busy|in_progress|completed/.test(n.status);
+      }).length;
+      var bad = ids.filter(function (n) {
+        return n && /failed|blocked/.test(n.status);
+      }).length;
+      return ids.length + ' 個節點 · ' + live + ' 個活躍' + (bad ? ' · ' + bad + ' 個異常' : '');
+    }
+
+    function renderSide() {
+      renderCrumbs();
+      renderList();
+      renderDetail();
+    }
+
+    // ---------- interaction ----------
+
+    function setFocus(hubId) {
+      state.focus = hubId;
+      state.selected = null;
+      relayout();
+      renderSide();
+      requestFrame();
+    }
+
+    function activate(id) {
+      var node = nodeById(id);
+      if (!node) return;
+      if (node.kind === 'core') return setFocus(null);
+      if (node.kind === 'hub') return setFocus(id);
+      var hub = state.graph.edges.find(function (e) {
+        return e.kind === 'member' && e.to === id;
+      });
+      if (hub && state.focus !== hub.from) {
+        state.focus = hub.from;
+        relayout();
+      }
+      state.selected = id;
+      renderSide();
+      requestFrame();
+    }
+
+    function back() {
+      if (state.selected) {
+        state.selected = null;
+        renderSide();
+        requestFrame();
+      } else if (state.focus) {
+        setFocus(null);
+      }
+    }
+
+    function hitTest(x, y) {
+      var best = null;
+      var bestD = Infinity;
+      state.graph.nodes.forEach(function (node) {
+        var p = state.pos[node.id];
+        if (!p || p.r < 0.5) return;
+        var d = Math.hypot(p.x - x, p.y - y);
+        if (d <= Math.max(p.r + 6, 10) && d < bestD) {
+          best = node.id;
+          bestD = d;
+        }
+      });
+      return best;
+    }
+
+    function pointer(event) {
+      var rect = event.currentTarget.getBoundingClientRect();
+      return hitTest(event.clientX - rect.left, event.clientY - rect.top);
+    }
+
+    var canvas = $('neural-canvas');
+    canvas.addEventListener('mousemove', function (event) {
+      var id = pointer(event);
+      if (id === state.hover) return;
+      state.hover = id;
+      canvas.classList.toggle('is-pointing', !!id);
+      requestFrame();
+    });
+    canvas.addEventListener('mouseleave', function () {
+      state.hover = null;
+      requestFrame();
+    });
+    canvas.addEventListener('click', function (event) {
+      var id = pointer(event);
+      if (id) activate(id);
+      else back();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && visible()) back();
+    });
+    window.addEventListener('resize', function () {
+      if (!visible()) return;
+      relayout();
+      requestFrame();
+    });
+    $('neural-refresh').addEventListener('click', function () {
+      load();
+    });
+
+    // ---------- data ----------
+
+    async function getJson(base, path) {
+      try {
+        var res = await fetch(base + path, { cache: 'no-store' });
+        var json = await res.json();
+        return res.ok && json && json.success ? json.data : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function schedule() {
+      clearTimeout(state.timer);
+      state.timer = setTimeout(function () {
+        if (visible() && !document.hidden) load();
+        else if (visible()) schedule();
+      }, POLL_MS);
+    }
+
+    async function load() {
+      var base = await getApiBase();
+      var results = await Promise.all([
+        getJson(base, '/api/services'),
+        getJson(base, '/api/roster'),
+        getJson(base, '/api/tasks'),
+      ]);
+      var items = typeof ALL_ITEMS !== 'undefined' && Array.isArray(ALL_ITEMS) ? ALL_ITEMS : [];
+      state.graph = buildGraph({
+        items: items,
+        cards: Array.isArray(window.NomadServiceCards) ? window.NomadServiceCards : [],
+        services: results[0] && Array.isArray(results[0].services) ? results[0].services : [],
+        agents: Array.isArray(results[1]) ? results[1] : [],
+        tasks: Array.isArray(results[2]) ? results[2] : [],
+      });
+      if (state.focus && !nodeById(state.focus)) state.focus = null;
+      if (state.selected && !nodeById(state.selected)) state.selected = null;
+      var offline = results.filter(function (r) {
+        return r === null;
+      }).length;
+      $('neural-status').textContent = offline
+        ? '有 ' + offline + ' 個資料來源無法連線，對應節點以「狀態未知」顯示。'
+        : '';
+      relayout();
+      renderSide();
+      requestFrame();
+      schedule();
+    }
+
+    window.NomadNeural = { show: load, buildGraph: buildGraph, activate: activate, back: back };
+  })();
+</script>

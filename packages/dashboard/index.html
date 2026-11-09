@@ -1772,6 +1772,9 @@
           <button class="tab-btn" onclick="filterCategory('github')" data-category="github">
             🐙 GitHub 盤點
           </button>
+          <button class="tab-btn" onclick="filterCategory('neural')" data-category="neural">
+            🧬 神經網絡
+          </button>
           <button class="tab-btn" onclick="filterCategory('ai')" data-category="ai">
             🧠 AI 決策與推論 <span class="tab-count">3</span>
           </button>
@@ -1798,6 +1801,7 @@
       <!-- @nomad:calendar-panel -->
       <!-- @nomad:shipping-panel -->
       <!-- @nomad:github-panel -->
+      <!-- @nomad:neural-panel -->
 
       <!-- ========================================================
          TASK CONTROL PLANE & KANBAN SECTION (Paperclip Native)
@@ -3850,6 +3854,7 @@
           calendar: window.NomadCalendar,
           shipping: window.NomadShipping,
           github: window.NomadGithub,
+          neural: window.NomadNeural,
         };
         Object.keys(panels).forEach((name) => {
           const section = document.getElementById(name + '-section');

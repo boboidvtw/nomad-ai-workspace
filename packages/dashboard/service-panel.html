@@ -395,6 +395,10 @@
     }
 
     window.refreshServiceCards = refreshServiceCards;
+    // Which backend services stand behind each dashboard card (read by the neural map).
+    window.NomadServiceCards = SERVICE_CARDS.map(function (entry) {
+      return { card: entry.card, services: entry.services.slice() };
+    });
     window.addEventListener('DOMContentLoaded', function () {
       mountPanels();
       refreshServiceCards();
