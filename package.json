@@ -132,6 +132,9 @@
     "tmp": "0.2.7",
     "vitepress": {
       "vite": "6.4.6"
+    },
+    "addons-linter@10.8.0": {
+      "image-size": "2.0.4"
     }
   },
   "workspaces": [
