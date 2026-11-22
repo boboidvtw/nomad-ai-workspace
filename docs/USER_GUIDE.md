@@ -392,7 +392,6 @@ curl -s http://127.0.0.1:8555/v1/systemone -H 'content-type: application/json' -
 | :--------------------- | :---------------------------- | :-------------------- | :----------------------------------- |
 | Laya                   | 啟動 8555 服務                | 停止服務              |                                      |
 | LM Studio              | 開啟 1234 本機 API            | 只停 API              | 模型要另外載入                       |
-| ComfyUI                | 啟動 8188                     | 停止該程序            |                                      |
 | Hermes Agent（終端機） | 開新的終端機視窗執行 `hermes` | 不提供                | 在視窗輸入 `/exit` 結束              |
 | Hermes Web             | 啟動 9119 管理介面            | 停止                  | 第一次要建置；啟動完成自動開啟介面   |
 | Hermes Telegram 閘道   | 連上 Telegram                 | 中斷連線              | 會開始回覆訊息，所以啟動前會詢問     |
@@ -424,7 +423,7 @@ curl -s -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1
 ```
 
 ```bash
-curl -s -X POST -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/services/comfyui/start
+curl -s -X POST -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/services/adminer/start
 ```
 
 ---

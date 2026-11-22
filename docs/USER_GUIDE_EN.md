@@ -387,7 +387,6 @@ Every card has ▶ 啟動 (start), ■ 關閉 (stop) and 📖 操作說明 (how-
 | :---------------------- | :--------------------------------------- | :-------------------- | :-------------------------------------------------- |
 | Laya                    | Starts port 8555                         | Stops the service     |                                                     |
 | LM Studio               | Opens the API on 1234                    | Stops only the API    | Load a model separately                             |
-| ComfyUI                 | Starts port 8188                         | Stops that process    |                                                     |
 | Hermes Agent (terminal) | Opens a terminal window running `hermes` | Not offered           | Type `/exit` in the window to end it                |
 | Hermes Web              | Starts the UI on 9119 and opens it       | Stops it              | First run builds the UI; opens it once started      |
 | Hermes Telegram gateway | Connects to Telegram                     | Disconnects           | It starts answering messages, so it asks first      |
@@ -420,7 +419,7 @@ curl -s -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1
 ```
 
 ```bash
-curl -s -X POST -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/services/comfyui/start
+curl -s -X POST -H "Authorization: Bearer $(cat ~/.nomad/daemon-token)" http://127.0.0.1:8765/api/services/adminer/start
 ```
 
 ---

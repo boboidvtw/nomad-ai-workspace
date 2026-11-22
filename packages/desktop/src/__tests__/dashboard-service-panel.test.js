@@ -48,12 +48,12 @@ function fakeServices() {
       canStop: false,
     },
     {
-      id: 'comfyui',
-      label: 'ComfyUI',
+      id: 'redis',
+      label: 'Redis',
       state: 'unavailable',
       canStart: false,
       canStop: false,
-      message: '找不到 venv',
+      message: '找不到 docker',
     },
   ];
 }
@@ -99,7 +99,7 @@ test.afterEach(() => {
 test('Service panel: every card has a how-to and at least one control', async () => {
   const { document } = await loadDashboard();
   const cards = [...document.querySelectorAll('.card[id^="card-"]')];
-  assert.strictEqual(cards.length, 11);
+  assert.strictEqual(cards.length, 10);
   for (const card of cards) {
     assert.ok(card.querySelector('.svc-row'), `${card.id} has controls`);
     const guide = card.querySelector('details.svc-guide');
@@ -159,10 +159,10 @@ test('Service panel: a running service with a web UI can open it in a window', a
 
 test('Service panel: an unavailable service shows why and cannot be pressed', async () => {
   const { document } = await loadDashboard();
-  const row = document.querySelector('.svc-row[data-service="comfyui"]');
+  const row = document.querySelector('.svc-row[data-service="redis"]');
   assert.strictEqual(row.querySelector('[data-action="start"]').disabled, true);
-  assert.strictEqual(row.querySelector('.svc-message').textContent, '找不到 venv');
-  const badge = document.querySelector('#card-comfyui .card-top .status-badge');
+  assert.strictEqual(row.querySelector('.svc-message').textContent, '找不到 docker');
+  const badge = document.querySelector('#card-redis .card-top .status-badge');
   assert.ok(badge.textContent.includes('未安裝'));
 });
 
@@ -180,6 +180,17 @@ test('Summary: online count comes from real states, with no fixed bonus', async 
   assert.strictEqual(document.getElementById('hud-online-count').textContent, '1');
 });
 
+test('Summary: category tabs match the cards on the page', async () => {
+  const { document } = await loadDashboard();
+  const cards = [...document.querySelectorAll('.card[id^="card-"]')];
+  assert.strictEqual(document.getElementById('count-all').textContent, String(cards.length));
+  for (const category of ['ai', 'agents', 'infra', 'tools']) {
+    const tab = document.querySelector(`.tab-btn[data-category="${category}"] .tab-count`);
+    const inTab = cards.filter((card) => card.dataset.category === category);
+    assert.strictEqual(tab.textContent, String(inTab.length), category);
+  }
+});
+
 test('Commands: nothing points at tools or services this machine does not have', () => {
   for (const stale of [
     'launchctl kickstart',
@@ -187,6 +198,9 @@ test('Commands: nothing points at tools or services this machine does not have',
     'psql -h 127.0.0.1',
     'redis-cli -h',
     'python3 main.py',
+    'comfyui',
+    'ComfyUI',
+    '8188',
     '.hermes/agent.log',
   ]) {
     assert.ok(!INDEX.includes(stale), stale);
