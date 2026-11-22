@@ -129,7 +129,10 @@
     },
     "shell-quote": "1.11.0",
     "firefox-profile": "4.7.1",
-    "tmp": "0.2.7"
+    "tmp": "0.2.7",
+    "vitepress": {
+      "vite": "6.4.6"
+    }
   },
   "workspaces": [
     "packages/*"
