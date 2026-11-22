@@ -23,24 +23,34 @@ function installControllerDependencies() {
         showGrammarButton: vi.fn(),
     };
 
-    window.GeminiToolbarUI = vi.fn(() => uiInstance);
+    window.GeminiToolbarUI = vi.fn(function () {
+        return uiInstance;
+    });
     window.GeminiToolbarActions = vi.fn();
-    window.GeminiSpeechReader = vi.fn(() => ({
-        readSelection: vi.fn(),
-        readPage: vi.fn(),
-    }));
-    window.GeminiImageDetector = vi.fn(() => ({
-        init: vi.fn(),
-        cancelHide: vi.fn(),
-        scheduleHide: vi.fn(),
-        setEnabled: vi.fn(),
-    }));
-    window.GeminiStreamHandler = vi.fn(() => ({ init: vi.fn() }));
-    window.GeminiInputManager = vi.fn(() => ({
-        capture: vi.fn(),
-        reset: vi.fn(),
-        hasSource: vi.fn(() => false),
-    }));
+    window.GeminiSpeechReader = vi.fn(function () {
+        return {
+            readSelection: vi.fn(),
+            readPage: vi.fn(),
+        };
+    });
+    window.GeminiImageDetector = vi.fn(function () {
+        return {
+            init: vi.fn(),
+            cancelHide: vi.fn(),
+            scheduleHide: vi.fn(),
+            setEnabled: vi.fn(),
+        };
+    });
+    window.GeminiStreamHandler = vi.fn(function () {
+        return { init: vi.fn() };
+    });
+    window.GeminiInputManager = vi.fn(function () {
+        return {
+            capture: vi.fn(),
+            reset: vi.fn(),
+            hasSource: vi.fn(() => false),
+        };
+    });
     window.GeminiToolbarDispatcher = vi.fn();
     window.GeminiSelectionObserver = vi.fn();
 

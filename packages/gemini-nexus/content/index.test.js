@@ -21,7 +21,9 @@ async function installContentIndex(storageResult, options = {}) {
     window.GeminiMessageRouter = router;
     window.GeminiShortcuts = shortcuts;
     window.GeminiNexusOverlay = vi.fn();
-    window.GeminiToolbarController = vi.fn(() => controller);
+    window.GeminiToolbarController = vi.fn(function () {
+        return controller;
+    });
 
     globalThis.chrome = {
         runtime: {
@@ -131,7 +133,9 @@ describe('content index text selection blacklist', () => {
         window.GeminiNexusToolbarControllerInstance = controller;
         window.GeminiShortcuts = shortcuts;
         window.GeminiMessageRouter = router;
-        window.GeminiNexusOverlay = vi.fn(() => overlay);
+        window.GeminiNexusOverlay = vi.fn(function () {
+            return overlay;
+        });
         window.GeminiToolbarController = vi.fn();
 
         await import('./index.js');
