@@ -1755,7 +1755,7 @@
       <div class="controls-bar">
         <div class="category-tabs">
           <button class="tab-btn active" onclick="filterCategory('all')" data-category="all">
-            全部 <span class="tab-count" id="count-all">11</span>
+            全部 <span class="tab-count" id="count-all">10</span>
           </button>
           <button class="tab-btn" onclick="filterCategory('tasks')" data-category="tasks">
             📋 任務派遣中心 <span class="tab-count" id="count-tasks">0</span>
@@ -1785,7 +1785,7 @@
             🐳 基礎設施與資料庫 <span class="tab-count">3</span>
           </button>
           <button class="tab-btn" onclick="filterCategory('tools')" data-category="tools">
-            📚 知識庫與工具 <span class="tab-count">2</span>
+            📚 知識庫與工具 <span class="tab-count">1</span>
           </button>
         </div>
 
@@ -2534,82 +2534,6 @@
               </button>
               <button class="btn-copy" onclick="copyText('http://127.0.0.1:1234/v1')">
                 📋 複製 Base URL
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- CARD 3: COMFYUI (AI) -->
-        <div class="card" data-category="ai" id="card-comfyui">
-          <div>
-            <div class="card-top">
-              <div class="card-title-group">
-                <span class="card-icon">🎨</span>
-                <div>
-                  <h2>ComfyUI 擴散生圖</h2>
-                  <div class="card-subtitle">Node-based Generative AI Pipeline</div>
-                </div>
-              </div>
-              <div class="status-badge offline" id="badge-comfyui">
-                <span id="comfyui-status-text">OFFLINE</span>
-              </div>
-            </div>
-
-            <div class="card-tags" style="margin-top: 0.75rem">
-              <span class="tag primary">Diffusion</span>
-              <span class="tag purple">FLUX / SDXL</span>
-              <span class="tag cyan">MPS 加速</span>
-              <span class="tag">Port 8188</span>
-            </div>
-
-            <div class="card-desc" style="margin-top: 0.75rem">
-              本地節點式擴散模型畫布，具備自定義 LoRA、ControlNet 與多步工作流串接能力。
-            </div>
-          </div>
-
-          <div>
-            <div class="card-meta">
-              <div class="meta-row">
-                <span class="meta-label">本機路徑</span>
-                <span class="meta-val">~/Developer/ComfyUI</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">服務端點</span>
-                <span class="meta-val">http://127.0.0.1:8188</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">執行階段</span>
-                <span class="meta-val">Python 3.11 / PyTorch MPS</span>
-              </div>
-            </div>
-
-            <div class="card-pipelines-drawer" id="drawer-card-comfyui">
-              <div class="pipeline-row">
-                <div class="pipeline-info">
-                  <span class="pipeline-name">🎨 本地啟動 ComfyUI</span>
-                  <span class="pipeline-cmd">~/Developer/ComfyUI/start_comfyui.sh</span>
-                </div>
-                <button class="btn-copy" onclick="copyText('~/Developer/ComfyUI/start_comfyui.sh')">
-                  📋 複製
-                </button>
-              </div>
-              <div class="pipeline-row">
-                <div class="pipeline-info">
-                  <span class="pipeline-name">📂 進入 Custom Nodes</span>
-                  <span class="pipeline-cmd">cd ~/Developer/ComfyUI/custom_nodes</span>
-                </div>
-                <button class="btn-copy" onclick="copyText('cd ~/Developer/ComfyUI/custom_nodes')">
-                  📋 複製
-                </button>
-              </div>
-            </div>
-
-            <div class="card-actions">
-              <button class="btn-pipeline-toggle" onclick="toggleCardPipelines('card-comfyui')">
-                ⚙️ 快捷管線
-              </button>
-              <button class="btn-copy" onclick="copyText('http://127.0.0.1:8188')">
-                📋 複製網址
               </button>
             </div>
           </div>
@@ -3509,9 +3433,6 @@
 
         <!-- Quick Suggestion Chips -->
         <div class="modal-quick-chips">
-          <button class="chip-btn" onclick="applyRouterChip('幫我產生一張賽博龐克風格的貓咪插畫')">
-            🎨 畫貓咪
-          </button>
           <button class="chip-btn" onclick="applyRouterChip('查詢上次儲存的技術手冊與架構筆記')">
             📚 查筆記
           </button>
@@ -3550,13 +3471,13 @@
             <div class="router-target-view">
               <div>
                 <h3 id="target-title" style="font-size: 1.05rem; font-weight: 700">
-                  🎨 ComfyUI 本地繪圖
+                  🧠 等待意圖輸入
                 </h3>
                 <p
                   id="target-desc"
                   style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px"
                 >
-                  匹配目標：圖像生成與 ControlNet 工作流
+                  輸入需求後，會顯示建議的服務
                 </p>
               </div>
               <a href="#" id="target-action-btn" target="_blank" class="btn btn-primary">
@@ -3650,17 +3571,6 @@
           probeUrl: 'http://127.0.0.1:1234/v1/models',
           actionUrl: 'http://127.0.0.1:1234',
           tags: ['GGUF', 'OpenAI API', 'Metal GPU', '1234'],
-        },
-        {
-          type: 'service',
-          id: 'card-comfyui',
-          title: '🎨 ComfyUI 擴散生圖',
-          desc: '本地節點式擴散模型畫布，具備 LoRA、FLUX/SDXL 與多步工作流。',
-          port: 8188,
-          category: 'ai',
-          probeUrl: 'http://127.0.0.1:8188/',
-          actionUrl: 'http://127.0.0.1:8188',
-          tags: ['Diffusion', 'FLUX', 'SDXL', '8188'],
         },
         {
           type: 'service',
@@ -3787,13 +3697,6 @@
       // LAYA 導流服務字典 (Laya Router Mapping)
       // ==========================================
       const SERVICES_MAP = {
-        comfyui: {
-          title: '🎨 ComfyUI 本地繪圖',
-          desc: '已識別為圖像生成需求，可直接喚醒本機節點式擴散模型畫布。',
-          url: 'http://127.0.0.1:8188',
-          btnText: '🚀 開啟 ComfyUI (8188)',
-          highlightCardId: 'card-comfyui',
-        },
         lm_studio: {
           title: '💬 LM Studio 本機大語言模型',
           desc: '已識別為 LLM 對話或文字生成任務，由本機 GGUF 伺服器進行 System 2 推論。',
@@ -4105,7 +4008,6 @@
               type: 'choice',
               instructions: '請根據使用者的操作意圖，分流至最合適的本地微服務或代理人：',
               criteria: {
-                comfyui: '繪製圖片、畫畫、插畫、LoRA、ControlNet、圖像生成、FLUX、Stable Diffusion',
                 lm_studio: '大語言模型聊天、文字生成、寫作、寫詩、程式碼詢問、本地 LLM 對話',
                 obsidian_kb: '查筆記、技術手冊、架構規範、知識圖譜、經驗庫、搜尋文件',
                 hermes_agent: '自主代理人、執行終端指令、多步驟工程任務、自動化流程',
@@ -4233,13 +4135,12 @@
           },
         },
         service_router: {
-          state: '我想畫一張未來太空城市的數位插畫，色彩要鮮艷，解析度要高。',
+          state: '幫我用本機大模型寫一首描寫太空城市的七言絕句。',
           questions: {
             target_service: {
               type: 'choice',
               instructions: '請根據使用者的操作意圖，分流至最合適的本地微服務或代理人：',
               criteria: {
-                comfyui: '繪製圖片、畫畫、插畫、LoRA、ControlNet、圖像生成、FLUX、Stable Diffusion',
                 lm_studio: '大語言模型聊天、文字生成、寫作、寫詩、程式碼詢問、本地 LLM 對話',
                 obsidian_kb: '查筆記、技術手冊、架構規範、知識圖譜、經驗庫、搜尋文件',
                 hermes_agent: '自主代理人、執行終端指令、多步驟工程任務、自動化流程',
@@ -4377,18 +4278,6 @@
           document.getElementById('lmstudio-status-text').innerText = 'OFFLINE';
         }
 
-        // 3. ComfyUI
-        const comfy = await checkServiceProbe({ probeUrl: 'http://127.0.0.1:8188/' });
-        const bComfy = document.getElementById('badge-comfyui');
-        if (comfy.online) {
-          currentOnline++;
-          bComfy.className = 'status-badge online';
-          document.getElementById('comfyui-status-text').innerText = `ONLINE (${comfy.latency}ms)`;
-        } else {
-          bComfy.className = 'status-badge offline';
-          document.getElementById('comfyui-status-text').innerText = 'OFFLINE';
-        }
-
         // 4. Adminer
         const adminer = await checkServiceProbe({ probeUrl: 'http://127.0.0.1:8080/' });
         const bAdminer = document.getElementById('badge-adminer');
@@ -4403,7 +4292,7 @@
         }
 
         onlineCount = currentOnline;
-        const totalServices = 11;
+        const totalServices = 10;
         document.getElementById('hud-online-count').innerText = onlineCount;
         document.getElementById('hud-total-count').innerText = totalServices;
       }

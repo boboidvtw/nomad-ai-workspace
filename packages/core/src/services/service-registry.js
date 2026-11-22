@@ -93,7 +93,6 @@ function macAppService(id, label, appName, pattern) {
  */
 function buildServiceRegistry(home) {
   const laya = path.join(home, '.gemini/antigravity-ide/scratch/laya');
-  const comfy = path.join(home, 'Developer/ComfyUI');
   const postgres = path.join(home, 'docker-services/postgres');
   const redis = path.join(home, 'docker-services/redis');
   const maih = path.join(home, 'Developer/maih');
@@ -115,21 +114,6 @@ function buildServiceRegistry(home) {
       timeoutMs: 60000,
       start: { kind: 'exec', bin: 'lms', args: ['server', 'start', '--port', '1234'] },
       stop: { kind: 'exec', bin: 'lms', args: ['server', 'stop'] },
-    },
-    {
-      id: 'comfyui',
-      label: 'ComfyUI',
-      check: { type: 'port', port: 8188 },
-      ui: 'http://127.0.0.1:8188',
-      requires: { paths: [path.join(comfy, 'venv')] },
-      timeoutMs: 120000,
-      start: {
-        kind: 'daemon',
-        bin: path.join(comfy, 'start_comfyui.sh'),
-        args: [],
-        cwd: comfy,
-      },
-      stop: { kind: 'process', port: 8188, marker: 'main.py' },
     },
     {
       id: 'hermes-cli',

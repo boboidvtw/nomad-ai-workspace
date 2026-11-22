@@ -6,6 +6,10 @@
 
 ## [Unreleased]
 
+### 🗑️ 移除 (Removed)
+
+- **ComfyUI**：本機已解除安裝，移除 Dashboard 卡片、一鍵啟停、搜尋項目、Laya 分流選項與使用手冊中的說明。
+
 ### 🐛 修正 (Fixed)
 
 - **Desktop Agent 用視窗標題找不到視窗**：macOS 不給沒有「螢幕錄製」權限的 App 讀 CoreGraphics 的視窗標題（會變成空白或 App 名稱），打包版因此每次都誤報 `WINDOW_NOT_FOUND`。現在比對不到時，會對標題被隱藏的視窗（最多 5 個）各取一次快照，改用輔助使用 API 讀到的真實標題比對，選中的快照直接沿用，不必再授權螢幕錄製；`list-windows` 本身失敗（例如 `PERM_DENIED`）時，也會回報原本的錯誤，不再一律說找不到視窗。實測打包版（只有輔助使用授權）依「下載」選中 Finder「下載項目」視窗。
