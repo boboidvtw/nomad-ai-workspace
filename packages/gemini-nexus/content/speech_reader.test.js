@@ -78,7 +78,9 @@ describe('GeminiSpeechReader', () => {
             pause: vi.fn(),
             removeAttribute: vi.fn(),
         };
-        const AudioCtor = vi.fn(() => audio);
+        const AudioCtor = vi.fn(function () {
+            return audio;
+        });
         const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:tts');
         const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 

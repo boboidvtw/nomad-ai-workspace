@@ -47,6 +47,8 @@ describe('RequestDispatcher response mapping', () => {
 
     afterEach(() => {
         vi.useRealTimers();
+        // restoreAllMocks only undoes spies, so reset the module mocks to their factory defaults.
+        vi.resetAllMocks();
         vi.restoreAllMocks();
     });
 
