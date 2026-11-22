@@ -123,7 +123,11 @@
     "web-ext-run": "^0.2.4"
   },
   "overrides": {
-    "rollup": "^4.24.0"
+    "rollup": "^4.24.0",
+    "oxfmt": {
+      "tinypool": "2.1.2"
+    },
+    "shell-quote": "1.11.0"
   },
   "workspaces": [
     "packages/*"
